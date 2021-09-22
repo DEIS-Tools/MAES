@@ -8,24 +8,24 @@ namespace Dora
     public class Simulator : MonoBehaviour
     {
         public SimulationConfiguration SimConfig = new SimulationConfiguration(); // Should this be a struct?!
-        private SimulationPlayState _playState = SimulationPlayState.Play;
+        private SimulationPlayState _playState = SimulationPlayState.Paused;
 
         public Text Text;
         private int _physicsTickCount = 0;
         private int _robotLogicTickCount = 0;
         private int _physicsTicksSinceUpdate = 0;
+        private int _simulatedTimeMillis = 0;
 
-        public SimulationPlayState PlayState
+        public SimulationPlayState PlayState { get; }
+
+        public SimulationPlayState AttemptSetPlayState(SimulationPlayState targetState)
         {
-            get => _playState;
-            set
-            {
-                if (value == PlayState) return;
-                // TODO: Check if possible to change (For example, not possible if no map is generated)
-                _playState = value;
-                // Reset next update time when changing play mode to avoid skipping ahead
-                _nextUpdateTimeMillis = Utils.CurrentTimeMillis();
-            }
+            if (targetState == _playState) return _playState;
+            // TODO: Check if possible to change (For example, not possible if no map is generated)
+            _playState = targetState;
+            // Reset next update time when changing play mode to avoid skipping ahead
+            _nextUpdateTimeMillis = Utils.CurrentTimeMillis();
+            return _playState;
         }
 
         private void Start()
@@ -58,6 +58,7 @@ namespace Dora
 
                 Physics.Simulate(physicsTickDeltaSeconds);
                 _physicsTickCount += 1;
+                _simulatedTimeMillis += physicsTickDeltaMillis;
                 _physicsTicksSinceUpdate++;
                 if (_physicsTicksSinceUpdate >= SimConfig.PhysicsTicksPerLogicUpdate)
                 {
@@ -74,8 +75,11 @@ namespace Dora
                 long maxDelayMillis = Math.Max(500, physicsTickDeltaMillis * 10);
                 _nextUpdateTimeMillis = Math.Max(_nextUpdateTimeMillis, Utils.CurrentTimeMillis() - maxDelayMillis);
             }
-
-            Text.text = _physicsTickCount.ToString() + "\n" + _robotLogicTickCount.ToString();
+            var simulatedTimeSpan = TimeSpan.FromMilliseconds(_simulatedTimeMillis);
+            var output = simulatedTimeSpan.ToString(@"hh\:mm\:ss");
+            Text.text = "Phys. ticks: " + _physicsTickCount + 
+                        "\nLogic ticks: " + _robotLogicTickCount + 
+                        "\nSimulated: " + output;
         }
     }
 }
