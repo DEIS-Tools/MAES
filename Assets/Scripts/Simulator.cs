@@ -10,11 +10,13 @@ namespace Dora
         public SimulationConfiguration SimConfig = new SimulationConfiguration(); // Should this be a struct?!
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 
+        public RobotForceController simulationUnit;
         public Text Text;
         private int _physicsTickCount = 0;
         private int _robotLogicTickCount = 0;
         private int _physicsTicksSinceUpdate = 0;
         private int _simulatedTimeMillis = 0;
+        
 
         public SimulationPlayState PlayState { get; }
 
@@ -30,7 +32,7 @@ namespace Dora
 
         private void Start()
         {
-            Text.text = "Start";
+            Physics.autoSimulation = false;
         }
 
         // Timing variables for controlling the simulation in a manner that is decoupled from Unity's update system
@@ -56,6 +58,7 @@ namespace Dora
                 // Yield if no more updates are needed this FixedUpdate cycle
                 if (_nextUpdateTimeMillis > fixedUpdateEndTime) break;
 
+                simulationUnit.SimUpdate(SimConfig);
                 Physics.Simulate(physicsTickDeltaSeconds);
                 _physicsTickCount += 1;
                 _simulatedTimeMillis += physicsTickDeltaMillis;
