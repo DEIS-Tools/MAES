@@ -2,6 +2,7 @@ namespace Dora
 {
     public enum SimulationPlayState
     {
-        Paused, Play, FastForward, FastAsPossible
+        Paused = 0, Play = 1, FastForward = 2, FastAsPossible = 1000
+        
     }
 }

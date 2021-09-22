@@ -4,7 +4,7 @@ namespace Dora
     public class SimulationConfiguration
     {
         public int LogicTickDeltaMillis { set; get; } = 100;
-        public int PhysicsTickDeltaMillis { set; get; } = 5;
+        public int PhysicsTickDeltaMillis { set; get; } = 10;
 
 
     }
