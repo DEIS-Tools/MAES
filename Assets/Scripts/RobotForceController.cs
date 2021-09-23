@@ -7,8 +7,6 @@ namespace Dora
 {
     public class RobotForceController : MonoBehaviour, SimulationUnit
     {
-        public Transform centerOfMass;
-        
         public Transform leftWheel;
         public Transform rightWheel;
 
@@ -18,11 +16,6 @@ namespace Dora
 
         private Vector3? lastLeftWheelPosition = null;
         private Vector3? lastRightWheelPosition = null;
-
-        private void Start()
-        {
-            GetComponent<Rigidbody>().centerOfMass = centerOfMass.localPosition;
-        }
 
         public void SimUpdate(SimulationConfiguration config)
         {
