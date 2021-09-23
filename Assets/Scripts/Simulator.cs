@@ -11,6 +11,7 @@ namespace Dora
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 
         public RobotForceController simulationUnit;
+        public RobotForceController simulationUnit2;
         public Text Text;
         private int _physicsTickCount = 0;
         private int _robotLogicTickCount = 0;
@@ -59,8 +60,9 @@ namespace Dora
                 if (_nextUpdateTimeMillis > fixedUpdateEndTime) break;
 
                 simulationUnit.SimUpdate(SimConfig);
+                simulationUnit2.SimUpdate(SimConfig);
                 Physics.Simulate(physicsTickDeltaSeconds);
-                _physicsTickCount += 1;
+                _physicsTickCount += 1; 
                 _simulatedTimeMillis += physicsTickDeltaMillis;
                 _physicsTicksSinceUpdate++;
                 if (_physicsTicksSinceUpdate >= SimConfig.PhysicsTicksPerLogicUpdate)
