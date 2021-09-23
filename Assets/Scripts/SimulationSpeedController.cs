@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace Dora
 {
-    public class SpeedController : MonoBehaviour
+    public class SimulationSpeedController : MonoBehaviour
     {
         
         public Simulator simulator;
