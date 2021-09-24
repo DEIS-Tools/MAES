@@ -6,8 +6,9 @@ using UnityEngine;
 
 namespace Dora.Robot
 {
-    public class RobotForceController : MonoBehaviour, SimulationUnit
+    public class RobotForceController : MonoBehaviour, ISimulationUnit
     {
+
         public Transform leftWheel;
         public Transform rightWheel;
 
@@ -88,6 +89,17 @@ namespace Dora.Robot
             // This factor determines how forward movement of the wheel translates into rotation
             const float rotationFactor = 80f;
             wheel.Rotate(new Vector3(rotationFactor * direction * magnitude, 0f, 0f));
+        }
+
+        
+        public object SaveState()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RestoreState(object stateInfo)
+        {
+            throw new NotImplementedException();
         }
     }
 }

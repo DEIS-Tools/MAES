@@ -14,8 +14,6 @@ namespace Dora
 
         public Transform simulationContainer;
 
-        public RobotForceController simulationUnit;
-        public RobotForceController simulationUnit2;
         public Text Text;
         private int _physicsTickCount = 0;
         private int _robotLogicTickCount = 0;
@@ -81,7 +79,7 @@ namespace Dora
         // Calls update on all children of SimulationContainer that are of type SimulationUnit
         private void UpdateSimulation(int physicsTickDeltaMillis, SimulationConfiguration config)
         {
-            List<SimulationUnit> simUnits = new List<SimulationUnit>();
+            List<ISimulationUnit> simUnits = new List<ISimulationUnit>();
 
             AddAllSimulationUnitsInChildren(simulationContainer, simUnits);
             simUnits.ForEach(simUnit => simUnit.PhysicsUpdate(config));
@@ -102,12 +100,12 @@ namespace Dora
 
         // Recursively finds all children that are of type SimulationUnit
         // Children are added depth first 
-        private void AddAllSimulationUnitsInChildren(Transform parent, List<SimulationUnit> simUnits)
+        private void AddAllSimulationUnitsInChildren(Transform parent, List<ISimulationUnit> simUnits)
         {
             foreach (Transform child in parent)
             {
                 AddAllSimulationUnitsInChildren(child, simUnits);
-                SimulationUnit unit = child.GetComponent<SimulationUnit>();
+                ISimulationUnit unit = child.GetComponent<ISimulationUnit>();
                 if (unit != null) simUnits.Add(unit);
             }
         }
