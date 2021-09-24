@@ -25,7 +25,7 @@ namespace Dora.Robot
             _rigidbody = GetComponent<Rigidbody>();
         }
 
-        public void SimUpdate(SimulationConfiguration config)
+        public void PhysicsUpdate(SimulationConfiguration config)
         {
             // Calculate movement between current and last physics tick
             var leftWheelDifferenceVector = leftWheel.transform.position - lastLeftWheelPosition ?? Vector3.zero;
@@ -66,6 +66,12 @@ namespace Dora.Robot
             }
             
             ApplyWheelForce(directive);
+        }
+
+        
+        public void LogicUpdate(SimulationConfiguration config)
+        {
+            
         }
 
         // Applies force at the positions of the wheels to create movement using physics simulation

@@ -2,8 +2,10 @@ namespace Dora
 {
     public interface SimulationUnit
     {
+        public void LogicUpdate(SimulationConfiguration config);
 
-        void SimUpdate(SimulationConfiguration config);
-        
+
+        public void PhysicsUpdate(SimulationConfiguration config);
+
     }
 }

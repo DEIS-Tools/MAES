@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Dora.Robot;
 using UnityEngine;
@@ -10,6 +11,8 @@ namespace Dora
     {
         public SimulationConfiguration SimConfig = new SimulationConfiguration(); // Should this be a struct?!
         private SimulationPlayState _playState = SimulationPlayState.Paused;
+
+        public Transform simulationContainer;
 
         public RobotForceController simulationUnit;
         public RobotForceController simulationUnit2;
@@ -52,7 +55,6 @@ namespace Dora
 
             // ReSharper disable once PossibleLossOfFraction
             int physicsTickDeltaMillis = SimConfig.LogicTickDeltaMillis / SimConfig.PhysicsTicksPerLogicUpdate;
-            float physicsTickDeltaSeconds = physicsTickDeltaMillis / 1000.0f;
 
             // Only calculate updates if there is still time left in the current update
             while (Utils.CurrentTimeMillis() - startTimeMillis < millisPerFixedUpdate)
@@ -60,22 +62,10 @@ namespace Dora
                 // Yield if no more updates are needed this FixedUpdate cycle
                 if (_nextUpdateTimeMillis > fixedUpdateEndTime) break;
 
-                simulationUnit.SimUpdate(SimConfig);
-                simulationUnit2.SimUpdate(SimConfig);
-                Physics.Simulate(physicsTickDeltaSeconds);
-                _physicsTickCount += 1; 
-                _simulatedTimeMillis += physicsTickDeltaMillis;
-                _physicsTicksSinceUpdate++;
-                if (_physicsTicksSinceUpdate >= SimConfig.PhysicsTicksPerLogicUpdate)
-                {
-                    // TODO: Update robot logic
-                    _physicsTicksSinceUpdate = 0;
-                    _robotLogicTickCount += 1;
-                }
-
-                // The delay between each update is dependant on the current play state
+                UpdateSimulation(physicsTickDeltaMillis, SimConfig);
+                
+                // The delay before simulating the next update is dependant on the current simulation play speed
                 int updateDelayMillis = physicsTickDeltaMillis / (int) _playState;
-                // Calculate next time to do an update
                 _nextUpdateTimeMillis = _nextUpdateTimeMillis + updateDelayMillis;
                 // Do not try to catch up if more than 0.5 seconds behind (higher if tick delta is high)
                 long maxDelayMillis = Math.Max(500, physicsTickDeltaMillis * 10);
@@ -86,6 +76,31 @@ namespace Dora
             Text.text = "Phys. ticks: " + _physicsTickCount + 
                         "\nLogic ticks: " + _robotLogicTickCount + 
                         "\nSimulated: " + output;
+        }
+
+        private void UpdateSimulation(int physicsTickDeltaMillis, SimulationConfiguration config)
+        {
+            List<SimulationUnit> simUnits = new List<SimulationUnit>();
+
+            foreach (Transform child in simulationContainer)
+            {
+                SimulationUnit unit = child.GetComponent<SimulationUnit>();
+                if (unit != null) simUnits.Add(unit);
+            }
+
+            simUnits.ForEach(simUnit => simUnit.PhysicsUpdate(config));
+            
+            float physicsTickDeltaSeconds = physicsTickDeltaMillis / 1000.0f;
+            Physics.Simulate(physicsTickDeltaSeconds);
+            _physicsTickCount += 1; 
+            _simulatedTimeMillis += physicsTickDeltaMillis;
+            _physicsTicksSinceUpdate++;
+            if (_physicsTicksSinceUpdate >= SimConfig.PhysicsTicksPerLogicUpdate)
+            {
+                simUnits.ForEach(simUnit => simUnit.LogicUpdate(config));
+                _physicsTicksSinceUpdate = 0;
+                _robotLogicTickCount += 1;
+            }
         }
     }
 }
