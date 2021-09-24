@@ -4,19 +4,28 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-public class UIMovementButton : MonoBehaviour, IPointerClickHandler
+[RequireComponent(typeof(Button))]
+public class UIMovementButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     public MainViewMovementController controller;
-    public Vector3 movement = new Vector3();
+    public Vector3 movement;
+    public bool isActive;
 
     private void Start()
     {
+        isActive = false;
         controller.Subscribe(this);
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void OnPointerDown(PointerEventData eventData)
     {
-        controller.OnButtonPressed(this);
+        isActive = true;
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        isActive = false;
     }
 }

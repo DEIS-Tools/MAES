@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,18 +7,24 @@ using UnityEngine.UI;
 
 public class MainViewMovementController : MonoBehaviour
 {
+    [Range(0.01f, 2f)]
+    public float movementSpeed;
     public Transform mainViewTransform;
     public List<UIMovementButton> buttons;
 
     public void Subscribe(UIMovementButton button)
     {
         buttons ??= new List<UIMovementButton>();
-        
         buttons.Add(button);
     }
 
-    public void OnButtonPressed(UIMovementButton button)
+    public void Update()
     {
-        mainViewTransform.Translate(button.movement);
+        foreach (var button in buttons)
+        {
+            if (!button.isActive) continue;
+            mainViewTransform.position += movementSpeed * button.movement * Time.deltaTime;
+        }
     }
+
 }
