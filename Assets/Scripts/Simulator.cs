@@ -78,16 +78,12 @@ namespace Dora
                         "\nSimulated: " + output;
         }
 
+        // Calls update on all children of SimulationContainer that are of type SimulationUnit
         private void UpdateSimulation(int physicsTickDeltaMillis, SimulationConfiguration config)
         {
             List<SimulationUnit> simUnits = new List<SimulationUnit>();
 
-            foreach (Transform child in simulationContainer)
-            {
-                SimulationUnit unit = child.GetComponent<SimulationUnit>();
-                if (unit != null) simUnits.Add(unit);
-            }
-
+            AddAllSimulationUnitsInChildren(simulationContainer, simUnits);
             simUnits.ForEach(simUnit => simUnit.PhysicsUpdate(config));
             
             float physicsTickDeltaSeconds = physicsTickDeltaMillis / 1000.0f;
@@ -95,11 +91,24 @@ namespace Dora
             _physicsTickCount += 1; 
             _simulatedTimeMillis += physicsTickDeltaMillis;
             _physicsTicksSinceUpdate++;
+            
             if (_physicsTicksSinceUpdate >= SimConfig.PhysicsTicksPerLogicUpdate)
             {
                 simUnits.ForEach(simUnit => simUnit.LogicUpdate(config));
                 _physicsTicksSinceUpdate = 0;
                 _robotLogicTickCount += 1;
+            }
+        }
+
+        // Recursively finds all children that are of type SimulationUnit
+        // Children are added depth first 
+        private void AddAllSimulationUnitsInChildren(Transform parent, List<SimulationUnit> simUnits)
+        {
+            foreach (Transform child in parent)
+            {
+                AddAllSimulationUnitsInChildren(child, simUnits);
+                SimulationUnit unit = child.GetComponent<SimulationUnit>();
+                if (unit != null) simUnits.Add(unit);
             }
         }
     }

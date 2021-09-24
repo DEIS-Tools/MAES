@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641258, b: 0.5748172, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -128,63 +128,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
   m_PrefabInstance: {fileID: 414600248}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &251797370
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 1561123521}
-    m_Modifications:
-    - target: {fileID: 6030822540777298417, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_Name
-      value: MonaRobot_PhysicsIntegrated
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_RootOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -1.993
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 1.34
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -3.8530831
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
 --- !u!1 &328625359
 GameObject:
   m_ObjectHideFlags: 0
@@ -375,11 +318,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6030822540777298417, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
       propertyPath: m_Name
-      value: MonaRobot_PhysicsIntegrated (1)
+      value: MonaRobot_PhysicsIntegrated
       objectReference: {fileID: 0}
     - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
       propertyPath: m_RootOrder
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
       propertyPath: m_LocalPosition.x
@@ -802,11 +745,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 964156731}
   m_CullTransparentMesh: 0
---- !u!4 &972650194 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6411465097675490123, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-  m_PrefabInstance: {fileID: 251797370}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1117897726
 GameObject:
   m_ObjectHideFlags: 0
@@ -1016,17 +954,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1341777454 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 262464179, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
-  m_PrefabInstance: {fileID: 251797370}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb855cccff892684e8b40c2ecaa38db3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1411149203
 GameObject:
   m_ObjectHideFlags: 0
@@ -1137,7 +1064,6 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 972650194}
   - {fileID: 82314478}
   m_Father: {fileID: 1838861764}
   m_RootOrder: 0
@@ -1548,7 +1474,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   simulationContainer: {fileID: 1561123521}
-  simulationUnit: {fileID: 1341777454}
+  simulationUnit: {fileID: 0}
   simulationUnit2: {fileID: 1144679658}
   Text: {fileID: 328625361}
 --- !u!1 &1940954641
