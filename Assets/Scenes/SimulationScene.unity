@@ -316,6 +316,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1561123521}
     m_Modifications:
+    - target: {fileID: 262464179, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
+      propertyPath: rotateForce
+      value: 60
+      objectReference: {fileID: 0}
     - target: {fileID: 6030822540777298417, guid: ae34eaaefada414ca9b986dab1f53dbf, type: 3}
       propertyPath: m_Name
       value: MonaRobot_PhysicsIntegrated
