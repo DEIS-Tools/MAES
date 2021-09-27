@@ -5,7 +5,7 @@ EditorSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 11
   m_SerializationMode: 2
-  m_LineEndingsForNewScripts: 1
+  m_LineEndingsForNewScripts: 0
   m_DefaultBehaviorMode: 0
   m_PrefabRegularEnvironment: {fileID: 0}
   m_PrefabUIEnvironment: {fileID: 0}
@@ -16,7 +16,7 @@ EditorSettings:
   m_EtcTextureNormalCompressor: 2
   m_EtcTextureBestCompressor: 4
   m_ProjectGenerationIncludedExtensions: txt;xml;fnt;cd;asmdef;rsp;asmref
-  m_ProjectGenerationRootNamespace: 
+  m_ProjectGenerationRootNamespace: Dora
   m_EnableTextureStreamingInEditMode: 1
   m_EnableTextureStreamingInPlayMode: 1
   m_AsyncShaderCompilation: 1
