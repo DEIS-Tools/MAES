@@ -476,6 +476,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: MapGenerator
       objectReference: {fileID: 0}
+    - target: {fileID: 118372939430713482, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
+      propertyPath: wallRoof
+      value: 
+      objectReference: {fileID: 2108420473}
+    - target: {fileID: 118372939430713482, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
+      propertyPath: innerWalls
+      value: 
+      objectReference: {fileID: 1200599457}
     - target: {fileID: 118372939430713483, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -987,6 +995,11 @@ CanvasRenderer:
 --- !u!4 &1200599454 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 118372940266225915, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
+  m_PrefabInstance: {fileID: 642336851}
+  m_PrefabAsset: {fileID: 0}
+--- !u!33 &1200599457 stripped
+MeshFilter:
+  m_CorrespondingSourceObject: {fileID: 118372940266225914, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
   m_PrefabInstance: {fileID: 642336851}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1204913313
@@ -1673,5 +1686,10 @@ Transform:
 --- !u!4 &2108420471 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 118372939304047972, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
+  m_PrefabInstance: {fileID: 642336851}
+  m_PrefabAsset: {fileID: 0}
+--- !u!33 &2108420473 stripped
+MeshFilter:
+  m_CorrespondingSourceObject: {fileID: 118372939304047974, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
   m_PrefabInstance: {fileID: 642336851}
   m_PrefabAsset: {fileID: 0}

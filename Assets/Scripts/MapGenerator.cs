@@ -50,7 +50,17 @@ public class MapGenerator : MonoBehaviour {
 	
 	void Update() {
 		if (Input.GetMouseButtonDown(0)) {
-			GenerateMap(60,40,Time.time.ToString(), 48, 5, 10, 10, 1, 1, 2, 1f);
+			var map = GenerateMap(60,
+										40,
+										Time.time.ToString(), 
+										48, 
+										5, 
+										10, 
+										10, 
+										1, 
+										1, 
+										2, 
+										3f);
 		}
 		
 		
@@ -91,7 +101,7 @@ public class MapGenerator : MonoBehaviour {
 		this.scaling = scaling;
 		this.wallHeight = wallHeight;
 		
-		GenerateMap();
+		var map = GenerateMap();
 		
 		// Resize plane below cave to fit size
 		float padding = 0.1f;
@@ -108,7 +118,7 @@ public class MapGenerator : MonoBehaviour {
 		newPosition.y = this.wallHeight; 
 		innerWalls.position = newPosition;
 
-		return this.mapToDraw;
+		return map;
 	}
 
 	public void clearMap(){
@@ -125,7 +135,7 @@ public class MapGenerator : MonoBehaviour {
 		meshGenerator.ClearMesh();
 	}
 
-	private void GenerateMap() {
+	private int[,] GenerateMap() {
 		// Fill map with random walls and empty tiles (Looks kinda like a QR code)
 		var randomlyFilledMap = CreateRandomFillMap(this.width, this.height);
 		
@@ -151,6 +161,8 @@ public class MapGenerator : MonoBehaviour {
 		
 		MeshGenerator meshGen = GetComponent<MeshGenerator>();
 		meshGen.GenerateMesh(borderedMap.Clone() as int[,], this.scaling, this.wallHeight);
+
+		return borderedMap;
 	}
 
 	int[,] CreateBorderedMap(int[,] map)

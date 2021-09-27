@@ -9,92 +9,120 @@ public class MeshGenerator : MonoBehaviour {
 	 */
 	public SquareGrid squareGrid;
 	// The inner walls, that the robots can collide with
-	public MeshFilter walls;
+	public MeshFilter innerWalls;
 	// The outer/upper parts of the closed off cave
-	public MeshFilter cave;
+	public MeshFilter wallRoof;
 
-	List<Vector3> vertices = new List<Vector3>();
-	List<int> triangles = new List<int>();
-
-	Dictionary<int,List<Triangle>> triangleDictionary = new Dictionary<int, List<Triangle>> ();
-	List<List<int>> outlines = new List<List<int>> ();
-	HashSet<int> checkedVertices = new HashSet<int>();
+	private List<Vector3> vertices = new List<Vector3>();
+	// list of all vertices in triangles
+	// This list tells unity in which order to read the vertices.
+	private List<int> triangles = new List<int>();
+	
+	// Map from vertex index to all triangles containing the vertex.
+	private Dictionary<int,List<Triangle>> triangleDictionary = new Dictionary<int, List<Triangle>> ();
+	// A list of all outlines containing lists of vertex indexes contained in the given outline.
+	// An outline is a wall either around an island of walls inside a room
+	// or the walls around a room.
+	private List<List<int>> outlines = new List<List<int>> ();
+	// Used to avoid checking the same case twice
+	private HashSet<int> checkedVertices = new HashSet<int>();
 	
 	private const int WALL_TYPE = 1, ROOM_TYPE = 0;
 
 	public void ClearMesh(){
 		squareGrid = null;
-		Destroy(walls.gameObject.GetComponent<MeshCollider>());
-		walls.mesh.Clear();
-		cave.mesh.Clear();
+		Destroy(innerWalls.gameObject.GetComponent<MeshCollider>());
+		innerWalls.mesh.Clear();
+		wallRoof.mesh.Clear();
 		vertices.Clear();
 		triangles.Clear();
 		triangleDictionary.Clear ();
-		outlines.Clear ();
-		checkedVertices.Clear ();
+		outlines.Clear();
+		checkedVertices.Clear();
 	}
 
 	public void GenerateMesh(int[,] map, float squareSize, float wallHeight) {
+		// Generate grid of squares containing control nodes and between nodes 
+		// for the marching square algorithm
 		squareGrid = new SquareGrid(map, squareSize);
 
 		vertices = new List<Vector3>();
 		triangles = new List<int>();
-
+		
 		for (int x = 0; x < squareGrid.squares.GetLength(0); x ++) {
 			for (int y = 0; y < squareGrid.squares.GetLength(1); y ++) {
+				// Create triangles from all the points in the squares
+				// assigned to variables "vertices" and "triangles"
 				TriangulateSquare(squareGrid.squares[x,y]);
 			}
 		}
 
-		Mesh mesh = new Mesh();
-		cave.mesh = mesh;
+		// Create roof mesh
+		Mesh wallRoofMesh = new Mesh();
+		wallRoofMesh.vertices = vertices.ToArray();
+		wallRoofMesh.triangles = triangles.ToArray();
+		wallRoofMesh.RecalculateNormals();
+		
+		// Apply mesh to wall roof
+		wallRoof.mesh = wallRoofMesh;
 
-		mesh.vertices = vertices.ToArray();
-		mesh.triangles = triangles.ToArray();
-		mesh.RecalculateNormals();
-
-		int tileAmount = 10;
+		// This bit of code allows us to apply a texture on the mesh
+		// Tiling refers to using the same texture next to each other.
+		/*int tileAmount = 10;
 		Vector2[] uvs = new Vector2[vertices.Count];
 		for (int i = 0; i < vertices.Count; i ++) {
 			float percentX = Mathf.InverseLerp(-map.GetLength(0) / 2 * squareSize,map.GetLength(0) / 2 * squareSize,vertices[i].x) * tileAmount;
 			float percentY = Mathf.InverseLerp(-map.GetLength(0) / 2 * squareSize,map.GetLength(0) / 2 * squareSize,vertices[i].z) * tileAmount;
 			uvs[i] = new Vector2(percentX, percentY);
 		}
-		mesh.uv = uvs;
+		wallRoofMesh.uv = uvs;*/
+		
 
 		CreateWallMesh(wallHeight);
 	}
 
 	void CreateWallMesh(float wallHeight) {
-		CalculateMeshOutlines ();
+		// Assigns outline vertices to list variable "outlines"
+		// An outline is a wall either around an island of walls inside a room
+		// or the walls around a room.
+		CalculateMeshOutlines();
 
-		List<Vector3> wallVertices = new List<Vector3> ();
-		List<int> wallTriangles = new List<int> ();
-		Mesh wallMesh = new Mesh ();
+		List<Vector3> wallVertices = new List<Vector3>();
+		List<int> wallTriangles = new List<int>();
+		Mesh innerWallsMesh = new Mesh();
 
-		foreach (List<int> outline in outlines) {
-			for (int i = 0; i < outline.Count -1; i ++) {
+		foreach(List<int> outline in outlines) {
+			for(int i = 0; i < outline.Count - 1; i++) {
 				int startIndex = wallVertices.Count;
-				wallVertices.Add(vertices[outline[i]]); // left
-				wallVertices.Add(vertices[outline[i+1]]); // right
-				wallVertices.Add(vertices[outline[i]] - Vector3.up * wallHeight); // bottom left
-				wallVertices.Add(vertices[outline[i+1]] - Vector3.up * wallHeight); // bottom right
+				// Create section of the wall currently being made
+				// as viewed from inside the room looked at the wall
+				wallVertices.Add(vertices[outline[i]]); // top left (0)
+				wallVertices.Add(vertices[outline[i + 1]]); // top right (1)
+				wallVertices.Add(vertices[outline[i]] - Vector3.up * wallHeight); // bottom left (2)
+				wallVertices.Add(vertices[outline[i+1]] - Vector3.up * wallHeight); // bottom right (3)
 
-				wallTriangles.Add(startIndex + 0);
-				wallTriangles.Add(startIndex + 2);
-				wallTriangles.Add(startIndex + 3);
-
-				wallTriangles.Add(startIndex + 3);
-				wallTriangles.Add(startIndex + 1);
-				wallTriangles.Add(startIndex + 0);
+				// Adding counter clockwise
+				// the number 0 to 3 comes from the order in which they were 
+				// added to the wall vertices.
+				
+				// Triangle one (left side lower side of the wall square)
+				wallTriangles.Add(startIndex + 0); // Top left
+				wallTriangles.Add(startIndex + 2); // Bottom left
+				wallTriangles.Add(startIndex + 3); // Bottom right
+				
+				// Triangle two (right side upper side of the wall square)
+				wallTriangles.Add(startIndex + 3); // Bottom Right
+				wallTriangles.Add(startIndex + 1); // Top right
+				wallTriangles.Add(startIndex + 0); // Top left
 			}
 		}
-		wallMesh.vertices = wallVertices.ToArray ();
-		wallMesh.triangles = wallTriangles.ToArray ();
-		walls.mesh = wallMesh;
+		// Unity cannot work with lists, so ToArray() is needed
+		innerWallsMesh.vertices = wallVertices.ToArray();
+		innerWallsMesh.triangles = wallTriangles.ToArray();
+		innerWalls.mesh = innerWallsMesh;
 
-		MeshCollider wallCollider = walls.gameObject.AddComponent<MeshCollider> ();
-		wallCollider.sharedMesh = wallMesh;
+		MeshCollider wallCollider = innerWalls.gameObject.AddComponent<MeshCollider> ();
+		wallCollider.sharedMesh = innerWallsMesh;
 	}
 
 	// According to the marching squares algorithm,
@@ -157,6 +185,7 @@ public class MeshGenerator : MonoBehaviour {
 		// 4 point:
 		case 15:
 			MeshFromPoints(square.topLeft, square.topRight, square.bottomRight, square.bottomLeft);
+			// If all 4 are active walls, it cannot be an outline to a room, and should thus not be checked
 			checkedVertices.Add(square.topLeft.vertexIndex);
 			checkedVertices.Add(square.topRight.vertexIndex);
 			checkedVertices.Add(square.bottomRight.vertexIndex);
@@ -167,7 +196,7 @@ public class MeshGenerator : MonoBehaviour {
 	}
 
 	void MeshFromPoints(params Node[] points) {
-		AssignVertices(points);
+		AssignIndexesToVertices(points);
 
 		if (points.Length >= 3)
 			CreateTriangle(points[0], points[1], points[2]);
@@ -180,7 +209,7 @@ public class MeshGenerator : MonoBehaviour {
 
 	}
 
-	void AssignVertices(Node[] points) {
+	void AssignIndexesToVertices(Node[] points) {
 		for (int i = 0; i < points.Length; i ++) {
 			if (points[i].vertexIndex == -1) {
 				points[i].vertexIndex = vertices.Count;
@@ -194,15 +223,15 @@ public class MeshGenerator : MonoBehaviour {
 		triangles.Add(b.vertexIndex);
 		triangles.Add(c.vertexIndex);
 
-		Triangle triangle = new Triangle (a.vertexIndex, b.vertexIndex, c.vertexIndex);
-		AddTriangleToDictionary (triangle.vertexIndexA, triangle);
-		AddTriangleToDictionary (triangle.vertexIndexB, triangle);
-		AddTriangleToDictionary (triangle.vertexIndexC, triangle);
+		Triangle triangle = new Triangle(a.vertexIndex, b.vertexIndex, c.vertexIndex);
+		AddTriangleToDictionary(triangle.vertexIndexA, triangle);
+		AddTriangleToDictionary(triangle.vertexIndexB, triangle);
+		AddTriangleToDictionary(triangle.vertexIndexC, triangle);
 	}
 
 	void AddTriangleToDictionary(int vertexIndexKey, Triangle triangle) {
-		if (triangleDictionary.ContainsKey (vertexIndexKey)) {
-			triangleDictionary [vertexIndexKey].Add (triangle);
+		if (triangleDictionary.ContainsKey(vertexIndexKey)) {
+			triangleDictionary[vertexIndexKey].Add(triangle);
 		} else {
 			List<Triangle> triangleList = new List<Triangle>();
 			triangleList.Add(triangle);
@@ -228,9 +257,9 @@ public class MeshGenerator : MonoBehaviour {
 	}
 
 	void FollowOutline(int vertexIndex, int outlineIndex) {
-		outlines [outlineIndex].Add (vertexIndex);
-		checkedVertices.Add (vertexIndex);
-		int nextVertexIndex = GetConnectedOutlineVertex (vertexIndex);
+		outlines[outlineIndex].Add(vertexIndex);
+		checkedVertices.Add(vertexIndex);
+		int nextVertexIndex = GetConnectedOutlineVertex(vertexIndex);
 
 		if (nextVertexIndex != -1) {
 			FollowOutline(nextVertexIndex, outlineIndex);
@@ -238,7 +267,7 @@ public class MeshGenerator : MonoBehaviour {
 	}
 
 	int GetConnectedOutlineVertex(int vertexIndex) {
-		List<Triangle> trianglesContainingVertex = triangleDictionary [vertexIndex];
+		List<Triangle> trianglesContainingVertex = triangleDictionary[vertexIndex];
 
 		for (int i = 0; i < trianglesContainingVertex.Count; i ++) {
 			Triangle triangle = trianglesContainingVertex[i];
@@ -258,7 +287,7 @@ public class MeshGenerator : MonoBehaviour {
 
 	bool IsOutlineEdge(int vertexA, int vertexB) {
 		// The inner walls made up of triangles are recognized based on the
-		// number of triangles sharing a given vertex. The outer ones only have 1.
+		// number of triangles shared between the two vertices. The outer ones only have 1 in common.
 		List<Triangle> trianglesContainingVertexA = triangleDictionary[vertexA];
 		int sharedTriangleCount = 0;
 
