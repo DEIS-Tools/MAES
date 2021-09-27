@@ -5,12 +5,18 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(Transform))]
 public class MainViewMovementController : MonoBehaviour
 {
-    [Range(0.01f, 2f)]
-    public float movementSpeed;
-    public Transform mainViewTransform;
+    private Transform _mainViewTransform;
+    
+    [Range(0.01f, 2f)] public float movementSpeed; // Value set in inspector
     public List<UIMovementButton> buttons;
+
+    private void Start()
+    {
+        _mainViewTransform = GetComponent<Transform>();
+    }
 
     public void Subscribe(UIMovementButton button)
     {
@@ -23,7 +29,7 @@ public class MainViewMovementController : MonoBehaviour
         foreach (var button in buttons)
         {
             if (!button.isActive) continue;
-            mainViewTransform.position += movementSpeed * button.movement * Time.deltaTime;
+            _mainViewTransform.position += movementSpeed * button.movement * Time.deltaTime;
         }
     }
 
