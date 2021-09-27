@@ -14,9 +14,10 @@ namespace Dora.Robot
         public Transform rightWheel;
 
         private Rigidbody _rigidbody;
+        private RobotStatus _currentStatus = RobotStatus.Idle;
 
-        [Range(1, 150)] public int rotateForce = 70;
-        [Range(1, 150)] public int moveForce = 95;
+        [Range(1, 150)] public int rotateForce = 60;
+        [Range(1, 150)] public int moveForce = 80;
 
         private Vector3? _previousLeftWheelPosition = null;
         private Vector3? _previousRightWheelPosition = null;
@@ -45,8 +46,18 @@ namespace Dora.Robot
 
             _previousLeftWheelPosition = leftWheel.position;
             _previousRightWheelPosition = rightWheel.position;
+
+            // Update the current status to indicate whether the robot is currently moving
+            if (rightWheelVelocityVector.magnitude > 0.01f || leftWheelVelocityVector.magnitude > 0.01f)
+            {
+                _currentStatus = RobotStatus.Moving;
+            } else {
+                _currentStatus = RobotStatus.Idle;
+            }
             
-            /*MovementDirective directive = MovementDirective.NoMovement;
+            /*Debug.Log("Current velocity: " + leftWheelVelocityVector.magnitude + ", " + rightWheelVelocityVector.magnitude);
+            
+            MovementDirective directive = MovementDirective.NoMovement;
 
             if (Input.GetButton("Left"))
             {
@@ -75,17 +86,17 @@ namespace Dora.Robot
 
         private void Update()
         {
-            if (Input.GetKeyUp("Left"))
+            if (Input.GetButtonUp("Left"))
             {
                 StartRotating(counterClockwise:true);
             }
             
-            if (Input.GetKeyUp("Right"))
+            if (Input.GetButtonUp("Right"))
             {
                 StartRotating(counterClockwise:false);
             }
 
-            if (Input.GetKeyUp("Reverse"))
+            if (Input.GetButtonUp("Reverse"))
             {
                 StopCurrentAction();
             }
@@ -128,7 +139,7 @@ namespace Dora.Robot
 
         public RobotStatus GetStatus()
         {
-            throw new NotImplementedException();
+            return _currentStatus;
         }
 
         public void Rotate(float degrees)
