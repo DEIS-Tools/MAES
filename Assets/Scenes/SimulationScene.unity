@@ -448,6 +448,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1838861764}
     m_Modifications:
+    - target: {fileID: 118372939304047973, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
+      propertyPath: m_Name
+      value: WallRoof
+      objectReference: {fileID: 0}
     - target: {fileID: 118372939430713480, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
       propertyPath: cave
       value: 
@@ -458,6 +462,14 @@ PrefabInstance:
       objectReference: {fileID: 883134475}
     - target: {fileID: 118372939430713480, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
       propertyPath: walls
+      value: 
+      objectReference: {fileID: 1200599454}
+    - target: {fileID: 118372939430713480, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
+      propertyPath: wallRoof
+      value: 
+      objectReference: {fileID: 2108420471}
+    - target: {fileID: 118372939430713480, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
+      propertyPath: innerWalls
       value: 
       objectReference: {fileID: 1200599454}
     - target: {fileID: 118372939430713481, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
@@ -507,6 +519,10 @@ PrefabInstance:
     - target: {fileID: 118372939430713483, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 118372940266225912, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
+      propertyPath: m_Name
+      value: InnerWalls
       objectReference: {fileID: 0}
     - target: {fileID: 118372940272869866, guid: 1f2387e04de104d8d8540dd4b404e728, type: 3}
       propertyPath: m_LocalScale.x

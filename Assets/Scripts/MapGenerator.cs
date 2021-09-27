@@ -41,7 +41,7 @@ public class MapGenerator : MonoBehaviour {
 
 	public Transform plane;
 	public Transform innerWalls;
-	public Transform wallRoofs;
+	public Transform wallRoof;
 
 	public MeshGenerator meshGenerator;
 
@@ -50,7 +50,7 @@ public class MapGenerator : MonoBehaviour {
 	
 	void Update() {
 		if (Input.GetMouseButtonDown(0)) {
-			GenerateMap(16,16,Time.time.ToString(), 48, 5, 10, 10, 1, 1, 1, 3f);
+			GenerateMap(60,40,Time.time.ToString(), 48, 5, 10, 10, 1, 1, 2, 1f);
 		}
 		
 		
@@ -75,8 +75,10 @@ public class MapGenerator : MonoBehaviour {
 			throw new ArgumentOutOfRangeException("smoothingRuns must be a positive integer or 0");
 		}
 		
+		// Clear and destroy objects from previous map
 		clearMap();
 
+		// Set new variables
 		this.width = width;
 		this.height = height;
 		this.randomSeed = seed;
@@ -86,9 +88,9 @@ public class MapGenerator : MonoBehaviour {
 		this.roomThresholdSize = roomThresholdSize;
 		this.borderSize = borderSize;
 		this.connectionPassagesWidth = connectionPassagesWidth;
-		this.scaling = 1;
+		this.scaling = scaling;
 		this.wallHeight = wallHeight;
-
+		
 		GenerateMap();
 		
 		// Resize plane below cave to fit size
@@ -98,9 +100,9 @@ public class MapGenerator : MonoBehaviour {
 										((height * scaling) / 10f) + padding);
 		
 		// Move walls and wall roof to above plane depending on wall height
-		Vector3 newPosition = wallRoofs.position;
+		Vector3 newPosition = wallRoof.position;
 		newPosition.y = this.wallHeight;
-		wallRoofs.position = newPosition;
+		wallRoof.position = newPosition;
 		
 		newPosition = innerWalls.position;
 		newPosition.y = this.wallHeight; 
