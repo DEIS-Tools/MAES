@@ -32,7 +32,16 @@ public class MapGenerator : MonoBehaviour {
 	// Border size (Assured walls on the edges)
 	private int borderSize;
 
+	// This can be increased to enlarge the smallest corridors by enlarging the entire cave
+	private int scaling;
+	
+	private float wallHeight; 
+
 	private const int WALL_TYPE = 1, ROOM_TYPE = 0;
+
+	public Transform plane;
+	public Transform innerWalls;
+	public Transform wallRoofs;
 
 	public MeshGenerator meshGenerator;
 
@@ -41,8 +50,10 @@ public class MapGenerator : MonoBehaviour {
 	
 	void Update() {
 		if (Input.GetMouseButtonDown(0)) {
-			GenerateMap(150,150,Time.time.ToString(), 48, 5, 10, 10, 1, 1);
+			GenerateMap(16,16,Time.time.ToString(), 48, 5, 10, 10, 1, 1, 1, 3f);
 		}
+		
+		
 
 		if (Input.GetMouseButtonDown(1))
 		{
@@ -52,7 +63,7 @@ public class MapGenerator : MonoBehaviour {
 	
 	public void GenerateMap(int width, int height, string seed, 
 		int randomFillPercent, int smoothingRuns, int wallThresholdSize, 
-		int roomThresholdSize, int borderSize, int connectionPassagesWidth)
+		int roomThresholdSize, int borderSize, int connectionPassagesWidth, int scaling, float wallHeight)
 	{
 		// Only fill percent between and including 0 to 100 are allowed
 		if(0 >= randomFillPercent || randomFillPercent >= 100 ){
@@ -75,8 +86,25 @@ public class MapGenerator : MonoBehaviour {
 		this.roomThresholdSize = roomThresholdSize;
 		this.borderSize = borderSize;
 		this.connectionPassagesWidth = connectionPassagesWidth;
+		this.scaling = 1;
+		this.wallHeight = wallHeight;
 
 		GenerateMap();
+		
+		// Resize plane below cave to fit size
+		float padding = 0.1f;
+		plane.localScale = new Vector3(((width * scaling) / 10f) + padding, 
+										1, 
+										((height * scaling) / 10f) + padding);
+		
+		// Move walls and wall roof to above plane depending on wall height
+		Vector3 newPosition = wallRoofs.position;
+		newPosition.y = this.wallHeight;
+		wallRoofs.position = newPosition;
+		
+		newPosition = innerWalls.position;
+		newPosition.y = this.wallHeight; 
+		innerWalls.position = newPosition;
 	}
 
 	public void clearMap(){
@@ -88,10 +116,10 @@ public class MapGenerator : MonoBehaviour {
 		this.wallThresholdSize = 0;
 		this.borderSize = 0;
 		this.connectionPassagesWidth = 0;
+		this.scaling = 0;
+		this.wallHeight = 0;
 		meshGenerator.ClearMesh();
 	}
-
-	
 
 	private void GenerateMap() {
 		// Fill map with random walls and empty tiles (Looks kinda like a QR code)
@@ -118,7 +146,7 @@ public class MapGenerator : MonoBehaviour {
 		// mapToDraw = borderedMap;
 		
 		MeshGenerator meshGen = GetComponent<MeshGenerator>();
-		meshGen.GenerateMesh(borderedMap.Clone() as int[,], 1);
+		meshGen.GenerateMesh(borderedMap.Clone() as int[,], this.scaling, this.wallHeight);
 	}
 
 	int[,] CreateBorderedMap(int[,] map)

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class MeshGenerator : MonoBehaviour {
 	/**
 	 * Uses the marching squares algorithm to smooth out
-	 * the grid. After this a 
+	 * the grid and create a continuous wall around the rooms 
 	 */
 	public SquareGrid squareGrid;
 	// The inner walls, that the robots can collide with
@@ -32,7 +32,7 @@ public class MeshGenerator : MonoBehaviour {
 		checkedVertices.Clear ();
 	}
 
-	public void GenerateMesh(int[,] map, float squareSize) {
+	public void GenerateMesh(int[,] map, float squareSize, float wallHeight) {
 		squareGrid = new SquareGrid(map, squareSize);
 
 		vertices = new List<Vector3>();
@@ -53,24 +53,22 @@ public class MeshGenerator : MonoBehaviour {
 
 		int tileAmount = 10;
 		Vector2[] uvs = new Vector2[vertices.Count];
-		for (int i =0; i < vertices.Count; i ++) {
-			float percentX = Mathf.InverseLerp(-map.GetLength(0)/2*squareSize,map.GetLength(0)/2*squareSize,vertices[i].x) * tileAmount;
-			float percentY = Mathf.InverseLerp(-map.GetLength(0)/2*squareSize,map.GetLength(0)/2*squareSize,vertices[i].z) * tileAmount;
-			uvs[i] = new Vector2(percentX,percentY);
+		for (int i = 0; i < vertices.Count; i ++) {
+			float percentX = Mathf.InverseLerp(-map.GetLength(0) / 2 * squareSize,map.GetLength(0) / 2 * squareSize,vertices[i].x) * tileAmount;
+			float percentY = Mathf.InverseLerp(-map.GetLength(0) / 2 * squareSize,map.GetLength(0) / 2 * squareSize,vertices[i].z) * tileAmount;
+			uvs[i] = new Vector2(percentX, percentY);
 		}
 		mesh.uv = uvs;
 
-		CreateWallMesh ();
+		CreateWallMesh(wallHeight);
 	}
 
-	void CreateWallMesh() {
-
+	void CreateWallMesh(float wallHeight) {
 		CalculateMeshOutlines ();
 
 		List<Vector3> wallVertices = new List<Vector3> ();
 		List<int> wallTriangles = new List<int> ();
 		Mesh wallMesh = new Mesh ();
-		float wallHeight = 5;
 
 		foreach (List<int> outline in outlines) {
 			for (int i = 0; i < outline.Count -1; i ++) {
@@ -232,7 +230,6 @@ public class MeshGenerator : MonoBehaviour {
 	}
 
 	void CalculateMeshOutlines() {
-
 		for (int vertexIndex = 0; vertexIndex < vertices.Count; vertexIndex ++) {
 			if (!checkedVertices.Contains(vertexIndex)) {
 				int newOutlineVertex = GetConnectedOutlineVertex(vertexIndex);
