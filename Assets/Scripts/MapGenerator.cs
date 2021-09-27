@@ -61,7 +61,7 @@ public class MapGenerator : MonoBehaviour {
 		}
 	}
 	
-	public void GenerateMap(int width, int height, string seed, 
+	public int[,] GenerateMap(int width, int height, string seed, 
 		int randomFillPercent, int smoothingRuns, int wallThresholdSize, 
 		int roomThresholdSize, int borderSize, int connectionPassagesWidth, int scaling, float wallHeight)
 	{
@@ -107,6 +107,8 @@ public class MapGenerator : MonoBehaviour {
 		newPosition = innerWalls.position;
 		newPosition.y = this.wallHeight; 
 		innerWalls.position = newPosition;
+
+		return this.mapToDraw;
 	}
 
 	public void clearMap(){

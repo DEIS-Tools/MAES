@@ -19,6 +19,8 @@ public class MeshGenerator : MonoBehaviour {
 	Dictionary<int,List<Triangle>> triangleDictionary = new Dictionary<int, List<Triangle>> ();
 	List<List<int>> outlines = new List<List<int>> ();
 	HashSet<int> checkedVertices = new HashSet<int>();
+	
+	private const int WALL_TYPE = 1, ROOM_TYPE = 0;
 
 	public void ClearMesh(){
 		squareGrid = null;
@@ -93,27 +95,6 @@ public class MeshGenerator : MonoBehaviour {
 
 		MeshCollider wallCollider = walls.gameObject.AddComponent<MeshCollider> ();
 		wallCollider.sharedMesh = wallMesh;
-	}
-
-	void Generate2DColliders() {
-
-		EdgeCollider2D[] currentColliders = gameObject.GetComponents<EdgeCollider2D> ();
-		for (int i = 0; i < currentColliders.Length; i++) {
-			Destroy(currentColliders[i]);
-		}
-
-		CalculateMeshOutlines ();
-
-		foreach (List<int> outline in outlines) {
-			EdgeCollider2D edgeCollider = gameObject.AddComponent<EdgeCollider2D>();
-			Vector2[] edgePoints = new Vector2[outline.Count];
-
-			for (int i =0; i < outline.Count; i ++) {
-				edgePoints[i] = new Vector2(vertices[outline[i]].x,vertices[outline[i]].z);
-			}
-			edgeCollider.points = edgePoints;
-		}
-
 	}
 
 	// According to the marching squares algorithm,
@@ -276,7 +257,9 @@ public class MeshGenerator : MonoBehaviour {
 	}
 
 	bool IsOutlineEdge(int vertexA, int vertexB) {
-		List<Triangle> trianglesContainingVertexA = triangleDictionary [vertexA];
+		// The inner walls made up of triangles are recognized based on the
+		// number of triangles sharing a given vertex. The outer ones only have 1.
+		List<Triangle> trianglesContainingVertexA = triangleDictionary[vertexA];
 		int sharedTriangleCount = 0;
 
 		for (int i = 0; i < trianglesContainingVertexA.Count; i ++) {
@@ -328,19 +311,21 @@ public class MeshGenerator : MonoBehaviour {
 			float mapWidth = nodeCountX * squareSize;
 			float mapHeight = nodeCountY * squareSize;
 
-			ControlNode[,] controlNodes = new ControlNode[nodeCountX,nodeCountY];
+			// Create map of control nodes
+			ControlNode[,] controlNodes = new ControlNode[nodeCountX, nodeCountY];
 
 			for (int x = 0; x < nodeCountX; x ++) {
 				for (int y = 0; y < nodeCountY; y ++) {
-					Vector3 pos = new Vector3(-mapWidth/2 + x * squareSize + squareSize/2, 0, -mapHeight/2 + y * squareSize + squareSize/2);
-					controlNodes[x,y] = new ControlNode(pos,map[x,y] == 1, squareSize);
+					// Divided by 2, since we start in 0,0 and can go both above and below 0.
+					Vector3 position = new Vector3(-mapWidth/2 + x * squareSize + squareSize/2, 0, -mapHeight / 2 + y * squareSize + squareSize / 2);
+					controlNodes[x,y] = new ControlNode(position,map[x,y] == WALL_TYPE, squareSize);
 				}
 			}
 
-			squares = new Square[nodeCountX -1,nodeCountY -1];
-			for (int x = 0; x < nodeCountX-1; x ++) {
-				for (int y = 0; y < nodeCountY-1; y ++) {
-					squares[x,y] = new Square(controlNodes[x,y+1], controlNodes[x+1,y+1], controlNodes[x+1,y], controlNodes[x,y]);
+			squares = new Square[nodeCountX - 1,nodeCountY - 1];
+			for (int x = 0; x < nodeCountX - 1; x++) {
+				for (int y = 0; y < nodeCountY - 1; y++) {
+					squares[x,y] = new Square(controlNodes[x,y + 1], controlNodes[x + 1,y + 1], controlNodes[x + 1,y], controlNodes[x,y]);
 				}
 			}
 
@@ -349,28 +334,36 @@ public class MeshGenerator : MonoBehaviour {
 	
 	public class Square {
 
+		// This class is used in the marching squares algorithm.
+		// Control nodes can be either on or off
 		public ControlNode topLeft, topRight, bottomRight, bottomLeft;
 		public Node centreTop, centreRight, centreBottom, centreLeft;
 		public int configuration;
 
-		public Square (ControlNode _topLeft, ControlNode _topRight, ControlNode _bottomRight, ControlNode _bottomLeft) {
-			topLeft = _topLeft;
-			topRight = _topRight;
-			bottomRight = _bottomRight;
-			bottomLeft = _bottomLeft;
+		public Square (ControlNode topLeft, ControlNode topRight, ControlNode bottomRight, ControlNode bottomLeft) {
+			this.topLeft = topLeft;
+			this.topRight = topRight;
+			this.bottomRight = bottomRight;
+			this.bottomLeft = bottomLeft;
 
-			centreTop = topLeft.right;
-			centreRight = bottomRight.above;
-			centreBottom = bottomLeft.right;
-			centreLeft = bottomLeft.above;
+			// Assign references
+			centreTop = this.topLeft.right;
+			centreRight = this.bottomRight.above;
+			centreBottom = this.bottomLeft.right;
+			centreLeft = this.bottomLeft.above;
 
-			if (topLeft.active)
+			// There are only 16 possible configurations
+			// Consider them in binary xxxx
+			// First bit is bottomLeft, second is bottomRight etc.
+			// this way we can deduct the configuration from the active nodes
+			// like below.
+			if (this.topLeft.isWall)
 				configuration += 8;
-			if (topRight.active)
+			if (this.topRight.isWall)
 				configuration += 4;
-			if (bottomRight.active)
+			if (this.bottomRight.isWall)
 				configuration += 2;
-			if (bottomLeft.active)
+			if (this.bottomLeft.isWall)
 				configuration += 1;
 		}
 
@@ -380,20 +373,20 @@ public class MeshGenerator : MonoBehaviour {
 		public Vector3 position;
 		public int vertexIndex = -1;
 
-		public Node(Vector3 _pos) {
-			position = _pos;
+		public Node(Vector3 position) {
+			this.position = position;
 		}
 	}
 
 	public class ControlNode : Node {
 
-		public bool active;
+		public bool isWall;
 		public Node above, right;
 
-		public ControlNode(Vector3 _pos, bool _active, float squareSize) : base(_pos) {
-			active = _active;
-			above = new Node(position + Vector3.forward * squareSize/2f);
-			right = new Node(position + Vector3.right * squareSize/2f);
+		public ControlNode(Vector3 position, bool isWall, float squareSize) : base(position) {
+			this.isWall = isWall;
+			above = new Node(base.position + Vector3.forward * squareSize / 2f);
+			right = new Node(base.position + Vector3.right * squareSize / 2f);
 		}
 
 	}
