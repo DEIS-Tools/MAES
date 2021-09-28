@@ -25,7 +25,7 @@ namespace Dora.Robot.Task
 
             var degreesRotated = GetAbsoluteDegreesRotated();
             // If near target rotation, stop rotation by applying force in the opposite direction
-            if (Math.Abs(_targetRotation) - 4f < degreesRotated)
+            if (Math.Abs(_targetRotation) - 3.5f < degreesRotated)
             {
                 _isCompleted = true;
                 if (_targetRotation < 0) return MovementDirective.Right;

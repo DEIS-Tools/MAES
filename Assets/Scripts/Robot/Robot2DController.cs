@@ -58,8 +58,7 @@ namespace Dora
                 if (shiftPressed)
                     StartRotating(counterClockwise: true);
                 else
-                    Rotate(-45);
-
+                    Rotate(-90);
             }
             
             if (Input.GetButtonDown("Right"))
@@ -67,12 +66,17 @@ namespace Dora
                 if (shiftPressed)
                     StartRotating(counterClockwise: false);
                 else
-                    Rotate(45);
+                    Rotate(90);
             }
 
             if (Input.GetButtonDown("Reverse"))
             {
-                StopCurrentAction();
+                MoveBackwards();
+            }
+
+            if (Input.GetButtonDown("Forward"))
+            {
+                MoveForward();
             }
         }
 
@@ -153,6 +157,11 @@ namespace Dora
 
         public void Rotate(float degrees)
         {
+            if (_currentTask != null)
+            {
+                StopCurrentAction();
+                return;
+            }
             AssertRobotIsInIdleState("rotation");
 
             _currentTask = new FiniteRotationTask(transform, degrees);
@@ -160,6 +169,11 @@ namespace Dora
 
         public void StartRotating(bool counterClockwise = false)
         {
+            if (_currentTask != null)
+            {
+                StopCurrentAction();
+                return;
+            }
             var currentStatus = GetStatus();
             AssertRobotIsInIdleState("rotation");
             
@@ -178,9 +192,33 @@ namespace Dora
                                                                                + "' action when current status is Idle");
         }
         
+        public void MoveForward()
+        {
+            if (_currentTask != null)
+            {
+                StopCurrentAction();
+                return;
+            }
+            AssertRobotIsInIdleState("Moving Forwards");
+            _currentTask = new MovementTask();
+        }
+
+        public void MoveBackwards()
+        {
+            if (_currentTask != null)
+            {
+                StopCurrentAction();
+                return;
+            }
+            AssertRobotIsInIdleState("Moving Forwards");
+            _currentTask = new MovementTask(reverse:true);
+        }
+        
         public void StopCurrentAction()
         {
             _currentTask = null;
         }
+
+      
     }
 }

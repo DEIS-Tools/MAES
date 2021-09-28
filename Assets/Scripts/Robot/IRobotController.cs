@@ -5,8 +5,8 @@ namespace Dora.Robot
 
         RobotStatus GetStatus();
         //void SenseSurroundings();
-        //void MoveForward();
-        //void MoveBackwards();
+        void MoveForward();
+        void MoveBackwards();
         
         /* Keep rotating the robot until the robot has rotated approximately the given amount of degrees */ 
         void Rotate(float degrees);
