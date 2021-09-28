@@ -55,11 +55,11 @@ namespace Dora.Robot
                 _currentStatus = RobotStatus.Idle;
             }
             
-            /*Debug.Log("Current velocity: " + leftWheelVelocityVector.magnitude + ", " + rightWheelVelocityVector.magnitude);
+            //Debug.Log("Current velocity: " + leftWheelVelocityVector.magnitude + ", " + rightWheelVelocityVector.magnitude);
             
-            MovementDirective directive = MovementDirective.NoMovement;
+            //MovementDirective directive = MovementDirective.NoMovement;
 
-            if (Input.GetButton("Left"))
+            /*if (Input.GetButton("Left"))
             {
                 directive = MovementDirective.Left;
             }
@@ -79,6 +79,7 @@ namespace Dora.Robot
                 directive = MovementDirective.Reverse;
             }*/
 
+            // Get directive from current task if present
             var directive = _currentTask?.GetNextDirective();
             if (directive != null)
                 ApplyWheelForce(directive);
@@ -86,7 +87,10 @@ namespace Dora.Robot
             // Delete task once completed
             var isCurrentTaskCompleted = _currentTask?.IsCompleted() ?? false;
             if (isCurrentTaskCompleted)
+            {
                 _currentTask = null;
+                Debug.Log(transform.rotation.eulerAngles.y);
+            }
         }
 
         private void Update()
@@ -97,7 +101,7 @@ namespace Dora.Robot
                 if (shiftPressed)
                     StartRotating(counterClockwise: true);
                 else
-                    Rotate(-45);
+                    Rotate(-20);
 
             }
             
@@ -106,7 +110,7 @@ namespace Dora.Robot
                 if (shiftPressed)
                     StartRotating(counterClockwise: false);
                 else
-                    Rotate(45);
+                    Rotate(15);
             }
 
             if (Input.GetButtonDown("Reverse"))
@@ -124,12 +128,15 @@ namespace Dora.Robot
         // Applies force at the positions of the wheels to create movement using physics simulation
         private void ApplyWheelForce(MovementDirective directive)
         {
+            var leftPosition = leftWheel.position;
+            var rightPosition = rightWheel.position;
+
             var forward = transform.forward;
             var force = moveForce;
             if (directive == MovementDirective.Left || directive == MovementDirective.Right) 
                 force = rotateForce;
-            _rigidbody.AddForceAtPosition(forward * force * directive.LeftWheelSpeed, leftWheel.position);
-            _rigidbody.AddForceAtPosition(forward * force * directive.RightWheelSpeed, rightWheel.position);
+            _rigidbody.AddForceAtPosition(forward * force * directive.LeftWheelSpeed, leftPosition);
+            _rigidbody.AddForceAtPosition(forward * force * directive.RightWheelSpeed, rightPosition);
         }
 
         // Rotates the given wheel depending on how far it has moved an in which direction
@@ -159,7 +166,7 @@ namespace Dora.Robot
         {
             AssertRobotIsInIdleState("rotation");
 
-            _currentTask = new FiniteRotationTask(degrees);
+            _currentTask = new FiniteRotationTask(transform, degrees);
         }
 
         public void StartRotating(bool counterClockwise = false)
