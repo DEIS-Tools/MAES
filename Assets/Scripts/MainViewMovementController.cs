@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Dora;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -29,7 +30,7 @@ public class MainViewMovementController : MonoBehaviour
         foreach (var button in buttons)
         {
             if (!button.isActive) continue;
-            _mainViewTransform.position += movementSpeed * button.movement * Time.deltaTime;
+            //_mainViewTransform.position += movementSpeed * button.Direction * Time.deltaTime;
         }
     }
 
