@@ -123,6 +123,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!4 &184213196 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+  m_PrefabInstance: {fileID: 905998335}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &328625359
 GameObject:
   m_ObjectHideFlags: 0
@@ -511,6 +516,63 @@ RectTransform:
   m_AnchoredPosition: {x: -60, y: 0}
   m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1001 &905998335
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 1561123521}
+    m_Modifications:
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9210634985821422333, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
+      propertyPath: m_Name
+      value: DoraRobot2D
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
 --- !u!1 &938636359
 GameObject:
   m_ObjectHideFlags: 0
@@ -881,11 +943,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!4 &1379691386 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-  m_PrefabInstance: {fileID: 1752940275}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1411149203
 GameObject:
   m_ObjectHideFlags: 0
@@ -996,7 +1053,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 1379691386}
+  - {fileID: 184213196}
   m_Father: {fileID: 1838861764}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1211,63 +1268,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1640831349}
   m_CullTransparentMesh: 1
---- !u!1001 &1752940275
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 1561123521}
-    m_Modifications:
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_RootOrder
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9210634985821422333, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-      propertyPath: m_Name
-      value: DoraRobot2D (1)
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
 --- !u!1 &1782859803
 GameObject:
   m_ObjectHideFlags: 0
