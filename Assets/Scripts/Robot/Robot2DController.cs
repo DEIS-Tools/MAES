@@ -118,7 +118,6 @@ namespace Dora
             if (isCurrentTaskCompleted)
             {
                 _currentTask = null;
-                Debug.Log(transform.rotation.eulerAngles.y);
             }
 
             if (directive != null)
@@ -132,8 +131,7 @@ namespace Dora
             var rightPosition = rightWheel.position;
 
             var forward = transform.up;
-            Debug.Log("Forward: " + (Vector2) forward);
-            
+
             var force = moveForce;
             if (directive == MovementDirective.Left || directive == MovementDirective.Right) 
                 force = rotateForce;
@@ -179,18 +177,7 @@ namespace Dora
             
             _currentTask = new InfiniteRotationTasK(counterClockwise);
         }
-
-        // Asserts that the current status is idle, and throws an exception if not
-        private void AssertRobotIsInIdleState(String attemptedActionName)
-        {
-            var currentStatus = GetStatus();
-            if (currentStatus != RobotStatus.Idle) 
-                throw new InvalidOperationException("Tried to start action: '" + attemptedActionName 
-                                                                               + "' rotation action but current status is: " 
-                                                                               + Enum.GetName(typeof(RobotStatus), currentStatus)
-                                                                               + "Can only start '" + attemptedActionName 
-                                                                               + "' action when current status is Idle");
-        }
+        
         
         public void MoveForward()
         {
@@ -213,6 +200,19 @@ namespace Dora
             AssertRobotIsInIdleState("Moving Forwards");
             _currentTask = new MovementTask(reverse:true);
         }
+
+        // Asserts that the current status is idle, and throws an exception if not
+        private void AssertRobotIsInIdleState(String attemptedActionName)
+        {
+            var currentStatus = GetStatus();
+            if (currentStatus != RobotStatus.Idle) 
+                throw new InvalidOperationException("Tried to start action: '" + attemptedActionName 
+                                                                               + "' rotation action but current status is: " 
+                                                                               + Enum.GetName(typeof(RobotStatus), currentStatus)
+                                                                               + "Can only start '" + attemptedActionName 
+                                                                               + "' action when current status is Idle");
+        }
+        
         
         public void StopCurrentAction()
         {

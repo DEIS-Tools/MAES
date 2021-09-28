@@ -14,7 +14,7 @@ namespace Dora
 
         public Transform simulationContainer;
 
-        public Text Text;
+        public Text TestingText;
         private int _physicsTickCount = 0;
         private int _robotLogicTickCount = 0;
         private int _physicsTicksSinceUpdate = 0;
@@ -37,6 +37,7 @@ namespace Dora
         {
             Physics.autoSimulation = false;
             Physics2D.simulationMode = SimulationMode2D.Script;
+            
         }
 
         // Timing variables for controlling the simulation in a manner that is decoupled from Unity's update system
@@ -72,7 +73,7 @@ namespace Dora
             }
             var simulatedTimeSpan = TimeSpan.FromMilliseconds(_simulatedTimeMillis);
             var output = simulatedTimeSpan.ToString(@"hh\:mm\:ss");
-            Text.text = "Phys. ticks: " + _physicsTickCount + 
+            TestingText.text = "Phys. ticks: " + _physicsTickCount + 
                         "\nLogic ticks: " + _robotLogicTickCount + 
                         "\nSimulated: " + output;
         }

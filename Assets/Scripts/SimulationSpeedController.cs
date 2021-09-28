@@ -18,6 +18,10 @@ namespace Dora
         private void Start()
         {
             UpdateButtonsUI(simulator.PlayState);
+            pauseButton.onClick.AddListener(Pause);
+            playButton.onClick.AddListener(Play);
+            fastForwardButton.onClick.AddListener(FastForward);
+            fastAsPossibleButton.onClick.AddListener(FastAsPossible);
         }
 
         private void UpdateButtonsUI(SimulationPlayState currentState)
