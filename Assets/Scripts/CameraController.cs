@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+// ReSharper disable ConvertIfStatementToNullCoalescingAssignment
+
 namespace Dora
 {
     public class CameraController : MonoBehaviour
@@ -27,6 +29,8 @@ namespace Dora
 
         public List<UIMovementButton> buttons;
 
+        public List<RectTransform> uiPanels;
+
         // Start is called before the first frame update
         void Start()
         {
@@ -45,33 +49,51 @@ namespace Dora
 
         public void Subscribe(UIMovementButton button)
         {
-            if (buttons == null)
-            {
-                buttons = new List<UIMovementButton>();
-            }
+            if (buttons == null) buttons = new List<UIMovementButton>();
 
             buttons.Add(button);
             buttons = buttons.OrderBy(b => b.direction).ToList();
         }
 
+        public void Subscribe(RectTransform panel)
+        {
+            if (uiPanels == null) uiPanels = new List<RectTransform>();
+            uiPanels.Add(panel);
+        }
+
         void HandleMouseInput()
         {
+            if (uiPanels.Any(panel =>
+                RectTransformUtility.RectangleContainsScreenPoint(panel, Input.mousePosition)))
+            {
+                return; // Don't do anything here, if mouse is in a UI panel.
+            }
+
+            #region MouseZoomRegion
+
             if (Input.mouseScrollDelta.y != 0)
             {
                 newZoom += Input.mouseScrollDelta.y * zoomAmount;
             }
 
+            #endregion
+
+            #region MouseMovementRegion
+
+            // If left mouse button has been clicked since last update()
             if (Input.GetMouseButtonDown(0))
             {
+                // Create temp plane along playing field, and a ray from clicked point
                 var plane = new Plane(Vector3.up, Vector3.zero);
                 var ray = cam.ScreenPointToRay(Input.mousePosition);
 
-                if (plane.Raycast(ray, out var entry))
+                if (plane.Raycast(ray, out var entry)) // If ray intersects plane
                 {
                     dragStartPosition = ray.GetPoint(entry);
                 }
             }
 
+            // If left mouse button is still being held down since last update()
             if (Input.GetMouseButton(0))
             {
                 var plane = new Plane(Vector3.up, Vector3.zero);
@@ -80,8 +102,13 @@ namespace Dora
                 if (!plane.Raycast(ray, out var entry)) return;
                 dragCurrentPosition = ray.GetPoint(entry);
 
+                // New position should be current position, plus difference in dragged position, relative to temp plane
                 newPosition = transform.position + (dragStartPosition - dragCurrentPosition);
             }
+
+            #endregion
+
+            #region MouseRotateRegion
 
             if (Input.GetMouseButtonDown(1))
             {
@@ -96,6 +123,8 @@ namespace Dora
             rotateStartPosition = rotateCurrentPosition;
 
             newRotation *= Quaternion.Euler(Vector3.up * (-1 * diff.x / 5f));
+
+            #endregion
         }
 
         void HandleMovementInput()
