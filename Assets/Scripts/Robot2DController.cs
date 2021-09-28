@@ -1,11 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Dora.Robot;
+using Dora.Robot.Task;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Dora
 {
-    public class Robot2DController : MonoBehaviour, ISimulationUnit
+    public class Robot2DController : MonoBehaviour, ISimulationUnit, IRobotController
     {
 
         private Rigidbody2D _rigidbody;
@@ -20,6 +23,8 @@ namespace Dora
         private Vector3? _previousRightWheelPosition = null;
         
         private RobotStatus _currentStatus = RobotStatus.Idle;
+        
+        [CanBeNull] private ITask _currentTask;
         
         void Start()
         {
@@ -44,8 +49,33 @@ namespace Dora
         {
             // No logic
         }
-        
-        
+
+        private void Update()
+        {
+            var shiftPressed = Input.GetKey(KeyCode.LeftShift);
+            if (Input.GetButtonDown("Left"))
+            {
+                if (shiftPressed)
+                    StartRotating(counterClockwise: true);
+                else
+                    Rotate(-45);
+
+            }
+            
+            if (Input.GetButtonDown("Right"))
+            {
+                if (shiftPressed)
+                    StartRotating(counterClockwise: false);
+                else
+                    Rotate(45);
+            }
+
+            if (Input.GetButtonDown("Reverse"))
+            {
+                StopCurrentAction();
+            }
+        }
+
 
         public void PhysicsUpdate(SimulationConfiguration config)
         {
@@ -72,28 +102,19 @@ namespace Dora
             } else {
                 _currentStatus = RobotStatus.Idle;
             }
+
+            // Get directive from current task if present
+            var directive = _currentTask?.GetNextDirective();
             
-            
-            MovementDirective directive = MovementDirective.NoMovement;
+            if (directive != null)
+                ApplyWheelForce(directive);
 
-            if (Input.GetButton("Left"))
+            // Delete task once completed
+            var isCurrentTaskCompleted = _currentTask?.IsCompleted() ?? false;
+            if (isCurrentTaskCompleted)
             {
-                directive = MovementDirective.Left;
-            }
-
-            if (Input.GetButton("Right"))
-            {
-                directive = MovementDirective.Right;
-            }
-
-            if (Input.GetButton("Forward"))
-            {
-                directive = MovementDirective.Forward;
-            }
-
-            if (Input.GetButton("Reverse"))
-            {
-                directive = MovementDirective.Reverse;
+                _currentTask = null;
+                Debug.Log(transform.rotation.eulerAngles.y);
             }
 
             if (directive != null)
@@ -106,7 +127,7 @@ namespace Dora
             var leftPosition = leftWheel.position;
             var rightPosition = rightWheel.position;
 
-            var forward = transform.forward;
+            var forward = transform.up;
             Debug.Log("Forward: " + (Vector2) forward);
             
             var force = moveForce;
@@ -123,6 +144,43 @@ namespace Dora
             // This factor determines how forward movement of the wheel translates into rotation
             const float rotationFactor = 80f;
             wheel.Rotate(new Vector3(rotationFactor * direction * magnitude, 0f, 0f));
+        }
+        
+        public RobotStatus GetStatus()
+        {
+            return _currentStatus;
+        }
+
+        public void Rotate(float degrees)
+        {
+            AssertRobotIsInIdleState("rotation");
+
+            _currentTask = new FiniteRotationTask(transform, degrees);
+        }
+
+        public void StartRotating(bool counterClockwise = false)
+        {
+            var currentStatus = GetStatus();
+            AssertRobotIsInIdleState("rotation");
+            
+            _currentTask = new InfiniteRotationTasK(counterClockwise);
+        }
+
+        // Asserts that the current status is idle, and throws an exception if not
+        private void AssertRobotIsInIdleState(String attemptedActionName)
+        {
+            var currentStatus = GetStatus();
+            if (currentStatus != RobotStatus.Idle) 
+                throw new InvalidOperationException("Tried to start action: '" + attemptedActionName 
+                                                                               + "' rotation action but current status is: " 
+                                                                               + Enum.GetName(typeof(RobotStatus), currentStatus)
+                                                                               + "Can only start '" + attemptedActionName 
+                                                                               + "' action when current status is Idle");
+        }
+        
+        public void StopCurrentAction()
+        {
+            _currentTask = null;
         }
     }
 }

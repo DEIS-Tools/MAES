@@ -16,7 +16,7 @@ namespace Dora.Robot.Task
         {
             _targetRotation = targetRotation;
             _transform = transform;
-            _startingAngle = transform.rotation.eulerAngles.y;
+            _startingAngle = transform.rotation.eulerAngles.z;
         }
 
         public MovementDirective GetNextDirective()
@@ -25,7 +25,7 @@ namespace Dora.Robot.Task
 
             var degreesRotated = GetAbsoluteDegreesRotated();
             // If near target rotation, stop rotation by applying force in the opposite direction
-            if (Math.Abs(_targetRotation) - 8f < degreesRotated)
+            if (Math.Abs(_targetRotation) - 4f < degreesRotated)
             {
                 _isCompleted = true;
                 if (_targetRotation < 0) return MovementDirective.Right;
@@ -45,7 +45,7 @@ namespace Dora.Robot.Task
         // Returns the amount of degrees that has been rotated since starting this task
         private float GetAbsoluteDegreesRotated()
         {
-            return Math.Abs(Mathf.DeltaAngle(_transform.rotation.eulerAngles.y, _startingAngle));
+            return Math.Abs(Mathf.DeltaAngle(_transform.rotation.eulerAngles.z, _startingAngle));
         }
 
     }

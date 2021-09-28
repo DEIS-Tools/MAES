@@ -79,13 +79,15 @@ namespace Dora.Robot
                 directive = MovementDirective.Reverse;
             }
 
-            // Get directive from current task if present
-            //var directive = _currentTask?.GetNextDirective();
+            
             
             if (Input.GetButton("Forward"))
             {
                 directive = MovementDirective.Forward;
             }
+            
+            // Get directive from current task if present
+            //var directive = _currentTask?.GetNextDirective();
             
             if (directive != null)
                 ApplyWheelForce(directive);
@@ -101,7 +103,7 @@ namespace Dora.Robot
 
         private void Update()
         {
-            /*var shiftPressed = Input.GetKey(KeyCode.LeftShift);
+            var shiftPressed = Input.GetKey(KeyCode.LeftShift);
             if (Input.GetButtonDown("Left"))
             {
                 if (shiftPressed)
@@ -122,7 +124,7 @@ namespace Dora.Robot
             if (Input.GetButtonDown("Reverse"))
             {
                 StopCurrentAction();
-            }*/
+            }
         }
 
         
@@ -138,8 +140,7 @@ namespace Dora.Robot
             var rightPosition = rightWheel.position;
 
             var forward = transform.forward;
-            Debug.Log("Forward: " + forward.y);
-            forward.y = 0.0f;
+            Debug.Log("Forward_: " + forward);
             var force = moveForce;
             if (directive == MovementDirective.Left || directive == MovementDirective.Right) 
                 force = rotateForce;
