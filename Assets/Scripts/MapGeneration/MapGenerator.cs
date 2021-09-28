@@ -53,8 +53,7 @@ public class MapGenerator : MonoBehaviour {
 	private int[,] mapToDraw = null; 
 	
 	void Update() {
-		
-		if (Input.GetMouseButtonDown(0)) {
+		/*if (Input.GetMouseButtonDown(0)) {
 			var map = GenerateMap(60,
 										40,
 										Time.time.ToString(), 
@@ -74,7 +73,7 @@ public class MapGenerator : MonoBehaviour {
 		if (Input.GetMouseButtonDown(1))
 		{
 			clearMap();
-		}
+		}*/
 	}
 	
 	public int[,] GenerateMap(int width, int height, string seed, 
