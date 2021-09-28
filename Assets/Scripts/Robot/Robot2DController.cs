@@ -17,11 +17,11 @@ namespace Dora
 
         [Range(1, 150)] public int rotateForce = 60;
         [Range(1, 150)] public int moveForce = 80;
-        
+
         // Used for calculating wheel rotation for animation
         private Vector3? _previousLeftWheelPosition = null;
         private Vector3? _previousRightWheelPosition = null;
-        
+
         private RobotStatus _currentStatus = RobotStatus.Idle;
         
         [CanBeNull] private ITask _currentTask;
@@ -58,7 +58,7 @@ namespace Dora
                 if (shiftPressed)
                     StartRotating(counterClockwise: true);
                 else
-                    Rotate(-90);
+                    Rotate(-45.0f);
             }
             
             if (Input.GetButtonDown("Right"))
@@ -66,7 +66,7 @@ namespace Dora
                 if (shiftPressed)
                     StartRotating(counterClockwise: false);
                 else
-                    Rotate(90);
+                    Rotate(25.0f);
             }
 
             if (Input.GetButtonDown("Reverse"))

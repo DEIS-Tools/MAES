@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.43040693, g: 0.4653563, b: 0.49721318, a: 1}
+  m_IndirectSpecularColor: {r: 0.43040666, g: 0.46535593, b: 0.4972127, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -144,7 +144,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7157761676322491357, guid: e2c1b36846c8ccc5dbea445137b2b20b, type: 3}
       propertyPath: m_RootOrder
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 7157761676322491357, guid: e2c1b36846c8ccc5dbea445137b2b20b, type: 3}
       propertyPath: m_AnchorMax.x
@@ -231,11 +231,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!4 &208652343 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 9210634985821422330, guid: 4790ce40d20cf0b43b5540e9c36aa8fb, type: 3}
-  m_PrefabInstance: {fileID: 1183768086}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &379321016
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -261,7 +256,7 @@ PrefabInstance:
       objectReference: {fileID: 71428754}
     - target: {fileID: 4230307919047253345, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: m_RootOrder
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4230307919047253345, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: m_LocalPosition.x
@@ -537,7 +532,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1411149203
 GameObject:
@@ -616,10 +611,10 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1411149203}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2, y: -0.29, z: -43.4}
+  m_LocalPosition: {x: 2, y: -0.29, z: -17.04}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 208652343}
+  m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1505733553 stripped
