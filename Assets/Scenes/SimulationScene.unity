@@ -722,6 +722,7 @@ MonoBehaviour:
   rotateStartPosition: {x: 0, y: 0, z: 0}
   rotateCurrentPosition: {x: 0, y: 0, z: 0}
   buttons: []
+  uiPanels: []
 --- !u!1 &328625359
 GameObject:
   m_ObjectHideFlags: 0
@@ -973,6 +974,7 @@ GameObject:
   - component: {fileID: 433398562}
   - component: {fileID: 433398564}
   - component: {fileID: 433398563}
+  - component: {fileID: 433398565}
   m_Layer: 5
   m_Name: SettingsPanel
   m_TagString: Untagged
@@ -1037,6 +1039,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 433398561}
   m_CullTransparentMesh: 1
+--- !u!114 &433398565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 433398561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efd3180bafafe51a0872c3b8aaa35309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraController: {fileID: 276180081}
 --- !u!1 &769455404
 GameObject:
   m_ObjectHideFlags: 0
@@ -2333,6 +2348,7 @@ GameObject:
   - component: {fileID: 1640831350}
   - component: {fileID: 1640831352}
   - component: {fileID: 1640831351}
+  - component: {fileID: 1640831353}
   m_Layer: 5
   m_Name: ControlPanel
   m_TagString: Untagged
@@ -2401,6 +2417,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1640831349}
   m_CullTransparentMesh: 1
+--- !u!114 &1640831353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1640831349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efd3180bafafe51a0872c3b8aaa35309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraController: {fileID: 276180081}
 --- !u!1 &1688409292
 GameObject:
   m_ObjectHideFlags: 0
@@ -2964,6 +2993,7 @@ GameObject:
   - component: {fileID: 1844368623}
   - component: {fileID: 1844368622}
   - component: {fileID: 1844368621}
+  - component: {fileID: 1844368624}
   m_Layer: 5
   m_Name: ViewControlPanel
   m_TagString: Untagged
@@ -3056,6 +3086,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1844368619}
   m_CullTransparentMesh: 1
+--- !u!114 &1844368624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1844368619}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efd3180bafafe51a0872c3b8aaa35309, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraController: {fileID: 276180081}
 --- !u!1 &1940954641
 GameObject:
   m_ObjectHideFlags: 0
