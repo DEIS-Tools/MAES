@@ -5,6 +5,7 @@ using System;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Threading;
+using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
 
 public class MapGenerator : MonoBehaviour {
@@ -35,6 +36,7 @@ public class MapGenerator : MonoBehaviour {
 	// This can be increased to enlarge the smallest corridors by enlarging the entire cave
 	private int scaling;
 	
+	// Only used in 3D 
 	private float wallHeight; 
 
 	private const int WALL_TYPE = 1, ROOM_TYPE = 0;
@@ -45,11 +47,13 @@ public class MapGenerator : MonoBehaviour {
 
 	public MeshGenerator meshGenerator;
 
+	private bool is2D;
+
 	// Variable used for drawing gizmos on selection for debugging.
 	private int[,] mapToDraw = null; 
 	
 	void Update() {
-		/*
+		
 		if (Input.GetMouseButtonDown(0)) {
 			var map = GenerateMap(60,
 										40,
@@ -61,7 +65,8 @@ public class MapGenerator : MonoBehaviour {
 										1, 
 										1, 
 										2, 
-										3f);
+										10f,
+										true);
 		}
 		
 		
@@ -69,12 +74,12 @@ public class MapGenerator : MonoBehaviour {
 		if (Input.GetMouseButtonDown(1))
 		{
 			clearMap();
-		}*/
+		}
 	}
 	
 	public int[,] GenerateMap(int width, int height, string seed, 
 		int randomFillPercent, int smoothingRuns, int wallThresholdSize, 
-		int roomThresholdSize, int borderSize, int connectionPassagesWidth, int scaling, float wallHeight)
+		int roomThresholdSize, int borderSize, int connectionPassagesWidth, int scaling, float wallHeight, bool is2D)
 	{
 		// Only fill percent between and including 0 to 100 are allowed
 		if(0 >= randomFillPercent || randomFillPercent >= 100 ){
@@ -101,6 +106,7 @@ public class MapGenerator : MonoBehaviour {
 		this.connectionPassagesWidth = connectionPassagesWidth;
 		this.scaling = scaling;
 		this.wallHeight = wallHeight;
+		this.is2D = is2D;
 		
 		var map = GenerateMap();
 		
@@ -111,13 +117,18 @@ public class MapGenerator : MonoBehaviour {
 										((height * scaling) / 10f) + padding);
 		
 		// Move walls and wall roof to above plane depending on wall height
-		Vector3 newPosition = wallRoof.position;
-		newPosition.y = this.wallHeight;
-		wallRoof.position = newPosition;
+		// Only done in 3D
+		if (!is2D)
+		{
+			Vector3 newPosition = wallRoof.position;
+			newPosition.y = this.wallHeight;
+			wallRoof.position = newPosition;
 		
-		newPosition = innerWalls.position;
-		newPosition.y = this.wallHeight; 
-		innerWalls.position = newPosition;
+			newPosition = innerWalls.position;
+			newPosition.y = this.wallHeight; 
+			innerWalls.position = newPosition;
+		}
+		
 
 		return map;
 	}
@@ -133,6 +144,7 @@ public class MapGenerator : MonoBehaviour {
 		this.connectionPassagesWidth = 0;
 		this.scaling = 0;
 		this.wallHeight = 0;
+		this.is2D = false;
 		meshGenerator.ClearMesh();
 	}
 
@@ -161,7 +173,12 @@ public class MapGenerator : MonoBehaviour {
 		// mapToDraw = borderedMap;
 		
 		MeshGenerator meshGen = GetComponent<MeshGenerator>();
-		meshGen.GenerateMesh(borderedMap.Clone() as int[,], this.scaling, this.wallHeight);
+		meshGen.GenerateMesh(borderedMap.Clone() as int[,], this.scaling, this.wallHeight, is2D);
+
+		if (is2D)
+		{
+			plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
+		}
 
 		return borderedMap;
 	}

@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.UI;
 
 public class MeshGenerator : MonoBehaviour {
 	/**
@@ -29,6 +30,8 @@ public class MeshGenerator : MonoBehaviour {
 	
 	private const int WALL_TYPE = 1, ROOM_TYPE = 0;
 
+	private bool is2D; 
+
 	public void ClearMesh(){
 		squareGrid = null;
 		Destroy(innerWalls.gameObject.GetComponent<MeshCollider>());
@@ -39,9 +42,13 @@ public class MeshGenerator : MonoBehaviour {
 		triangleDictionary.Clear ();
 		outlines.Clear();
 		checkedVertices.Clear();
+		is2D = false;
 	}
 
-	public void GenerateMesh(int[,] map, float squareSize, float wallHeight) {
+	public void GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D)
+	{
+		this.is2D = is2D;
+		
 		// Generate grid of squares containing control nodes and between nodes 
 		// for the marching square algorithm
 		squareGrid = new SquareGrid(map, squareSize);
@@ -49,8 +56,8 @@ public class MeshGenerator : MonoBehaviour {
 		vertices = new List<Vector3>();
 		triangles = new List<int>();
 		
-		for (int x = 0; x < squareGrid.squares.GetLength(0); x ++) {
-			for (int y = 0; y < squareGrid.squares.GetLength(1); y ++) {
+		for (int x = 0; x < squareGrid.squares.GetLength(0); x++) {
+			for (int y = 0; y < squareGrid.squares.GetLength(1); y++) {
 				// Create triangles from all the points in the squares
 				// assigned to variables "vertices" and "triangles"
 				TriangulateSquare(squareGrid.squares[x,y]);
@@ -59,6 +66,7 @@ public class MeshGenerator : MonoBehaviour {
 
 		// Create roof mesh
 		Mesh wallRoofMesh = new Mesh();
+		
 		wallRoofMesh.vertices = vertices.ToArray();
 		wallRoofMesh.triangles = triangles.ToArray();
 		wallRoofMesh.RecalculateNormals();
@@ -76,9 +84,40 @@ public class MeshGenerator : MonoBehaviour {
 			uvs[i] = new Vector2(percentX, percentY);
 		}
 		wallRoofMesh.uv = uvs;*/
-		
 
-		CreateWallMesh(wallHeight);
+		if (is2D)
+		{
+			Generate2DColliders();
+		}
+		else
+		{
+			CreateWallMesh(wallHeight);
+		}
+		
+	}
+	
+	void Generate2DColliders() {
+		// remove colliders from last build
+		EdgeCollider2D[] currentColliders = gameObject.GetComponents<EdgeCollider2D> ();
+		for (int i = 0; i < currentColliders.Length; i++) {
+			Destroy(currentColliders[i]);
+		}
+
+		// Assigns outline vertices to list variable "outlines"
+		// An outline is a wall either around an island of walls inside a room
+		// or the walls around a room.
+		CalculateMeshOutlines();
+		
+		foreach(List<int> outline in outlines) {
+			EdgeCollider2D edgeCollider = gameObject.AddComponent<EdgeCollider2D>();
+			Vector2[] edgePoints = new Vector2[outline.Count];
+
+			for (int i = 0; i < outline.Count; i ++) {
+				edgePoints[i] = new Vector2(vertices[outline[i]].x,vertices[outline[i]].z);
+			}
+			edgeCollider.points = edgePoints;
+		}
+
 	}
 
 	void CreateWallMesh(float wallHeight) {
@@ -213,7 +252,15 @@ public class MeshGenerator : MonoBehaviour {
 		for (int i = 0; i < points.Length; i ++) {
 			if (points[i].vertexIndex == -1) {
 				points[i].vertexIndex = vertices.Count;
-				vertices.Add(points[i].position);
+				if (this.is2D)
+				{
+					var pos2D = new Vector3(points[i].position.x, points[i].position.z);
+					vertices.Add(pos2D);
+				}
+				else
+				{
+					vertices.Add(points[i].position);
+				}
 			}
 		}
 	}
