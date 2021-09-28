@@ -65,7 +65,7 @@ public class MapGenerator : MonoBehaviour {
 										1, 
 										1, 
 										2, 
-										10f,
+										3f,
 										true);
 		}
 		
@@ -117,8 +117,18 @@ public class MapGenerator : MonoBehaviour {
 										((height * scaling) / 10f) + padding);
 		
 		// Move walls and wall roof to above plane depending on wall height
-		// Only done in 3D
-		if (!is2D)
+		// The axis depends on whether it is 3D or 2D.
+		if (is2D)
+		{
+			Vector3 newPosition = wallRoof.position;
+			newPosition.z = -this.wallHeight;
+			wallRoof.position = newPosition;
+		
+			newPosition = innerWalls.position;
+			newPosition.z = -this.wallHeight; 
+			innerWalls.position = newPosition;
+		}
+		else
 		{
 			Vector3 newPosition = wallRoof.position;
 			newPosition.y = this.wallHeight;

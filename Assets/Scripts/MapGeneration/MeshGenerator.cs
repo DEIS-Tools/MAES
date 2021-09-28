@@ -87,6 +87,7 @@ public class MeshGenerator : MonoBehaviour {
 
 		if (is2D)
 		{
+			CreateWallMesh(wallHeight);
 			Generate2DColliders();
 		}
 		else
@@ -106,14 +107,14 @@ public class MeshGenerator : MonoBehaviour {
 		// Assigns outline vertices to list variable "outlines"
 		// An outline is a wall either around an island of walls inside a room
 		// or the walls around a room.
-		CalculateMeshOutlines();
+		// CalculateMeshOutlines();
 		
 		foreach(List<int> outline in outlines) {
 			EdgeCollider2D edgeCollider = gameObject.AddComponent<EdgeCollider2D>();
 			Vector2[] edgePoints = new Vector2[outline.Count];
 
 			for (int i = 0; i < outline.Count; i ++) {
-				edgePoints[i] = new Vector2(vertices[outline[i]].x,vertices[outline[i]].z);
+				edgePoints[i] = new Vector2(vertices[outline[i]].x, vertices[outline[i]].y);
 			}
 			edgeCollider.points = edgePoints;
 		}
@@ -137,22 +138,31 @@ public class MeshGenerator : MonoBehaviour {
 				// as viewed from inside the room looked at the wall
 				wallVertices.Add(vertices[outline[i]]); // top left (0)
 				wallVertices.Add(vertices[outline[i + 1]]); // top right (1)
-				wallVertices.Add(vertices[outline[i]] - Vector3.up * wallHeight); // bottom left (2)
-				wallVertices.Add(vertices[outline[i+1]] - Vector3.up * wallHeight); // bottom right (3)
-
-				// Adding counter clockwise
-				// the number 0 to 3 comes from the order in which they were 
-				// added to the wall vertices.
 				
+				// The wall stick out in different axes depending on 2D or 3D.
+				if (is2D)
+				{
+					wallVertices.Add(vertices[outline[i]] - Vector3.back * wallHeight); // bottom left (2)
+					wallVertices.Add(vertices[outline[i+1]] - Vector3.back * wallHeight); // bottom right (3)
+				}
+				else
+				{
+					wallVertices.Add(vertices[outline[i]] - Vector3.up * wallHeight); // bottom left (2)
+					wallVertices.Add(vertices[outline[i+1]] - Vector3.up * wallHeight); // bottom right (3)
+				}
+
+				// The "outside" of the mesh with the texture depends on the order
+				// Since the rotation is vertical for 2D, we have to invert the order
 				// Triangle one (left side lower side of the wall square)
 				wallTriangles.Add(startIndex + 0); // Top left
 				wallTriangles.Add(startIndex + 2); // Bottom left
 				wallTriangles.Add(startIndex + 3); // Bottom right
-				
+			
 				// Triangle two (right side upper side of the wall square)
 				wallTriangles.Add(startIndex + 3); // Bottom Right
 				wallTriangles.Add(startIndex + 1); // Top right
 				wallTriangles.Add(startIndex + 0); // Top left
+				
 			}
 		}
 		// Unity cannot work with lists, so ToArray() is needed
@@ -160,8 +170,12 @@ public class MeshGenerator : MonoBehaviour {
 		innerWallsMesh.triangles = wallTriangles.ToArray();
 		innerWalls.mesh = innerWallsMesh;
 
-		MeshCollider wallCollider = innerWalls.gameObject.AddComponent<MeshCollider> ();
-		wallCollider.sharedMesh = innerWallsMesh;
+		if (!is2D)
+		{
+			MeshCollider wallCollider = innerWalls.gameObject.AddComponent<MeshCollider> ();
+			wallCollider.sharedMesh = innerWallsMesh;
+		}
+		
 	}
 
 	// According to the marching squares algorithm,
@@ -254,7 +268,8 @@ public class MeshGenerator : MonoBehaviour {
 				points[i].vertexIndex = vertices.Count;
 				if (this.is2D)
 				{
-					var pos2D = new Vector3(points[i].position.x, points[i].position.z);
+					// The map is rotated in 2d mode
+					var pos2D = new Vector3(points[i].position.x, points[i].position.z, points[i].position.y);
 					vertices.Add(pos2D);
 				}
 				else
