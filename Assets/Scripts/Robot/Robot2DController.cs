@@ -114,6 +114,7 @@ namespace Dora
         
         public RobotStatus GetStatus()
         {
+            if (_currentStatus == RobotStatus.Idle && _currentTask != null) return RobotStatus.Moving;
             return _currentStatus;
         }
 
