@@ -3,6 +3,8 @@ namespace Dora.Robot
     public interface IRobotController
     {
 
+        void UpdateMotorPhysics(SimulationConfiguration config);
+        
         RobotStatus GetStatus();
         //void SenseSurroundings();
         void MoveForward();

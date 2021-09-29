@@ -8,31 +8,31 @@ using UnityEngine;
 
 namespace Dora
 {
-    public class Robot2DController : MonoBehaviour, ISimulationUnit, IRobotController
+    public class Robot2DController : IRobotController
     {
 
         private Rigidbody2D _rigidbody;
-        public Transform leftWheel;
-        public Transform rightWheel;
+        private Transform _transform;
+        private Transform _leftWheel;
+        private Transform _rightWheel;
 
-        [Range(1, 150)] public int rotateForce = 60;
-        [Range(1, 150)] public int moveForce = 80;
+        private const int RotateForce = 20;
+        private const int MoveForce = 30;
 
         // Used for calculating wheel rotation for animation
         private Vector3? _previousLeftWheelPosition = null;
         private Vector3? _previousRightWheelPosition = null;
 
         private RobotStatus _currentStatus = RobotStatus.Idle;
-        
         [CanBeNull] private ITask _currentTask;
-        
-        void Start()
-        {
-            //Physics2D.gravity = Vector2.zero;
-            _rigidbody = GetComponent<Rigidbody2D>();
-        }
 
-        
+        public Robot2DController(Rigidbody2D rigidbody, Transform transform, Transform leftWheel, Transform rightWheel)
+        {
+            _rigidbody = rigidbody;
+            _transform = transform;
+            _leftWheel = leftWheel;
+            _rightWheel = rightWheel;
+        }
         
         public object SaveState()
         {
@@ -45,59 +45,23 @@ namespace Dora
             throw new System.NotImplementedException();
         }
 
-        public void LogicUpdate(SimulationConfiguration config)
-        {
-            // No logic
-        }
-
-        private void Update()
-        {
-            var shiftPressed = Input.GetKey(KeyCode.LeftShift);
-            if (Input.GetButtonDown("Left"))
-            {
-                if (shiftPressed)
-                    StartRotating(counterClockwise: true);
-                else
-                    Rotate(-45.0f);
-            }
-            
-            if (Input.GetButtonDown("Right"))
-            {
-                if (shiftPressed)
-                    StartRotating(counterClockwise: false);
-                else
-                    Rotate(25.0f);
-            }
-
-            if (Input.GetButtonDown("Reverse"))
-            {
-                MoveBackwards();
-            }
-
-            if (Input.GetButtonDown("Forward"))
-            {
-                MoveForward();
-            }
-        }
-
-
-        public void PhysicsUpdate(SimulationConfiguration config)
+        public void UpdateMotorPhysics(SimulationConfiguration config)
         {
             // Calculate movement delta between current and last physics tick
-            var leftWheelVelocityVector = leftWheel.transform.position - _previousLeftWheelPosition ?? Vector3.zero;
-            var rightWheelVelocityVector = rightWheel.transform.position - _previousRightWheelPosition ?? Vector3.zero;
+            var leftWheelVelocityVector = _leftWheel.transform.position - _previousLeftWheelPosition ?? Vector3.zero;
+            var rightWheelVelocityVector = _rightWheel.transform.position - _previousRightWheelPosition ?? Vector3.zero;
 
             // For each wheel, determine whether it has moved forwards or backwards
-            var forward = transform.forward;
+            var forward = _transform.forward;
             var leftWheelMoveDirection = Vector3.Dot(forward, leftWheelVelocityVector) < 0 ? -1f : 1f;
             var rightWheelMoveDirection = Vector3.Dot(forward, rightWheelVelocityVector) < 0 ? -1f : 1f;
 
             // Animate rotating wheels to match movement of the robot
-            AnimateWheelRotation(leftWheel, leftWheelMoveDirection, leftWheelVelocityVector.magnitude);
-            AnimateWheelRotation(rightWheel, rightWheelMoveDirection, rightWheelVelocityVector.magnitude);
+            AnimateWheelRotation(_leftWheel, leftWheelMoveDirection, leftWheelVelocityVector.magnitude);
+            AnimateWheelRotation(_rightWheel, rightWheelMoveDirection, rightWheelVelocityVector.magnitude);
 
-            _previousLeftWheelPosition = leftWheel.position;
-            _previousRightWheelPosition = rightWheel.position;
+            _previousLeftWheelPosition = _leftWheel.position;
+            _previousRightWheelPosition = _rightWheel.position;
 
             // Update the current status to indicate whether the robot is currently moving
             if (rightWheelVelocityVector.magnitude > 0.01f || leftWheelVelocityVector.magnitude > 0.01f)
@@ -127,14 +91,14 @@ namespace Dora
         // Applies force at the positions of the wheels to create movement using physics simulation
         private void ApplyWheelForce(MovementDirective directive)
         {
-            var leftPosition = leftWheel.position;
-            var rightPosition = rightWheel.position;
+            var leftPosition = _leftWheel.position;
+            var rightPosition = _rightWheel.position;
 
-            var forward = transform.up;
+            var forward = _transform.up;
 
-            var force = moveForce;
-            if (directive == MovementDirective.Left || directive == MovementDirective.Right) 
-                force = rotateForce;
+            var force = MoveForce;
+            if (directive.IsRotational()) 
+                force = RotateForce;
             
             _rigidbody.AddForceAtPosition(forward * force * directive.LeftWheelSpeed, leftPosition);
             _rigidbody.AddForceAtPosition(forward * force * directive.RightWheelSpeed, rightPosition);
@@ -162,7 +126,7 @@ namespace Dora
             }
             AssertRobotIsInIdleState("rotation");
 
-            _currentTask = new FiniteRotationTask(transform, degrees);
+            _currentTask = new FiniteRotationTask(_transform, degrees);
         }
 
         public void StartRotating(bool counterClockwise = false)

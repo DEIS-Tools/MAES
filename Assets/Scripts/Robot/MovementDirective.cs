@@ -1,3 +1,5 @@
+using System;
+
 namespace Dora.Robot
 {
     
@@ -17,6 +19,11 @@ namespace Dora.Robot
         {
             RightWheelSpeed = rightWheelSpeed;
             LeftWheelSpeed = leftWheelSpeed;
+        }
+
+        public bool IsRotational()
+        {
+            return Math.Abs(LeftWheelSpeed - RightWheelSpeed) > 0.01f;
         }
     }
 
