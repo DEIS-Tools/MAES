@@ -1,15 +1,37 @@
-﻿using Dora.Robot.ExplorationAlgorithm;
+﻿using System;
+using Dora.Robot.ExplorationAlgorithm;
+using UnityEngine;
 
 namespace Dora.Robot
 {
-    public class Robot: ISimulationUnit
+    public class Robot: MonoBehaviour, ISimulationUnit
     {
-        // The algorithm that control the logic of the robot
-        private readonly IExplorationAlgorithm _algorithm;
+        
+        public Transform leftWheelTransform;
+        public Transform rightWheelTransform;
         
         // The controller that provides an interface for moving the robot
-        private readonly IRobotController _movementController;
+        private IRobotController _movementController;
         
+        // The algorithm that controls the logic of the robot
+        IExplorationAlgorithm ExplorationAlgorithm { get; set; }
+
+        private void Start()
+        {
+            var rigidBody = GetComponent<Rigidbody2D>();
+            _movementController = new Robot2DController(rigidBody, transform, leftWheelTransform, rightWheelTransform);
+        }
+
+        public void LogicUpdate(SimulationConfiguration config)
+        {
+            ExplorationAlgorithm.UpdateLogic(config);
+        }
+
+        public void PhysicsUpdate(SimulationConfiguration config)
+        {
+            _movementController.UpdateMotorPhysics(config);
+        }
+
         public object SaveState()
         {
             throw new System.NotImplementedException();
@@ -20,14 +42,5 @@ namespace Dora.Robot
             throw new System.NotImplementedException();
         }
 
-        public void LogicUpdate(SimulationConfiguration config)
-        {
-            _algorithm.UpdateLogic(config);
-        }
-
-        public void PhysicsUpdate(SimulationConfiguration config)
-        {
-            _movementController.UpdateMotorPhysics(config);
-        }
     }
 }
