@@ -9,11 +9,11 @@ namespace Dora.MapGeneration
         public GameObject robotPrefab;
         public Transform simulationContainer;
         
-        // Temporary method for testing!
+        // Temporary method for testing! Return list of robots?
         public void SpawnRobots()
         {
-            var gameObject = Instantiate(robotPrefab, parent: simulationContainer);
-            gameObject.GetComponent<Robot.Robot>().ExplorationAlgorithm = new RandomExplorationAlgorithm();
+            var robotGameObject = Instantiate(robotPrefab, parent: simulationContainer);
+            robotGameObject.GetComponent<Robot.Robot>().ExplorationAlgorithm = new RandomExplorationAlgorithm();
         }
         
     }

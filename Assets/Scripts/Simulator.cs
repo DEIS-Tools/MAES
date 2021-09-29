@@ -57,7 +57,7 @@ namespace Dora
                 3f,
                 true);
             
-            //RobotSpawner.SpawnRobots(robotPrefab, );
+            RobotSpawner.SpawnRobots();
         }
 
         // Timing variables for controlling the simulation in a manner that is decoupled from Unity's update system
