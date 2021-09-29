@@ -14,7 +14,7 @@ namespace Dora.MapGeneration
         {
             var robotGameObject = Instantiate(robotPrefab, parent: simulationContainer);
             var robot = robotGameObject.GetComponent<Robot.Robot>();
-            robot.ExplorationAlgorithm = new RandomExplorationAlgorithm(robot.movementController);
+            robot.ExplorationAlgorithm = new RandomExplorationAlgorithm(robot);
         }
         
     }

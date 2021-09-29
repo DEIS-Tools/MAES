@@ -11,7 +11,7 @@ namespace Dora.Robot
         public Transform rightWheelTransform;
 
         // The controller that provides an interface for moving the robot
-        public IRobotController movementController { get; private set; }
+        public Robot2DController movementController { get; private set; }
 
         // The algorithm that controls the logic of the robot
         public IExplorationAlgorithm ExplorationAlgorithm { get; set; }
@@ -30,6 +30,11 @@ namespace Dora.Robot
         public void PhysicsUpdate(SimulationConfiguration config)
         {
             movementController.UpdateMotorPhysics(config);
+        }
+
+        private void OnCollisionEnter2D(Collision2D other)
+        {
+            movementController.NotifyCollided();
         }
 
         public object SaveState()

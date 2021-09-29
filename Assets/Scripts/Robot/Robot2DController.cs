@@ -25,6 +25,7 @@ namespace Dora
 
         private RobotStatus _currentStatus = RobotStatus.Idle;
         [CanBeNull] private ITask _currentTask;
+        private bool _collisionFlag = false;
 
         public Robot2DController(Rigidbody2D rigidbody, Transform transform, Transform leftWheel, Transform rightWheel)
         {
@@ -36,7 +37,6 @@ namespace Dora
         
         public object SaveState()
         {
-            
             throw new System.NotImplementedException();
         }
 
@@ -69,6 +69,12 @@ namespace Dora
                 _currentStatus = RobotStatus.Moving;
             } else {
                 _currentStatus = RobotStatus.Idle;
+            }
+
+            if (_collisionFlag)
+            {
+                _collisionFlag = false;
+                StopCurrentAction();
             }
 
             // Get directive from current task if present
@@ -184,6 +190,10 @@ namespace Dora
             _currentTask = null;
         }
 
-      
+
+        public void NotifyCollided()
+        {
+            this._collisionFlag = true;
+        }
     }
 }
