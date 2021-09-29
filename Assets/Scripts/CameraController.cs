@@ -84,7 +84,7 @@ namespace Dora
             if (Input.GetMouseButtonDown(0))
             {
                 // Create temp plane along playing field, and a ray from clicked point
-                var plane = new Plane(Vector3.up, Vector3.zero);
+                var plane = new Plane(Vector3.forward, Vector3.zero);
                 var ray = cam.ScreenPointToRay(Input.mousePosition);
 
                 if (plane.Raycast(ray, out var entry)) // If ray intersects plane
@@ -96,7 +96,7 @@ namespace Dora
             // If left mouse button is still being held down since last update()
             if (Input.GetMouseButton(0))
             {
-                var plane = new Plane(Vector3.up, Vector3.zero);
+                var plane = new Plane(Vector3.forward, Vector3.zero);
                 var ray = cam.ScreenPointToRay(Input.mousePosition);
 
                 if (!plane.Raycast(ray, out var entry)) return;
