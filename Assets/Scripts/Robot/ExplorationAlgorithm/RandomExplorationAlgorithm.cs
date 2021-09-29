@@ -9,10 +9,10 @@ namespace Dora.Robot.ExplorationAlgorithm
         private bool _hasJustRotated = false;
         private Random _random;
 
-        public RandomExplorationAlgorithm(Robot robot) // Todo: Random seed
+        public RandomExplorationAlgorithm(Robot robot, int randomSeed) // Todo: Random seed
         {
             _robot = robot;
-            _random = new Random();
+            _random = new Random(randomSeed);
         }
         
         public object SaveState()
