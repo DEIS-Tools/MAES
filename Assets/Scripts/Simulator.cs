@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Dora.MapGeneration;
 using Dora.Robot;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,13 +14,14 @@ namespace Dora
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 
         public Transform simulationContainer;
+        public MapGenerator MapGenerator;
+        public RobotSpawner RobotSpawner;
 
         public Text TestingText;
         private int _physicsTickCount = 0;
         private int _robotLogicTickCount = 0;
         private int _physicsTicksSinceUpdate = 0;
         private int _simulatedTimeMillis = 0;
-        
 
         public SimulationPlayState PlayState { get; }
 
@@ -37,7 +39,25 @@ namespace Dora
         {
             Physics.autoSimulation = false;
             Physics2D.simulationMode = SimulationMode2D.Script;
+            GenerateSimulation();
+        }
+
+        private void GenerateSimulation()
+        {
+            var map = MapGenerator.GenerateMap(50,
+                50,
+                Time.time.ToString(), 
+                48, 
+                5, 
+                10, 
+                10, 
+                1, 
+                1, 
+                2, 
+                3f,
+                true);
             
+            //RobotSpawner.SpawnRobots(robotPrefab, );
         }
 
         // Timing variables for controlling the simulation in a manner that is decoupled from Unity's update system

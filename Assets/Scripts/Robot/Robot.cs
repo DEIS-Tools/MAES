@@ -9,12 +9,12 @@ namespace Dora.Robot
         
         public Transform leftWheelTransform;
         public Transform rightWheelTransform;
-        
+
         // The controller that provides an interface for moving the robot
         private IRobotController _movementController;
         
         // The algorithm that controls the logic of the robot
-        IExplorationAlgorithm ExplorationAlgorithm { get; set; }
+        public IExplorationAlgorithm ExplorationAlgorithm { get; set; }
 
         private void Start()
         {
