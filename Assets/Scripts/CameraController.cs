@@ -9,6 +9,9 @@ namespace Dora
 {
     public class CameraController : MonoBehaviour
     {
+        public static CameraController SingletonInstance;
+        public Transform movementTransform;
+        
         public Camera cam;
         public Transform cameraTransform;
 
@@ -34,6 +37,7 @@ namespace Dora
         // Start is called before the first frame update
         void Start()
         {
+            SingletonInstance = this;
             var t = transform; // Temp storage of build-in is (apparently) more efficient than repeated access.
             newPosition = t.position;
             newRotation = t.rotation;
@@ -43,8 +47,90 @@ namespace Dora
         // Update is called once per frame
         void Update()
         {
-            HandleMouseInput();
-            HandleMovementInput();
+
+            if (movementTransform == null)
+            {
+                HandleMouseMovementInput();
+                HandleKeyboardMovementInput();
+            }
+            else
+            {
+                newPosition = movementTransform.position;
+            }
+            
+            HandleMouseRotateZoomInput();
+            HandleKeyboardRotateZoomInput();
+            ApplyMovement();
+            
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                movementTransform = null;
+            }
+        }
+
+        private void ApplyMovement()
+        {
+            var t = transform;
+            t.position = Vector3.Lerp(t.position, newPosition, Time.deltaTime * movementTime);
+            t.rotation = Quaternion.Lerp(t.rotation, newRotation, Time.deltaTime * movementTime);
+            cameraTransform.localPosition =
+                Vector3.Lerp(cameraTransform.localPosition, newZoom, Time.deltaTime * movementTime);
+        }
+
+        private void HandleKeyboardRotateZoomInput()
+        {
+            
+            if (Input.GetKey(KeyCode.U) || buttons[(int) UIMovementButton.Direction.RLeft].isActive)
+            {
+                newRotation *= Quaternion.Euler(Vector3.up * rotationAmount);
+            }
+
+            if (Input.GetKey(KeyCode.O) || buttons[(int) UIMovementButton.Direction.RRight].isActive)
+            {
+                newRotation *= Quaternion.Euler(Vector3.up * (-1 * rotationAmount));
+            }
+
+            if (Input.GetKey(KeyCode.Period) || Input.GetKey(KeyCode.Plus) || Input.GetKey(KeyCode.KeypadPlus) ||
+                buttons[(int) UIMovementButton.Direction.In].isActive)
+            {
+                newZoom += zoomAmount;
+            }
+
+            if (Input.GetKey(KeyCode.Comma) || Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus) ||
+                buttons[(int) UIMovementButton.Direction.Out].isActive)
+            {
+                newZoom -= zoomAmount;
+            }
+        }
+
+        private void HandleMouseRotateZoomInput()
+        {
+            #region MouseZoomRegion
+
+            if (Input.mouseScrollDelta.y != 0)
+            {
+                newZoom += Input.mouseScrollDelta.y * zoomAmount;
+            }
+
+            #endregion
+            
+            #region MouseRotateRegion
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                rotateStartPosition = Input.mousePosition;
+            }
+
+            if (!Input.GetMouseButton(1)) return;
+            rotateCurrentPosition = Input.mousePosition;
+
+            var diff = rotateStartPosition - rotateCurrentPosition;
+
+            rotateStartPosition = rotateCurrentPosition;
+
+            newRotation *= Quaternion.Euler(Vector3.up * (-1 * diff.x / 5f));
+
+            #endregion
         }
 
         public void Subscribe(UIMovementButton button)
@@ -61,22 +147,13 @@ namespace Dora
             uiPanels.Add(panel);
         }
 
-        void HandleMouseInput()
+        void HandleMouseMovementInput()
         {
             if (uiPanels.Any(panel =>
                 RectTransformUtility.RectangleContainsScreenPoint(panel, Input.mousePosition)))
             {
                 return; // Don't do anything here, if mouse is in a UI panel.
             }
-
-            #region MouseZoomRegion
-
-            if (Input.mouseScrollDelta.y != 0)
-            {
-                newZoom += Input.mouseScrollDelta.y * zoomAmount;
-            }
-
-            #endregion
 
             #region MouseMovementRegion
 
@@ -107,27 +184,9 @@ namespace Dora
             }
 
             #endregion
-
-            #region MouseRotateRegion
-
-            if (Input.GetMouseButtonDown(1))
-            {
-                rotateStartPosition = Input.mousePosition;
-            }
-
-            if (!Input.GetMouseButton(1)) return;
-            rotateCurrentPosition = Input.mousePosition;
-
-            var diff = rotateStartPosition - rotateCurrentPosition;
-
-            rotateStartPosition = rotateCurrentPosition;
-
-            newRotation *= Quaternion.Euler(Vector3.up * (-1 * diff.x / 5f));
-
-            #endregion
         }
 
-        void HandleMovementInput()
+        void HandleKeyboardMovementInput()
         {
             var t = transform;
             if (Input.GetKey(KeyCode.I) || buttons[(int) UIMovementButton.Direction.Forwards].isActive)
@@ -137,45 +196,18 @@ namespace Dora
 
             if (Input.GetKey(KeyCode.K) || buttons[(int) UIMovementButton.Direction.Backwards].isActive)
             {
-                newPosition += t.forward * -1 * movementSpeed;
+                newPosition += t.forward * (-1 * movementSpeed);
             }
 
             if (Input.GetKey(KeyCode.J) || buttons[(int) UIMovementButton.Direction.Left].isActive)
             {
-                newPosition += t.right * -1 * movementSpeed;
+                newPosition += t.right * (-1 * movementSpeed);
             }
 
             if (Input.GetKey(KeyCode.L) || buttons[(int) UIMovementButton.Direction.Right].isActive)
             {
                 newPosition += t.right * movementSpeed;
             }
-
-            if (Input.GetKey(KeyCode.U) || buttons[(int) UIMovementButton.Direction.RLeft].isActive)
-            {
-                newRotation *= Quaternion.Euler(Vector3.up * rotationAmount);
-            }
-
-            if (Input.GetKey(KeyCode.O) || buttons[(int) UIMovementButton.Direction.RRight].isActive)
-            {
-                newRotation *= Quaternion.Euler(Vector3.up * -1 * rotationAmount);
-            }
-
-            if (Input.GetKey(KeyCode.Period) || Input.GetKey(KeyCode.Plus) || Input.GetKey(KeyCode.KeypadPlus) ||
-                buttons[(int) UIMovementButton.Direction.In].isActive)
-            {
-                newZoom += zoomAmount;
-            }
-
-            if (Input.GetKey(KeyCode.Comma) || Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus) ||
-                buttons[(int) UIMovementButton.Direction.Out].isActive)
-            {
-                newZoom -= zoomAmount;
-            }
-
-            t.position = Vector3.Lerp(t.position, newPosition, Time.deltaTime * movementTime);
-            t.rotation = Quaternion.Lerp(t.rotation, newRotation, Time.deltaTime * movementTime);
-            cameraTransform.localPosition =
-                Vector3.Lerp(cameraTransform.localPosition, newZoom, Time.deltaTime * movementTime);
         }
     }
 }

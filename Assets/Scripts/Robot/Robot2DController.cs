@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Dora.Robot;
 using Dora.Robot.Task;
 using JetBrains.Annotations;
@@ -37,12 +35,12 @@ namespace Dora
         public object SaveState()
         {
             
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public void RestoreState(object stateInfo)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public void LogicUpdate(SimulationConfiguration config)
@@ -219,6 +217,9 @@ namespace Dora
             _currentTask = null;
         }
 
-      
+        public void OnMouseDown()
+        {
+            CameraController.SingletonInstance.movementTransform = transform;
+        }
     }
 }
