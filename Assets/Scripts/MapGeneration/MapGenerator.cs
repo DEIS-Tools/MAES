@@ -5,40 +5,12 @@ using System;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Threading;
+using Dora.MapGeneration;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
 
 public class MapGenerator : MonoBehaviour {
-
-	int width;
-	int height;
-
-	string randomSeed;
 	
-	// How many runs of smoothing to get from QR code like noise to groups of room or wall tiles.
-	int smoothingRuns;
-	
-	// How wide should the passages made by the connection algorithm be
-	int connectionPassagesWidth;
-
-	// How much of the room should be filled with walls.
-	int randomFillPercent;
-	
-	// Minimum number of wall tiles in a group to not delete them in processing
-	int wallThresholdSize;
-	
-	// Minimum number of rooms tiles in a group to not delete them in processing
-	private int roomThresholdSize;
-	
-	// Border size (Assured walls on the edges)
-	private int borderSize;
-
-	// This can be increased to enlarge the smallest corridors by enlarging the entire cave
-	private int scaling;
-	
-	// Only used in 3D 
-	private float wallHeight; 
-
 	private const int WALL_TYPE = 1, ROOM_TYPE = 0;
 
 	public Transform plane;
@@ -47,24 +19,24 @@ public class MapGenerator : MonoBehaviour {
 
 	public MeshGenerator meshGenerator;
 
-	private bool is2D;
-
 	// Variable used for drawing gizmos on selection for debugging.
 	private int[,] mapToDraw = null; 
 	
 	void Update() {
-		if (Input.GetButtonUp("Jump")) {
-			var map = GenerateMap(100,
-										100,
-										Time.time.ToString(), 
-										48, 
-										5, 
-										10, 
-										10, 
-										1, 
-										1, 
-										2, 
-										3f,
+		if (Input.GetButtonUp("Jump"))
+		{
+			var config = new CaveMapConfig(100,
+				100,
+				Time.time.ToString(),
+				4,
+				2,
+				48,
+				10,
+				1,
+				1,
+				2);
+			var map = GenerateCaveMap(config, 
+										3.0f,
 										true);
 		}
 		
@@ -75,114 +47,94 @@ public class MapGenerator : MonoBehaviour {
 			clearMap();
 		}
 	}
-	
-	public int[,] GenerateMap(int width, int height, string seed, 
-		int randomFillPercent, int smoothingRuns, int wallThresholdSize, 
-		int roomThresholdSize, int borderSize, int connectionPassagesWidth, int scaling, float wallHeight, bool is2D)
-	{
-		// Only fill percent between and including 0 to 100 are allowed
-		if(0 >= randomFillPercent || randomFillPercent >= 100 ){
-			throw new ArgumentOutOfRangeException("randomFillPercent must be between 0 and 100");
-		}
 
-		if (smoothingRuns < 0)
-		{
-			throw new ArgumentOutOfRangeException("smoothingRuns must be a positive integer or 0");
-		}
-		
+	public int[,] GenerateOfficeMap(OfficeMapConfig config, float wallHeight, bool is2D = true)
+	{
+		return null;
+	}
+
+	public int[,] GenerateCaveMap(CaveMapConfig caveConfig, float wallHeight, bool is2D = true)
+	{
 		// Clear and destroy objects from previous map
 		clearMap();
 
-		// Set new variables
-		this.width = width;
-		this.height = height;
-		this.randomSeed = seed;
-		this.randomFillPercent = randomFillPercent;
-		this.smoothingRuns = smoothingRuns;
-		this.wallThresholdSize = wallThresholdSize;
-		this.roomThresholdSize = roomThresholdSize;
-		this.borderSize = borderSize;
-		this.connectionPassagesWidth = connectionPassagesWidth;
-		this.scaling = scaling;
-		this.wallHeight = wallHeight;
-		this.is2D = is2D;
-		
-		var map = GenerateMap();
-		
-		// Resize plane below cave to fit size
-		float padding = 0.1f;
-		plane.localScale = new Vector3(((width * scaling) / 10f) + padding, 
-										1, 
-										((height * scaling) / 10f) + padding);
-		
+		var map = CreateCaveMapWithMesh(caveConfig, wallHeight, is2D);
+
+		ResizePlaneToFitMap(caveConfig.height, caveConfig.width, caveConfig.scaling);
+
+		MovePlaneAndWallRoofToFitWallHeight(wallHeight, is2D);
+
+		return map;
+	}
+
+	private void MovePlaneAndWallRoofToFitWallHeight(float wallHeight, bool is2D = true)
+	{
 		// Move walls and wall roof to above plane depending on wall height
 		// The axis depends on whether it is 3D or 2D.
 		if (is2D)
 		{
+			Debug.Log("Correct 2D");
 			Vector3 newPosition = wallRoof.position;
-			newPosition.z = -this.wallHeight;
+			newPosition.z = -wallHeight;
 			wallRoof.position = newPosition;
 		
 			newPosition = innerWalls.position;
-			newPosition.z = -this.wallHeight; 
+			newPosition.z = -wallHeight; 
 			innerWalls.position = newPosition;
 		}
 		else
 		{
 			Vector3 newPosition = wallRoof.position;
-			newPosition.y = this.wallHeight;
+			newPosition.y = wallHeight;
 			wallRoof.position = newPosition;
 		
 			newPosition = innerWalls.position;
-			newPosition.y = this.wallHeight; 
+			newPosition.y = wallHeight; 
 			innerWalls.position = newPosition;
 		}
-		
-
-		return map;
 	}
 
-	public void clearMap(){
-		this.width = 0;
-		this.height = 0;
-		this.randomSeed = "0";
-		this.randomFillPercent = 0;
-		this.smoothingRuns = 0;
-		this.wallThresholdSize = 0;
-		this.borderSize = 0;
-		this.connectionPassagesWidth = 0;
-		this.scaling = 0;
-		this.wallHeight = 0;
-		this.is2D = false;
+	private void ResizePlaneToFitMap(int height, int width, float scaling, float padding = 0.1f)
+	{
+		// Resize plane below cave to fit size
+		plane.localScale = new Vector3(((width * scaling) / 10f) + padding, 
+			1, 
+			((height * scaling) / 10f) + padding);
+	}
+
+	public void clearMap()
+	{
 		meshGenerator.ClearMesh();
 	}
 
-	private int[,] GenerateMap() {
+	private int[,] CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 3.0f, bool is2D = true) {
 		// Fill map with random walls and empty tiles (Looks kinda like a QR code)
-		var randomlyFilledMap = CreateRandomFillMap(this.width, this.height);
+		var randomlyFilledMap = CreateRandomFillMap(caveConfig);
 		
 		// Use smoothing runs to make sense of the noise
 		// f.x. walls can only stay walls, if they have at least N neighbouring walls
 		int[,] smoothedMap = randomlyFilledMap;
-		for (int i = 0; i < this.smoothingRuns; i++)
+		for (int i = 0; i < caveConfig.smoothingRuns; i++)
 		{
-			smoothedMap = SmoothMap(neighbourWallsNeededToStayWall: 4, smoothedMap);
+			smoothedMap = SmoothMap(smoothedMap, caveConfig);
 		}
 
 		// Clean up regions smaller than threshold for both walls and rooms.
-		var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(wallThresholdSize, roomThresholdSize, smoothedMap);
+		var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(caveConfig.wallThresholdSize, 
+																							caveConfig.roomThresholdSize, 
+																							smoothedMap);
 
 		// Connect all rooms to main (the biggest) room
-		var connectedMap = ConnectAllRoomsToMainRoom(survivingRooms, cleanedMap);
+		var connectedMap = ConnectAllRoomsToMainRoom(survivingRooms, cleanedMap, caveConfig);
 
 		// Ensure a border around the map
-		var borderedMap = CreateBorderedMap(connectedMap);
+		var borderedMap = CreateBorderedMap(connectedMap, caveConfig);
 		
 		// Draw gizmo of map for debugging. Will draw the map in Scene upon selection.
 		// mapToDraw = borderedMap;
 		
 		MeshGenerator meshGen = GetComponent<MeshGenerator>();
-		meshGen.GenerateMesh(borderedMap.Clone() as int[,], this.scaling, this.wallHeight, is2D);
+		meshGen.GenerateMesh(borderedMap.Clone() as int[,], caveConfig.scaling, wallHeight, is2D);
 
 		if (is2D)
 		{
@@ -192,14 +144,14 @@ public class MapGenerator : MonoBehaviour {
 		return borderedMap;
 	}
 
-	int[,] CreateBorderedMap(int[,] map)
+	int[,] CreateBorderedMap(int[,] map, CaveMapConfig config)
 	{
-		int[,] borderedMap = new int[width + borderSize * 2,height + borderSize * 2];
+		int[,] borderedMap = new int[config.width + config.borderSize * 2, config.height + config.borderSize * 2];
 
 		for (int x = 0; x < borderedMap.GetLength(0); x ++) {
 			for (int y = 0; y < borderedMap.GetLength(1); y ++) {
-				if (x >= borderSize && x < width + borderSize && y >= borderSize && y < height + borderSize) {
-					borderedMap[x,y] = map[x-borderSize,y-borderSize];
+				if (x >= config.borderSize && x < config.width + config.borderSize && y >= config.borderSize && y < config.height + config.borderSize) {
+					borderedMap[x,y] = map[x - config.borderSize, y - config.borderSize];
 				}
 				else {
 					borderedMap[x,y] = WALL_TYPE;
@@ -216,7 +168,7 @@ public class MapGenerator : MonoBehaviour {
 		List<List<Coord>> wallRegions = GetRegions (WALL_TYPE, cleanedMap);
 
 		foreach (List<Coord> wallRegion in wallRegions) {
-			if (wallRegion.Count < wallThresholdSize) {
+			if (wallRegion.Count < wallThreshold) {
 				foreach (Coord tile in wallRegion) {
 					cleanedMap[tile.tileX,tile.tileY] = ROOM_TYPE;
 				}
@@ -227,7 +179,7 @@ public class MapGenerator : MonoBehaviour {
 		List<Room> survivingRooms = new List<Room> ();
 		
 		foreach (List<Coord> roomRegion in roomRegions) {
-			if (roomRegion.Count < roomThresholdSize) {
+			if (roomRegion.Count < roomThreshold) {
 				foreach (Coord tile in roomRegion) {
 					cleanedMap[tile.tileX,tile.tileY] = WALL_TYPE;
 				}
@@ -240,17 +192,17 @@ public class MapGenerator : MonoBehaviour {
 		return (survivingRooms, cleanedMap);
 	}
 	
-	private int[,] ConnectAllRoomsToMainRoom(List<Room> survivingRooms, int[,] map)
+	private int[,] ConnectAllRoomsToMainRoom(List<Room> survivingRooms, int[,] map, CaveMapConfig config)
 	{
 		var connectedMap = map.Clone() as int[,];
 		survivingRooms.Sort ();
 		survivingRooms [0].isMainRoom = true;
 		survivingRooms [0].isAccessibleFromMainRoom = true;
 
-		return ConnectClosestRooms(survivingRooms, connectedMap);
+		return ConnectClosestRooms(survivingRooms, connectedMap, config);
 	}
 
-	private int[,] ConnectClosestRooms(List<Room> allRooms, int[,] map)
+	private int[,] ConnectClosestRooms(List<Room> allRooms, int[,] map, CaveMapConfig config)
 	{
 		int[,] connectedMap = map.Clone() as int[,];
 		List<Room> roomListA = new List<Room> ();
@@ -299,20 +251,20 @@ public class MapGenerator : MonoBehaviour {
 		}
 
 		if (possibleConnectionFound) {
-			CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB, connectedMap);
-			connectedMap = ConnectClosestRooms(allRooms, connectedMap);
+			CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB, connectedMap, config);
+			connectedMap = ConnectClosestRooms(allRooms, connectedMap, config);
 		}
 
 		return connectedMap;
 	}
 
-	void CreatePassage(Room roomA, Room roomB, Coord tileA, Coord tileB, int[,] map) {
+	void CreatePassage(Room roomA, Room roomB, Coord tileA, Coord tileB, int[,] map, CaveMapConfig config) {
 		Room.ConnectRooms (roomA, roomB);
 		// Debug.DrawLine (CoordToWorldPoint (tileA), CoordToWorldPoint (tileB), Color.green, 10);
 
 		List<Coord> line = GetLine(tileA, tileB);
 		foreach (Coord c in line) {
-			MakeRoomOfLine(c,this.connectionPassagesWidth, map);
+			MakeRoomOfLine(c, config.connectionPassagesWidth, map);
 		}
 	}
 
@@ -382,7 +334,7 @@ public class MapGenerator : MonoBehaviour {
 	}
 
 	// Just used be drawing a line for debugging
-	private Vector3 CoordToWorldPoint(Coord tile) {
+	private Vector3 CoordToWorldPoint(Coord tile, int width, int height) {
 		return new Vector3 (-width / 2 + .5f + tile.tileX, 2, -height / 2 + .5f + tile.tileY);
 	}
 
@@ -446,18 +398,18 @@ public class MapGenerator : MonoBehaviour {
 	}
 
 
-	int[,] CreateRandomFillMap(int width, int height)	
+	int[,] CreateRandomFillMap(CaveMapConfig config)	
 	{
-		int[,] randomFillMap = new int[width, height];
-		System.Random pseudoRandom = new System.Random(randomSeed.GetHashCode());
+		int[,] randomFillMap = new int[config.width, config.height];
+		System.Random pseudoRandom = new System.Random(config.randomSeed.GetHashCode());
 		
-		for (int x = 0; x < width; x ++) {
-			for (int y = 0; y < height; y ++) {
-				if (x == 0 || x == width-1 || y == 0 || y == height -1) {
+		for (int x = 0; x < config.width; x ++) {
+			for (int y = 0; y < config.height; y ++) {
+				if (x == 0 || x == config.width - 1 || y == 0 || y == config.height -1) {
 					randomFillMap[x,y] = WALL_TYPE;
 				}
 				else {
-					randomFillMap[x,y] = (pseudoRandom.Next(0,100) < randomFillPercent) ? WALL_TYPE : ROOM_TYPE;
+					randomFillMap[x,y] = (pseudoRandom.Next(0,100) < config.randomFillPercent) ? WALL_TYPE : ROOM_TYPE;
 				}
 			}
 		}
@@ -465,15 +417,15 @@ public class MapGenerator : MonoBehaviour {
 		return randomFillMap;
 	}
 
-	int[,] SmoothMap(int neighbourWallsNeededToStayWall, int[,] map) {
+	int[,] SmoothMap(int[,] map, CaveMapConfig config) {
 		var smoothedMap = map.Clone() as int[,];
-		for (int x = 0; x < width; x ++) {
-			for (int y = 0; y < height; y ++) {
+		for (int x = 0; x < config.width; x ++) {
+			for (int y = 0; y < config.height; y ++) {
 				int neighbourWallTiles = GetSurroundingWallCount(x,y, map);
 
-				if (neighbourWallTiles > neighbourWallsNeededToStayWall)
+				if (neighbourWallTiles > config.neighbourWallsNeededToStayWall)
 					smoothedMap[x,y] = WALL_TYPE;
-				else if (neighbourWallTiles < neighbourWallsNeededToStayWall)
+				else if (neighbourWallTiles < config.neighbourWallsNeededToStayWall)
 					smoothedMap[x,y] = ROOM_TYPE;
 
 			}
@@ -503,11 +455,14 @@ public class MapGenerator : MonoBehaviour {
 	// Draw the gizmo of the map for debugging purposes.
 	void drawMap(int[,] map)
 	{
+		int width = map.GetLength(0);
+		int height = map.GetLength(1);
+		
 		if (mapToDraw != null)
 		{
-			for (int x = 0; x < map.GetLength(0); x++)
+			for (int x = 0; x < width; x++)
 			{
-				for (int y = 0; y < map.GetLength(1); y++)
+				for (int y = 0; y < height; y++)
 				{
 					Gizmos.color = (map[x, y] == 1) ? Color.black : Color.white;
 					Vector3 pos = new Vector3(-width / 2 + x + .5f, 0, -height / 2 + y + .5f);
