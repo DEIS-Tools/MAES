@@ -1,4 +1,4 @@
-﻿namespace Dora.Robot.ExplorationAlgorithm
+﻿namespace Dora.ExplorationAlgorithm
 {
     public interface IExplorationAlgorithm: ISavable<object>
     {

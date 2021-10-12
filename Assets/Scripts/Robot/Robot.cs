@@ -1,5 +1,5 @@
 ﻿using System;
-using Dora.Robot.ExplorationAlgorithm;
+using Dora.ExplorationAlgorithm;
 using UnityEngine;
 
 namespace Dora.Robot

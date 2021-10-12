@@ -1,15 +1,16 @@
 ﻿using System;
+using Dora.Robot;
 
-namespace Dora.Robot.ExplorationAlgorithm
+namespace Dora.ExplorationAlgorithm
 {
     public class RandomExplorationAlgorithm: IExplorationAlgorithm
     {
         
-        private Robot _robot;
+        private Robot.Robot _robot;
         private bool _hasJustRotated = false;
         private Random _random;
 
-        public RandomExplorationAlgorithm(Robot robot, int randomSeed) // Todo: Random seed
+        public RandomExplorationAlgorithm(Robot.Robot robot, int randomSeed) // Todo: Random seed
         {
             _robot = robot;
             _random = new Random(randomSeed);
