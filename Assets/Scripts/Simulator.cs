@@ -94,9 +94,12 @@ namespace Dora
             }
             var simulatedTimeSpan = TimeSpan.FromMilliseconds(_simulatedTimeMillis);
             var output = simulatedTimeSpan.ToString(@"hh\:mm\:ss");
+            var following = CameraController.SingletonInstance.movementTransform == null
+                ? ""
+                : "\nPress Esc to release camera";
             TestingText.text = "Phys. ticks: " + _physicsTickCount + 
                         "\nLogic ticks: " + _robotLogicTickCount + 
-                        "\nSimulated: " + output;
+                        "\nSimulated: " + output + following;
         }
 
         // Calls update on all children of SimulationContainer that are of type SimulationUnit

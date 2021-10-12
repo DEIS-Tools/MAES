@@ -70,7 +70,7 @@ public class MapGenerator : MonoBehaviour {
 		
 		
 
-		if (Input.GetMouseButtonDown(1))
+		if (Input.GetMouseButtonDown(1) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))
 		{
 			clearMap();
 		}
