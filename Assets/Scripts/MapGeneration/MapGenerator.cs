@@ -2,16 +2,20 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Threading;
 using Dora.MapGeneration;
+using UnityEditor.UI;
 using Quaternion = UnityEngine.Quaternion;
+using Random = System.Random;
 using Vector3 = UnityEngine.Vector3;
+
 
 public class MapGenerator : MonoBehaviour {
 	
-	private const int WALL_TYPE = 1, ROOM_TYPE = 0;
+	private const int WALL_TYPE = 1, ROOM_TYPE = 0, HALL_TYPE = 2;
 
 	public Transform plane;
 	public Transform innerWalls;
@@ -25,7 +29,7 @@ public class MapGenerator : MonoBehaviour {
 	void Update() {
 		if (Input.GetButtonUp("Jump"))
 		{
-			var config = new CaveMapConfig(100,
+			/*var config = new CaveMapConfig(100,
 				100,
 				Time.time.ToString(),
 				4,
@@ -37,7 +41,9 @@ public class MapGenerator : MonoBehaviour {
 				2);
 			var map = GenerateCaveMap(config, 
 										3.0f,
-										true);
+										true);*/
+			var officeConfig = new OfficeMapConfig(50, 50, Time.time.ToString(), 1, 30, 5, 2);
+			var map = GenerateOfficeMap(officeConfig, 3.0f, true);
 		}
 		
 		
@@ -46,25 +52,6 @@ public class MapGenerator : MonoBehaviour {
 		{
 			clearMap();
 		}
-	}
-
-	public int[,] GenerateOfficeMap(OfficeMapConfig config, float wallHeight, bool is2D = true)
-	{
-		return null;
-	}
-
-	public int[,] GenerateCaveMap(CaveMapConfig caveConfig, float wallHeight, bool is2D = true)
-	{
-		// Clear and destroy objects from previous map
-		clearMap();
-
-		var map = CreateCaveMapWithMesh(caveConfig, wallHeight, is2D);
-
-		ResizePlaneToFitMap(caveConfig.height, caveConfig.width, caveConfig.scaling);
-
-		MovePlaneAndWallRoofToFitWallHeight(wallHeight, is2D);
-
-		return map;
 	}
 
 	private void MovePlaneAndWallRoofToFitWallHeight(float wallHeight, bool is2D = true)
@@ -105,6 +92,144 @@ public class MapGenerator : MonoBehaviour {
 	public void clearMap()
 	{
 		meshGenerator.ClearMesh();
+	}
+	
+	/**
+	 * Methods for creating office map
+	 */
+	
+	public int[,] GenerateOfficeMap(OfficeMapConfig config, float wallHeight, bool is2D = true)
+	{
+		// Clear and destroy objects from previous map
+		clearMap();
+
+		int[,] emptyMap = GenerateEmptyMap(config.width, config.height);
+
+		var mapWithHalls = GenerateMapWithHalls(emptyMap, config);
+		
+		mapToDraw = mapWithHalls;
+
+
+		// Split house space into halls (Blocks of rooms)
+		// Rotate 90 degrees every time
+		
+		// Split the chunks (blocks of rooms) into smaller rooms. At random, do not to allow for large rooms
+		
+		// Create doors between rooms
+
+		return mapWithHalls;
+	}
+
+	private int[,] GenerateMapWithHalls(int[,] map, OfficeMapConfig config) {
+		var mapWithHalls = map.Clone() as int[,];
+
+		var random = new Random();
+		
+
+		// Rotate 90 degrees every time a hallway is generated
+		bool usingXAxis = true;
+		while (GetHallPercentage(mapWithHalls) < config.maxHallInPercent) {
+			// We always split the currently biggest room
+			List<List<Coord>> roomRegions = GetRegions(ROOM_TYPE, mapWithHalls);
+			List<Coord> biggestRoom = roomRegions.OrderByDescending(l => l.Count).ToList()[0];
+			
+			// We either use the x axis or y axis as starting point
+			List<int> coords;
+			if (usingXAxis)
+				coords = biggestRoom.Select(coord => coord.x).ToList();
+			else 
+				coords = biggestRoom.Select(coord => coord.y).ToList();
+			
+			// Filter out coords too close to the edges to be a hall
+			var sortedCoords = coords.OrderBy(c => c).ToList();
+			var smallestValue = sortedCoords[0];
+			var biggestValue = sortedCoords[sortedCoords.Count - 1];
+
+			var filteredCoords = sortedCoords.FindAll(x => 
+				x + config.hallWidth < biggestValue - config.hallWidth && // Right side
+				x > smallestValue + config.hallWidth
+			);
+
+			if (filteredCoords.Count == 0) {
+				Debug.Log("The maxHallInPercent of " + config.maxHallInPercent + " could not be achieved.");
+				break; 
+			}
+			
+			// Select random index to fill with hallway
+			var selectedIndex = random.Next(filteredCoords.Count);
+			var hallStartCoord = filteredCoords[selectedIndex];
+
+			if (usingXAxis) {
+				// Fill with hall tiles
+				foreach (var c in biggestRoom){
+					if (hallStartCoord <= c.x && c.x < hallStartCoord + config.hallWidth) {
+						mapWithHalls[c.x, c.y] = HALL_TYPE;
+					}
+				}
+
+				usingXAxis = false;
+			}
+			else {
+				// Fill with hall tiles
+				foreach (var c in biggestRoom){
+					if (hallStartCoord <= c.y && c.y < hallStartCoord + config.hallWidth) {
+						mapWithHalls[c.x, c.y] = HALL_TYPE;
+					}
+				}
+				usingXAxis = true;
+			}
+		}
+
+		return mapWithHalls;
+	}
+
+	private int[,] GenerateEmptyMap(int width, int height)
+	{
+		int[,] emptyMap = new int[width, height];
+		
+		for(int x = 0; x < emptyMap.GetLength(0); x++){
+			for(int y = 0; y < emptyMap.GetLength(1); y++)
+			{
+				emptyMap[x, y] = ROOM_TYPE;
+			}
+		}
+
+		return emptyMap;
+	}
+
+	private float GetHallPercentage(int[,] map)
+	{
+		int width = map.GetLength(0);
+		int height = map.GetLength(1);
+		int mapSize = width * height;
+
+		int amountOfHall = 0;
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++)
+			{
+				amountOfHall += map[x, y] == HALL_TYPE ? 1 : 0;
+			}
+		}
+
+		return (amountOfHall / (float)mapSize) * 100f;
+	}
+	
+	/**
+	 * METHODS for creating cave
+	 */
+	
+	public int[,] GenerateCaveMap(CaveMapConfig caveConfig, float wallHeight, bool is2D = true)
+	{
+		// Clear and destroy objects from previous map
+		clearMap();
+
+		var map = CreateCaveMapWithMesh(caveConfig, wallHeight, is2D);
+
+		ResizePlaneToFitMap(caveConfig.height, caveConfig.width, caveConfig.scaling);
+
+		MovePlaneAndWallRoofToFitWallHeight(wallHeight, is2D);
+
+		return map;
 	}
 
 	private int[,] CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 3.0f, bool is2D = true) {
@@ -165,12 +290,12 @@ public class MapGenerator : MonoBehaviour {
 	(List<Room> surviningRooms, int[,] map) RemoveRoomsAndWallsBelowThreshold(int wallThreshold, int roomThreshold, int[,] map)
 	{
 		var cleanedMap = map.Clone() as int[,];
-		List<List<Coord>> wallRegions = GetRegions (WALL_TYPE, cleanedMap);
+		List<List<Coord>> wallRegions = GetRegions(WALL_TYPE, cleanedMap);
 
 		foreach (List<Coord> wallRegion in wallRegions) {
 			if (wallRegion.Count < wallThreshold) {
 				foreach (Coord tile in wallRegion) {
-					cleanedMap[tile.tileX,tile.tileY] = ROOM_TYPE;
+					cleanedMap[tile.x,tile.y] = ROOM_TYPE;
 				}
 			}
 		}
@@ -181,7 +306,7 @@ public class MapGenerator : MonoBehaviour {
 		foreach (List<Coord> roomRegion in roomRegions) {
 			if (roomRegion.Count < roomThreshold) {
 				foreach (Coord tile in roomRegion) {
-					cleanedMap[tile.tileX,tile.tileY] = WALL_TYPE;
+					cleanedMap[tile.x,tile.y] = WALL_TYPE;
 				}
 			}
 			else {
@@ -195,9 +320,9 @@ public class MapGenerator : MonoBehaviour {
 	private int[,] ConnectAllRoomsToMainRoom(List<Room> survivingRooms, int[,] map, CaveMapConfig config)
 	{
 		var connectedMap = map.Clone() as int[,];
-		survivingRooms.Sort ();
-		survivingRooms [0].isMainRoom = true;
-		survivingRooms [0].isAccessibleFromMainRoom = true;
+		survivingRooms.Sort();
+		survivingRooms[0].isMainRoom = true;
+		survivingRooms[0].isAccessibleFromMainRoom = true;
 
 		return ConnectClosestRooms(survivingRooms, connectedMap, config);
 	}
@@ -205,8 +330,8 @@ public class MapGenerator : MonoBehaviour {
 	private int[,] ConnectClosestRooms(List<Room> allRooms, int[,] map, CaveMapConfig config)
 	{
 		int[,] connectedMap = map.Clone() as int[,];
-		List<Room> roomListA = new List<Room> ();
-		List<Room> roomListB = new List<Room> ();
+		List<Room> roomListA = new List<Room>();
+		List<Room> roomListB = new List<Room>();
 
 		
 		foreach (Room room in allRooms) {
@@ -219,10 +344,10 @@ public class MapGenerator : MonoBehaviour {
 		
 
 		int bestDistance = 0;
-		Coord bestTileA = new Coord ();
-		Coord bestTileB = new Coord ();
-		Room bestRoomA = new Room ();
-		Room bestRoomB = new Room ();
+		Coord bestTileA = new Coord();
+		Coord bestTileB = new Coord();
+		Room bestRoomA = new Room();
+		Room bestRoomB = new Room();
 		bool possibleConnectionFound = false;
 
 		foreach (Room roomA in roomListA) {
@@ -235,7 +360,7 @@ public class MapGenerator : MonoBehaviour {
 					for (int tileIndexB = 0; tileIndexB < roomB.edgeTiles.Count; tileIndexB ++) {
 						Coord tileA = roomA.edgeTiles[tileIndexA];
 						Coord tileB = roomB.edgeTiles[tileIndexB];
-						int distanceBetweenRooms = (int)(Mathf.Pow (tileA.tileX-tileB.tileX,2) + Mathf.Pow (tileA.tileY-tileB.tileY,2));
+						int distanceBetweenRooms = (int)(Mathf.Pow (tileA.x-tileB.x,2) + Mathf.Pow (tileA.y-tileB.y,2));
 
 						if (distanceBetweenRooms < bestDistance || !possibleConnectionFound) {
 							bestDistance = distanceBetweenRooms;
@@ -272,8 +397,8 @@ public class MapGenerator : MonoBehaviour {
 		for (int x = -r; x <= r; x++) {
 			for (int y = -r; y <= r; y++) {
 				if (x*x + y*y <= r*r) {
-					int drawX = c.tileX + x;
-					int drawY = c.tileY + y;
+					int drawX = c.x + x;
+					int drawY = c.y + y;
 					if (IsInMapRange(drawX, drawY, map)) {
 						map[drawX, drawY] = ROOM_TYPE;
 					}
@@ -285,11 +410,11 @@ public class MapGenerator : MonoBehaviour {
 	private List<Coord> GetLine(Coord from, Coord to) {
 		List<Coord> line = new List<Coord> ();
 
-		int x = from.tileX;
-		int y = from.tileY;
+		int x = from.x;
+		int y = from.y;
 
-		int dx = to.tileX - from.tileX;
-		int dy = to.tileY - from.tileY;
+		int dx = to.x - from.x;
+		int dy = to.y - from.y;
 
 		bool inverted = false;
 		int step = Math.Sign (dx);
@@ -308,7 +433,7 @@ public class MapGenerator : MonoBehaviour {
 		}
 
 		int gradientAccumulation = longest / 2;
-		for (int i =0; i < longest; i ++) {
+		for (int i = 0; i < longest; i ++) {
 			line.Add(new Coord(x,y));
 
 			if (inverted) {
@@ -335,7 +460,7 @@ public class MapGenerator : MonoBehaviour {
 
 	// Just used be drawing a line for debugging
 	private Vector3 CoordToWorldPoint(Coord tile, int width, int height) {
-		return new Vector3 (-width / 2 + .5f + tile.tileX, 2, -height / 2 + .5f + tile.tileY);
+		return new Vector3 (-width / 2 + .5f + tile.x, 2, -height / 2 + .5f + tile.y);
 	}
 
 	private List<List<Coord>> GetRegions(int tileType, int[,] map) {
@@ -352,7 +477,7 @@ public class MapGenerator : MonoBehaviour {
 					regions.Add(newRegion);
 
 					foreach (Coord tile in newRegion) {
-						mapFlags[tile.tileX, tile.tileY] = counted;
+						mapFlags[tile.x, tile.y] = counted;
 					}
 				}
 			}
@@ -379,9 +504,9 @@ public class MapGenerator : MonoBehaviour {
 			Coord tile = queue.Dequeue();
 			tiles.Add(tile);
 
-			for (int x = tile.tileX - 1; x <= tile.tileX + 1; x++) {
-				for (int y = tile.tileY - 1; y <= tile.tileY + 1; y++) {
-					if (IsInMapRange(x,y, map) && (y == tile.tileY || x == tile.tileX)) {
+			for (int x = tile.x - 1; x <= tile.x + 1; x++) {
+				for (int y = tile.y - 1; y <= tile.y + 1; y++) {
+					if (IsInMapRange(x,y, map) && (y == tile.y || x == tile.x)) {
 						if (mapFlags[x,y] == notCounted && map[x,y] == tileType) {
 							mapFlags[x,y] = WALL_TYPE;
 							queue.Enqueue(new Coord(x,y));
@@ -455,16 +580,27 @@ public class MapGenerator : MonoBehaviour {
 	// Draw the gizmo of the map for debugging purposes.
 	void drawMap(int[,] map)
 	{
-		int width = map.GetLength(0);
-		int height = map.GetLength(1);
 		
-		if (mapToDraw != null)
-		{
-			for (int x = 0; x < width; x++)
-			{
-				for (int y = 0; y < height; y++)
-				{
-					Gizmos.color = (map[x, y] == 1) ? Color.black : Color.white;
+		if (mapToDraw != null) {
+			int width = map.GetLength(0);
+			int height = map.GetLength(1);
+
+			for (int x = 0; x < width; x++) {
+				for (int y = 0; y < height; y++) {
+					switch (map[x, y]) {
+						case WALL_TYPE:
+							Gizmos.color = Color.black;
+							break;
+						case ROOM_TYPE:
+							Gizmos.color = Color.white;
+							break;
+						case HALL_TYPE:
+							Gizmos.color = Color.gray;
+							break;
+						default:
+							Gizmos.color = Color.red;
+							break;
+					}
 					Vector3 pos = new Vector3(-width / 2 + x + .5f, 0, -height / 2 + y + .5f);
 					Gizmos.DrawCube(pos, Vector3.one);
 				}
@@ -479,12 +615,12 @@ public class MapGenerator : MonoBehaviour {
 	}
 
 	struct Coord {
-		public int tileX;
-		public int tileY;
+		public int x;
+		public int y;
 
 		public Coord(int x, int y) {
-			tileX = x;
-			tileY = y;
+			this.x = x;
+			this.y = y;
 		}
 	}
 
@@ -507,9 +643,9 @@ public class MapGenerator : MonoBehaviour {
 
 			edgeTiles = new List<Coord>();
 			foreach (Coord tile in tiles) {
-				for (int x = tile.tileX - 1; x <= tile.tileX + 1; x++) {
-					for (int y = tile.tileY - 1; y <= tile.tileY + 1; y++) {
-						if (x == tile.tileX || y == tile.tileY) {
+				for (int x = tile.x - 1; x <= tile.x + 1; x++) {
+					for (int y = tile.y - 1; y <= tile.y + 1; y++) {
+						if (x == tile.x || y == tile.y) {
 							if (map[x,y] == WALL_TYPE) {
 								edgeTiles.Add(tile);
 							}
