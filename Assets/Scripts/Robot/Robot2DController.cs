@@ -64,7 +64,7 @@ namespace Dora
         {
             _newCollisionSinceLastUpdate = true;
             _isCurrentlyColliding = true;
-            StopCurrentAction();
+            StopCurrentTask();
         }
 
         public void NotifyCollisionExit()
@@ -178,7 +178,7 @@ namespace Dora
         {
             if (_currentTask != null)
             {
-                StopCurrentAction();
+                StopCurrentTask();
                 return;
             }
             AssertRobotIsInIdleState("rotation");
@@ -190,7 +190,7 @@ namespace Dora
         {
             if (_currentTask != null)
             {
-                StopCurrentAction();
+                StopCurrentTask();
                 return;
             }
             var currentStatus = GetStatus();
@@ -200,13 +200,13 @@ namespace Dora
         }
         
         
-        public void MoveForward()
+        public void StartMovingForwards()
         {
             AssertRobotIsInIdleState("Moving Forwards");
             _currentTask = new MovementTask();
         }
 
-        public void MoveBackwards()
+        public void StartMovingBackwards()
         {
             AssertRobotIsInIdleState("Moving Forwards");
             _currentTask = new MovementTask(reverse:true);
@@ -225,7 +225,7 @@ namespace Dora
         }
         
         
-        public void StopCurrentAction()
+        public void StopCurrentTask()
         {
             _currentTask = null;
         }

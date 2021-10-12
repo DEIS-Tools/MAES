@@ -40,7 +40,7 @@ namespace Dora.Robot.ExplorationAlgorithm
                 }
                 else
                 {
-                    controller.MoveForward();
+                    controller.StartMovingForwards();
                     _hasJustRotated = false;
                 }
             }
