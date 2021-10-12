@@ -4,6 +4,10 @@ namespace Dora.Robot
     {
 
         void UpdateMotorPhysics(SimulationConfiguration config);
+        void UpdateLogic(SimulationConfiguration config);
+
+        // Returns true if the robot has encountered a new collision since the previous logic update
+        bool HasCollided();
         
         RobotStatus GetStatus();
         //void SenseSurroundings();

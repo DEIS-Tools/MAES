@@ -25,6 +25,7 @@ namespace Dora.Robot
         public void LogicUpdate(SimulationConfiguration config)
         {
             ExplorationAlgorithm.UpdateLogic(config);
+            movementController.UpdateLogic(config);
         }
 
         public void PhysicsUpdate(SimulationConfiguration config)
@@ -35,6 +36,12 @@ namespace Dora.Robot
         private void OnCollisionEnter2D(Collision2D other)
         {
             movementController.NotifyCollided();
+        }
+
+        private void OnCollisionExit2D(Collision2D other)
+        {
+            // TODO? Check that all collisions have exited before calling collision exit on controller
+            movementController.NotifyCollisionExit();
         }
 
         public object SaveState()

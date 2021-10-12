@@ -25,7 +25,21 @@ namespace Dora
 
         private RobotStatus _currentStatus = RobotStatus.Idle;
         [CanBeNull] private ITask _currentTask;
-        private bool _collisionFlag = false;
+        
+        // Whether the rigidbody is currently colliding with something
+        private bool _isCurrentlyColliding = false;
+        // Indicates whether the robot has entered a new collision since the previous logic update
+        private bool _newCollisionSinceLastUpdate = false;
+
+        // When the robot enters a collision (such as with a wall) the robot will only be notified of the
+        // collision upon initial impact. If the robot continues to drive into the wall,
+        // no further collision notifications will be received. To counteract this problem, the controller will 
+        // reissue the collision notification if the collision flag is not cleared and the robot is following an
+        // instruction to move forward. Because the acceleration of the robot is relatively slow, the collision
+        // exit may not be triggered until after a few physics updates. This variable determines how many physics
+        // updates to wait before re-declaring the collision.
+        private readonly int _movementUpdatesBeforeRedeclaringCollision = 2;
+        private int _physicsUpdatesSinceStartingMovement = 0;
 
         public Robot2DController(Rigidbody2D rigidbody, Transform transform, Transform leftWheel, Transform rightWheel)
         {
@@ -35,6 +49,29 @@ namespace Dora
             _rightWheel = rightWheel;
         }
         
+        public void UpdateLogic(SimulationConfiguration config)
+        {
+            // Clear the collision flag
+            _newCollisionSinceLastUpdate = false;
+        }
+
+        public bool HasCollided()
+        {
+            return _newCollisionSinceLastUpdate;
+        }
+        
+        public void NotifyCollided()
+        {
+            _newCollisionSinceLastUpdate = true;
+            _isCurrentlyColliding = true;
+            StopCurrentAction();
+        }
+
+        public void NotifyCollisionExit()
+        {
+            this._isCurrentlyColliding = false;
+        }
+
         public object SaveState()
         {
             throw new System.NotImplementedException();
@@ -63,18 +100,31 @@ namespace Dora
             _previousLeftWheelPosition = _leftWheel.position;
             _previousRightWheelPosition = _rightWheel.position;
 
-            // Update the current status to indicate whether the robot is currently moving
-            if (rightWheelVelocityVector.magnitude > 0.01f || leftWheelVelocityVector.magnitude > 0.01f)
+            // Update the current status to indicate whether the robot is currently moving, stopping or idle
+            if (_currentTask != null)
             {
+                // The robot is currently following an assigned task
                 _currentStatus = RobotStatus.Moving;
+            }else if (rightWheelVelocityVector.magnitude > 0.01f || leftWheelVelocityVector.magnitude > 0.01f)
+            {
+                // The robot is moving but is not following a task, it assumed to be in the process of stopping
+                _currentStatus = RobotStatus.Stopping;
             } else {
                 _currentStatus = RobotStatus.Idle;
             }
 
-            if (_collisionFlag)
+            var isAttemptingToMoveForwards = _currentTask is MovementTask;
+            if (_isCurrentlyColliding && isAttemptingToMoveForwards)
             {
-                _collisionFlag = false;
-                StopCurrentAction();
+                if (_physicsUpdatesSinceStartingMovement > _movementUpdatesBeforeRedeclaringCollision)
+                    NotifyCollided();
+                
+                _physicsUpdatesSinceStartingMovement += 1;
+            }
+            else
+            {
+                // Reset counter
+                _physicsUpdatesSinceStartingMovement = 0;
             }
 
             // Get directive from current task if present
@@ -152,22 +202,12 @@ namespace Dora
         
         public void MoveForward()
         {
-            if (_currentTask != null)
-            {
-                StopCurrentAction();
-                return;
-            }
             AssertRobotIsInIdleState("Moving Forwards");
             _currentTask = new MovementTask();
         }
 
         public void MoveBackwards()
         {
-            if (_currentTask != null)
-            {
-                StopCurrentAction();
-                return;
-            }
             AssertRobotIsInIdleState("Moving Forwards");
             _currentTask = new MovementTask(reverse:true);
         }
@@ -191,9 +231,6 @@ namespace Dora
         }
 
 
-        public void NotifyCollided()
-        {
-            this._collisionFlag = true;
-        }
+        
     }
 }
