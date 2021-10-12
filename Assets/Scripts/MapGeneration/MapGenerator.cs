@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
@@ -42,7 +43,7 @@ public class MapGenerator : MonoBehaviour {
 			var map = GenerateCaveMap(config, 
 										3.0f,
 										true);*/
-			var officeConfig = new OfficeMapConfig(50, 50, Time.time.ToString(), 1, 30, 5, 2, 3);
+			var officeConfig = new OfficeMapConfig(60, 60, Time.time.ToString(), 1, 8, 3, 5, 1, 60);
 			var map = GenerateOfficeMap(officeConfig, 3.0f, true);
 		}
 		
@@ -103,13 +104,17 @@ public class MapGenerator : MonoBehaviour {
 		// Clear and destroy objects from previous map
 		clearMap();
 
+		Random random = new Random(config.randomSeed.GetHashCode());
+
 		int[,] emptyMap = GenerateEmptyMap(config.width, config.height);
 
-		var mapWithHalls = GenerateMapWithHalls(emptyMap, config);
+		var mapWithHalls = GenerateMapWithHalls(emptyMap, config, random);
 
 		var mapWithWallsAroundOffices = AddWallAroundOfficeRegions(mapWithHalls, config);
+
+		var mapWithOfficeRooms = GenerateOfficeBetweenHalls(mapWithWallsAroundOffices, config, random);
 		
-		mapToDraw = mapWithWallsAroundOffices;
+		mapToDraw = mapWithOfficeRooms;
 
 
 		// Split house space into halls (Blocks of rooms)
@@ -122,16 +127,92 @@ public class MapGenerator : MonoBehaviour {
 		return mapWithHalls;
 	}
 
-	private int[,] GenerateOfficeBetweenHalls(int[,] oldMap, OfficeMapConfig config) {
+	private int[,] GenerateOfficeBetweenHalls(int[,] oldMap, OfficeMapConfig config, Random random) {
 		var mapWithOffices = oldMap.Clone() as int[,];
 		
 		List<List<Coord>> officeRegions = GetRegions(ROOM_TYPE, mapWithOffices);
+		
 
 		foreach (List<Coord> officeRegion in officeRegions) {
-			break;
+			SplitOfficeRegion(mapWithOffices, officeRegion, config, false, true, random);
 		}
 
 		return mapWithOffices;
+	}
+
+	// This function has side effects on the map!
+	private void SplitOfficeRegion(int[,] map, List<Coord> officeRegion, OfficeMapConfig config, bool splitOnXAxis, bool forceSplit, Random random) {
+		// Check if we want to split. This allows for different size offices
+		bool shouldSplit = random.Next(0, 100) <= config.officeSplitChance;
+
+		if (!shouldSplit && !forceSplit)
+			return;
+		
+		// Find where to split
+		// Rotate 90 degrees every time an office is split
+		// We either use the x axis or y axis as starting point
+		List<int> coords;
+		if (splitOnXAxis)
+			coords = officeRegion.Select(coord => coord.x).ToList();
+		else 
+			coords = officeRegion.Select(coord => coord.y).ToList();
+		
+		// Filter out coords that would be too close to the edges to allow for 2 rooms side by side according to config.minRoomSideLength
+		var sortedCoords = coords.OrderBy(c => c).ToList();
+		var smallestValue = sortedCoords[0];
+		var biggestValue = sortedCoords[sortedCoords.Count - 1];
+		
+		// +1 to allow for wall between office spaces
+		var filteredCoords = sortedCoords.FindAll(x => 
+			x + config.minRoomSideLength < biggestValue - config.minRoomSideLength && // Right side
+			x > smallestValue + config.minRoomSideLength
+		);
+		
+		// If no possible split on the current axis is possible, try the other one with guaranteed split
+		if (filteredCoords.Count == 0) {
+			// Force split only gets once chance to avoid stack overflow
+			if (!forceSplit) {
+				SplitOfficeRegion(map, officeRegion, config, !splitOnXAxis, true, random);
+			}
+			return;
+		}
+		
+		// Select random index to start the wall
+		var selectedIndex = random.Next(filteredCoords.Count);
+		var wallStartCoord = filteredCoords[selectedIndex];
+
+		// Create wall
+		if (splitOnXAxis) {
+			foreach (var c in officeRegion) {
+				if (c.x == wallStartCoord)
+					map[c.x, c.y] = WALL_TYPE;
+			}
+		}
+		else {
+			foreach (var c in officeRegion) {
+				if (c.y == wallStartCoord)
+					map[c.x, c.y] = WALL_TYPE;
+			}
+		}
+
+		// Get two new regions
+		List<Coord> newRegion1, newRegion2;
+		Coord region1Tile, region2Tile; // A random tile from each region. We use flooding algorithm to find the rest
+		if (splitOnXAxis) {
+			region1Tile = officeRegion.Find(c => c.x < wallStartCoord);
+			region2Tile = officeRegion.Find(c => c.x > wallStartCoord);
+		}
+		else {
+			region1Tile = officeRegion.Find(c => c.y < wallStartCoord);
+			region2Tile = officeRegion.Find(c => c.y > wallStartCoord);
+		}
+
+		newRegion1 = GetRegionTiles(region1Tile.x, region1Tile.y, map);
+		newRegion2 = GetRegionTiles(region2Tile.x, region2Tile.y, map);
+
+		// Run function recursively
+		SplitOfficeRegion(map, newRegion1, config, !splitOnXAxis, false, random);
+		SplitOfficeRegion(map, newRegion2, config, !splitOnXAxis, false, random);
 	}
 
 	private int[,] AddWallAroundOfficeRegions(int[,] oldMap, OfficeMapConfig config) {
@@ -159,16 +240,9 @@ public class MapGenerator : MonoBehaviour {
 		return mapWithOfficeWalls;
 	}
 	
-	// THIS FUNCTION HAS SIDE EFFECTS ON MAP
-	private void SplitRegionIntoOffices(int[,] map, OfficeMapConfig config) {
-		
-	}
-
-	private int[,] GenerateMapWithHalls(int[,] map, OfficeMapConfig config) {
+	private int[,] GenerateMapWithHalls(int[,] map, OfficeMapConfig config, Random random) {
 		var mapWithHalls = map.Clone() as int[,];
-
-		var random = new Random();
-
+		
 		// Rotate 90 degrees every time a hallway is generated
 		bool usingXAxis = true;
 		while (GetHallPercentage(mapWithHalls) < config.maxHallInPercent) {
@@ -187,9 +261,10 @@ public class MapGenerator : MonoBehaviour {
 			var sortedCoords = coords.OrderBy(c => c).ToList();
 			var smallestValue = sortedCoords[0];
 			var biggestValue = sortedCoords[sortedCoords.Count - 1];
+			// Plus 2 to allow for inner walls in the office spaces
 			var filteredCoords = sortedCoords.FindAll(x => 
-				x + config.hallWidth < biggestValue - config.hallWidth && // Right side
-				x > smallestValue + config.hallWidth
+				x + config.minRoomSideLength + 2 < biggestValue - config.minRoomSideLength + 2 && // Right side
+				x > smallestValue + config.minRoomSideLength + 2
 			);
 
 			if (filteredCoords.Count == 0) {
