@@ -208,7 +208,7 @@ namespace Dora
 
         public void StartMovingBackwards()
         {
-            AssertRobotIsInIdleState("Moving Forwards");
+            AssertRobotIsInIdleState("Moving Backwards");
             _currentTask = new MovementTask(reverse:true);
         }
 
