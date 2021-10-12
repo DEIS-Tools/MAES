@@ -42,7 +42,7 @@ public class MapGenerator : MonoBehaviour {
 			var map = GenerateCaveMap(config, 
 										3.0f,
 										true);*/
-			var officeConfig = new OfficeMapConfig(50, 50, Time.time.ToString(), 1, 30, 5, 2);
+			var officeConfig = new OfficeMapConfig(50, 50, Time.time.ToString(), 1, 30, 5, 2, 3);
 			var map = GenerateOfficeMap(officeConfig, 3.0f, true);
 		}
 		
@@ -106,8 +106,10 @@ public class MapGenerator : MonoBehaviour {
 		int[,] emptyMap = GenerateEmptyMap(config.width, config.height);
 
 		var mapWithHalls = GenerateMapWithHalls(emptyMap, config);
+
+		var mapWithWallsAroundOffices = AddWallAroundOfficeRegions(mapWithHalls, config);
 		
-		mapToDraw = mapWithHalls;
+		mapToDraw = mapWithWallsAroundOffices;
 
 
 		// Split house space into halls (Blocks of rooms)
@@ -120,11 +122,52 @@ public class MapGenerator : MonoBehaviour {
 		return mapWithHalls;
 	}
 
+	private int[,] GenerateOfficeBetweenHalls(int[,] oldMap, OfficeMapConfig config) {
+		var mapWithOffices = oldMap.Clone() as int[,];
+		
+		List<List<Coord>> officeRegions = GetRegions(ROOM_TYPE, mapWithOffices);
+
+		foreach (List<Coord> officeRegion in officeRegions) {
+			break;
+		}
+
+		return mapWithOffices;
+	}
+
+	private int[,] AddWallAroundOfficeRegions(int[,] oldMap, OfficeMapConfig config) {
+		var mapWithOfficeWalls = oldMap.Clone() as int[,];
+		
+		List<List<Coord>> officeRegions = GetRegions(ROOM_TYPE, mapWithOfficeWalls);
+
+		foreach (var region in officeRegions) {
+			// Get smallest and largest x and y
+			var sortedXsAsc = region.Select(c => c.x).ToList().OrderBy(x => x).ToList();
+			var sortedYsAsc = region.Select(c => c.y).ToList().OrderBy(y => y).ToList();
+
+			var smallestX = sortedXsAsc[0];
+			var biggestX = sortedXsAsc[sortedXsAsc.Count - 1];
+			var smallestY = sortedYsAsc[0];
+			var biggestY = sortedYsAsc[sortedYsAsc.Count - 1];
+
+			foreach (var coord in region) {
+				if (coord.x == smallestX || coord.x == biggestX || coord.y == smallestY || coord.y == biggestY) {
+					mapWithOfficeWalls[coord.x, coord.y] = WALL_TYPE;
+				}
+			}
+		}
+
+		return mapWithOfficeWalls;
+	}
+	
+	// THIS FUNCTION HAS SIDE EFFECTS ON MAP
+	private void SplitRegionIntoOffices(int[,] map, OfficeMapConfig config) {
+		
+	}
+
 	private int[,] GenerateMapWithHalls(int[,] map, OfficeMapConfig config) {
 		var mapWithHalls = map.Clone() as int[,];
 
 		var random = new Random();
-		
 
 		// Rotate 90 degrees every time a hallway is generated
 		bool usingXAxis = true;
@@ -144,7 +187,6 @@ public class MapGenerator : MonoBehaviour {
 			var sortedCoords = coords.OrderBy(c => c).ToList();
 			var smallestValue = sortedCoords[0];
 			var biggestValue = sortedCoords[sortedCoords.Count - 1];
-
 			var filteredCoords = sortedCoords.FindAll(x => 
 				x + config.hallWidth < biggestValue - config.hallWidth && // Right side
 				x > smallestValue + config.hallWidth
