@@ -53,6 +53,11 @@ namespace Dora.Robot
         {
             throw new System.NotImplementedException();
         }
+        
+        public void OnMouseDown()
+        {
+            CameraController.SingletonInstance.movementTransform = transform;
+        }
 
     }
 }

@@ -229,10 +229,5 @@ namespace Dora
         {
             _currentTask = null;
         }
-
-        public void OnMouseDown()
-        {
-            CameraController.SingletonInstance.movementTransform = transform;
-        }
     }
 }
