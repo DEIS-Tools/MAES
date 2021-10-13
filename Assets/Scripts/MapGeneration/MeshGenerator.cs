@@ -46,7 +46,7 @@ public class MeshGenerator : MonoBehaviour {
 		is2D = false;
 	}
 
-	public CollisionMap GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D)
+	public SimulationMap GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D)
 	{
 		this.is2D = is2D;
 		
@@ -96,7 +96,7 @@ public class MeshGenerator : MonoBehaviour {
 			CreateWallMesh(wallHeight);
 		}
 		
-		return new CollisionMap(new List<Vector3>(vertices), new List<int>(triangles), 
+		return new SimulationMap(new List<Vector3>(vertices), new List<int>(triangles), 
 			map.GetLength(0), map.GetLength(1), 
 			new Vector2(squareGrid.XOffset, squareGrid.YOffset), 
 			squareSize);
