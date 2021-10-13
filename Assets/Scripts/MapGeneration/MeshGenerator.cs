@@ -95,8 +95,11 @@ public class MeshGenerator : MonoBehaviour {
 		{
 			CreateWallMesh(wallHeight);
 		}
-
-		return new CollisionMap(new List<Vector3>(vertices), new List<int>(triangles));
+		
+		return new CollisionMap(new List<Vector3>(vertices), new List<int>(triangles), 
+			map.GetLength(0), map.GetLength(1), 
+			new Vector2(squareGrid.XOffset, squareGrid.YOffset), 
+			squareSize);
 
 	}
 	
@@ -398,6 +401,7 @@ public class MeshGenerator : MonoBehaviour {
 
 	public class SquareGrid {
 		public Square[,] squares;
+		public readonly float XOffset, YOffset;
 
 		public SquareGrid(int[,] map, float squareSize) {
 			int nodeCountX = map.GetLength(0);
@@ -408,10 +412,13 @@ public class MeshGenerator : MonoBehaviour {
 			// Create map of control nodes
 			ControlNode[,] controlNodes = new ControlNode[nodeCountX, nodeCountY];
 
+			XOffset = -mapWidth / 2 + squareSize / 2;
+			YOffset = -mapHeight / 2 + squareSize / 2;
+
 			for (int x = 0; x < nodeCountX; x ++) {
 				for (int y = 0; y < nodeCountY; y ++) {
 					// Divided by 2, since we start in 0,0 and can go both above and below 0.
-					Vector3 position = new Vector3(-mapWidth/2 + x * squareSize + squareSize/2, 0, -mapHeight / 2 + y * squareSize + squareSize / 2);
+					Vector3 position = new Vector3( x * squareSize + XOffset, 0, y * squareSize + YOffset);
 					controlNodes[x,y] = new ControlNode(position,map[x,y] == WALL_TYPE, squareSize);
 				}
 			}
