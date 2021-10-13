@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Dora.MapGeneration;
 using UnityEditor.UI;
 
 public class MeshGenerator : MonoBehaviour {
@@ -45,7 +46,7 @@ public class MeshGenerator : MonoBehaviour {
 		is2D = false;
 	}
 
-	public void GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D)
+	public CollisionMap GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D)
 	{
 		this.is2D = is2D;
 		
@@ -94,7 +95,9 @@ public class MeshGenerator : MonoBehaviour {
 		{
 			CreateWallMesh(wallHeight);
 		}
-		
+
+		return new CollisionMap(new List<Vector3>(vertices), new List<int>(triangles));
+
 	}
 	
 	void Generate2DColliders() {

@@ -10,6 +10,8 @@ namespace Dora.Robot
         public Transform leftWheelTransform;
         public Transform rightWheelTransform;
 
+        public int id = -1;
+
         // The controller that provides an interface for moving the robot
         public Robot2DController movementController { get; private set; }
 
