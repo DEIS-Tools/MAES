@@ -43,7 +43,7 @@ public class MapGenerator : MonoBehaviour {
 			var map = GenerateCaveMap(config, 
 										3.0f,
 										true);*/
-			var officeConfig = new OfficeMapConfig(60, 60, Time.time.ToString(), 1, 8, 3, 5, 1, 60);
+			var officeConfig = new OfficeMapConfig(60, 60, Time.time.ToString(), 1, 8, 3, 5, 4, 0, 65);
 			var map = GenerateOfficeMap(officeConfig, 3.0f, true);
 		}
 		
@@ -109,30 +109,200 @@ public class MapGenerator : MonoBehaviour {
 		int[,] emptyMap = GenerateEmptyMap(config.width, config.height);
 
 		var mapWithHalls = GenerateMapWithHalls(emptyMap, config, random);
-
+		
 		var mapWithWallsAroundOffices = AddWallAroundOfficeRegions(mapWithHalls, config);
 
-		var mapWithOfficeRooms = GenerateOfficeBetweenHalls(mapWithWallsAroundOffices, config, random);
-		
-		mapToDraw = mapWithOfficeRooms;
+		var mapWithOfficeRooms = GenerateOfficesBetweenHalls(mapWithWallsAroundOffices, config, random);
 
+		var closedHallwayMap = CloseOffHallwayEnds(mapWithOfficeRooms);
 
-		// Split house space into halls (Blocks of rooms)
-		// Rotate 90 degrees every time
-		
-		// Split the chunks (blocks of rooms) into smaller rooms. At random, do not to allow for large rooms
-		
+		// Offices and halls sorted according to biggest hall first. Biggest hall set to main room.
+		var rooms = GetSortedOfficeRooms(closedHallwayMap);
+
+		var connectedMap = ConnectOfficesToHall(rooms, closedHallwayMap, random, config);
+
+		mapToDraw = connectedMap;
+
 		// Create doors between rooms
+		
+		// Add borders
+		
+		// Add mesh
 
 		return mapWithHalls;
 	}
+	
+	private int[,] ConnectOfficesToHall(List<Room> sortedOffices, int[,] oldMap, Random random, OfficeMapConfig config) {
+		int[,] connectedMap = oldMap.Clone() as int[,];
+		// Whether the given room is connected to the main room
+		List<Room> connectedRooms = new List<Room>();
+		List<Room> nonConnectedRooms = new List<Room>();
+		
+		foreach (var room in sortedOffices) {
+			if (room.isAccessibleFromMainRoom) 
+				connectedRooms.Add(room);
+			else
+				nonConnectedRooms.Add(room);
+		}
 
-	private int[,] GenerateOfficeBetweenHalls(int[,] oldMap, OfficeMapConfig config, Random random) {
+		Debug.Log("Connected rooms: " + connectedRooms.Count + ", nonconnected rooms: " + nonConnectedRooms.Count);
+
+		if (nonConnectedRooms.Count == 0)
+			return connectedMap;
+		
+		foreach (Room cRoom in connectedRooms) {
+			foreach (var nRoom in nonConnectedRooms) {
+				if (cRoom == nRoom || cRoom.IsConnected(nRoom))
+					continue;
+				
+				// If they share any wall, they must be adjacent
+				var sharedWallTiles = cRoom.GetSharedWallTiles(nRoom);
+				if (sharedWallTiles.Count > 0) {
+					// Make door fill entire wall
+					/*foreach (var sharedTile in sharedWallTiles) {
+						connectedMap[sharedTile.x, sharedTile.y] = ROOM_TYPE;
+					}*/
+
+					int biggestXValue, smallestXValue;
+					int biggestYValue, smallestYValue;
+					
+					
+					sharedWallTiles.Sort((c1, c2) => c1.x - c2.x);
+					smallestXValue = sharedWallTiles[0].x;
+					biggestXValue = sharedWallTiles[sharedWallTiles.Count - 1].x;
+					sharedWallTiles.Sort((c1, c2) => c1.y - c2.y);
+					smallestYValue = sharedWallTiles[0].y;
+					biggestYValue = sharedWallTiles[sharedWallTiles.Count - 1].y;
+					
+					List<Coord> line;
+					int maxDoors = random.Next(1, 4);
+					if (smallestYValue == biggestYValue || smallestXValue == biggestXValue)
+						maxDoors = 1;
+					int doorsMade = 0;
+					int doorPadding = config.doorPadding;
+					
+					// A shared wall with the smallest y value
+					if (doorsMade < maxDoors) {
+						line = sharedWallTiles.FindAll(c => c.y == smallestYValue).ToList();
+						if (line.Count > config.doorWidth + (doorPadding * 2)) {
+							line.Sort((c1, c2) => c1.x - c2.x); // Ascending order
+							int doorStartingIndex = random.Next(0 + doorPadding, (line.Count - 1) - (int)config.doorWidth - doorPadding);
+							var doorStartingPoint = line[doorStartingIndex];
+							for (int i = 0; i < config.doorWidth; i++) {
+								connectedMap[doorStartingPoint.x + i, doorStartingPoint.y] = ROOM_TYPE;
+							}
+							Room.ConnectRooms(cRoom, nRoom);
+							doorsMade++;
+						}
+					}
+					
+					// Shared wall with the biggest y value
+					if (doorsMade < maxDoors) {
+						line = sharedWallTiles.FindAll(c => c.y == biggestYValue).ToList();
+						if (line.Count > config.doorWidth + (doorPadding * 2)) {
+							line.Sort((c1, c2) => c1.x - c2.x); // Ascending order
+							int doorStartingIndex = random.Next(0 + doorPadding, (line.Count - 1) - (int) config.doorWidth - doorPadding);
+							var doorStartingPoint = line[doorStartingIndex];
+							for (int i = 0; i < config.doorWidth; i++) {
+								connectedMap[doorStartingPoint.x + i, doorStartingPoint.y] = ROOM_TYPE;
+							}
+							Room.ConnectRooms(cRoom, nRoom);
+							doorsMade++;
+						}
+					}
+					
+					// A shared wall with the smallest x value
+					if (doorsMade < maxDoors) {
+						line = sharedWallTiles.FindAll(c => c.x == smallestXValue).ToList();
+						if (line.Count > config.doorWidth + (doorPadding * 2)) {
+							line.Sort((c1, c2) => c1.y - c2.y); // Ascending order
+							int doorStartingIndex = random.Next(0 + doorPadding, (line.Count - 1) - (int)config.doorWidth - doorPadding);
+							var doorStartingPoint = line[doorStartingIndex];
+							for (int i = 0; i < config.doorWidth; i++) {
+								connectedMap[doorStartingPoint.x, doorStartingPoint.y + i] = ROOM_TYPE;
+							}
+							Room.ConnectRooms(cRoom, nRoom);
+							doorsMade++;
+						}
+					}
+					
+					// A shared wall with the biggest x value
+					if (doorsMade < maxDoors) {
+						line = sharedWallTiles.FindAll(c => c.x == biggestXValue).ToList();
+						if (line.Count > config.doorWidth + (doorPadding * 2)) {
+							line.Sort((c1, c2) => c1.y - c2.y); // Ascending order
+							int doorStartingIndex = random.Next(0 + doorPadding, (line.Count - 1) - (int)config.doorWidth - doorPadding);
+							var doorStartingPoint = line[doorStartingIndex];
+							for (int i = 0; i < config.doorWidth; i++) {
+								connectedMap[doorStartingPoint.x, doorStartingPoint.y + i] = ROOM_TYPE;
+							}
+							Room.ConnectRooms(cRoom, nRoom);
+							doorsMade++;
+						}
+					}
+				}
+			}
+		}
+		
+		Debug.Log("Connected rooms: " + connectedRooms.Count + ", nonconnected rooms: " + nonConnectedRooms.Count);
+		
+		connectedMap = ConnectOfficesToHall(sortedOffices, connectedMap, random, config);
+		
+		return connectedMap;
+	}
+
+	private List<Room> GetSortedOfficeRooms(int[,] map) {
+		List<List<Coord>> roomRegions = GetRegions(map, ROOM_TYPE, HALL_TYPE);
+
+		List<Room> offices = new List<Room>();
+		foreach (var region in roomRegions) {
+			offices.Add(new Room(region, map));
+		}
+		
+		// Sort by first tiletype = Hall, then size
+		// Descending order. Hallway > other room types
+		offices.Sort((o1, o2) => {
+			var o1x = o1.tiles[0].x;
+			var o1y = o1.tiles[0].y;
+			var o2x = o2.tiles[0].x;
+			var o2y = o2.tiles[0].y;
+			if (map[o1x, o1y] != map[o2x, o2y])
+				if (map[o1x, o1y] == HALL_TYPE && map[o2x, o2y] != HALL_TYPE)
+					return -1;
+				else if (map[o1x, o1y] != HALL_TYPE && map[o2x, o2y] == HALL_TYPE)
+					return 1;
+
+			return o2.roomSize - o1.roomSize;
+		});
+		// This should now be the biggest hallway
+		offices[0].isMainRoom = true;
+		offices[0].isAccessibleFromMainRoom = true;
+
+		return offices;
+	}
+
+	private int[,] CloseOffHallwayEnds(int[,] oldMap) {
+		var map = oldMap.Clone() as int[,];
+		
+		var mapWidth = map.GetLength(0);
+		var mapHeight = map.GetLength(1);
+
+		for (int x = 0; x < mapWidth; x++) {
+			for (int y = 0; y < mapHeight; y++) {
+				if (x == mapWidth - 1 || x == 0 || y == 0 || y == mapHeight - 1) {
+					map[x, y] = WALL_TYPE;
+				}
+			}
+		}
+
+		return map;
+	}
+
+	private int[,] GenerateOfficesBetweenHalls(int[,] oldMap, OfficeMapConfig config, Random random) {
 		var mapWithOffices = oldMap.Clone() as int[,];
 		
-		List<List<Coord>> officeRegions = GetRegions(ROOM_TYPE, mapWithOffices);
+		List<List<Coord>> officeRegions = GetRegions(mapWithOffices, ROOM_TYPE);
 		
-
 		foreach (List<Coord> officeRegion in officeRegions) {
 			SplitOfficeRegion(mapWithOffices, officeRegion, config, false, true, random);
 		}
@@ -218,7 +388,7 @@ public class MapGenerator : MonoBehaviour {
 	private int[,] AddWallAroundOfficeRegions(int[,] oldMap, OfficeMapConfig config) {
 		var mapWithOfficeWalls = oldMap.Clone() as int[,];
 		
-		List<List<Coord>> officeRegions = GetRegions(ROOM_TYPE, mapWithOfficeWalls);
+		List<List<Coord>> officeRegions = GetRegions(mapWithOfficeWalls, ROOM_TYPE);
 
 		foreach (var region in officeRegions) {
 			// Get smallest and largest x and y
@@ -247,7 +417,7 @@ public class MapGenerator : MonoBehaviour {
 		bool usingXAxis = true;
 		while (GetHallPercentage(mapWithHalls) < config.maxHallInPercent) {
 			// We always split the currently biggest room
-			List<List<Coord>> roomRegions = GetRegions(ROOM_TYPE, mapWithHalls);
+			List<List<Coord>> roomRegions = GetRegions(mapWithHalls, ROOM_TYPE);
 			List<Coord> biggestRoom = roomRegions.OrderByDescending(l => l.Count).ToList()[0];
 			
 			// We either use the x axis or y axis as starting point
@@ -365,7 +535,6 @@ public class MapGenerator : MonoBehaviour {
 		var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(caveConfig.wallThresholdSize, 
 																							caveConfig.roomThresholdSize, 
 																							smoothedMap);
-
 		// Connect all rooms to main (the biggest) room
 		var connectedMap = ConnectAllRoomsToMainRoom(survivingRooms, cleanedMap, caveConfig);
 
@@ -407,7 +576,7 @@ public class MapGenerator : MonoBehaviour {
 	(List<Room> surviningRooms, int[,] map) RemoveRoomsAndWallsBelowThreshold(int wallThreshold, int roomThreshold, int[,] map)
 	{
 		var cleanedMap = map.Clone() as int[,];
-		List<List<Coord>> wallRegions = GetRegions(WALL_TYPE, cleanedMap);
+		List<List<Coord>> wallRegions = GetRegions(cleanedMap, WALL_TYPE);
 
 		foreach (List<Coord> wallRegion in wallRegions) {
 			if (wallRegion.Count < wallThreshold) {
@@ -417,7 +586,7 @@ public class MapGenerator : MonoBehaviour {
 			}
 		}
 
-		List<List<Coord>> roomRegions = GetRegions (ROOM_TYPE, cleanedMap);
+		List<List<Coord>> roomRegions = GetRegions (cleanedMap, ROOM_TYPE);
 		List<Room> survivingRooms = new List<Room> ();
 		
 		foreach (List<Coord> roomRegion in roomRegions) {
@@ -441,10 +610,10 @@ public class MapGenerator : MonoBehaviour {
 		survivingRooms[0].isMainRoom = true;
 		survivingRooms[0].isAccessibleFromMainRoom = true;
 
-		return ConnectClosestRooms(survivingRooms, connectedMap, config);
+		return ConnectClosestRooms(survivingRooms, connectedMap, config.connectionPassagesWidth);
 	}
 
-	private int[,] ConnectClosestRooms(List<Room> allRooms, int[,] map, CaveMapConfig config)
+	private int[,] ConnectClosestRooms(List<Room> allRooms, int[,] map, int passageWidth)
 	{
 		int[,] connectedMap = map.Clone() as int[,];
 		List<Room> roomListA = new List<Room>();
@@ -453,9 +622,9 @@ public class MapGenerator : MonoBehaviour {
 		
 		foreach (Room room in allRooms) {
 			if (room.isAccessibleFromMainRoom) {
-				roomListB.Add (room);
+				roomListB.Add(room);
 			} else {
-				roomListA.Add (room);
+				roomListA.Add(room);
 			}
 		}
 		
@@ -493,20 +662,20 @@ public class MapGenerator : MonoBehaviour {
 		}
 
 		if (possibleConnectionFound) {
-			CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB, connectedMap, config);
-			connectedMap = ConnectClosestRooms(allRooms, connectedMap, config);
+			CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB, connectedMap, passageWidth);
+			connectedMap = ConnectClosestRooms(allRooms, connectedMap, passageWidth);
 		}
 
 		return connectedMap;
 	}
 
-	void CreatePassage(Room roomA, Room roomB, Coord tileA, Coord tileB, int[,] map, CaveMapConfig config) {
+	void CreatePassage(Room roomA, Room roomB, Coord tileA, Coord tileB, int[,] map, int passageWidth) {
 		Room.ConnectRooms (roomA, roomB);
 		// Debug.DrawLine (CoordToWorldPoint (tileA), CoordToWorldPoint (tileB), Color.green, 10);
 
 		List<Coord> line = GetLine(tileA, tileB);
 		foreach (Coord c in line) {
-			MakeRoomOfLine(c, config.connectionPassagesWidth, map);
+			MakeRoomOfLine(c, passageWidth, map);
 		}
 	}
 
@@ -580,7 +749,7 @@ public class MapGenerator : MonoBehaviour {
 		return new Vector3 (-width / 2 + .5f + tile.x, 2, -height / 2 + .5f + tile.y);
 	}
 
-	private List<List<Coord>> GetRegions(int tileType, int[,] map) {
+	private List<List<Coord>> GetRegions(int[,] map, params int[] tileTypes) {
 		List<List<Coord>> regions = new List<List<Coord>> ();
 		// Flags if a given coordinate has already been accounted for
 		// 1 = yes, 0 = no
@@ -589,7 +758,7 @@ public class MapGenerator : MonoBehaviour {
 
 		for (int x = 0; x < map.GetLength(0); x ++) {
 			for (int y = 0; y < map.GetLength(1); y ++) {
-				if (mapFlags[x,y] == notCounted && map[x,y] == tileType) {
+				if (mapFlags[x,y] == notCounted && tileTypes.Contains(map[x,y])) {
 					List<Coord> newRegion = GetRegionTiles(x,y, map);
 					regions.Add(newRegion);
 
@@ -739,11 +908,54 @@ public class MapGenerator : MonoBehaviour {
 			this.x = x;
 			this.y = y;
 		}
+
+		public bool Equals(Coord other) {
+			return x == other.x && y == other.y;
+		}
+
+		public override bool Equals(object obj) {
+			return obj is Coord other && Equals(other);
+		}
+
+		public override int GetHashCode() {
+			unchecked {
+				return (x * 397) ^ y;
+			}
+		}
+
+		public List<Coord> GetAdjacentCoords() {
+			List<Coord> adjacentTiles = new List<Coord>();
+			for (int x = this.x - 1; x <= this.x + 1; x++) {
+				for (int y = this.y - 1; y <= this.y + 1; y++) {
+					if (x == this.x || y == this.y) {	
+						adjacentTiles.Add(new Coord(x, y));
+					}
+				}
+			}
+
+			return adjacentTiles;
+		}
+
+		public bool IsAdjacentTo(Coord other) {
+			if ((x + 1 == other.x || x - 1 == other.x) && y == other.y) {
+				return true;
+			}
+			if ((y + 1 == other.y || y - 1 == other.y) && x == other.x) {
+				return true;
+			}
+
+			return false;
+		}
+
+		public int ManhattanDistanceTo(Coord other) {
+			return Math.Abs(this.x - other.x) + Math.Abs(this.y - other.y);
+		}
 	}
 
 
 	class Room : IComparable<Room> {
 		public List<Coord> tiles;
+		// The tiles next to the walls surrounding the room
 		public List<Coord> edgeTiles;
 		public List<Room> connectedRooms;
 		public int roomSize;
@@ -757,7 +969,7 @@ public class MapGenerator : MonoBehaviour {
 			tiles = roomTiles;
 			roomSize = tiles.Count;
 			connectedRooms = new List<Room>();
-
+			
 			edgeTiles = new List<Coord>();
 			foreach (Coord tile in tiles) {
 				for (int x = tile.x - 1; x <= tile.x + 1; x++) {
@@ -772,6 +984,63 @@ public class MapGenerator : MonoBehaviour {
 			}
 		}
 
+		public bool IsWithinRangeOf(Room other, int range) {
+			foreach (var tile in this.edgeTiles) {
+				foreach (var oTile in other.edgeTiles) {
+					if (tile.ManhattanDistanceTo(oTile) <= range)
+						return true;
+				}
+			}
+
+			return false;
+		}
+		
+		public List<Coord> GetWallSurroundingRoom(int wallThickness = 1) {
+			var surroundingWalls = new List<Coord>();
+			
+			int smallestXValue, biggestXValue;
+			int smallestYValue, biggestYValue;
+			
+			// x values in ascending order
+			tiles.Sort((c1, c2) => c1.x - c2.x);
+			smallestXValue = tiles[0].x;
+			biggestXValue = tiles[tiles.Count - 1].x;
+			// Sorted by y values in ascending order
+			tiles.Sort((c1,c2) => c1.y - c2.y);
+			smallestYValue = tiles[0].y;
+			biggestYValue = tiles[tiles.Count - 1].y;
+			
+			for (int x = smallestXValue - wallThickness; x <= biggestXValue + wallThickness; x++) {
+				for (int y = smallestYValue - wallThickness; y <= biggestYValue + wallThickness; y++) {
+					// If adjacent with a tile, but not in tiles
+					var c = new Coord(x, y);
+					foreach (var t in this.edgeTiles) {
+						// It must not be part of the room, but adjacent to a tile in the room
+						if (c.IsAdjacentTo(t) && !this.tiles.Contains(c)) {
+							surroundingWalls.Add(c);
+						}
+					}
+				}
+			}
+
+			return surroundingWalls;
+		}
+
+		public List<Coord> GetSharedWallTiles(Room other, int wallThickness = 1) {
+			var walls = this.GetWallSurroundingRoom(wallThickness);
+			var otherWalls = other.GetWallSurroundingRoom(wallThickness);
+
+			var intersect = walls.Intersect(otherWalls).ToList();
+
+			foreach (var p in intersect) {
+				if (p.x > 59 || p.y > 59) {
+					Debug.Log("Too large point at x:" + p.x + ", y:" + p.y);
+				}
+			}
+
+			return walls.Intersect(otherWalls).ToList();
+		}
+		
 		public void SetAccessibleFromMainRoom() {
 			if (!isAccessibleFromMainRoom) {
 				isAccessibleFromMainRoom = true;
@@ -783,12 +1052,12 @@ public class MapGenerator : MonoBehaviour {
 
 		public static void ConnectRooms(Room roomA, Room roomB) {
 			if (roomA.isAccessibleFromMainRoom) {
-				roomB.SetAccessibleFromMainRoom ();
+				roomB.SetAccessibleFromMainRoom();
 			} else if (roomB.isAccessibleFromMainRoom) {
 				roomA.SetAccessibleFromMainRoom();
 			}
-			roomA.connectedRooms.Add (roomB);
-			roomB.connectedRooms.Add (roomA);
+			roomA.connectedRooms.Add(roomB);
+			roomB.connectedRooms.Add(roomA);
 		}
 
 		public bool IsConnected(Room otherRoom) {
@@ -796,7 +1065,7 @@ public class MapGenerator : MonoBehaviour {
 		}
 
 		public int CompareTo(Room otherRoom) {
-			return otherRoom.roomSize.CompareTo (roomSize);
+			return otherRoom.roomSize.CompareTo(roomSize);
 		}
 	}
 

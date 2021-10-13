@@ -15,12 +15,13 @@ namespace Dora.MapGeneration
 
         public float hallWidth;
         public float minRoomSideLength;
-        public float doorWidth;
+        public uint doorWidth;
+        public int doorPadding;
         // Value in [0,100] determining the likelihood of an office being split
         // Higher value = more but smaller rooms.
         public uint officeSplitChance;
 
-        public OfficeMapConfig(int width, int height, string randomSeed, float minSplittableArea, float maxHallInPercent, float hallWidth, float minRoomSideLength, float doorWidth, uint officeSplitChance) {
+        public OfficeMapConfig(int width, int height, string randomSeed, float minSplittableArea, float maxHallInPercent, float hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint officeSplitChance) {
             if (doorWidth > minRoomSideLength) {
                 throw new ArgumentOutOfRangeException("Door width cannot be bigger than the smallest side lenght of rooms");
             }
@@ -37,6 +38,7 @@ namespace Dora.MapGeneration
             this.hallWidth = hallWidth;
             this.minRoomSideLength = minRoomSideLength;
             this.doorWidth = doorWidth;
+            this.doorPadding = doorPadding;
             this.officeSplitChance = officeSplitChance;
         }
     }
