@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Dora.MapGeneration;
 using UnityEditor.UI;
 
@@ -46,7 +47,7 @@ public class MeshGenerator : MonoBehaviour {
 		is2D = false;
 	}
 
-	public SimulationMap GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D)
+	public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D)
 	{
 		this.is2D = is2D;
 		
@@ -96,11 +97,33 @@ public class MeshGenerator : MonoBehaviour {
 			CreateWallMesh(wallHeight);
 		}
 		
-		return new SimulationMap(new List<Vector3>(vertices), new List<int>(triangles), 
+		return GenerateCollisionMap(new List<Vector3>(vertices), new List<int>(triangles), 
 			map.GetLength(0), map.GetLength(1), 
 			new Vector2(squareGrid.XOffset, squareGrid.YOffset), 
 			squareSize);
+	}
 
+	private SimulationMap<bool> GenerateCollisionMap(List<Vector3> vertices, List<int> collisionTriangles, int width, int height, Vector3 offset, float mapScale)
+	{
+		// Create a bool type SimulationMap with default value of false in all cells
+		SimulationMap<bool> collisionMap = new SimulationMap<bool>(() => false, width, height, mapScale, offset);
+		
+		var totalTriangles = collisionTriangles.Count / 3;
+		for (int triangleNumber = 0; triangleNumber < totalTriangles; triangleNumber++)
+		{
+			var index = triangleNumber * 3;
+			var v1 = vertices[collisionTriangles[index]];
+			var v2 = vertices[collisionTriangles[index + 1]];
+			var v3 = vertices[collisionTriangles[index + 2]];
+
+			// Find the centroid of the triangle
+			var triangleCenter = (v1 + v2 + v3) / 3.0f;
+			// Mark the corresponding map triangle as collidable
+			collisionMap.SetCell(triangleCenter, true);
+
+		}
+
+		return collisionMap;
 	}
 	
 	void Generate2DColliders() {

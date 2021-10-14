@@ -9,13 +9,17 @@ namespace Dora.MapGeneration
     // A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles
     public class SimulationMap<TCell>
     {
-        private readonly int _width, _height;
+        public readonly int Width, Height;
+        public readonly float Scale;
+        public readonly Vector2 Offset;
         private readonly SimulationMapTile<TCell>[,] _tiles;
         
-        public SimulationMap(Functional.Factory<TCell> cellFactory, int width, int height)
+        public SimulationMap(Functional.Factory<TCell> cellFactory, int width, int height, float scale, Vector2 offset)
         {
-            _width = width;
-            _height = height;
+            this.Offset = Offset;
+            this.Scale = scale;
+            this.Width = width;
+            this.Height = height;
             _tiles = new SimulationMapTile<TCell>[width, height];
             for (int x = 0; x < width; x++)
             {
@@ -27,59 +31,63 @@ namespace Dora.MapGeneration
         }
 
         // Private constructor for a pre-specified set of tiles. This is used in the fmap function
-        private SimulationMap(SimulationMapTile<TCell>[,] tiles)
+        private SimulationMap(SimulationMapTile<TCell>[,] tiles, float scale, Vector2 offset)
         {
+            this.Offset = offset;
             _tiles = tiles;
-            _width = tiles.GetLength(0);
-            _height = tiles.GetLength(1);
+            Width = tiles.GetLength(0);
+            Height = tiles.GetLength(1);
+        }
+
+        // Returns the triangle cell at the given world position
+        public TCell GetCell(Vector2 coordinate)
+        {
+            var localCoordinate = ToLocalMapCoordinate(coordinate);
+            var tile = _tiles[(int) coordinate.x, (int) coordinate.y];
+            return tile.GetTriangleCellByCoordinateDecimals(coordinate.x % 1.0f, coordinate.y % 1.0f);
+        }
+
+        public void SetCell(Vector2 coordinate, TCell newCell)
+        {
+            var localCoordinate = ToLocalMapCoordinate(coordinate);
+            var tile = _tiles[(int) coordinate.x, (int) coordinate.y];
+            tile.SetTriangleCellByCoordinateDecimals(coordinate.x % 1.0f, coordinate.y % 1.0f, newCell);
+        }
+
+        // Takes a world coordinates and removes the offset and scale to translate it to a local map coordinate
+        private Vector2 ToLocalMapCoordinate(Vector2 worldCoordinate)
+        {
+            var localCoordinate = (worldCoordinate - Offset) / Scale;
+            if (!IsWithinLocalMapBounds(localCoordinate))
+            {
+                throw new ArgumentException("The given coordinate " + localCoordinate 
+                                            + "(World coordinate:" + worldCoordinate + " )" 
+                                            + " is not within map bounds: {" + Width + ", " + Height + "}");
+            }
+
+            return localCoordinate;
+        }
+
+        private bool IsWithinLocalMapBounds(Vector2 localCoordinates)
+        {
+            return localCoordinates.x >= 0.0f && localCoordinates.x < Width
+                   && localCoordinates.y >= 0f && localCoordinates.y < Height; 
         }
 
         // Generates a new SimulationMap<T2> by mapping the given function over all cells
         public SimulationMap<TNewCell> FMap<TNewCell>(Func<TCell, TNewCell> mapper)
         {
             // TODO: Magnus - Define the mapping function for the SimulationMap and SimulationMapTile
-            SimulationMapTile<TNewCell>[,] mappedTiles = new SimulationMapTile<TNewCell>[_width, _height];
-            for (int x = 0; x < _width; x++)
+            SimulationMapTile<TNewCell>[,] mappedTiles = new SimulationMapTile<TNewCell>[Width, Height];
+            for (int x = 0; x < Width; x++)
             {
-                for (int y = 0; y < _height; y++)
+                for (int y = 0; y < Height; y++)
                 {
                     mappedTiles[x, y] = _tiles[x, y].FMap(mapper);
                 }
             }
 
-            return new SimulationMap<TNewCell>(mappedTiles);
+            return new SimulationMap<TNewCell>(mappedTiles, this.Scale, this.Offset);
         }
-        
-        /*public SimulationMap(List<Vector3> vertices, List<int> collisionTriangles, int width, int height, Vector3 offset, float mapScale)
-        {
-            _scale = mapScale;
-            _cells = new SimulationMapCell[width, height];
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    _cells[x, y] = new SimulationMapCell();
-                }
-            }
-
-            var translatedVertices = (from v in vertices select (v - offset) / _scale).ToList();
-            var totalTriangles = collisionTriangles.Count / 3;
-            for (int triangleNumber = 0; triangleNumber < totalTriangles; triangleNumber++)
-            {
-                var index = triangleNumber * 3;
-                var v1 = translatedVertices[collisionTriangles[index]];
-                var v2 = translatedVertices[collisionTriangles[index + 1]];
-                var v3 = translatedVertices[collisionTriangles[index + 2]];
-                
-                // Find the centroid of the triangle
-                var triangleCenter = (v1 + v2 + v3) / 3.0f;
-                // Mark the corresponding map triangle as collidable
-                _cells[(int) triangleCenter.x, (int) triangleCenter.y]
-                    .MarkTriangleAsCollidable(triangleCenter.x % 1.0f, triangleCenter.y % 1.0f);
-            }
-        }*/
-
-        
-        
     }
 }
