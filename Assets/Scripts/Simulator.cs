@@ -45,18 +45,23 @@ namespace Dora
 
         private void GenerateSimulation()
         {
-            var map = MapGenerator.GenerateMap(50,
-                50,
-                Time.time.ToString(), 
-                48, 
-                5, 
-                10, 
-                10, 
-                1, 
-                1, 
-                2, 
-                3f,
-                true);
+            /*
+            var config = new CaveMapConfig(100,
+                100,
+                Time.time.ToString(),
+                4,
+                2,
+                48,
+                10,
+                1,
+                1,
+                2);
+            var map = MapGenerator.GenerateCaveMap(config, 
+                3.0f,
+                true);*/
+            
+            var officeConfig = new OfficeMapConfig(60, 60, Time.time.ToString(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
+            var map = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);
             
             RobotSpawner.SpawnRobots();
         }
