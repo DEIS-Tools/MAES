@@ -13,7 +13,7 @@ namespace Dora.MapGeneration
             ///  |4/5|6\7|
             ///  |0\1|2/3|
             private List<TCell> _triangleCells = new List<TCell>();
-
+            
             public SimulationMapTile(Functional.Factory<TCell> cellFactory)
             {
                 for (int i = 0; i < 8; i++)
@@ -26,6 +26,7 @@ namespace Dora.MapGeneration
             {
                 this._triangleCells = cells;
             }
+            
             
             public SimulationMapTile<TNewCell> FMap<TNewCell>(Func<TCell,TNewCell> mapper)
             {
@@ -46,7 +47,8 @@ namespace Dora.MapGeneration
             {
                 _triangleCells[CoordinateDecimalsToTriangleIndex(xDecimals, yDecimals)] = newCell;
             }
-
+            
+            
             private int CoordinateDecimalsToTriangleIndex(float xDecimal, float yDecimal)
             {
                 if (xDecimal < 0.0f || xDecimal > 1.0f || yDecimal < 0.0f || yDecimal > 1.0f)

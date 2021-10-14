@@ -7,11 +7,17 @@ using UnityEngine;
 namespace Dora.MapGeneration
 {
     // A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles
+    // This matches the structure of the map exported by the MapGenerator
     public class SimulationMap<TCell>
     {
+        // The width / height of the map measured in tiles
         public readonly int Width, Height;
+        
+        // The scale of the map in world space
         public readonly float Scale;
+        // The scaled offset in world space
         public readonly Vector2 Offset;
+        
         private readonly SimulationMapTile<TCell>[,] _tiles;
         
         public SimulationMap(Functional.Factory<TCell> cellFactory, int width, int height, float scale, Vector2 offset)
@@ -65,10 +71,10 @@ namespace Dora.MapGeneration
                                             + "(World coordinate:" + worldCoordinate + " )" 
                                             + " is not within map bounds: {" + Width + ", " + Height + "}");
             }
-
             return localCoordinate;
         }
         
+        // Checks that the given coordinates are within the local map bounds
         private bool IsWithinLocalMapBounds(Vector2 localCoordinates)
         {
             return localCoordinates.x >= 0.0f && localCoordinates.x < Width
@@ -86,7 +92,6 @@ namespace Dora.MapGeneration
                     mappedTiles[x, y] = _tiles[x, y].FMap(mapper);
                 }
             }
-
             return new SimulationMap<TNewCell>(mappedTiles, this.Scale, this.Offset);
         }
     }
