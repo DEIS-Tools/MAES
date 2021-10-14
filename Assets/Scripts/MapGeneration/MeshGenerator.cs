@@ -120,7 +120,6 @@ public class MeshGenerator : MonoBehaviour {
 			var triangleCenter = (v1 + v2 + v3) / 3.0f;
 			// Mark the corresponding map triangle as collidable
 			collisionMap.SetCell(triangleCenter, true);
-
 		}
 
 		return collisionMap;

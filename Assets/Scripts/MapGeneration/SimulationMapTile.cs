@@ -18,7 +18,7 @@ namespace Dora.MapGeneration
             {
                 for (int i = 0; i < 8; i++)
                 {
-                    _triangleCells[i] = cellFactory();
+                    _triangleCells.Add(cellFactory());
                 }
             }
 
@@ -40,9 +40,8 @@ namespace Dora.MapGeneration
             public TCell GetTriangleCellByCoordinateDecimals(float xDecimals, float yDecimals)
             {
                 return _triangleCells[CoordinateDecimalsToTriangleIndex(xDecimals, yDecimals)];
-            } 
-            
-            
+            }
+
             public void SetTriangleCellByCoordinateDecimals(float xDecimals, float yDecimals, TCell newCell)
             {
                 _triangleCells[CoordinateDecimalsToTriangleIndex(xDecimals, yDecimals)] = newCell;
@@ -51,7 +50,8 @@ namespace Dora.MapGeneration
             private int CoordinateDecimalsToTriangleIndex(float xDecimal, float yDecimal)
             {
                 if (xDecimal < 0.0f || xDecimal > 1.0f || yDecimal < 0.0f || yDecimal > 1.0f)
-                    throw new ArgumentException("Coordinate decimals must be between 0.0 and 1.0");
+                    throw new ArgumentException("Coordinate decimals must be between 0.0 and 1.0. " +
+                                                "Coordinates were: (" + xDecimal + ", " + yDecimal + " )");
 
                 var index = 0;
 

@@ -16,7 +16,7 @@ namespace Dora.MapGeneration
         
         public SimulationMap(Functional.Factory<TCell> cellFactory, int width, int height, float scale, Vector2 offset)
         {
-            this.Offset = Offset;
+            this.Offset = offset;
             this.Scale = scale;
             this.Width = width;
             this.Height = height;
@@ -42,16 +42,17 @@ namespace Dora.MapGeneration
         // Returns the triangle cell at the given world position
         public TCell GetCell(Vector2 coordinate)
         {
-            var localCoordinate = ToLocalMapCoordinate(coordinate);
-            var tile = _tiles[(int) coordinate.x, (int) coordinate.y];
-            return tile.GetTriangleCellByCoordinateDecimals(coordinate.x % 1.0f, coordinate.y % 1.0f);
+            var localCoordinate = ToLocalMapCoordinate(coordinate); 
+            var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
+            return tile.GetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
         }
 
+        // Assigns the given value to the triangle cell at the given coordinate
         public void SetCell(Vector2 coordinate, TCell newCell)
         {
-            var localCoordinate = ToLocalMapCoordinate(coordinate);
-            var tile = _tiles[(int) coordinate.x, (int) coordinate.y];
-            tile.SetTriangleCellByCoordinateDecimals(coordinate.x % 1.0f, coordinate.y % 1.0f, newCell);
+            var localCoordinate = ToLocalMapCoordinate(coordinate); 
+            var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
+            tile.SetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f, newCell);
         }
 
         // Takes a world coordinates and removes the offset and scale to translate it to a local map coordinate
@@ -67,7 +68,7 @@ namespace Dora.MapGeneration
 
             return localCoordinate;
         }
-
+        
         private bool IsWithinLocalMapBounds(Vector2 localCoordinates)
         {
             return localCoordinates.x >= 0.0f && localCoordinates.x < Width
@@ -77,7 +78,6 @@ namespace Dora.MapGeneration
         // Generates a new SimulationMap<T2> by mapping the given function over all cells
         public SimulationMap<TNewCell> FMap<TNewCell>(Func<TCell, TNewCell> mapper)
         {
-            // TODO: Magnus - Define the mapping function for the SimulationMap and SimulationMapTile
             SimulationMapTile<TNewCell>[,] mappedTiles = new SimulationMapTile<TNewCell>[Width, Height];
             for (int x = 0; x < Width; x++)
             {
