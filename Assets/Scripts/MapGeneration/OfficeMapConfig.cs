@@ -9,37 +9,40 @@ namespace Dora.MapGeneration
 
         public string randomSeed;
 
-        public float minSplittableArea;
-        
         public float maxHallInPercent;
 
-        public float hallWidth;
+        public int hallWidth;
         public float minRoomSideLength;
         public uint doorWidth;
         public int doorPadding;
         // Value in [0,100] determining the likelihood of an office being split
         // Higher value = more but smaller rooms.
-        public uint officeSplitChance;
+        public uint officeSplitChancePercent;
 
-        public OfficeMapConfig(int width, int height, string randomSeed, float minSplittableArea, float maxHallInPercent, float hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint officeSplitChance) {
-            if (doorWidth > minRoomSideLength) {
-                throw new ArgumentOutOfRangeException("Door width cannot be bigger than the smallest side lenght of rooms");
+        public int borderSize;
+
+        public float scaling;
+
+        public OfficeMapConfig(int width, int height, string randomSeed, float maxHallInPercent, int hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint officeSplitChancePercent, int borderSize, float scaling) {
+            if ((2 * doorPadding  + doorWidth) > minRoomSideLength) {
+                throw new ArgumentOutOfRangeException("Door width cannot be bigger than the smallest side lenght of rooms plus two times doorPadding");
             }
 
-            if (officeSplitChance > 100) {
+            if (officeSplitChancePercent > 100) {
                 throw new ArgumentOutOfRangeException("officeSplitChance cannot be greater than 100");
             }
             
             this.width = width;
             this.height = height;
             this.randomSeed = randomSeed;
-            this.minSplittableArea = minSplittableArea;
             this.maxHallInPercent = maxHallInPercent;
             this.hallWidth = hallWidth;
             this.minRoomSideLength = minRoomSideLength;
             this.doorWidth = doorWidth;
             this.doorPadding = doorPadding;
-            this.officeSplitChance = officeSplitChance;
+            this.officeSplitChancePercent = officeSplitChancePercent;
+            this.borderSize = borderSize;
+            this.scaling = scaling;
         }
     }
 }

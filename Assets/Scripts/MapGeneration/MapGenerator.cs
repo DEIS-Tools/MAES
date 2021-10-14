@@ -43,16 +43,16 @@ public class MapGenerator : MonoBehaviour {
 			var map = GenerateCaveMap(config, 
 										3.0f,
 										true);*/
-			var officeConfig = new OfficeMapConfig(60, 60, Time.time.ToString(), 1, 8, 3, 5, 4, 0, 65);
-			var map = GenerateOfficeMap(officeConfig, 3.0f, true);
+			/*var officeConfig = new OfficeMapConfig(60, 60, Time.time.ToString(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
+			var map = GenerateOfficeMap(officeConfig, 3.0f, true);*/
 		}
 		
 		
 
-		if (Input.GetMouseButtonDown(1) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))
+		/*if (Input.GetMouseButtonDown(1) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))
 		{
 			clearMap();
-		}
+		}*/
 	}
 
 	private void MovePlaneAndWallRoofToFitWallHeight(float wallHeight, bool is2D = true)
@@ -117,22 +117,31 @@ public class MapGenerator : MonoBehaviour {
 		var closedHallwayMap = CloseOffHallwayEnds(mapWithOfficeRooms);
 
 		// Offices and halls sorted according to biggest hall first. Biggest hall set to main room.
-		var rooms = GetSortedOfficeRooms(closedHallwayMap);
+		var offices = GetSortedOfficeRooms(closedHallwayMap);
 
-		var connectedMap = ConnectOfficesToHall(rooms, closedHallwayMap, random, config);
+		var connectedMap = ConnectOfficesWithDoors(offices, closedHallwayMap, random, config);
 
-		mapToDraw = connectedMap;
-
-		// Create doors between rooms
+		var borderedMap = CreateBorderedMap(connectedMap, config.width, config.height, config.borderSize);
 		
-		// Add borders
+		// For debugging
+		// mapToDraw = borderedMap;
 		
-		// Add mesh
+		MeshGenerator meshGen = GetComponent<MeshGenerator>();
+		meshGen.GenerateMesh(borderedMap.Clone() as int[,], 2.0f, wallHeight, is2D);
 
-		return mapWithHalls;
+		if (is2D)
+		{
+			plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
+		}
+
+		ResizePlaneToFitMap(config.height, config.width, config.scaling);
+
+		MovePlaneAndWallRoofToFitWallHeight(wallHeight, is2D);
+
+		return borderedMap;
 	}
 	
-	private int[,] ConnectOfficesToHall(List<Room> sortedOffices, int[,] oldMap, Random random, OfficeMapConfig config) {
+	private int[,] ConnectOfficesWithDoors(List<Room> sortedOffices, int[,] oldMap, Random random, OfficeMapConfig config) {
 		int[,] connectedMap = oldMap.Clone() as int[,];
 		// Whether the given room is connected to the main room
 		List<Room> connectedRooms = new List<Room>();
@@ -145,8 +154,6 @@ public class MapGenerator : MonoBehaviour {
 				nonConnectedRooms.Add(room);
 		}
 
-		Debug.Log("Connected rooms: " + connectedRooms.Count + ", nonconnected rooms: " + nonConnectedRooms.Count);
-
 		if (nonConnectedRooms.Count == 0)
 			return connectedMap;
 		
@@ -158,15 +165,10 @@ public class MapGenerator : MonoBehaviour {
 				// If they share any wall, they must be adjacent
 				var sharedWallTiles = cRoom.GetSharedWallTiles(nRoom);
 				if (sharedWallTiles.Count > 0) {
-					// Make door fill entire wall
-					/*foreach (var sharedTile in sharedWallTiles) {
-						connectedMap[sharedTile.x, sharedTile.y] = ROOM_TYPE;
-					}*/
-
 					int biggestXValue, smallestXValue;
 					int biggestYValue, smallestYValue;
 					
-					
+					// The maxima of x and y are needed to isolate the coordinates for each line of wall
 					sharedWallTiles.Sort((c1, c2) => c1.x - c2.x);
 					smallestXValue = sharedWallTiles[0].x;
 					biggestXValue = sharedWallTiles[sharedWallTiles.Count - 1].x;
@@ -183,6 +185,7 @@ public class MapGenerator : MonoBehaviour {
 					
 					// A shared wall with the smallest y value
 					if (doorsMade < maxDoors) {
+						// A shared line/wall in the bottom
 						line = sharedWallTiles.FindAll(c => c.y == smallestYValue).ToList();
 						if (line.Count > config.doorWidth + (doorPadding * 2)) {
 							line.Sort((c1, c2) => c1.x - c2.x); // Ascending order
@@ -198,6 +201,7 @@ public class MapGenerator : MonoBehaviour {
 					
 					// Shared wall with the biggest y value
 					if (doorsMade < maxDoors) {
+						// A shared line/wall in the top
 						line = sharedWallTiles.FindAll(c => c.y == biggestYValue).ToList();
 						if (line.Count > config.doorWidth + (doorPadding * 2)) {
 							line.Sort((c1, c2) => c1.x - c2.x); // Ascending order
@@ -213,6 +217,7 @@ public class MapGenerator : MonoBehaviour {
 					
 					// A shared wall with the smallest x value
 					if (doorsMade < maxDoors) {
+						// A shared line/wall on the left
 						line = sharedWallTiles.FindAll(c => c.x == smallestXValue).ToList();
 						if (line.Count > config.doorWidth + (doorPadding * 2)) {
 							line.Sort((c1, c2) => c1.y - c2.y); // Ascending order
@@ -228,6 +233,7 @@ public class MapGenerator : MonoBehaviour {
 					
 					// A shared wall with the biggest x value
 					if (doorsMade < maxDoors) {
+						// A shared line/wall on the right
 						line = sharedWallTiles.FindAll(c => c.x == biggestXValue).ToList();
 						if (line.Count > config.doorWidth + (doorPadding * 2)) {
 							line.Sort((c1, c2) => c1.y - c2.y); // Ascending order
@@ -243,10 +249,9 @@ public class MapGenerator : MonoBehaviour {
 				}
 			}
 		}
-		
-		Debug.Log("Connected rooms: " + connectedRooms.Count + ", nonconnected rooms: " + nonConnectedRooms.Count);
-		
-		connectedMap = ConnectOfficesToHall(sortedOffices, connectedMap, random, config);
+
+		// Recursive call that continues, until all offices and halls are connected
+		connectedMap = ConnectOfficesWithDoors(sortedOffices, connectedMap, random, config);
 		
 		return connectedMap;
 	}
@@ -313,7 +318,7 @@ public class MapGenerator : MonoBehaviour {
 	// This function has side effects on the map!
 	private void SplitOfficeRegion(int[,] map, List<Coord> officeRegion, OfficeMapConfig config, bool splitOnXAxis, bool forceSplit, Random random) {
 		// Check if we want to split. This allows for different size offices
-		bool shouldSplit = random.Next(0, 100) <= config.officeSplitChance;
+		bool shouldSplit = random.Next(0, 100) <= config.officeSplitChancePercent;
 
 		if (!shouldSplit && !forceSplit)
 			return;
@@ -539,7 +544,7 @@ public class MapGenerator : MonoBehaviour {
 		var connectedMap = ConnectAllRoomsToMainRoom(survivingRooms, cleanedMap, caveConfig);
 
 		// Ensure a border around the map
-		var borderedMap = CreateBorderedMap(connectedMap, caveConfig);
+		var borderedMap = CreateBorderedMap(connectedMap, caveConfig.width, caveConfig.height, caveConfig.borderSize);
 		
 		// Draw gizmo of map for debugging. Will draw the map in Scene upon selection.
 		// mapToDraw = borderedMap;
@@ -555,14 +560,14 @@ public class MapGenerator : MonoBehaviour {
 		return borderedMap;
 	}
 
-	int[,] CreateBorderedMap(int[,] map, CaveMapConfig config)
+	int[,] CreateBorderedMap(int[,] map, int width, int height, int borderSize)
 	{
-		int[,] borderedMap = new int[config.width + config.borderSize * 2, config.height + config.borderSize * 2];
+		int[,] borderedMap = new int[width + borderSize * 2, height + borderSize * 2];
 
 		for (int x = 0; x < borderedMap.GetLength(0); x ++) {
 			for (int y = 0; y < borderedMap.GetLength(1); y ++) {
-				if (x >= config.borderSize && x < config.width + config.borderSize && y >= config.borderSize && y < config.height + config.borderSize) {
-					borderedMap[x,y] = map[x - config.borderSize, y - config.borderSize];
+				if (x >= borderSize && x < width + borderSize && y >= borderSize && y < height + borderSize) {
+					borderedMap[x,y] = map[x - borderSize, y - borderSize];
 				}
 				else {
 					borderedMap[x,y] = WALL_TYPE;
