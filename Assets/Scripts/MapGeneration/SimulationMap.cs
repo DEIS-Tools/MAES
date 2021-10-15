@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Dora.Utilities;
@@ -8,7 +9,7 @@ namespace Dora.MapGeneration
 {
     // A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles
     // This matches the structure of the map exported by the MapGenerator
-    public class SimulationMap<TCell>
+    public class SimulationMap<TCell> : IEnumerable<(int, TCell)>
     {
         // The width / height of the map measured in tiles
         public readonly int Width, Height;
@@ -34,6 +35,11 @@ namespace Dora.MapGeneration
                     _tiles[x,y] = new SimulationMapTile<TCell>(cellFactory);
                 }
             }
+        }
+
+        public int TriangleCount()
+        {
+            return Width * Height * 8;
         }
 
         // Private constructor for a pre-specified set of tiles. This is used in the fmap function
@@ -93,6 +99,27 @@ namespace Dora.MapGeneration
                 }
             }
             return new SimulationMap<TNewCell>(mappedTiles, this.Scale, this.Offset);
+        }
+
+        // Enumerates all triangles and their index
+        public IEnumerator<(int, TCell)> GetEnumerator()
+        {
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    var triangles = _tiles[x, y].GetTriangles();
+                    for (int t = 0; t < 8; t++)
+                    {
+                        yield return ((x * 8 + y * Width * 8) + t, triangles[t]);
+                    }
+                }
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

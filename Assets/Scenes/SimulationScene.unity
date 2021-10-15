@@ -504,8 +504,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 233363916}
-  - component: {fileID: 233363919}
   - component: {fileID: 233363918}
+  - component: {fileID: 233363919}
   - component: {fileID: 233363917}
   m_Layer: 0
   m_Name: ExplorationVisualizer
@@ -569,7 +569,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 5e10340f16647bfa29fca8eb28d00418, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -748,6 +748,10 @@ PrefabInstance:
       propertyPath: RobotSpawner
       value: 
       objectReference: {fileID: 644326066}
+    - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
+      propertyPath: explorationVisualizer
+      value: 
+      objectReference: {fileID: 233363917}
     - target: {fileID: 4230307919047253350, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: m_Name
       value: Simulator

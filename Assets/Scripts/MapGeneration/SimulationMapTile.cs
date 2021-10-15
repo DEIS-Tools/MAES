@@ -76,6 +76,10 @@ namespace Dora.MapGeneration
                     return 7;
                 }
             }
-            
+
+            public List<TCell> GetTriangles()
+            {
+                return _triangleCells;
+            }
         }
 }

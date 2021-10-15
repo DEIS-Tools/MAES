@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using Dora.MapGeneration;
 using Dora.Robot;
+using Dora.Statistics;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +18,9 @@ namespace Dora
         public Transform simulationContainer;
         public MapGenerator MapGenerator;
         public RobotSpawner RobotSpawner;
+
+        private ExplorationTracker _explorationTracker;
+        public ExplorationVisualizer explorationVisualizer;
 
         public Text TestingText;
         private int _physicsTickCount = 0;
@@ -61,9 +65,12 @@ namespace Dora
                 true);*/
             
             var officeConfig = new OfficeMapConfig(60, 60,  (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
-            var map = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);
+            var collisionMap = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);
             
             RobotSpawner.SpawnRobots();
+
+            _explorationTracker = new ExplorationTracker(collisionMap, explorationVisualizer);
+
         }
 
         // Timing variables for controlling the simulation in a manner that is decoupled from Unity's update system

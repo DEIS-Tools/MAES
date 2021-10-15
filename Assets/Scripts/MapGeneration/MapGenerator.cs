@@ -99,7 +99,7 @@ public class MapGenerator : MonoBehaviour {
 	 * Methods for creating office map
 	 */
 	
-	public int[,] GenerateOfficeMap(OfficeMapConfig config, float wallHeight, bool is2D = true)
+	public SimulationMap<bool> GenerateOfficeMap(OfficeMapConfig config, float wallHeight, bool is2D = true)
 	{
 		// Clear and destroy objects from previous map
 		clearMap();
@@ -127,7 +127,7 @@ public class MapGenerator : MonoBehaviour {
 		// mapToDraw = borderedMap;
 		
 		MeshGenerator meshGen = GetComponent<MeshGenerator>();
-		meshGen.GenerateMesh(borderedMap.Clone() as int[,], 2.0f, wallHeight, is2D);
+		var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], 2.0f, wallHeight, is2D);
 
 		if (is2D)
 		{
@@ -138,7 +138,7 @@ public class MapGenerator : MonoBehaviour {
 
 		MovePlaneAndWallRoofToFitWallHeight(wallHeight, is2D);
 
-		return borderedMap;
+		return collisionMap;
 	}
 	
 	private int[,] ConnectOfficesWithDoors(List<Room> sortedOffices, int[,] oldMap, Random random, OfficeMapConfig config) {
@@ -510,21 +510,21 @@ public class MapGenerator : MonoBehaviour {
 	 * METHODS for creating cave
 	 */
 	
-	public int[,] GenerateCaveMap(CaveMapConfig caveConfig, float wallHeight, bool is2D = true)
+	public SimulationMap<bool> GenerateCaveMap(CaveMapConfig caveConfig, float wallHeight, bool is2D = true)
 	{
 		// Clear and destroy objects from previous map
 		clearMap();
 
-		var map = CreateCaveMapWithMesh(caveConfig, wallHeight, is2D);
+		var collisionMap = CreateCaveMapWithMesh(caveConfig, wallHeight, is2D);
 
 		ResizePlaneToFitMap(caveConfig.height, caveConfig.width, caveConfig.scaling);
 
 		MovePlaneAndWallRoofToFitWallHeight(wallHeight, is2D);
 
-		return map;
+		return collisionMap;
 	}
 
-	private int[,] CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 3.0f, bool is2D = true) {
+	private SimulationMap<bool> CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 3.0f, bool is2D = true) {
 		// Fill map with random walls and empty tiles (Looks kinda like a QR code)
 		var randomlyFilledMap = CreateRandomFillMap(caveConfig);
 		
@@ -550,14 +550,14 @@ public class MapGenerator : MonoBehaviour {
 		// mapToDraw = borderedMap;
 		
 		MeshGenerator meshGen = GetComponent<MeshGenerator>();
-		meshGen.GenerateMesh(borderedMap.Clone() as int[,], caveConfig.scaling, wallHeight, is2D);
+		var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], caveConfig.scaling, wallHeight, is2D);
 
 		if (is2D)
 		{
 			plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
 		}
 
-		return borderedMap;
+		return collisionMap;
 	}
 
 	int[,] CreateBorderedMap(int[,] map, int width, int height, int borderSize)
