@@ -19,7 +19,7 @@ namespace Dora.Statistics
         private int _widthInTiles, _heightInTiles;
         private int _widthInVertices, _heightInVertices;
         private float _scale;
-        private Vector3 _offset;
+        private Vector3 _scaledOffset;
 
         private List<Vector3> _vertices = new List<Vector3>();
         private List<int> _triangles = new List<int>();
@@ -34,113 +34,108 @@ namespace Dora.Statistics
             _widthInTiles = _map.Width;
             _heightInTiles = _map.Height;
             _scale = scale;
-            _offset = offset;
+            _scaledOffset = offset;
             _widthInVertices = _widthInTiles * ResolutionMultiplier + 1;
             _heightInVertices = _heightInTiles * ResolutionMultiplier + 1;
             
-            GenerateVertices();
+            //GenerateVertices();
+            GenerateTriangleVertices();
             GenerateTriangles();
-            _colors = new Color[_map.TriangleCount()];
+            _colors = new Color[_vertices.Count];
             UpdateColors(_map);
             
             mesh = new Mesh();
             mesh.vertices = _vertices.ToArray();
             mesh.triangles = _triangles.ToArray();
             mesh.RecalculateNormals();
-            //mesh.colors = _colors;
+            
+            mesh.colors = _colors;
 
             meshFilter.mesh = mesh;
         }
 
-      
-        
-        private void UpdateColors(SimulationMap<ExplorationCell> newMap)
-        {
-            
-            foreach (var (index, explorationCell) in newMap)
-            {
-                _colors[index] = explorationCell.isExplorable ? _unexploredColor : _solidColor;
-            }
-        }
-
-        private void GenerateVertices()
-        {
-            _vertices.Clear();
-            float coordinateMultiplier = _scale / ResolutionMultiplier;
-            for (int y = 0; y < _heightInVertices; y++)
-            {
-                for (int x = 0; x < _widthInVertices; x++)
-                {
-                    _vertices.Add(new Vector3(x * coordinateMultiplier, y * coordinateMultiplier, 0f));
-                }                
-            }
-        }
-
         private void GenerateTriangles()
         {
-            _triangles.Clear();
-            for (int y = 0; y < _heightInTiles; y++)
+            // The vertices are already arranged in the correct order (ie. triangle 0 has vertices indexed 0, 1, 2)
+            _triangles = new List<int>();
+            for (int i = 0; i < _vertices.Count; i++)
+                _triangles.Add(i);
+        }
+
+
+        // Colors each triangle depending on its current state
+        private void UpdateColors(SimulationMap<ExplorationCell> newMap)
+        {
+            foreach (var (index, explorationCell) in newMap)
             {
-                for (int x = 0; x < _widthInTiles; x++)
-                {
-                    // The index of the first vertex in the bottom row of the tile
-                    var row0Index = y * ResolutionMultiplier * _widthInVertices + x * ResolutionMultiplier;
-                    // Index of first vertex in second row of the tile
-                    var row1Index = row0Index + _widthInVertices;
-                    // Index of first vertex in third row of the tile
-                    var row2Index = row1Index + _widthInVertices;
-                    
-                    // Add the 8 triangles of this tile to the triangle list
-                    AddTriangles(row0Index, row1Index, row2Index);
-                }                
+                var vertexIndex = index * 3;
+                var color = explorationCell.isExplorable ? _unexploredColor : _solidColor;
+                _colors[index] = color;
+                _colors[index + 1] = color;
+                _colors[index + 2] = color;
             }
         }
 
-        // Adds the 8 triangles of a tile starting at the given offsets
+        private void GenerateTriangleVertices()
+        {
+            _vertices.Clear();
+            var vertexDistance = _scale / ResolutionMultiplier;
+            for (int y = 0; y < _heightInTiles; y++)
+            {
+                var translatedY = y * _scale;
+                for (int x = 0; x < _widthInTiles; x++)
+                {
+                    var translatedX = x * _scale;
+                    AddTileTriangleVertices(translatedX, translatedY, vertexDistance);
+                }
+            }
+        }
+
+        // Adds all of the vertices needed for a tile of 8 triangles
         // The triangles are indexed and arranged as shown in this very pretty illustration:
         // |4/5|6\7|
         // |0\1|2/3|
-        private void AddTriangles(int row0, int row1, int row2)
+        private void AddTileTriangleVertices(float x, float y, float vertexDistance)
         {
             // Triangle 0
-            _triangles.Add(row0);
-            _triangles.Add(row1);
-            _triangles.Add(row0 + 1);
+            _vertices.Add(new Vector3(x, y, 0f));
+            _vertices.Add(new Vector3(x, y + vertexDistance, 0f));
+            _vertices.Add(new Vector3(x + vertexDistance, y, 0f));
             
             // Triangle 1
-            _triangles.Add(row1);
-            _triangles.Add(row1 + 1);
-            _triangles.Add(row0 + 1);
+            _vertices.Add(new Vector3(x, y + vertexDistance));
+            _vertices.Add(new Vector3(x + vertexDistance, y + vertexDistance));
+            _vertices.Add(new Vector3(x + vertexDistance, y));
             
             // Triangle 2
-            _triangles.Add(row1 + 1);
-            _triangles.Add(row1 + 2);
-            _triangles.Add(row0 + 1);
-
+            _vertices.Add(new Vector3(x + vertexDistance, y + vertexDistance));
+            _vertices.Add(new Vector3(x + 2 * vertexDistance, y +  vertexDistance));
+            _vertices.Add(new Vector3(x + vertexDistance, y));
+            
             // Triangle 3
-            _triangles.Add(row0 + 1);
-            _triangles.Add(row1 + 2);
-            _triangles.Add(row0 + 2);
+            _vertices.Add(new Vector3(x + vertexDistance, y));
+            _vertices.Add(new Vector3(x + 2 * vertexDistance, y + vertexDistance));
+            _vertices.Add(new Vector3(x + 2 * vertexDistance, y));
             
             // Triangle 4
-            _triangles.Add(row1);
-            _triangles.Add(row2);
-            _triangles.Add(row2 + 1);
+            _vertices.Add(new Vector3(x, y + 2 * vertexDistance));
+            _vertices.Add(new Vector3(x + vertexDistance, y + 2 * vertexDistance));
+            _vertices.Add(new Vector3(x, y + vertexDistance));
             
             // Triangle 5
-            _triangles.Add(row1);
-            _triangles.Add(row2 + 1);
-            _triangles.Add(row1 + 1);
+            _vertices.Add(new Vector3(x, y + vertexDistance));
+            _vertices.Add(new Vector3(x + vertexDistance, y + 2 * vertexDistance));
+            _vertices.Add(new Vector3(x + vertexDistance, y + vertexDistance));
             
             // Triangle 6
-            _triangles.Add(row1 + 1);
-            _triangles.Add(row2 + 1);
-            _triangles.Add(row1 + 2);
+            _vertices.Add(new Vector3(x + vertexDistance, y + 2 *vertexDistance));
+            _vertices.Add(new Vector3(x + 2 * vertexDistance, y + vertexDistance));
+            _vertices.Add(new Vector3(x + vertexDistance, y + vertexDistance));
             
             // Triangle 7
-            _triangles.Add(row2 + 1);
-            _triangles.Add(row2 + 2);
-            _triangles.Add(row1 + 2);
+            _vertices.Add(new Vector3(x + vertexDistance, y + 2 * vertexDistance));
+            _vertices.Add(new Vector3(x + 2 * vertexDistance, y + 2 * vertexDistance));
+            _vertices.Add(new Vector3(x + 2 * vertexDistance, y + vertexDistance));
         }
     }
 }
