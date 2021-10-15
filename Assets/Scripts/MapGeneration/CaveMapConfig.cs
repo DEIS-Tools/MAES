@@ -7,7 +7,7 @@ namespace Dora.MapGeneration
         public int width;
         public int height;
 
-        public string randomSeed;
+        public int randomSeed;
 	
         // How many runs of smoothing to get from QR code like noise to groups of room or wall tiles.
         public int smoothingRuns;
@@ -32,7 +32,7 @@ namespace Dora.MapGeneration
 
         public int neighbourWallsNeededToStayWall;
 
-        public CaveMapConfig(int width, int height, string randomSeed, int smoothingRuns, int connectionPassagesWidth, int randomFillPercent, int wallThresholdSize, int roomThresholdSize, int borderSize, int scaling, int neighbourWallsNeededToStayWall = 4)
+        public CaveMapConfig(int width, int height, int randomSeed, int smoothingRuns, int connectionPassagesWidth, int randomFillPercent, int wallThresholdSize, int roomThresholdSize, int borderSize, int scaling, int neighbourWallsNeededToStayWall = 4)
         {
 	        // Only fill percent between and including 0 to 100 are allowed
 	        if(0 >= randomFillPercent || randomFillPercent >= 100 ){

@@ -104,7 +104,7 @@ public class MapGenerator : MonoBehaviour {
 		// Clear and destroy objects from previous map
 		clearMap();
 
-		Random random = new Random(config.randomSeed.GetHashCode());
+		Random random = new Random(config.randomSeed);
 
 		int[,] emptyMap = GenerateEmptyMap(config.width, config.height);
 
@@ -817,7 +817,7 @@ public class MapGenerator : MonoBehaviour {
 	int[,] CreateRandomFillMap(CaveMapConfig config)	
 	{
 		int[,] randomFillMap = new int[config.width, config.height];
-		System.Random pseudoRandom = new System.Random(config.randomSeed.GetHashCode());
+		System.Random pseudoRandom = new System.Random(config.randomSeed);
 		
 		for (int x = 0; x < config.width; x ++) {
 			for (int y = 0; y < config.height; y ++) {
