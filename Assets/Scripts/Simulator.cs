@@ -60,7 +60,7 @@ namespace Dora
                 3.0f,
                 true);*/
             
-            var officeConfig = new OfficeMapConfig(60, 60, Time.time.ToString(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
+            var officeConfig = new OfficeMapConfig(60, 60,  (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
             var map = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);
             
             RobotSpawner.SpawnRobots();

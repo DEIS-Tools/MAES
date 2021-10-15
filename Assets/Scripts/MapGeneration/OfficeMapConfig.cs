@@ -7,7 +7,7 @@ namespace Dora.MapGeneration
         public int width;
         public int height;
 
-        public string randomSeed;
+        public int randomSeed;
 
         public float maxHallInPercent;
 
@@ -23,7 +23,7 @@ namespace Dora.MapGeneration
 
         public float scaling;
 
-        public OfficeMapConfig(int width, int height, string randomSeed, float maxHallInPercent, int hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint officeSplitChancePercent, int borderSize, float scaling) {
+        public OfficeMapConfig(int width, int height, int randomSeed, float maxHallInPercent, int hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint officeSplitChancePercent, int borderSize, float scaling) {
             if ((2 * doorPadding  + doorWidth) > minRoomSideLength) {
                 throw new ArgumentOutOfRangeException("Door width cannot be bigger than the smallest side lenght of rooms plus two times doorPadding");
             }
