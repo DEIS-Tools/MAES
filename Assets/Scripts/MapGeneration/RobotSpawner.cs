@@ -14,9 +14,11 @@ namespace Dora.MapGeneration
         {
             for (int i = 0; i < 1; i++)
             {
+                var robotID = i;
                 var robotGameObject = Instantiate(robotPrefab, parent: simulationContainer);
                 var robot = robotGameObject.GetComponent<Robot.Robot>();
-                robot.ExplorationAlgorithm = new RandomExplorationAlgorithm(robot, i);                
+                robot.id = robotID;
+                robot.ExplorationAlgorithm = new RandomExplorationAlgorithm(robot, randomSeed: robotID);                
             }
         }
         
