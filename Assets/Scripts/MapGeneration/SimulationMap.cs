@@ -12,7 +12,7 @@ namespace Dora.MapGeneration
     public class SimulationMap<TCell> : IEnumerable<(int, TCell)>
     {
         // The width / height of the map measured in tiles
-        public readonly int Width, Height;
+        public readonly int WidthInTiles, HeightInTiles;
         
         // The scale of the map in world space
         public readonly float Scale;
@@ -21,16 +21,16 @@ namespace Dora.MapGeneration
         
         private readonly SimulationMapTile<TCell>[,] _tiles;
         
-        public SimulationMap(Functional.Factory<TCell> cellFactory, int width, int height, float scale, Vector2 offset)
+        public SimulationMap(Functional.Factory<TCell> cellFactory, int widthInTiles, int heightInTiles, float scale, Vector2 offset)
         {
             this.Offset = offset;
             this.Scale = scale;
-            this.Width = width;
-            this.Height = height;
-            _tiles = new SimulationMapTile<TCell>[width, height];
-            for (int x = 0; x < width; x++)
+            this.WidthInTiles = widthInTiles;
+            this.HeightInTiles = heightInTiles;
+            _tiles = new SimulationMapTile<TCell>[widthInTiles, heightInTiles];
+            for (int x = 0; x < widthInTiles; x++)
             {
-                for (int y = 0; y < height; y++)
+                for (int y = 0; y < heightInTiles; y++)
                 {
                     _tiles[x,y] = new SimulationMapTile<TCell>(cellFactory);
                 }
@@ -39,16 +39,16 @@ namespace Dora.MapGeneration
 
         public int TriangleCount()
         {
-            return Width * Height * 8;
+            return WidthInTiles * HeightInTiles * 8;
         }
 
-        // Private constructor for a pre-specified set of tiles. This is used in the fmap function
+        // Private constructor for a pre-specified set of tiles. This is used in the FMap function
         private SimulationMap(SimulationMapTile<TCell>[,] tiles, float scale, Vector2 offset)
         {
             this.Offset = offset;
             _tiles = tiles;
-            Width = tiles.GetLength(0);
-            Height = tiles.GetLength(1);
+            WidthInTiles = tiles.GetLength(0);
+            HeightInTiles = tiles.GetLength(1);
         }
 
         // Returns the triangle cell at the given world position
@@ -62,7 +62,7 @@ namespace Dora.MapGeneration
         // Assigns the given value to the triangle cell at the given coordinate
         public void SetCell(Vector2 coordinate, TCell newCell)
         {
-            var localCoordinate = ToLocalMapCoordinate(coordinate); 
+            var localCoordinate = ToLocalMapCoordinate(coordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             tile.SetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f, newCell);
         }
@@ -75,7 +75,7 @@ namespace Dora.MapGeneration
             {
                 throw new ArgumentException("The given coordinate " + localCoordinate 
                                             + "(World coordinate:" + worldCoordinate + " )" 
-                                            + " is not within map bounds: {" + Width + ", " + Height + "}");
+                                            + " is not within map bounds: {" + WidthInTiles + ", " + HeightInTiles + "}");
             }
             return localCoordinate;
         }
@@ -83,17 +83,17 @@ namespace Dora.MapGeneration
         // Checks that the given coordinates are within the local map bounds
         private bool IsWithinLocalMapBounds(Vector2 localCoordinates)
         {
-            return localCoordinates.x >= 0.0f && localCoordinates.x < Width
-                   && localCoordinates.y >= 0f && localCoordinates.y < Height; 
+            return localCoordinates.x >= 0.0f && localCoordinates.x < WidthInTiles
+                   && localCoordinates.y >= 0f && localCoordinates.y < HeightInTiles; 
         }
 
         // Generates a new SimulationMap<T2> by mapping the given function over all cells
         public SimulationMap<TNewCell> FMap<TNewCell>(Func<TCell, TNewCell> mapper)
         {
-            SimulationMapTile<TNewCell>[,] mappedTiles = new SimulationMapTile<TNewCell>[Width, Height];
-            for (int x = 0; x < Width; x++)
+            SimulationMapTile<TNewCell>[,] mappedTiles = new SimulationMapTile<TNewCell>[WidthInTiles, HeightInTiles];
+            for (int x = 0; x < WidthInTiles; x++)
             {
-                for (int y = 0; y < Height; y++)
+                for (int y = 0; y < HeightInTiles; y++)
                 {
                     mappedTiles[x, y] = _tiles[x, y].FMap(mapper);
                 }
@@ -104,14 +104,14 @@ namespace Dora.MapGeneration
         // Enumerates all triangles and their index
         public IEnumerator<(int, TCell)> GetEnumerator()
         {
-            for (int y = 0; y < Height; y++)
+            for (int y = 0; y < HeightInTiles; y++)
             {
-                for (int x = 0; x < Width; x++)
+                for (int x = 0; x < WidthInTiles; x++)
                 {
                     var triangles = _tiles[x, y].GetTriangles();
                     for (int t = 0; t < 8; t++)
                     {
-                        yield return ((x * 8 + y * Width * 8) + t, triangles[t]);
+                        yield return ((x * 8 + y * WidthInTiles * 8) + t, triangles[t]);
                     }
                 }
             }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dora.Utilities;
+using UnityEngine;
 
 namespace Dora.MapGeneration
 {
@@ -37,6 +38,8 @@ namespace Dora.MapGeneration
                 }
                 return new SimulationMapTile<TNewCell>(mappedCells);
             }
+            
+            
 
             public TCell GetTriangleCellByCoordinateDecimals(float xDecimals, float yDecimals)
             {

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ public class MeshGenerator : MonoBehaviour {
 	 * Uses the marching squares algorithm to smooth out
 	 * the grid and create a continuous wall around the rooms 
 	 */
+	
 	public SquareGrid squareGrid;
 	// The inner walls, that the robots can collide with
 	public MeshFilter innerWalls;
@@ -71,10 +73,15 @@ public class MeshGenerator : MonoBehaviour {
 		
 		wallRoofMesh.vertices = vertices.ToArray();
 		wallRoofMesh.triangles = triangles.ToArray();
+		Debug.Log("Triangles: " + triangles.Count / 3);
 		wallRoofMesh.RecalculateNormals();
 		
 		// Apply mesh to wall roof
 		wallRoof.mesh = wallRoofMesh;
+		
+		Debug.Log("Should be false" + wallRoofMesh.bounds.Contains(new Vector3(0f, 0f,0f)));
+		Debug.Log("Should be true" + wallRoofMesh.(new Vector3(0f, 0f,0f)));
+
 
 		// This bit of code allows us to apply a texture on the mesh
 		// Tiling refers to using the same texture next to each other.
@@ -96,7 +103,7 @@ public class MeshGenerator : MonoBehaviour {
 		{
 			CreateWallMesh(wallHeight);
 		}
-		
+
 		return GenerateCollisionMap(new List<Vector3>(vertices), new List<int>(triangles), 
 			map.GetLength(0), map.GetLength(1), 
 			new Vector2(squareGrid.XOffset, squareGrid.YOffset), 
@@ -107,7 +114,7 @@ public class MeshGenerator : MonoBehaviour {
 	{
 		// Create a bool type SimulationMap with default value of false in all cells
 		SimulationMap<bool> collisionMap = new SimulationMap<bool>(() => false, width, height, mapScale, offset);
-		
+
 		var totalTriangles = collisionTriangles.Count / 3;
 		for (int triangleNumber = 0; triangleNumber < totalTriangles; triangleNumber++)
 		{
@@ -121,7 +128,8 @@ public class MeshGenerator : MonoBehaviour {
 			// Mark the corresponding map triangle as collidable
 			collisionMap.SetCell(triangleCenter, true);
 		}
-
+		
+		
 		return collisionMap;
 	}
 	

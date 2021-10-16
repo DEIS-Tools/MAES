@@ -49,10 +49,10 @@ namespace Dora
 
         private void GenerateSimulation()
         {
-            /*
+            
             var config = new CaveMapConfig(100,
                 100,
-                Time.time.ToString(),
+                (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
                 4,
                 2,
                 48,
@@ -60,12 +60,12 @@ namespace Dora
                 1,
                 1,
                 2);
-            var map = MapGenerator.GenerateCaveMap(config, 
+            var collisionMap = MapGenerator.GenerateCaveMap(config, 
                 3.0f,
-                true);*/
+                true);
             
-            var officeConfig = new OfficeMapConfig(60, 60,  (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
-            var collisionMap = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);
+            //var officeConfig = new OfficeMapConfig(60, 60,  (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
+            //var collisionMap = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);
             
             RobotSpawner.SpawnRobots();
 
