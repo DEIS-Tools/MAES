@@ -20,6 +20,7 @@ namespace Dora.MapGeneration
                 for (int i = 0; i < 8; i++)
                 {
                     _triangleCells.Add(cellFactory());
+                    
                 }
             }
 

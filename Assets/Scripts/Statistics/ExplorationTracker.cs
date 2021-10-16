@@ -9,7 +9,7 @@ namespace Dora.Statistics
         // The low-resolution collision map used to create the smoothed map that robots are navigating 
         private SimulationMap<bool> _collisionMap;
         private ExplorationVisualizer _explorationVisualizer;
-
+        
         private SimulationMap<ExplorationCell> _explorationMap;
         private readonly int _explorationMapWidth;
         private readonly int _explorationMapHeight;
