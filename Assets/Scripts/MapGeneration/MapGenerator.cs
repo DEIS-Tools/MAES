@@ -127,7 +127,7 @@ public class MapGenerator : MonoBehaviour {
 		// mapToDraw = borderedMap;
 		
 		MeshGenerator meshGen = GetComponent<MeshGenerator>();
-		meshGen.GenerateMesh(borderedMap.Clone() as int[,], 2.0f, wallHeight, is2D);
+		meshGen.GenerateMesh(borderedMap.Clone() as int[,], 2.0f, wallHeight, is2D, true);
 
 		if (is2D)
 		{
@@ -550,7 +550,7 @@ public class MapGenerator : MonoBehaviour {
 		// mapToDraw = borderedMap;
 		
 		MeshGenerator meshGen = GetComponent<MeshGenerator>();
-		meshGen.GenerateMesh(borderedMap.Clone() as int[,], caveConfig.scaling, wallHeight, is2D);
+		meshGen.GenerateMesh(borderedMap.Clone() as int[,], caveConfig.scaling, wallHeight, is2D, false);
 
 		if (is2D)
 		{

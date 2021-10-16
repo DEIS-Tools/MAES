@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Dora.MapGeneration;
 using UnityEditor.UI;
+using UnityEngine.EventSystems;
 
 public class MeshGenerator : MonoBehaviour {
 	/**
@@ -47,7 +49,7 @@ public class MeshGenerator : MonoBehaviour {
 		is2D = false;
 	}
 
-	public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D)
+	public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D, bool removeRoundedCorners)
 	{
 		this.is2D = is2D;
 		
@@ -62,7 +64,7 @@ public class MeshGenerator : MonoBehaviour {
 			for (int y = 0; y < squareGrid.squares.GetLength(1); y++) {
 				// Create triangles from all the points in the squares
 				// assigned to variables "vertices" and "triangles"
-				TriangulateSquare(squareGrid.squares[x,y]);
+				TriangulateSquare(squareGrid.squares[x,y], removeRoundedCorners);
 			}
 		}
 
@@ -210,23 +212,38 @@ public class MeshGenerator : MonoBehaviour {
 	// there are 16 cases, since there are 16 combinations of ON
 	// and OFF for a box where each of the 4 corners can have either of these 
 	// states.
-	void TriangulateSquare(Square square) {
+	// Find the states in this image: https://lh3.googleusercontent.com/proxy/VY0qi_JEz439h3vPRgD6QStgxwdZCBRJ2TnJcthTb0q3fe8tZygPAUVptJPxGG8y39JdsgAp3M1SoQbdRXpP0cuY65Cl_Sica_lVCjUxEEo6ttMI7bulJqEq
+	// removeRoundedCorners simply ignores case 1, 2, 4, 7, 8, 11, 13, 14 by using a center point to square off the edges
+	void TriangulateSquare(Square square, bool removeRoundedCorners = false) {
+		
 		switch (square.configuration) {
 		case 0:
 			break;
 
 		// 1 points:
 		case 1:
-			MeshFromPoints(square.centreLeft, square.centreBottom, square.bottomLeft);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.center, square.centreBottom, square.bottomLeft, square.centreLeft);
+			else
+				MeshFromPoints(square.centreLeft, square.centreBottom, square.bottomLeft);
 			break;
 		case 2:
-			MeshFromPoints(square.bottomRight, square.centreBottom, square.centreRight);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.centreRight, square.bottomRight, square.centreBottom, square.center);
+			else
+				MeshFromPoints(square.bottomRight, square.centreBottom, square.centreRight);
 			break;
 		case 4:
-			MeshFromPoints(square.topRight, square.centreRight, square.centreTop);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.topRight, square.centreRight, square.center, square.centreTop);
+			else 
+				MeshFromPoints(square.topRight, square.centreRight, square.centreTop);
 			break;
 		case 8:
-			MeshFromPoints(square.topLeft, square.centreTop, square.centreLeft);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.topLeft, square.centreTop, square.center, square.centreLeft);
+			else
+				MeshFromPoints(square.topLeft, square.centreTop, square.centreLeft);
 			break;
 
 		// 2 points:
@@ -251,16 +268,28 @@ public class MeshGenerator : MonoBehaviour {
 
 		// 3 point:
 		case 7:
-			MeshFromPoints(square.centreTop, square.topRight, square.bottomRight, square.bottomLeft, square.centreLeft);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.center, square.centreTop, square.topRight, square.bottomRight, square.bottomLeft, square.centreLeft);
+			else
+				MeshFromPoints(square.centreTop, square.topRight, square.bottomRight, square.bottomLeft, square.centreLeft);
 			break;
 		case 11:
-			MeshFromPoints(square.topLeft, square.centreTop, square.centreRight, square.bottomRight, square.bottomLeft);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.center, square.centreRight, square.bottomRight, square.bottomLeft, square.topLeft, square.centreTop);
+			else
+				MeshFromPoints(square.topLeft, square.centreTop, square.centreRight, square.bottomRight, square.bottomLeft);
 			break;
 		case 13:
-			MeshFromPoints(square.topLeft, square.topRight, square.centreRight, square.centreBottom, square.bottomLeft);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.center, square.centreBottom, square.bottomLeft, square.topLeft, square.topRight, square.centreRight);
+			else
+				MeshFromPoints(square.topLeft, square.topRight, square.centreRight, square.centreBottom, square.bottomLeft);
 			break;
 		case 14:
-			MeshFromPoints(square.topLeft, square.topRight, square.bottomRight, square.centreBottom, square.centreLeft);
+			if (removeRoundedCorners)
+				MeshFromPoints(square.center, square.centreLeft, square.topLeft, square.topRight, square.bottomRight, square.centreBottom);
+			else 
+				MeshFromPoints(square.topLeft, square.topRight, square.bottomRight, square.centreBottom, square.centreLeft);
 			break;
 
 		// 4 point:
@@ -278,7 +307,7 @@ public class MeshGenerator : MonoBehaviour {
 
 	void MeshFromPoints(params Node[] points) {
 		AssignIndexesToVertices(points);
-
+		
 		if (points.Length >= 3)
 			CreateTriangle(points[0], points[1], points[2]);
 		if (points.Length >= 4)
@@ -461,6 +490,7 @@ public class MeshGenerator : MonoBehaviour {
 		// Control nodes can be either on or off
 		public ControlNode topLeft, topRight, bottomRight, bottomLeft;
 		public Node centreTop, centreRight, centreBottom, centreLeft;
+		public Node center; // Used for square off for offices. Ignoring case 1, 2, 4, 7, 8, 11, 13, 14
 		public int configuration;
 
 		public Square (ControlNode topLeft, ControlNode topRight, ControlNode bottomRight, ControlNode bottomLeft) {
@@ -474,6 +504,13 @@ public class MeshGenerator : MonoBehaviour {
 			centreRight = this.bottomRight.above;
 			centreBottom = this.bottomLeft.right;
 			centreLeft = this.bottomLeft.above;
+			
+			// Find middle
+			var xDiff = Math.Abs(topLeft.position.x - topRight.position.x);
+			var zDiff = Math.Abs(topLeft.position.z - bottomLeft.position.z);
+			var centerX = bottomLeft.position.x + (xDiff / 2f);
+			var centerZ = bottomLeft.position.z + (zDiff / 2f);
+			this.center = new Node(new Vector3(centerX, topLeft.position.y, centerZ));
 
 			// There are only 16 possible configurations
 			// Consider them in binary xxxx
