@@ -78,10 +78,6 @@ public class MeshGenerator : MonoBehaviour {
 		
 		// Apply mesh to wall roof
 		wallRoof.mesh = wallRoofMesh;
-		
-		Debug.Log("Should be false" + wallRoofMesh.bounds.Contains(new Vector3(0f, 0f,0f)));
-		Debug.Log("Should be true" + wallRoofMesh.(new Vector3(0f, 0f,0f)));
-
 
 		// This bit of code allows us to apply a texture on the mesh
 		// Tiling refers to using the same texture next to each other.
@@ -104,33 +100,92 @@ public class MeshGenerator : MonoBehaviour {
 			CreateWallMesh(wallHeight);
 		}
 
-		return GenerateCollisionMap(new List<Vector3>(vertices), new List<int>(triangles), 
-			map.GetLength(0), map.GetLength(1), 
+		return GenerateCollisionMap(squareGrid, map.GetLength(0), map.GetLength(1), 
 			new Vector2(squareGrid.XOffset, squareGrid.YOffset), 
 			squareSize);
 	}
 
-	private SimulationMap<bool> GenerateCollisionMap(List<Vector3> vertices, List<int> collisionTriangles, int width, int height, Vector3 offset, float mapScale)
+	private SimulationMap<bool> GenerateCollisionMap(SquareGrid squareGrid, int width, int height, Vector3 offset, float mapScale)
 	{
 		// Create a bool type SimulationMap with default value of false in all cells
 		SimulationMap<bool> collisionMap = new SimulationMap<bool>(() => false, width, height, mapScale, offset);
-
-		var totalTriangles = collisionTriangles.Count / 3;
-		for (int triangleNumber = 0; triangleNumber < totalTriangles; triangleNumber++)
-		{
-			var index = triangleNumber * 3;
-			var v1 = vertices[collisionTriangles[index]];
-			var v2 = vertices[collisionTriangles[index + 1]];
-			var v3 = vertices[collisionTriangles[index + 2]];
-
-			// Find the centroid of the triangle
-			var triangleCenter = (v1 + v2 + v3) / 3.0f;
-			// Mark the corresponding map triangle as collidable
-			collisionMap.SetCell(triangleCenter, true);
+		
+		for (int x = 0; x < squareGrid.squares.GetLength(0); x++) {
+			for (int y = 0; y < squareGrid.squares.GetLength(1); y++)
+			{
+				var square = squareGrid.squares[x, y];
+				var collisionTile = collisionMap.GetTile(x, y);
+				// Create triangles from all the points in the squares
+				// assigned to variables "vertices" and "triangles"
+				AdaptCollisionMapTile(collisionTile, square);
+			}
 		}
 		
-		
 		return collisionMap;
+	}
+
+	private void AdaptCollisionMapTile(SimulationMapTile<bool> tile, Square square)
+	{
+		int[] triangles = { };
+		switch (square.configuration) {
+		case 0:
+			break;
+		
+		case 1:
+			triangles = new[]{0};
+			break;
+		case 2:
+			triangles = new[]{3};
+			break;
+		case 4:
+			triangles = new[]{7};
+			break;
+		case 8:
+			triangles = new[]{4};
+			break;
+		
+		case 3:
+			triangles = new[]{0,1,2,3};
+			break;
+		case 6:
+			triangles = new[]{2,3,6,7};
+			break;
+		case 9:
+			triangles = new[]{0,1,4,5};
+			break;
+		case 12:
+			triangles = new[]{4,5,6,7};
+			break;
+		case 5:
+			triangles = new[]{0,1,2,5,6,7};
+			break;
+		case 10:
+			triangles = new[]{1,2,3,4,5,6};
+			break;
+		
+		case 7:
+			triangles = new[]{0,1,2,3,5,6,7};
+			break;
+		case 11:
+			triangles = new[]{0,1,2,3,4,5,6};
+			break;
+		case 13:
+			triangles = new[]{0,1,2,4,5,6,7};
+			break;
+		case 14:
+			triangles = new[]{1,2,3,4,5,6,7};
+			break;
+
+		// 4 point:
+		case 15:
+			triangles = new[]{0,1,2,3,4,5,6,7};
+			break;
+		}
+
+		foreach (var index in triangles)
+		{
+			tile.SetCellValue(index, true);
+		}
 	}
 	
 	void Generate2DColliders() {

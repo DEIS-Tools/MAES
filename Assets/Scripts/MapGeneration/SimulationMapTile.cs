@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Dora.MapGeneration
 {
-    internal class SimulationMapTile<TCell>
+    public class SimulationMapTile<TCell>
         {
             // A tile is a rectangle consisting of 8 triangle shaped cells.
             // The triangles are arranged in 4 different orientations
@@ -21,6 +21,11 @@ namespace Dora.MapGeneration
                 {
                     _triangleCells.Add(cellFactory());
                 }
+            }
+
+            public void SetCellValue(int index, TCell newCellValue)
+            {
+                this._triangleCells[index] = newCellValue;
             }
 
             private SimulationMapTile(List<TCell> cells)

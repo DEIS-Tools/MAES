@@ -121,5 +121,10 @@ namespace Dora.MapGeneration
         {
             return GetEnumerator();
         }
+
+        public SimulationMapTile<TCell> GetTile(int x, int y)
+        {
+            return _tiles[x, y];
+        }
     }
 }
