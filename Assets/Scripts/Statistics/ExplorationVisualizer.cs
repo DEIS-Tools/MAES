@@ -133,13 +133,14 @@ namespace Dora.Statistics
             foreach (var (index, explorationCell) in newMap)
             {
                 var vertexIndex = index * 3;
-                var color = explorationCell.isExplorable ? _unexploredColor : _solidColor;
+                var color = _solidColor;
+                if (explorationCell.isExplorable)
+                    color = explorationCell.IsExplored ? _exploredColor : _unexploredColor;
                 _colors[vertexIndex] = color;
                 _colors[vertexIndex + 1] = color;
                 _colors[vertexIndex + 2] = color;
                 if (!explorationCell.isExplorable) count++;
             }
-            Debug.Log("Rendered triangles" + count);
         }
     }
 }

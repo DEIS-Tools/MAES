@@ -63,9 +63,9 @@ namespace Dora.MapGeneration
                 for (int y = 0; y < heightInTiles; y++)
                 {
                     var v1 = new Vector2(x, y) * Scale + Offset;
-                    var v2 = new Vector2(x + tileSize, y)  * Scale + Offset;
-                    var v3 = new Vector2(x + tileSize, y + tileSize)  * Scale + Offset;
-                    var v4 = new Vector2(x, y + tileSize)  * Scale + Offset;
+                    var v2 = new Vector2(x + 1, y)  * Scale + Offset;
+                    var v3 = new Vector2(x + 1, y + 1)  * Scale + Offset;
+                    var v4 = new Vector2(x, y + 1)  * Scale + Offset;
                     _tileEdges[x, y, (int) TileEdgeSide.South] = new AxialLine2D(v1, v2);
                     _tileEdges[x, y, (int) TileEdgeSide.East] = new AxialLine2D(v2, v3);
                     _tileEdges[x, y, (int) TileEdgeSide.North] = new AxialLine2D(v4, v3);
@@ -77,14 +77,20 @@ namespace Dora.MapGeneration
         // Casts a trace starting at given point, moving in the given direction and terminating when encountering a
         // collision or after exceeding the given direction.
         // Returns the list of intersected cells in the order that they were encountered  
-        public List<TCell> Raytrace(Vector2 startingPoint, float angle, float distance)
+        public List<TCell> Raytrace(Vector2 startingPoint, float angle, float distance, Action<TCell> cellAction)
         {
             // First find the Tiles that intersect with the trace
-            var tiles = TilesTrace(startingPoint, angle, distance);
-            return new List<TCell>();
+            var tracedTiles = TilesTrace(startingPoint, angle, distance);
+            
+            var tracedCells = new List<TCell>();
+            foreach (var tile in tracedTiles)
+            {
+                tile.ForEachCell(cellAction);
+            }
+            return tracedCells;
         }
         
-        private List<SimulationMapTile<TCell>> TilesTrace(Vector2 startingPoint, float angleDegrees, float distance)
+        private List<SimulationMapTile<TCell>> TilesTrace(Vector2 startingPoint, float angleDegrees, float rayLength)
         {
             if (Mathf.Abs(angleDegrees) < 0.01f) 
                 throw new ArgumentException("Cannot perform raytrace for angles of 90° and 270°");
@@ -97,17 +103,15 @@ namespace Dora.MapGeneration
             List<SimulationMapTile<TCell>> tracedTiles = new List<SimulationMapTile<TCell>>();
             var localCoordinate = (startingPoint - Offset) / Scale;
             var currentTile = new Vector2Int((int) localCoordinate.x, (int) localCoordinate.y);
-            Vector2Int nextTile;
             Vector2 intersection;
-            
             do
             {
-                Debug.Log("Traced tile: " + currentTile);
                 tracedTiles.Add(_tiles[currentTile.x, currentTile.y]);
+                Vector2Int nextTile;
                 (nextTile, intersection) = FindNextTileIntersection(currentTile, angleDegrees, a, b);
                 if (!IsWithinLocalMapBounds(nextTile)) break;
                 currentTile = nextTile;
-            } while (true); // TODO: distance check
+            } while (Geometry.DistanceBetween(startingPoint, intersection) <= rayLength); 
 
             return tracedTiles;
         }

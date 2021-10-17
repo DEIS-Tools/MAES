@@ -55,7 +55,6 @@ namespace Dora.Utilities
                 
                 // y = ax + b, solved for x gives x = (y - b) / a
                 var xIntersection = (this.Start.y - b) / a;
-                Debug.Log("Horizontal line: {" + _minX + ", " + _maxX + "}" + " intersection at " + xIntersection);
                 // Return intersection if it is within bounds of this line
                 if (xIntersection >= _minX && xIntersection <= _maxX)
                     return new Vector2(xIntersection, Start.y);

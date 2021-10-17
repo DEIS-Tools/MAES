@@ -45,6 +45,14 @@ namespace Dora.MapGeneration
                 return new SimulationMapTile<TNewCell>(mappedCells);
             }
             
+            public void ForEachCell(Action<TCell> cellAction)
+            {
+                foreach (var cell in _triangleCells)
+                {
+                    cellAction(cell);
+                }
+            }
+            
             
 
             public TCell GetTriangleCellByCoordinateDecimals(float xDecimals, float yDecimals)

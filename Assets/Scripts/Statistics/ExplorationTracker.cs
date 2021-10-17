@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
 using Dora.MapGeneration;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Dora.Statistics
 {
@@ -23,8 +26,18 @@ namespace Dora.Statistics
             _collisionMap = collisionMap;
             _explorationVisualizer = explorationVisualizer;
             _explorationMap = collisionMap.FMap(isCellSolid => new ExplorationCell(!isCellSolid));
+
+            var sw = Stopwatch.StartNew();
+            float traceDistance = 20.0f;
+            for (int i = 0; i < 90 * 50; i++)
+            {
+                float angle = (i * 4 + 1f) % 360f;
+                _explorationMap.Raytrace(new Vector2(-0.0f, -0.0f), angle, 20.0f, cell =>  cell.IsExplored = true);
+            }
+            sw.Stop();
+            Debug.Log("Millis for 90 raytraces " + sw.ElapsedMilliseconds);
+
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.Scale, collisionMap.Offset);
-            _explorationMap.Raytrace(new Vector2(-99.67f, -99.2f), 85f, 8.0f);
         }
 
     }
