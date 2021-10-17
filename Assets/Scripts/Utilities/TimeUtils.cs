@@ -1,8 +1,8 @@
 using System;
 
-namespace Dora
+namespace Dora.Utilities
 {
-    public class Utils
+    public class TimeUtils
     {
 
         public static long CurrentTimeMillis()

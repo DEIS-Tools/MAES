@@ -5,6 +5,7 @@ using System.Threading;
 using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Statistics;
+using Dora.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -36,7 +37,7 @@ namespace Dora
             // TODO: Check if possible to change (For example, not possible if no map is generated)
             _playState = targetState;
             // Reset next update time when changing play mode to avoid skipping ahead
-            _nextUpdateTimeMillis = Utils.CurrentTimeMillis();
+            _nextUpdateTimeMillis = TimeUtils.CurrentTimeMillis();
             return _playState;
         }
 
@@ -90,7 +91,7 @@ namespace Dora
             int physicsTickDeltaMillis = SimConfig.LogicTickDeltaMillis / SimConfig.PhysicsTicksPerLogicUpdate;
 
             // Only calculate updates if there is still time left in the current update
-            while (Utils.CurrentTimeMillis() - startTimeMillis < millisPerFixedUpdate)
+            while (TimeUtils.CurrentTimeMillis() - startTimeMillis < millisPerFixedUpdate)
             {
                 // Yield if no more updates are needed this FixedUpdate cycle
                 if (_nextUpdateTimeMillis > fixedUpdateEndTime) break;
@@ -102,7 +103,7 @@ namespace Dora
                 _nextUpdateTimeMillis = _nextUpdateTimeMillis + updateDelayMillis;
                 // Do not try to catch up if more than 0.5 seconds behind (higher if tick delta is high)
                 long maxDelayMillis = Math.Max(500, physicsTickDeltaMillis * 10);
-                _nextUpdateTimeMillis = Math.Max(_nextUpdateTimeMillis, Utils.CurrentTimeMillis() - maxDelayMillis);
+                _nextUpdateTimeMillis = Math.Max(_nextUpdateTimeMillis, TimeUtils.CurrentTimeMillis() - maxDelayMillis);
             }
             var simulatedTimeSpan = TimeSpan.FromMilliseconds(_simulatedTimeMillis);
             var output = simulatedTimeSpan.ToString(@"hh\:mm\:ss");
