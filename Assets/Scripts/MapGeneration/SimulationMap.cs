@@ -20,7 +20,7 @@ namespace Dora.MapGeneration
         public readonly Vector2 Offset;
         
         private readonly SimulationMapTile<TCell>[,] _tiles;
-        private AxialLine2D[,,] _tileEdges;
+        private Line2D[,,] _tileEdges;
         
         private enum TileEdgeSide
         {
@@ -57,7 +57,7 @@ namespace Dora.MapGeneration
 
         private void GenerateTileEdges(int widthInTiles, int heightInTiles, float tileSize)
         {
-            _tileEdges = new AxialLine2D[widthInTiles, heightInTiles, 4];
+            _tileEdges = new Line2D[widthInTiles, heightInTiles, 4];
             for (int x = 0; x < widthInTiles; x++)
             {
                 for (int y = 0; y < heightInTiles; y++)
@@ -66,10 +66,10 @@ namespace Dora.MapGeneration
                     var v2 = new Vector2(x + 1, y)  * Scale + Offset;
                     var v3 = new Vector2(x + 1, y + 1)  * Scale + Offset;
                     var v4 = new Vector2(x, y + 1)  * Scale + Offset;
-                    _tileEdges[x, y, (int) TileEdgeSide.South] = new AxialLine2D(v1, v2);
-                    _tileEdges[x, y, (int) TileEdgeSide.East] = new AxialLine2D(v2, v3);
-                    _tileEdges[x, y, (int) TileEdgeSide.North] = new AxialLine2D(v4, v3);
-                    _tileEdges[x, y, (int) TileEdgeSide.West] = new AxialLine2D(v1, v4);
+                    _tileEdges[x, y, (int) TileEdgeSide.South] = new Line2D(v1, v2);
+                    _tileEdges[x, y, (int) TileEdgeSide.East] = new Line2D(v2, v3);
+                    _tileEdges[x, y, (int) TileEdgeSide.North] = new Line2D(v4, v3);
+                    _tileEdges[x, y, (int) TileEdgeSide.West] = new Line2D(v1, v4);
                 }
             }
         }
@@ -174,7 +174,7 @@ namespace Dora.MapGeneration
                 
         }
 
-        private AxialLine2D GetTileEdge(Vector2Int tileCoordinate, TileEdgeSide side)
+        private Line2D GetTileEdge(Vector2Int tileCoordinate, TileEdgeSide side)
         {
             return _tileEdges[tileCoordinate.x, tileCoordinate.y, (int) side];
         }
