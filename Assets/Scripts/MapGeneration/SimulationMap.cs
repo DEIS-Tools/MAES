@@ -21,6 +21,8 @@ namespace Dora.MapGeneration
         
         private readonly SimulationMapTile<TCell>[,] _tiles;
         private Line2D[,,] _tileEdges;
+
+        private RayTracingTriangle[] _tracableTriangles;
         
         private enum TileEdgeSide
         {
@@ -79,6 +81,8 @@ namespace Dora.MapGeneration
         // Returns the list of intersected cells in the order that they were encountered  
         public List<TCell> Raytrace(Vector2 startingPoint, float angle, float distance, Action<TCell> cellAction)
         {
+
+            if (_tracableTriangles == null) GenerateTraceableTriangles();
             // First find the Tiles that intersect with the trace
             var tracedTiles = TilesTrace(startingPoint, angle, distance);
             
@@ -89,7 +93,9 @@ namespace Dora.MapGeneration
             }
             return tracedCells;
         }
+
         
+
         private List<SimulationMapTile<TCell>> TilesTrace(Vector2 startingPoint, float angleDegrees, float rayLength)
         {
             if (Mathf.Abs(angleDegrees) < 0.01f) 
@@ -259,5 +265,178 @@ namespace Dora.MapGeneration
         {
             return _tiles[x, y];
         }
+        
+        // ---------------------- Custom "Raytracing" -------------------------------
+
+        // Initializes 
+        private void GenerateTraceableTriangles()
+        {
+            var totalTriangles = WidthInTiles * HeightInTiles * 8;
+            var trianglesPerRow = WidthInTiles * 8;
+            var vertexDistance = Scale / 2.0f;
+            
+            _tracableTriangles = new RayTracingTriangle[totalTriangles];
+            for (int x = 0; x < WidthInTiles; x++)
+            {
+                for (int y = 0; y < HeightInTiles; y++)
+                {
+                    int index = x * 8 + y * trianglesPerRow;
+                    AddTraceableTriangles(new Vector2(x, y) * Scale + Offset, vertexDistance, index, trianglesPerRow);
+                }
+            }
+
+            foreach (var (index, cell) in this)
+            {
+                _tracableTriangles[index].Cell = cell;
+            }
+        }
+
+        private void AddTraceableTriangles(Vector2 bottomLeft, float vertexDistance, int index, int trianglesPerRow)
+        {
+            var x = bottomLeft.x;
+            var y = bottomLeft.y;
+            // Triangle 0
+            var neighbours = new int[3];
+            neighbours[Inclined] = index + 1;
+            neighbours[Horizontal] = index - trianglesPerRow + 4;
+            neighbours[Vertical] = index - 5;
+            _tracableTriangles[index] = new RayTracingTriangle(
+                new Vector2(x, y + vertexDistance), 
+                new Vector2(x + vertexDistance, y),
+                new Vector2(x, y),
+                neighbours
+            );
+
+            // Triangle 1
+            index++;
+            var neighbours1 = new int[3];
+            neighbours1[Inclined] = index - 1;
+            neighbours1[Horizontal] = index + 4;
+            neighbours1[Vertical] = index + 1;
+            _tracableTriangles[index] = new RayTracingTriangle(
+                new Vector2(x + vertexDistance, y), 
+                new Vector2(x, y + vertexDistance),
+                new Vector2(x + vertexDistance, y + vertexDistance),
+                neighbours1
+            );
+            
+            // Triangle 2
+            index++;
+            var neighbours2 = new int[3];
+            neighbours2[Inclined] = index + 1;
+            neighbours2[Horizontal] = index + 4;
+            neighbours2[Vertical] = index - 1;
+            _tracableTriangles[index] = new RayTracingTriangle(
+                new Vector2(x + vertexDistance, y),
+                new Vector2(x + 2 * vertexDistance, y + vertexDistance),
+                new Vector2(x + vertexDistance, y + vertexDistance),
+                neighbours2
+            );
+            
+            // Triangle 3
+            index++;
+            var neighbours3 = new int[3];
+            neighbours3[Inclined] = index - 1;
+            neighbours3[Horizontal] = index - trianglesPerRow + 4;
+            neighbours3[Vertical] = index + 5;
+            _tracableTriangles[index] = new RayTracingTriangle(
+                new Vector2(x + 2 * vertexDistance, y + vertexDistance),
+                new Vector2(x + vertexDistance, y),
+                new Vector2(x + 2 * vertexDistance, y),
+                neighbours3
+            );
+            
+            // Triangle 4
+            index++;
+            var neighbours4 = new int[3];
+            neighbours4[Inclined] = index + 1;
+            neighbours4[Horizontal] = index + trianglesPerRow - 4;
+            neighbours4[Vertical] = index - 5;
+            _tracableTriangles[index] = new RayTracingTriangle(
+                new Vector2(x, y + vertexDistance),
+                new Vector2(x + vertexDistance, y + 2 * vertexDistance),
+                new Vector2(x, y + 2 * vertexDistance),
+                neighbours4
+            );
+            
+            // Triangle 5
+            index++;
+            var neighbours5 = new int[3];
+            neighbours5[Inclined] = index - 1;
+            neighbours5[Horizontal] = index - 4;
+            neighbours5[Vertical] = index + 1;
+            _tracableTriangles[index] = new RayTracingTriangle(
+                new Vector2(x + vertexDistance, y + 2 * vertexDistance),
+                new Vector2(x, y + vertexDistance),
+                new Vector2(x + vertexDistance, y + vertexDistance),
+                neighbours5
+            );
+            
+            // Triangle 6
+            index++;
+            var neighbours6 = new int[3];
+            neighbours6[Inclined] = index + 1;
+            neighbours6[Horizontal] = index - 1;
+            neighbours6[Vertical] = index - 4;
+            _tracableTriangles[index] = new RayTracingTriangle(
+                new Vector2(x + vertexDistance, y + 2 * vertexDistance),
+                new Vector2(x + 2 * vertexDistance, y + vertexDistance),
+                new Vector2(x + vertexDistance, y + vertexDistance),
+                neighbours6
+            );
+            
+            // Triangle 7
+            index++;
+            var neighbours7 = new int[3];
+            neighbours7[Inclined] = index - 1;
+            neighbours7[Horizontal] = index + trianglesPerRow - 4;
+            neighbours7[Vertical] = index + 5;
+            _tracableTriangles[index] = new RayTracingTriangle(
+                new Vector2(x + 2 * vertexDistance, y + vertexDistance),
+                new Vector2(x + vertexDistance, y + 2 * vertexDistance),
+                new Vector2(x + 2 * vertexDistance, y + 2 * vertexDistance),
+                neighbours7
+            );
+        }
+        
+        private const int Inclined = 0, Horizontal = 1, Vertical = 2;
+        private static readonly int[] _triangleEdges = new[]
+            {Inclined, Horizontal, Vertical};
+
+        private class RayTracingTriangle
+        {
+            private Line2D[] _lines;
+            private int[] _neighbourIndex;
+            public TCell Cell;
+
+            public RayTracingTriangle(Vector2 p1, Vector2 p2, Vector2 p3, int[] neighbourIndex)
+            {
+                _lines = new Line2D[3]{new Line2D(p1, p2), new Line2D(p2, p3), new Line2D(p3, p1)};
+                _neighbourIndex = neighbourIndex;
+            }
+
+            // Returns the side at which the trace exited the triangle, the exit intersection point
+            // and the index of the triangle that the trace enters next
+            // Takes the edge that this tile was entered from, and the linear equation ax+b for the trace 
+            public (int, Vector2, int) RayTrace(int enteringEdge, float a, float b)
+            {
+                foreach (var edge in _triangleEdges)
+                {
+                    // The line must exit the triangle in one of the two edges that the line did not enter through
+                    // Therefore only check intersection for these two lines
+                    if (edge == enteringEdge) continue;
+                        
+                    var intersection = _lines[(int) edge].GetIntersection(a, b);
+                    if (intersection != null) return (edge, intersection!.Value, _neighbourIndex[(int) edge]);
+                }
+
+                throw new Exception("Triangle does not have any intersections with the given line");
+            }
+        }
+        
     }
+    
+    
+    
+    
 }
