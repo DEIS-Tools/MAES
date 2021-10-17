@@ -76,44 +76,43 @@ namespace Dora.MapGeneration
             }
         }
 
-        // Casts a trace starting at given point, moving in the given direction and terminating when encountering a
-        // collision or after exceeding the given direction.
-        // Returns the list of intersected cells in the order that they were encountered  
-        public List<TCell> Raytrace(Vector2 startingPoint, float angleDegrees, float distance, Func<TCell, bool> shouldContinueFromCell)
+        // Casts a trace starting at given point, moving in the given direction. The given function will be called on
+        // each cell that is encountered. If the function returns true the trace will continue to the next cell,
+        // if it returns false the trace will terminate. The trace automatically terminates when it exits map bounds.
+        public void Raytrace(Vector2 startingPoint, float angleDegrees, float distance, Func<TCell, bool> shouldContinueFromCell)
         {
             if (_tracableTriangles == null) GenerateTraceableTriangles();
             int nextTriangleIndex = GetTriangleIndex(startingPoint);
             
-            // Convert angle to a
-            // solve for b
+            // Convert given angle and starting point to a linear equation: ax + b
             var a = Mathf.Tan(Mathf.PI / 180 * angleDegrees);
             var b = startingPoint.y - a * startingPoint.x;
 
             var currentTriangle = _tracableTriangles[nextTriangleIndex];
             var enteringEdge = currentTriangle.FindInitialEnteringEdge(angleDegrees, a, b);
-            Vector2 intersectionPoint;
-            
-            do
+
+            while(true)
             {
-                currentTriangle = _tracableTriangles[nextTriangleIndex];
+                // Invoke the given function on the cell, and only continue if it returns true
                 if (!shouldContinueFromCell(currentTriangle.Cell))
                     break;
-                (enteringEdge, intersectionPoint, nextTriangleIndex) = currentTriangle.RayTrace(enteringEdge, a, b);
-            } while (Geometry.DistanceBetween(startingPoint, intersectionPoint) <= distance 
-                     && nextTriangleIndex > 0 && nextTriangleIndex < _tracableTriangles.Length);
-            
-            /*_tracableTriangles[triangleIndex].RayTrace(enteringEdge, a, b);
 
-            // First find the Tiles that intersect with the trace
-            var tracedTiles = TilesTrace(startingPoint, angleDegrees, distance);
-            
-            var tracedCells = new List<TCell>();
-            foreach (var tile in tracedTiles)
-            {
-                tile.ForEachCell(cellAction);
-            }*/
-            var tracedCells = new List<TCell>();
-            return tracedCells;
+                // Perform the ray tracing step for the current triangle
+                (enteringEdge, _, nextTriangleIndex) = currentTriangle.RayTrace(enteringEdge, a, b);
+                
+                // Break if the next triangle is outside the map bounds
+                if (nextTriangleIndex < 0 || nextTriangleIndex >= _tracableTriangles.Length)
+                    break; 
+
+                currentTriangle = _tracableTriangles[nextTriangleIndex];
+
+                // All vertices of the triangle must be within range for the triangle to be considered visible
+                bool withinRange = Geometry.DistanceBetween(startingPoint, currentTriangle._lines[0].Start) <= distance;
+                withinRange &= Geometry.DistanceBetween(startingPoint, currentTriangle._lines[1].Start) <= distance;
+                withinRange &= Geometry.DistanceBetween(startingPoint, currentTriangle._lines[2].Start) <= distance;
+                if (!withinRange)
+                    break;
+            }
         }
 
         
@@ -437,7 +436,7 @@ namespace Dora.MapGeneration
 
         private class RayTracingTriangle
         {
-            private Line2D[] _lines;
+            public Line2D[] _lines;
             private int[] _neighbourIndex;
             public TCell Cell;
 
