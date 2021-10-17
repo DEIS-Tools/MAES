@@ -62,10 +62,10 @@ namespace Dora.MapGeneration
             {
                 for (int y = 0; y < heightInTiles; y++)
                 {
-                    var v1 = new Vector2(x, y);
-                    var v2 = new Vector2(x + tileSize, y);
-                    var v3 = new Vector2(x + tileSize, y + tileSize);
-                    var v4 = new Vector2(x, y + tileSize);
+                    var v1 = new Vector2(x, y) * Scale + Offset;
+                    var v2 = new Vector2(x + tileSize, y)  * Scale + Offset;
+                    var v3 = new Vector2(x + tileSize, y + tileSize)  * Scale + Offset;
+                    var v4 = new Vector2(x, y + tileSize)  * Scale + Offset;
                     _tileEdges[x, y, (int) TileEdgeSide.South] = new AxialLine2D(v1, v2);
                     _tileEdges[x, y, (int) TileEdgeSide.East] = new AxialLine2D(v2, v3);
                     _tileEdges[x, y, (int) TileEdgeSide.North] = new AxialLine2D(v4, v3);
@@ -122,7 +122,7 @@ namespace Dora.MapGeneration
             
             if (direction < 90f)
             {
-                // The line must either exit the North edce or East edge
+                // The line must either exit the North edge or East edge
                 // Check north first
                 var northIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.North).GetIntersection(a, b);
                 if (northIntersection != null) return (localTileCoordinate + Vector2Int.up, northIntersection.Value);

@@ -24,7 +24,7 @@ namespace Dora.Statistics
             _explorationVisualizer = explorationVisualizer;
             _explorationMap = collisionMap.FMap(isCellSolid => new ExplorationCell(!isCellSolid));
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.Scale, collisionMap.Offset);
-            _explorationMap.Raytrace(new Vector2(-99.67f, -99.2f), 45f, 8.0f);
+            _explorationMap.Raytrace(new Vector2(-99.67f, -99.2f), 85f, 8.0f);
         }
 
     }
