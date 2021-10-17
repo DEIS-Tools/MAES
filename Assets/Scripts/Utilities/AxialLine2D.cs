@@ -40,21 +40,37 @@ namespace Dora.Utilities
         }
 
         // Checks for intersection with an infinite line described by ax+b 
-        public bool Intersects(float a, float b)
+        public Vector2? GetIntersection(float a, float b)
         {
             if (this._isHorizontal)
             {
                 // Parallel lines case
-                if (a == 0) return Math.Abs(this.Start.y - b) < 0.001f;
+                if (Mathf.Abs(a) < 0.01f)
+                {
+                    throw new ArgumentException("Due to floating point imprecision intersection can only be " +
+                                                "measured for lines that are not near-constant " +
+                                                "(the slope, a, must satisfy: a > 0.01f || a < -0.01f)" +
+                                                "+ | Given slope: " + a);
+                }
                 
+                // y = ax + b, solved for x gives x = (y - b) / a
                 var xIntersection = (this.Start.y - b) / a;
-                return xIntersection <= _maxX && xIntersection >= _minX;
+                // Return intersection if it is within bounds of this line
+                if (xIntersection <= _maxX && xIntersection >= _minX)
+                    return new Vector2(xIntersection, Start.y);
+                else 
+                    return null;
             }
             else
             {
                 // This line is vertical. Simply plug x coordinate of this line into equation to find y intersection
                 var yIntersection = this.Start.x * a + b;
-                return yIntersection <= _maxY && yIntersection >= _minY;
+                // Return intersection if it is within bounds of this line
+                if (yIntersection <= _maxY && yIntersection >= _minY)
+                    return new Vector2(Start.x, yIntersection);
+                else
+                    return null;
+
             }
         }
     }

@@ -20,7 +20,7 @@ namespace Dora.MapGeneration
         public readonly Vector2 Offset;
         
         private readonly SimulationMapTile<TCell>[,] _tiles;
-        private readonly AxialLine2D[,,] _tileEdges;
+        private AxialLine2D[,,] _tileEdges;
         
         private enum TileEdgeSide
         {
@@ -34,13 +34,34 @@ namespace Dora.MapGeneration
             this.WidthInTiles = widthInTiles;
             this.HeightInTiles = heightInTiles;
             _tiles = new SimulationMapTile<TCell>[widthInTiles, heightInTiles];
-            _tileEdges = new AxialLine2D[widthInTiles, heightInTiles, 4];
-            var tileSize = scale; 
             for (int x = 0; x < widthInTiles; x++)
             {
                 for (int y = 0; y < heightInTiles; y++)
                 {
-                    _tiles[x,y] = new SimulationMapTile<TCell>(cellFactory);
+                    _tiles[x, y] = new SimulationMapTile<TCell>(cellFactory);
+                }
+            }
+            GenerateTileEdges(widthInTiles, heightInTiles, scale);
+        }
+        
+        // Private constructor for a pre-specified set of tiles. This is used in the FMap function
+        private SimulationMap(SimulationMapTile<TCell>[,] tiles, float scale, Vector2 offset)
+        {
+            this.Offset = offset;
+            _tiles = tiles;
+            this.Scale = scale;
+            WidthInTiles = tiles.GetLength(0);
+            HeightInTiles = tiles.GetLength(1);
+            GenerateTileEdges(WidthInTiles, HeightInTiles, scale);
+        }
+
+        private void GenerateTileEdges(int widthInTiles, int heightInTiles, float tileSize)
+        {
+            _tileEdges = new AxialLine2D[widthInTiles, heightInTiles, 4];
+            for (int x = 0; x < widthInTiles; x++)
+            {
+                for (int y = 0; y < heightInTiles; y++)
+                {
                     var v1 = new Vector2(x, y);
                     var v2 = new Vector2(x + tileSize, y);
                     var v3 = new Vector2(x + tileSize, y + tileSize);
@@ -59,7 +80,7 @@ namespace Dora.MapGeneration
         public List<TCell> Raytrace(Vector2 startingPoint, float angle, float distance)
         {
             // First find the Tiles that intersect with the trace
-            
+            var tiles = TilesTrace(startingPoint, angle, distance);
             return new List<TCell>();
         }
         
@@ -73,59 +94,90 @@ namespace Dora.MapGeneration
             var a = Mathf.Tan(Mathf.PI / 180 * angleDegrees);
             var b = startingPoint.y - a * startingPoint.x;
             
-            List<SimulationMapTile<TCell>> tiles = new List<SimulationMapTile<TCell>>();
-            tiles.Add(_tiles[(int) startingPoint.x, (int) startingPoint.y]);
-
+            List<SimulationMapTile<TCell>> tracedTiles = new List<SimulationMapTile<TCell>>();
+            var localCoordinate = (startingPoint - Offset) / Scale;
+            var currentTile = new Vector2Int((int) localCoordinate.x, (int) localCoordinate.y);
+            Vector2Int nextTile;
+            Vector2 intersection;
+            
             do
             {
-                
-            } while (true);
+                Debug.Log("Traced tile: " + currentTile);
+                tracedTiles.Add(_tiles[currentTile.x, currentTile.y]);
+                (nextTile, intersection) = FindNextTileIntersection(currentTile, angleDegrees, a, b);
+                if (!IsWithinLocalMapBounds(nextTile)) break;
+                currentTile = nextTile;
+            } while (true); // TODO: distance check
+
+            return tracedTiles;
         }
 
         
         // Finds and returns the coordinate of the next tile (ints) and the coordinate of intersection (floats)
-        public (Vector2Int, Vector2) FindNextTileIntersection(Vector2Int currentTile, float direction, float a, float b)
+        public (Vector2Int, Vector2) FindNextTileIntersection(Vector2Int localTileCoordinate, float direction, float a, float b)
         {
             if (direction < 0f || direction > 360f) 
                 throw new ArgumentException("Direction must be a negative float between 0 and 360");
-
             
             
             if (direction < 90f)
             {
-                // 
-                return (currentTile + Vector2Int.up, currentTile + Vector2Int.right);
+                // The line must either exit the North edce or East edge
+                // Check north first
+                var northIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.North).GetIntersection(a, b);
+                if (northIntersection != null) return (localTileCoordinate + Vector2Int.up, northIntersection.Value);
+                
+                // If intersection is not at the North edge, then it must be at the East edge
+                var eastIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.East).GetIntersection(a, b);
+                return (localTileCoordinate + Vector2Int.right, eastIntersection!.Value);
             }
 
             if (direction < 180f)
             {
-                return (currentTile + Vector2Int.up, currentTile + Vector2Int.left);                
+                // The line must either exit the North edge or West face
+                // Check north first
+                var northIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.North).GetIntersection(a, b);
+                if (northIntersection != null) return (localTileCoordinate + Vector2Int.up, northIntersection.Value);
+                
+                // If intersection is not at the North edge, then it must be at the West edge
+                var westIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.West).GetIntersection(a, b);
+                return (localTileCoordinate + Vector2Int.left, westIntersection!.Value);          
             }
 
             if (direction < 270f)
             {
-                return (currentTile + Vector2Int.down, currentTile + Vector2Int.left);
+                // The line must either exit the West edge or South edge
+                // Check West first
+                var westIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.West).GetIntersection(a, b);
+                if (westIntersection != null) return (localTileCoordinate + Vector2Int.left, westIntersection.Value);
+                
+                // If intersection is not at the West edge, then it must be at the South edge
+                var southIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.South).GetIntersection(a, b);
+                return (localTileCoordinate + Vector2Int.down, southIntersection!.Value);
             }
 
             else
             {
-                return (currentTile + Vector2Int.down, currentTile + Vector2Int.right);
+                // The line must either exit the South edge or East edge
+                // Check South first
+                var southIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.South).GetIntersection(a, b);
+                if (southIntersection != null) return (localTileCoordinate + Vector2Int.down, southIntersection.Value);
+                
+                // If intersection is not at the South edge, then it must be at the East edge
+                var eastIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.East).GetIntersection(a, b);
+                return (localTileCoordinate + Vector2Int.right, eastIntersection!.Value);
             }
                 
+        }
+
+        private AxialLine2D GetTileEdge(Vector2Int tileCoordinate, TileEdgeSide side)
+        {
+            return _tileEdges[tileCoordinate.x, tileCoordinate.y, (int) side];
         }
 
         public int TriangleCount()
         {
             return WidthInTiles * HeightInTiles * 8;
-        }
-
-        // Private constructor for a pre-specified set of tiles. This is used in the FMap function
-        private SimulationMap(SimulationMapTile<TCell>[,] tiles, float scale, Vector2 offset)
-        {
-            this.Offset = offset;
-            _tiles = tiles;
-            WidthInTiles = tiles.GetLength(0);
-            HeightInTiles = tiles.GetLength(1);
         }
 
         // Returns the triangle cell at the given world position
@@ -161,7 +213,7 @@ namespace Dora.MapGeneration
         private bool IsWithinLocalMapBounds(Vector2 localCoordinates)
         {
             return localCoordinates.x >= 0.0f && localCoordinates.x < WidthInTiles
-                   && localCoordinates.y >= 0f && localCoordinates.y < HeightInTiles; 
+                   && localCoordinates.y >= 0.0f && localCoordinates.y < HeightInTiles; 
         }
 
         // Generates a new SimulationMap<T2> by mapping the given function over all cells
