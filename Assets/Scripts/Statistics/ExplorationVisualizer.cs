@@ -127,7 +127,7 @@ namespace Dora.Statistics
         }
         
         // Colors each triangle depending on its current state
-        private void UpdateColors(SimulationMap<ExplorationCell> newMap)
+        public void UpdateColors(SimulationMap<ExplorationCell> newMap)
         {
             int count = 0;
             foreach (var (index, explorationCell) in newMap)
@@ -141,6 +141,8 @@ namespace Dora.Statistics
                 _colors[vertexIndex + 2] = color;
                 if (!explorationCell.isExplorable) count++;
             }
+
+            if(mesh != null) mesh.colors32 = _colors;
         }
     }
 }

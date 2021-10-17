@@ -22,6 +22,7 @@ namespace Dora
 
         private ExplorationTracker _explorationTracker;
         public ExplorationVisualizer explorationVisualizer;
+        private List<MonaRobot> _robots;
 
         public Text TestingText;
         private int _physicsTickCount = 0;
@@ -68,10 +69,8 @@ namespace Dora
             //var officeConfig = new OfficeMapConfig(60, 60,  (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
             //var collisionMap = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);
             
-            RobotSpawner.SpawnRobots();
-
+            _robots = RobotSpawner.SpawnRobots();
             _explorationTracker = new ExplorationTracker(collisionMap, explorationVisualizer);
-
         }
 
         // Timing variables for controlling the simulation in a manner that is decoupled from Unity's update system
@@ -129,6 +128,8 @@ namespace Dora
             _physicsTickCount += 1; 
             _simulatedTimeMillis += physicsTickDeltaMillis;
             _physicsTicksSinceUpdate++;
+            
+            _explorationTracker.Update(config, _robots);
             
             if (_physicsTicksSinceUpdate >= SimConfig.PhysicsTicksPerLogicUpdate)
             {
