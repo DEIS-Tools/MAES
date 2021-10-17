@@ -114,7 +114,7 @@ public class MeshGenerator : MonoBehaviour {
 			for (int y = 0; y < squareGrid.squares.GetLength(1); y++)
 			{
 				var square = squareGrid.squares[x, y];
-				var collisionTile = collisionMap.GetTile(x, y);
+				var collisionTile = collisionMap.GetTileByLocalCoordinate(x, y);
 				// Create triangles from all the points in the squares
 				// assigned to variables "vertices" and "triangles"
 				AdaptCollisionMapTile(collisionTile, square);

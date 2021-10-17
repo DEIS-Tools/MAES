@@ -17,21 +17,17 @@ namespace Dora.MapGeneration
         // The scale of the map in world space
         public readonly float Scale;
         // The scaled offset in world space
-        public readonly Vector2 Offset;
+        public readonly Vector2 ScaledOffset;
         
+        // The tiles of the map (each tile containing 8 triangle cells) 
         private readonly SimulationMapTile<TCell>[,] _tiles;
-        private Line2D[,,] _tileEdges;
 
-        private RayTracingTriangle[] _tracableTriangles;
+        // Used for calculating ray traces on the map. Lazily initialized.
+        private RayTracingTriangle[] _traceableTriangles;
         
-        private enum TileEdgeSide
+        public SimulationMap(Functional.Factory<TCell> cellFactory, int widthInTiles, int heightInTiles, float scale, Vector2 scaledOffset)
         {
-            North, South, East, West
-        }
-        
-        public SimulationMap(Functional.Factory<TCell> cellFactory, int widthInTiles, int heightInTiles, float scale, Vector2 offset)
-        {
-            this.Offset = offset;
+            this.ScaledOffset = scaledOffset;
             this.Scale = scale;
             this.WidthInTiles = widthInTiles;
             this.HeightInTiles = heightInTiles;
@@ -43,52 +39,32 @@ namespace Dora.MapGeneration
                     _tiles[x, y] = new SimulationMapTile<TCell>(cellFactory);
                 }
             }
-            GenerateTileEdges(widthInTiles, heightInTiles, scale);
         }
         
         // Private constructor for a pre-specified set of tiles. This is used in the FMap function
-        private SimulationMap(SimulationMapTile<TCell>[,] tiles, float scale, Vector2 offset)
+        private SimulationMap(SimulationMapTile<TCell>[,] tiles, float scale, Vector2 scaledOffset)
         {
-            this.Offset = offset;
+            this.ScaledOffset = scaledOffset;
             _tiles = tiles;
             this.Scale = scale;
             WidthInTiles = tiles.GetLength(0);
             HeightInTiles = tiles.GetLength(1);
-            GenerateTileEdges(WidthInTiles, HeightInTiles, scale);
         }
 
-        private void GenerateTileEdges(int widthInTiles, int heightInTiles, float tileSize)
-        {
-            _tileEdges = new Line2D[widthInTiles, heightInTiles, 4];
-            for (int x = 0; x < widthInTiles; x++)
-            {
-                for (int y = 0; y < heightInTiles; y++)
-                {
-                    var v1 = new Vector2(x, y) * Scale + Offset;
-                    var v2 = new Vector2(x + 1, y)  * Scale + Offset;
-                    var v3 = new Vector2(x + 1, y + 1)  * Scale + Offset;
-                    var v4 = new Vector2(x, y + 1)  * Scale + Offset;
-                    _tileEdges[x, y, (int) TileEdgeSide.South] = new Line2D(v1, v2);
-                    _tileEdges[x, y, (int) TileEdgeSide.East] = new Line2D(v2, v3);
-                    _tileEdges[x, y, (int) TileEdgeSide.North] = new Line2D(v4, v3);
-                    _tileEdges[x, y, (int) TileEdgeSide.West] = new Line2D(v1, v4);
-                }
-            }
-        }
 
         // Casts a trace starting at given point, moving in the given direction. The given function will be called on
         // each cell that is encountered. If the function returns true the trace will continue to the next cell,
         // if it returns false the trace will terminate. The trace automatically terminates when it exits map bounds.
         public void Raytrace(Vector2 startingPoint, float angleDegrees, float distance, Func<TCell, bool> shouldContinueFromCell)
         {
-            if (_tracableTriangles == null) GenerateTraceableTriangles();
+            if (_traceableTriangles == null) GenerateTraceableTriangles();
             int nextTriangleIndex = GetTriangleIndex(startingPoint);
             
             // Convert given angle and starting point to a linear equation: ax + b
             var a = Mathf.Tan(Mathf.PI / 180 * angleDegrees);
             var b = startingPoint.y - a * startingPoint.x;
 
-            var currentTriangle = _tracableTriangles[nextTriangleIndex];
+            var currentTriangle = _traceableTriangles[nextTriangleIndex];
             var enteringEdge = currentTriangle.FindInitialEnteringEdge(angleDegrees, a, b);
 
             while(true)
@@ -101,10 +77,10 @@ namespace Dora.MapGeneration
                 (enteringEdge, _, nextTriangleIndex) = currentTriangle.RayTrace(enteringEdge, a, b);
                 
                 // Break if the next triangle is outside the map bounds
-                if (nextTriangleIndex < 0 || nextTriangleIndex >= _tracableTriangles.Length)
+                if (nextTriangleIndex < 0 || nextTriangleIndex >= _traceableTriangles.Length)
                     break; 
 
-                currentTriangle = _tracableTriangles[nextTriangleIndex];
+                currentTriangle = _traceableTriangles[nextTriangleIndex];
 
                 // All vertices of the triangle must be within range for the triangle to be considered visible
                 bool withinRange = Geometry.DistanceBetween(startingPoint, currentTriangle._lines[0].Start) <= distance;
@@ -114,101 +90,10 @@ namespace Dora.MapGeneration
                     break;
             }
         }
-
         
-
-        private List<SimulationMapTile<TCell>> TilesTrace(Vector2 startingPoint, float angleDegrees, float rayLength)
+        public SimulationMapTile<TCell> GetTileByLocalCoordinate(int x, int y)
         {
-            if (Mathf.Abs(angleDegrees) < 0.01f) 
-                throw new ArgumentException("Cannot perform raytrace for angles of 90° and 270°");
-            
-            // Convert angle to a
-            // solve for b
-            var a = Mathf.Tan(Mathf.PI / 180 * angleDegrees);
-            var b = startingPoint.y - a * startingPoint.x;
-            
-            List<SimulationMapTile<TCell>> tracedTiles = new List<SimulationMapTile<TCell>>();
-            var localCoordinate = (startingPoint - Offset) / Scale;
-            var currentTile = new Vector2Int((int) localCoordinate.x, (int) localCoordinate.y);
-            Vector2 intersection;
-            do
-            {
-                tracedTiles.Add(_tiles[currentTile.x, currentTile.y]);
-                Vector2Int nextTile;
-                (nextTile, intersection) = FindNextTileIntersection(currentTile, angleDegrees, a, b);
-                if (!IsWithinLocalMapBounds(nextTile)) break;
-                currentTile = nextTile;
-            } while (Geometry.DistanceBetween(startingPoint, intersection) <= rayLength); 
-
-            return tracedTiles;
-        }
-
-        
-        // Finds and returns the coordinate of the next tile (ints) and the coordinate of intersection (floats)
-        public (Vector2Int, Vector2) FindNextTileIntersection(Vector2Int localTileCoordinate, float direction, float a, float b)
-        {
-            if (direction < 0f || direction > 360f) 
-                throw new ArgumentException("Direction must be a negative float between 0 and 360");
-            
-            
-            if (direction < 90f)
-            {
-                // The line must either exit the North edge or East edge
-                // Check north first
-                var northIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.North).GetIntersection(a, b);
-                if (northIntersection != null) return (localTileCoordinate + Vector2Int.up, northIntersection.Value);
-                
-                // If intersection is not at the North edge, then it must be at the East edge
-                var eastIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.East).GetIntersection(a, b);
-                return (localTileCoordinate + Vector2Int.right, eastIntersection!.Value);
-            }
-
-            if (direction < 180f)
-            {
-                // The line must either exit the North edge or West face
-                // Check north first
-                var northIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.North).GetIntersection(a, b);
-                if (northIntersection != null) return (localTileCoordinate + Vector2Int.up, northIntersection.Value);
-                
-                // If intersection is not at the North edge, then it must be at the West edge
-                var westIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.West).GetIntersection(a, b);
-                return (localTileCoordinate + Vector2Int.left, westIntersection!.Value);          
-            }
-
-            if (direction < 270f)
-            {
-                // The line must either exit the West edge or South edge
-                // Check West first
-                var westIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.West).GetIntersection(a, b);
-                if (westIntersection != null) return (localTileCoordinate + Vector2Int.left, westIntersection.Value);
-                
-                // If intersection is not at the West edge, then it must be at the South edge
-                var southIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.South).GetIntersection(a, b);
-                return (localTileCoordinate + Vector2Int.down, southIntersection!.Value);
-            }
-
-            else
-            {
-                // The line must either exit the South edge or East edge
-                // Check South first
-                var southIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.South).GetIntersection(a, b);
-                if (southIntersection != null) return (localTileCoordinate + Vector2Int.down, southIntersection.Value);
-                
-                // If intersection is not at the South edge, then it must be at the East edge
-                var eastIntersection = GetTileEdge(localTileCoordinate, TileEdgeSide.East).GetIntersection(a, b);
-                return (localTileCoordinate + Vector2Int.right, eastIntersection!.Value);
-            }
-                
-        }
-
-        private Line2D GetTileEdge(Vector2Int tileCoordinate, TileEdgeSide side)
-        {
-            return _tileEdges[tileCoordinate.x, tileCoordinate.y, (int) side];
-        }
-
-        public int TriangleCount()
-        {
-            return WidthInTiles * HeightInTiles * 8;
+            return _tiles[x, y];
         }
 
         // Returns the triangle cell at the given world position
@@ -217,6 +102,14 @@ namespace Dora.MapGeneration
             var localCoordinate = ToLocalMapCoordinate(coordinate); 
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             return tile.GetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
+        }
+        
+        // Assigns the given value to the triangle cell at the given coordinate
+        public void SetCell(Vector2 coordinate, TCell newCell)
+        {
+            var localCoordinate = ToLocalMapCoordinate(coordinate);
+            var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
+            tile.SetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f, newCell);
         }
         
         // Returns the index of triangle cell at the given world position
@@ -229,18 +122,10 @@ namespace Dora.MapGeneration
                    tile.CoordinateDecimalsToTriangleIndex(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
         }
 
-        // Assigns the given value to the triangle cell at the given coordinate
-        public void SetCell(Vector2 coordinate, TCell newCell)
-        {
-            var localCoordinate = ToLocalMapCoordinate(coordinate);
-            var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
-            tile.SetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f, newCell);
-        }
-
         // Takes a world coordinates and removes the offset and scale to translate it to a local map coordinate
         private Vector2 ToLocalMapCoordinate(Vector2 worldCoordinate)
         {
-            var localCoordinate = (worldCoordinate - Offset) / Scale;
+            var localCoordinate = (worldCoordinate - ScaledOffset) / Scale;
             if (!IsWithinLocalMapBounds(localCoordinate))
             {
                 throw new ArgumentException("The given coordinate " + localCoordinate 
@@ -250,14 +135,14 @@ namespace Dora.MapGeneration
             return localCoordinate;
         }
         
-        // Checks that the given coordinates are within the local map bounds
+        // Checks that the given coordinate is within the local map bounds
         private bool IsWithinLocalMapBounds(Vector2 localCoordinates)
         {
             return localCoordinates.x >= 0.0f && localCoordinates.x < WidthInTiles
                    && localCoordinates.y >= 0.0f && localCoordinates.y < HeightInTiles; 
         }
 
-        // Generates a new SimulationMap<T2> by mapping the given function over all cells
+        // Generates a new SimulationMap<T2> by mapping the given function over all cells of this map
         public SimulationMap<TNewCell> FMap<TNewCell>(Func<TCell, TNewCell> mapper)
         {
             SimulationMapTile<TNewCell>[,] mappedTiles = new SimulationMapTile<TNewCell>[WidthInTiles, HeightInTiles];
@@ -268,10 +153,10 @@ namespace Dora.MapGeneration
                     mappedTiles[x, y] = _tiles[x, y].FMap(mapper);
                 }
             }
-            return new SimulationMap<TNewCell>(mappedTiles, this.Scale, this.Offset);
+            return new SimulationMap<TNewCell>(mappedTiles, this.Scale, this.ScaledOffset);
         }
 
-        // Enumerates all triangles and their index
+        // Enumerates all triangles paired with their index
         public IEnumerator<(int, TCell)> GetEnumerator()
         {
             for (int y = 0; y < HeightInTiles; y++)
@@ -292,10 +177,6 @@ namespace Dora.MapGeneration
             return GetEnumerator();
         }
 
-        public SimulationMapTile<TCell> GetTile(int x, int y)
-        {
-            return _tiles[x, y];
-        }
         
         // ---------------------- Custom "Raytracing" -------------------------------
 
@@ -306,22 +187,27 @@ namespace Dora.MapGeneration
             var trianglesPerRow = WidthInTiles * 8;
             var vertexDistance = Scale / 2.0f;
             
-            _tracableTriangles = new RayTracingTriangle[totalTriangles];
+            _traceableTriangles = new RayTracingTriangle[totalTriangles];
             for (int x = 0; x < WidthInTiles; x++)
             {
                 for (int y = 0; y < HeightInTiles; y++)
                 {
                     int index = x * 8 + y * trianglesPerRow;
-                    AddTraceableTriangles(new Vector2(x, y) * Scale + Offset, vertexDistance, index, trianglesPerRow);
+                    AddTraceableTriangles(new Vector2(x, y) * Scale + ScaledOffset, vertexDistance, index, trianglesPerRow);
                 }
             }
 
             foreach (var (index, cell) in this)
             {
-                _tracableTriangles[index].Cell = cell;
+                _traceableTriangles[index].Cell = cell;
             }
         }
 
+        // Sorry about this function...
+        // Adds 8 'Traceable triangles' for a given tile. These triangles contain information that allows effective 
+        // raytracing. Each triangle contains a list of their neighbours indexes. Additionally it contains information
+        // about the 3 lines that make up the triangle (An inclined line, a horizontal line and a vertical line
+        // (in that order)
         private void AddTraceableTriangles(Vector2 bottomLeft, float vertexDistance, int index, int trianglesPerRow)
         {
             var x = bottomLeft.x;
@@ -331,7 +217,7 @@ namespace Dora.MapGeneration
             neighbours[Inclined] = index + 1;
             neighbours[Horizontal] = index - trianglesPerRow + 4;
             neighbours[Vertical] = index - 5;
-            _tracableTriangles[index] = new RayTracingTriangle(
+            _traceableTriangles[index] = new RayTracingTriangle(
                 new Vector2(x, y + vertexDistance), 
                 new Vector2(x + vertexDistance, y),
                 new Vector2(x, y),
@@ -344,7 +230,7 @@ namespace Dora.MapGeneration
             neighbours1[Inclined] = index - 1;
             neighbours1[Horizontal] = index + 4;
             neighbours1[Vertical] = index + 1;
-            _tracableTriangles[index] = new RayTracingTriangle(
+            _traceableTriangles[index] = new RayTracingTriangle(
                 new Vector2(x + vertexDistance, y), 
                 new Vector2(x, y + vertexDistance),
                 new Vector2(x + vertexDistance, y + vertexDistance),
@@ -357,7 +243,7 @@ namespace Dora.MapGeneration
             neighbours2[Inclined] = index + 1;
             neighbours2[Horizontal] = index + 4;
             neighbours2[Vertical] = index - 1;
-            _tracableTriangles[index] = new RayTracingTriangle(
+            _traceableTriangles[index] = new RayTracingTriangle(
                 new Vector2(x + vertexDistance, y),
                 new Vector2(x + 2 * vertexDistance, y + vertexDistance),
                 new Vector2(x + vertexDistance, y + vertexDistance),
@@ -370,7 +256,7 @@ namespace Dora.MapGeneration
             neighbours3[Inclined] = index - 1;
             neighbours3[Horizontal] = index - trianglesPerRow + 4;
             neighbours3[Vertical] = index + 5;
-            _tracableTriangles[index] = new RayTracingTriangle(
+            _traceableTriangles[index] = new RayTracingTriangle(
                 new Vector2(x + 2 * vertexDistance, y + vertexDistance),
                 new Vector2(x + vertexDistance, y),
                 new Vector2(x + 2 * vertexDistance, y),
@@ -383,7 +269,7 @@ namespace Dora.MapGeneration
             neighbours4[Inclined] = index + 1;
             neighbours4[Horizontal] = index + trianglesPerRow - 4;
             neighbours4[Vertical] = index - 5;
-            _tracableTriangles[index] = new RayTracingTriangle(
+            _traceableTriangles[index] = new RayTracingTriangle(
                 new Vector2(x, y + vertexDistance),
                 new Vector2(x + vertexDistance, y + 2 * vertexDistance),
                 new Vector2(x, y + 2 * vertexDistance),
@@ -396,7 +282,7 @@ namespace Dora.MapGeneration
             neighbours5[Inclined] = index - 1;
             neighbours5[Horizontal] = index - 4;
             neighbours5[Vertical] = index + 1;
-            _tracableTriangles[index] = new RayTracingTriangle(
+            _traceableTriangles[index] = new RayTracingTriangle(
                 new Vector2(x + vertexDistance, y + 2 * vertexDistance),
                 new Vector2(x, y + vertexDistance),
                 new Vector2(x + vertexDistance, y + vertexDistance),
@@ -409,7 +295,7 @@ namespace Dora.MapGeneration
             neighbours6[Inclined] = index + 1;
             neighbours6[Horizontal] = index - 4;
             neighbours6[Vertical] = index - 1;
-            _tracableTriangles[index] = new RayTracingTriangle(
+            _traceableTriangles[index] = new RayTracingTriangle(
                 new Vector2(x + vertexDistance, y + 2 * vertexDistance),
                 new Vector2(x + 2 * vertexDistance, y + vertexDistance),
                 new Vector2(x + vertexDistance, y + vertexDistance),
@@ -422,7 +308,7 @@ namespace Dora.MapGeneration
             neighbours7[Inclined] = index - 1;
             neighbours7[Horizontal] = index + trianglesPerRow - 4;
             neighbours7[Vertical] = index + 5;
-            _tracableTriangles[index] = new RayTracingTriangle(
+            _traceableTriangles[index] = new RayTracingTriangle(
                 new Vector2(x + 2 * vertexDistance, y + vertexDistance),
                 new Vector2(x + vertexDistance, y + 2 * vertexDistance),
                 new Vector2(x + 2 * vertexDistance, y + 2 * vertexDistance),
@@ -464,8 +350,8 @@ namespace Dora.MapGeneration
                 throw new Exception("Triangle does not have any intersections with the given line");
             }
 
-            // When starting a ray trace, it must be determined which of the 3 edges are to be considered to the intial
-            // entering edge
+            // When starting a ray trace, it must be determined which of the 3 edges are to be considered to the
+            // initial "entering" edge
             public int FindInitialEnteringEdge(float direction, float a, float b)
             {
                 List<(Vector2, int)> intersectionsAndEdge = new List<(Vector2, int)>();

@@ -49,7 +49,7 @@ namespace Dora.Statistics
             
             
 
-            _explorationVisualizer.SetMap(_explorationMap, collisionMap.Scale, collisionMap.Offset);
+            _explorationVisualizer.SetMap(_explorationMap, collisionMap.Scale, collisionMap.ScaledOffset);
         }
 
     }
