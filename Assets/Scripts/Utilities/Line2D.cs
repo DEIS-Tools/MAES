@@ -23,6 +23,9 @@ namespace Dora.Utilities
             Start = start;
             End = end;
 
+            if (start.x > end.x)
+                (start, end) = (end, start);
+
             _minY = Mathf.Min(start.y, end.y);
             _maxY = Mathf.Max(start.y, end.y);
             
@@ -31,7 +34,8 @@ namespace Dora.Utilities
             
             _isVertical = Mathf.Approximately(_minX, _maxX);
             if(!_isVertical) _isHorizontal = Mathf.Approximately(_minY, _maxY);
-            if(!_isVertical && _isVertical)
+            
+            if(!_isVertical && !_isVertical)
             {
                 _a = (end.y - start.y) / (_maxX - _minX);
                 _b = start.y - _a * start.x;

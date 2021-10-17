@@ -79,18 +79,40 @@ namespace Dora.MapGeneration
         // Casts a trace starting at given point, moving in the given direction and terminating when encountering a
         // collision or after exceeding the given direction.
         // Returns the list of intersected cells in the order that they were encountered  
-        public List<TCell> Raytrace(Vector2 startingPoint, float angle, float distance, Action<TCell> cellAction)
+        public List<TCell> Raytrace(Vector2 startingPoint, float angleDegrees, float distance, Func<TCell, bool> shouldContinueFromCell)
         {
-
             if (_tracableTriangles == null) GenerateTraceableTriangles();
+            int nextTriangleIndex = GetTriangleIndex(startingPoint);
+            
+            // Convert angle to a
+            // solve for b
+            var a = Mathf.Tan(Mathf.PI / 180 * angleDegrees);
+            var b = startingPoint.y - a * startingPoint.x;
+
+            var currentTriangle = _tracableTriangles[nextTriangleIndex];
+            var enteringEdge = currentTriangle.FindInitialEnteringEdge(angleDegrees, a, b);
+            Vector2 intersectionPoint;
+            
+            do
+            {
+                currentTriangle = _tracableTriangles[nextTriangleIndex];
+                if (!shouldContinueFromCell(currentTriangle.Cell))
+                    break;
+                (enteringEdge, intersectionPoint, nextTriangleIndex) = currentTriangle.RayTrace(enteringEdge, a, b);
+            } while (Geometry.DistanceBetween(startingPoint, intersectionPoint) <= distance 
+                     && nextTriangleIndex > 0 && nextTriangleIndex < _tracableTriangles.Length);
+            
+            /*_tracableTriangles[triangleIndex].RayTrace(enteringEdge, a, b);
+
             // First find the Tiles that intersect with the trace
-            var tracedTiles = TilesTrace(startingPoint, angle, distance);
+            var tracedTiles = TilesTrace(startingPoint, angleDegrees, distance);
             
             var tracedCells = new List<TCell>();
             foreach (var tile in tracedTiles)
             {
                 tile.ForEachCell(cellAction);
-            }
+            }*/
+            var tracedCells = new List<TCell>();
             return tracedCells;
         }
 
@@ -196,6 +218,16 @@ namespace Dora.MapGeneration
             var localCoordinate = ToLocalMapCoordinate(coordinate); 
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             return tile.GetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
+        }
+        
+        // Returns the index of triangle cell at the given world position
+        private int GetTriangleIndex(Vector2 coordinate)
+        {
+            var localCoordinate = ToLocalMapCoordinate(coordinate);
+            var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
+            var triangleIndexOffset = ((int) localCoordinate.x) * 8 + ((int) localCoordinate.y) * WidthInTiles * 8;
+            return triangleIndexOffset + 
+                   tile.CoordinateDecimalsToTriangleIndex(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
         }
 
         // Assigns the given value to the triangle cell at the given coordinate
@@ -376,8 +408,8 @@ namespace Dora.MapGeneration
             index++;
             var neighbours6 = new int[3];
             neighbours6[Inclined] = index + 1;
-            neighbours6[Horizontal] = index - 1;
-            neighbours6[Vertical] = index - 4;
+            neighbours6[Horizontal] = index - 4;
+            neighbours6[Vertical] = index - 1;
             _tracableTriangles[index] = new RayTracingTriangle(
                 new Vector2(x + vertexDistance, y + 2 * vertexDistance),
                 new Vector2(x + 2 * vertexDistance, y + vertexDistance),
@@ -431,6 +463,35 @@ namespace Dora.MapGeneration
                 }
 
                 throw new Exception("Triangle does not have any intersections with the given line");
+            }
+
+            // When starting a ray trace, it must be determined which of the 3 edges are to be considered to the intial
+            // entering edge
+            public int FindInitialEnteringEdge(float direction, float a, float b)
+            {
+                List<(Vector2, int)> intersectionsAndEdge = new List<(Vector2, int)>();
+                foreach (var edge in _triangleEdges)
+                {
+                    var intersection = _lines[edge].GetIntersection(a, b);
+                    if (intersection != null) intersectionsAndEdge.Add((intersection!.Value, edge));
+                }
+
+                var intersectionOneX = intersectionsAndEdge[0].Item1.x;
+                var intersectionTwoX = intersectionsAndEdge[1].Item1.x;
+                if (direction <= 90 || direction >= 270)
+                {
+                    // Entering point must be the left most intersection
+                    return intersectionOneX < intersectionTwoX
+                        ? intersectionsAndEdge[0].Item2
+                        : intersectionsAndEdge[1].Item2;
+                }
+                else
+                {
+                    // Entering point must be the right most intersection
+                    return intersectionOneX > intersectionTwoX
+                        ? intersectionsAndEdge[0].Item2
+                        : intersectionsAndEdge[1].Item2;
+                }
             }
         }
         

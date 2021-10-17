@@ -64,7 +64,7 @@ namespace Dora.MapGeneration
             }
             
             
-            private int CoordinateDecimalsToTriangleIndex(float xDecimal, float yDecimal)
+            public int CoordinateDecimalsToTriangleIndex(float xDecimal, float yDecimal)
             {
                 if (xDecimal < 0.0f || xDecimal > 1.0f || yDecimal < 0.0f || yDecimal > 1.0f)
                     throw new ArgumentException("Coordinate decimals must be between 0.0 and 1.0. " +

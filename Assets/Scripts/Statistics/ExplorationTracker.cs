@@ -27,15 +27,27 @@ namespace Dora.Statistics
             _explorationVisualizer = explorationVisualizer;
             _explorationMap = collisionMap.FMap(isCellSolid => new ExplorationCell(!isCellSolid));
 
+            //_explorationMap.Raytrace(new Vector2(0.1f, 0.0f), 50, 20.0f, cell =>  cell.IsExplored = true);
+            _explorationMap.Raytrace(new Vector2(0.1f, 0.1f), 110, 20.0f, cell =>
+            {
+                cell.IsExplored = true;
+                return cell.isExplorable;
+            });
             var sw = Stopwatch.StartNew();
             float traceDistance = 20.0f;
-            for (int i = 0; i < 90 * 50; i++)
+            for (int i = 0; i < 180; i++)
             {
-                float angle = (i * 4 + 1f) % 360f;
-                _explorationMap.Raytrace(new Vector2(-0.0f, -0.0f), angle, 20.0f, cell =>  cell.IsExplored = true);
+                var angle = i * 2;
+                if (i * 2 % 45 == 0) continue;
+                _explorationMap.Raytrace(new Vector2(0.1f, 0.1f), angle, 20.0f, cell => {
+                    cell.IsExplored = true;
+                    return cell.isExplorable;
+                });
             }
             sw.Stop();
             Debug.Log("Millis for 90 raytraces " + sw.ElapsedMilliseconds);
+            
+            
 
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.Scale, collisionMap.Offset);
         }
