@@ -374,11 +374,7 @@ namespace Dora.MapGeneration
             // Takes the edge that this tile was entered from, and the linear equation ax+b for the trace 
             public void RayTrace(ref TriangleTrace trace, in float angle, in float a, in float b)
             {
-                // Debug.Log("Raytracing for triangle at coordinates: {" + _lines[0].Start + ", " + _lines[1].Start +
-                //           ", " + _lines[2].Start + "}");
-                // Debug.Log("Entering from edge: " + trace.enteringEdge);
-
-                // Intersections and their edge
+                // Variable for storing an intersection and the corresponding edge
                 Vector2? intersection = null;
                 int intersectionEdge = -1;
                 foreach (var edge in _triangleEdges)
@@ -387,32 +383,35 @@ namespace Dora.MapGeneration
                     // Therefore only check intersection for these two lines
                     if (edge == trace.enteringEdge) continue;
 
+                    // Find the intersection for the current edge
                     var edgeIntersection = _lines[edge].GetIntersection(a, b);
-
-                    if (edgeIntersection == null)
+                    
+                    if (edgeIntersection == null) // No intersection
                     {
-                        if (intersection != null) break;
-
-                        // TODO: Should never happen, and could therefore be removed once testing is complete
-                        if (edge == 2)
+                        // If there is a previous intersection, use that
+                        if (intersection != null) break; 
+                        
+                        // This is a debugging measure. Used for safety but slowes down computation slightly
+                        /*if (edge == 2)
                             throw new Exception($"Triangle {trace.nextTriangleIndex} " +
                                                 $"does not have any intersection with line {a}x + {b}" +
-                                                $"(Triangle: {_lines[0].Start}, {_lines[1].Start}, {_lines[2].Start})");
+                                                $"(Triangle: {_lines[0].Start}, {_lines[1].Start}, {_lines[2].Start})");*/
 
-                        // No intersection on this line, so it has to be the other one
+                        // Since there is no intersection on this line, it has to be the other one (that isnt the entering edge)
                         // If the entering edge is 2, the next edge must be 1
                         // Otherwise the next edge can only be 2 (the cases where enter edge is 0 or 1)
                         intersectionEdge = trace.enteringEdge == 2 ? 1 : 2;
                         break;
                     }
-                    else
+                    else // There is an intersection for this edge
                     {
-                        //Debug.Log($"Intersection with edge {edge}!");
+                        // If there is no previous intersection, just use this one
                         if (intersection == null)
                         {
                             intersection = edgeIntersection;
                             intersectionEdge = edge;
                         }
+                        
                         // If there are two conflicting intersections, then choose the highest one if angle is between 0-180
                         // otherwise choose the lowest one. This is a conflict resolution measure to avoid infinite loops.
                         else if (angle >= 0 && angle <= 180)
@@ -436,8 +435,7 @@ namespace Dora.MapGeneration
 
                 if (intersectionEdge != -1)
                 {
-                    //Debug.Log($"Exit edge: {intersectionEdge}");
-                    // Modify out parameter and return
+                    // Modify out parameter (Slight performance increase over returning a value)
                     trace.enteringEdge = intersectionEdge;
                     trace.nextTriangleIndex = _neighbourIndex[intersectionEdge];
                     return;
