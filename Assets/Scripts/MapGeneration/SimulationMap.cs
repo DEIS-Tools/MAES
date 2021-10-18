@@ -345,44 +345,46 @@ namespace Dora.MapGeneration
                 // Debug.Log("Entering from edge: " + enteringEdge);
                 
                 // Intersections and their edge
-                List<(Vector2, int)> intersectionsAndEdge = new List<(Vector2, int)>();
+                Vector2? intersection = null;
+                int intersectionEdge = -1;
                 foreach (var edge in _triangleEdges)
                 {
                     // The line must exit the triangle in one of the two edges that the line did not enter through
                     // Therefore only check intersection for these two lines
                     if (edge == enteringEdge) continue;
                     
-                    var intersection = _lines[edge].GetIntersection(a, b);
-                    if (intersection != null) intersectionsAndEdge.Add((intersection!.Value, edge));
-                }
-
-                if (intersectionsAndEdge.Count == 1)
-                {
-                    var edge = intersectionsAndEdge[0].Item2;
-                    return (edge, _neighbourIndex[edge]);
-                }
-
-                // This case can happen when the line exactly intersects one of the points of the triangle
-                if (intersectionsAndEdge.Count == 2)
-                {
-                    // If there are two conflicting intersections, then choose the highest one if angle is between 0-180
-                    // otherwise choose the lowest one. This is a conflict resolution measure to avoid infinite loops.
-                    var highestIntersection = intersectionsAndEdge[0].Item1.y > intersectionsAndEdge[1].Item1.y ? 0 : 1;
-                    var chosenIntersection = angle <= 180 ? highestIntersection : (highestIntersection + 1) % 2;
-                    var edge = intersectionsAndEdge[chosenIntersection].Item2;
-                    return (edge, _neighbourIndex[edge]);
-                }
-                
-                /*foreach (var edge in _triangleEdges)
-                {
-                    var intersection = _lines[(int) edge].GetIntersection(a, b);
-                    if (intersection != null)
+                    var edgeIntersection = _lines[edge].GetIntersection(a, b);
+                    
+                    if (edgeIntersection != null)
                     {
-                        Debug.Log("Exit edge: " + edge);
-                        return (edge, intersection!.Value, _neighbourIndex[(int) edge]);
+                        if (intersection == null)
+                        {
+                            intersection = edgeIntersection;
+                            intersectionEdge = edge;
+                        }
+                        // If there are two conflicting intersections, then choose the highest one if angle is between 0-180
+                        // otherwise choose the lowest one. This is a conflict resolution measure to avoid infinite loops.
+                        else if (angle >= 0 && angle <= 180)
+                        {
+                            if (edgeIntersection!.Value.y > intersection!.Value.y)
+                            {
+                                intersection = edgeIntersection;
+                                intersectionEdge = edge;
+                            }
+                        }
+                        else
+                        {
+                            if (edgeIntersection!.Value.y < intersection!.Value.y)
+                            {
+                                intersection = edgeIntersection;
+                                intersectionEdge = edge;
+                            }
+                        }
                     }
-                }*/
+                }
 
+                if (intersectionEdge != -1) 
+                    return (intersectionEdge, _neighbourIndex[intersectionEdge]);
                 throw new Exception("Triangle does not have any intersections with the given line");
             }
 
