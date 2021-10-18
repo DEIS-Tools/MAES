@@ -86,7 +86,7 @@ namespace Dora.Utilities
                 // Debug.Log($"({b_2} - {_b}) / ({_a} - {a_2}) ");
                 var intersectX = (b_2 - _b) / (_a - a_2);
                 // Check if intersection is outside line segment
-                if (intersectX < _minX || intersectX > _maxX) return null;
+                if (intersectX - _minX < -0.0001f || _maxX - intersectX < -0.0001f) return null;
                 var intersectY = _a * intersectX + _b;
                 // Debug.Log("Line : " + _a + "x + " + _b + " intersects with " + a_2 + "x + " + b_2 + 
                 //           " at " + intersectX + ", " + intersectY);
