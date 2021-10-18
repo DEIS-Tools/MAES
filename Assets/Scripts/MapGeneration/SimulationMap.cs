@@ -69,12 +69,10 @@ namespace Dora.MapGeneration
             var enteringEdge = triangle.FindInitialEnteringEdge(angleDegrees, a, b);
             int traceCount = 1;
             TriangleTrace trace = new TriangleTrace(enteringEdge, startingIndex);
-
-            float triSideLength = Scale / 2f;
-            // In a worst case, the trace may travel a distance of the triangle hypotenuse each step
-            float maxTraceLength = Mathf.Sqrt(Mathf.Pow(triSideLength, 2) * 2);
-            int minimumTracesBeforeDistanceCheck = (int) (distance / maxTraceLength);
             
+            // If a trace travels diagonally in the bottom half of a tile, it will cross at least 4 tiles
+            float maxTraceLengthPerTriangle = Mathf.Sqrt(Scale * Scale + 1) / 4f;
+            int minimumTracesBeforeDistanceCheck = (int) (distance / maxTraceLengthPerTriangle);
             while(true)
             {
                 // Invoke the given function on the cell, and only continue if it returns true
@@ -95,9 +93,9 @@ namespace Dora.MapGeneration
                 if (traceCount >= minimumTracesBeforeDistanceCheck)
                 {
                     // All vertices of the triangle must be within range for the triangle to be considered visible
-                    bool withinRange = Geometry.DistanceBetween(startingPoint, triangle._lines[0].Start) <= distance;
-                    withinRange &= Geometry.DistanceBetween(startingPoint, triangle._lines[1].Start) <= distance;
-                    withinRange &= Geometry.DistanceBetween(startingPoint, triangle._lines[2].Start) <= distance;
+                    bool withinRange = Vector2.Distance(startingPoint, triangle._lines[0].Start) <= distance;
+                    withinRange &= Vector2.Distance(startingPoint, triangle._lines[0].End) <= distance;
+                    withinRange &= Vector2.Distance(startingPoint, triangle._lines[1].End) <= distance;
                     if (!withinRange)
                         break;    
                 }

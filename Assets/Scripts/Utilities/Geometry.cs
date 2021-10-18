@@ -6,7 +6,7 @@ namespace Dora.Utilities
     public class Geometry
     {
 
-        public static float DistanceBetween(Vector2 p1, Vector2 p2)
+        public static float DistanceBetween(in Vector2 p1, in Vector2 p2)
         {
             if (p1.Equals(p2)) return 0f;
             
