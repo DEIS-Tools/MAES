@@ -67,32 +67,40 @@ namespace Dora.MapGeneration
 
             var triangle = _traceableTriangles[startingIndex];
             var enteringEdge = triangle.FindInitialEnteringEdge(angleDegrees, a, b);
-            int traceCount = 0;
+            int traceCount = 1;
             TriangleTrace trace = new TriangleTrace(enteringEdge, startingIndex);
+
+            float triSideLength = Scale / 2f;
+            // In a worst case, the trace may travel a distance of the triangle hypotenuse each step
+            float maxTraceLength = Mathf.Sqrt(Mathf.Pow(triSideLength, 2) * 2);
+            int minimumTracesBeforeDistanceCheck = (int) (distance / maxTraceLength);
             
             while(true)
             {
                 // Invoke the given function on the cell, and only continue if it returns true
                 if (!shouldContinueFromCell(trace.nextTriangleIndex, triangle.Cell))
-                    break;
+                     break;
 
                 // Perform the ray tracing step for the current triangle
                 triangle.RayTrace(ref trace, angleDegrees, a, b);
+                traceCount++;
                 
                 // Break if the next triangle is outside the map bounds
                 if (trace.nextTriangleIndex < 0 || trace.nextTriangleIndex >= _traceableTriangles.Length)
                     break; 
-
+                
                 triangle = _traceableTriangles[trace.nextTriangleIndex];
-
-                // All vertices of the triangle must be within range for the triangle to be considered visible
-                bool withinRange = Geometry.DistanceBetween(startingPoint, triangle._lines[0].Start) <= distance;
-                withinRange &= Geometry.DistanceBetween(startingPoint, triangle._lines[1].Start) <= distance;
-                withinRange &= Geometry.DistanceBetween(startingPoint, triangle._lines[2].Start) <= distance;
-                if (!withinRange)
-                    break;
-
-                traceCount++;
+                
+                // Optimization - Only start performance distance checks once we have performed a certain amount of traces
+                if (traceCount >= minimumTracesBeforeDistanceCheck)
+                {
+                    // All vertices of the triangle must be within range for the triangle to be considered visible
+                    bool withinRange = Geometry.DistanceBetween(startingPoint, triangle._lines[0].Start) <= distance;
+                    withinRange &= Geometry.DistanceBetween(startingPoint, triangle._lines[1].Start) <= distance;
+                    withinRange &= Geometry.DistanceBetween(startingPoint, triangle._lines[2].Start) <= distance;
+                    if (!withinRange)
+                        break;    
+                }
             }
         }
         
@@ -367,8 +375,18 @@ namespace Dora.MapGeneration
                     if (edge == trace.enteringEdge) continue;
                     
                     var edgeIntersection = _lines[edge].GetIntersection(a, b);
-                    
-                    if (edgeIntersection != null)
+
+                    if (edgeIntersection == null)
+                    {
+                        if (intersection != null) break;
+                        // TODO ! Remove this optimization to reproduce bug
+                        // No intersection on this line, so it has to be the other one
+                        // If the entering edge is 2, the next edge must be 1
+                        // Otherwise the next edge can only be 2 (the cases where enter edge is 0 or 1)
+                        intersectionEdge = trace.enteringEdge == 2 ? 1 : 2;
+                        break;
+                    } 
+                    else 
                     {
                         if (intersection == null)
                         {
