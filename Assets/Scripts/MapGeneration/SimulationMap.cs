@@ -59,35 +59,36 @@ namespace Dora.MapGeneration
         public void Raytrace(Vector2 startingPoint, float angleDegrees, float distance, CellFunction shouldContinueFromCell)
         {
             if (_traceableTriangles == null) GenerateTraceableTriangles();
-            int nextTriangleIndex = GetTriangleIndex(startingPoint);
+            int startingIndex = GetTriangleIndex(startingPoint);
             
             // Convert given angle and starting point to a linear equation: ax + b
             var a = Mathf.Tan(Mathf.PI / 180 * angleDegrees);
             var b = startingPoint.y - a * startingPoint.x;
 
-            var currentTriangle = _traceableTriangles[nextTriangleIndex];
-            var enteringEdge = currentTriangle.FindInitialEnteringEdge(angleDegrees, a, b);
+            var triangle = _traceableTriangles[startingIndex];
+            var enteringEdge = triangle.FindInitialEnteringEdge(angleDegrees, a, b);
             int traceCount = 0;
+            TriangleTrace trace = new TriangleTrace(enteringEdge, startingIndex);
             
             while(true)
             {
                 // Invoke the given function on the cell, and only continue if it returns true
-                if (!shouldContinueFromCell(nextTriangleIndex, currentTriangle.Cell))
+                if (!shouldContinueFromCell(trace.nextTriangleIndex, triangle.Cell))
                     break;
 
                 // Perform the ray tracing step for the current triangle
-                (enteringEdge, nextTriangleIndex) = currentTriangle.RayTrace(enteringEdge, angleDegrees, a, b);
+                triangle.RayTrace(ref trace, angleDegrees, a, b);
                 
                 // Break if the next triangle is outside the map bounds
-                if (nextTriangleIndex < 0 || nextTriangleIndex >= _traceableTriangles.Length)
+                if (trace.nextTriangleIndex < 0 || trace.nextTriangleIndex >= _traceableTriangles.Length)
                     break; 
 
-                currentTriangle = _traceableTriangles[nextTriangleIndex];
+                triangle = _traceableTriangles[trace.nextTriangleIndex];
 
                 // All vertices of the triangle must be within range for the triangle to be considered visible
-                bool withinRange = Geometry.DistanceBetween(startingPoint, currentTriangle._lines[0].Start) <= distance;
-                withinRange &= Geometry.DistanceBetween(startingPoint, currentTriangle._lines[1].Start) <= distance;
-                withinRange &= Geometry.DistanceBetween(startingPoint, currentTriangle._lines[2].Start) <= distance;
+                bool withinRange = Geometry.DistanceBetween(startingPoint, triangle._lines[0].Start) <= distance;
+                withinRange &= Geometry.DistanceBetween(startingPoint, triangle._lines[1].Start) <= distance;
+                withinRange &= Geometry.DistanceBetween(startingPoint, triangle._lines[2].Start) <= distance;
                 if (!withinRange)
                     break;
 
@@ -323,6 +324,18 @@ namespace Dora.MapGeneration
         private const int Inclined = 0, Horizontal = 1, Vertical = 2;
         private static readonly int[] _triangleEdges = new[]
             {Inclined, Horizontal, Vertical};
+        
+        public struct TriangleTrace
+        {
+            public int enteringEdge;
+            public int nextTriangleIndex;
+
+            public TriangleTrace(int enteringEdge, int nextTriangleIndex)
+            {
+                this.enteringEdge = enteringEdge;
+                this.nextTriangleIndex = nextTriangleIndex;
+            }
+        }
 
         private class RayTracingTriangle
         {
@@ -335,11 +348,11 @@ namespace Dora.MapGeneration
                 _lines = new Line2D[3]{new Line2D(p1, p2), new Line2D(p2, p3), new Line2D(p3, p1)};
                 _neighbourIndex = neighbourIndex;
             }
-            
+
             // Returns the side at which the trace exited the triangle, the exit intersection point
             // and the index of the triangle that the trace enters next
             // Takes the edge that this tile was entered from, and the linear equation ax+b for the trace 
-            public (int, int) RayTrace(int enteringEdge, float angle, float a, float b)
+            public void RayTrace(ref TriangleTrace trace, float angle, float a, float b)
             {
                 // Debug.Log("Raytracing for triangle at coordinates: {" + _lines[0].Start + ", " + _lines[1].Start + ", " + _lines[2].Start + "}");
                 // Debug.Log("Entering from edge: " + enteringEdge);
@@ -351,7 +364,7 @@ namespace Dora.MapGeneration
                 {
                     // The line must exit the triangle in one of the two edges that the line did not enter through
                     // Therefore only check intersection for these two lines
-                    if (edge == enteringEdge) continue;
+                    if (edge == trace.enteringEdge) continue;
                     
                     var edgeIntersection = _lines[edge].GetIntersection(a, b);
                     
@@ -383,8 +396,14 @@ namespace Dora.MapGeneration
                     }
                 }
 
-                if (intersectionEdge != -1) 
-                    return (intersectionEdge, _neighbourIndex[intersectionEdge]);
+                if (intersectionEdge != -1)
+                {
+                    // Modify out parameter and return
+                    trace.enteringEdge = intersectionEdge;
+                    trace.nextTriangleIndex = _neighbourIndex[intersectionEdge];
+                    return;
+                }
+                    
                 throw new Exception("Triangle does not have any intersections with the given line");
             }
 
