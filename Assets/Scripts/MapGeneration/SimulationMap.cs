@@ -51,11 +51,12 @@ namespace Dora.MapGeneration
             HeightInTiles = tiles.GetLength(1);
         }
 
+        public delegate bool CellFunction(int index, TCell cell);
 
         // Casts a trace starting at given point, moving in the given direction. The given function will be called on
         // each cell that is encountered. If the function returns true the trace will continue to the next cell,
         // if it returns false the trace will terminate. The trace automatically terminates when it exits map bounds.
-        public void Raytrace(Vector2 startingPoint, float angleDegrees, float distance, Func<TCell, bool> shouldContinueFromCell)
+        public void Raytrace(Vector2 startingPoint, float angleDegrees, float distance, CellFunction shouldContinueFromCell)
         {
             if (_traceableTriangles == null) GenerateTraceableTriangles();
             int nextTriangleIndex = GetTriangleIndex(startingPoint);
@@ -66,15 +67,16 @@ namespace Dora.MapGeneration
 
             var currentTriangle = _traceableTriangles[nextTriangleIndex];
             var enteringEdge = currentTriangle.FindInitialEnteringEdge(angleDegrees, a, b);
-
+            int traceCount = 0;
+            
             while(true)
             {
                 // Invoke the given function on the cell, and only continue if it returns true
-                if (!shouldContinueFromCell(currentTriangle.Cell))
+                if (!shouldContinueFromCell(nextTriangleIndex, currentTriangle.Cell))
                     break;
 
                 // Perform the ray tracing step for the current triangle
-                (enteringEdge, _, nextTriangleIndex) = currentTriangle.RayTrace(enteringEdge, a, b);
+                (enteringEdge, nextTriangleIndex) = currentTriangle.RayTrace(enteringEdge, angleDegrees, a, b);
                 
                 // Break if the next triangle is outside the map bounds
                 if (nextTriangleIndex < 0 || nextTriangleIndex >= _traceableTriangles.Length)
@@ -88,6 +90,8 @@ namespace Dora.MapGeneration
                 withinRange &= Geometry.DistanceBetween(startingPoint, currentTriangle._lines[2].Start) <= distance;
                 if (!withinRange)
                     break;
+
+                traceCount++;
             }
         }
         
@@ -331,21 +335,53 @@ namespace Dora.MapGeneration
                 _lines = new Line2D[3]{new Line2D(p1, p2), new Line2D(p2, p3), new Line2D(p3, p1)};
                 _neighbourIndex = neighbourIndex;
             }
-
+            
             // Returns the side at which the trace exited the triangle, the exit intersection point
             // and the index of the triangle that the trace enters next
             // Takes the edge that this tile was entered from, and the linear equation ax+b for the trace 
-            public (int, Vector2, int) RayTrace(int enteringEdge, float a, float b)
+            public (int, int) RayTrace(int enteringEdge, float angle, float a, float b)
             {
+                // Debug.Log("Raytracing for triangle at coordinates: {" + _lines[0].Start + ", " + _lines[1].Start + ", " + _lines[2].Start + "}");
+                // Debug.Log("Entering from edge: " + enteringEdge);
+                
+                // Intersections and their edge
+                List<(Vector2, int)> intersectionsAndEdge = new List<(Vector2, int)>();
                 foreach (var edge in _triangleEdges)
                 {
                     // The line must exit the triangle in one of the two edges that the line did not enter through
                     // Therefore only check intersection for these two lines
                     if (edge == enteringEdge) continue;
-                        
-                    var intersection = _lines[(int) edge].GetIntersection(a, b);
-                    if (intersection != null) return (edge, intersection!.Value, _neighbourIndex[(int) edge]);
+                    
+                    var intersection = _lines[edge].GetIntersection(a, b);
+                    if (intersection != null) intersectionsAndEdge.Add((intersection!.Value, edge));
                 }
+
+                if (intersectionsAndEdge.Count == 1)
+                {
+                    var edge = intersectionsAndEdge[0].Item2;
+                    return (edge, _neighbourIndex[edge]);
+                }
+
+                // This case can happen when the line exactly intersects one of the points of the triangle
+                if (intersectionsAndEdge.Count == 2)
+                {
+                    // If there are two conflicting intersections, then choose the highest one if angle is between 0-180
+                    // otherwise choose the lowest one. This is a conflict resolution measure to avoid infinite loops.
+                    var highestIntersection = intersectionsAndEdge[0].Item1.y > intersectionsAndEdge[1].Item1.y ? 0 : 1;
+                    var chosenIntersection = angle <= 180 ? highestIntersection : (highestIntersection + 1) % 2;
+                    var edge = intersectionsAndEdge[chosenIntersection].Item2;
+                    return (edge, _neighbourIndex[edge]);
+                }
+                
+                /*foreach (var edge in _triangleEdges)
+                {
+                    var intersection = _lines[(int) edge].GetIntersection(a, b);
+                    if (intersection != null)
+                    {
+                        Debug.Log("Exit edge: " + edge);
+                        return (edge, intersection!.Value, _neighbourIndex[(int) edge]);
+                    }
+                }*/
 
                 throw new Exception("Triangle does not have any intersections with the given line");
             }

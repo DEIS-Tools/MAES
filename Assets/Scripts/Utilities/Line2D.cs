@@ -82,11 +82,14 @@ namespace Dora.Utilities
                     throw new ArgumentException("The given line is approximate parallel to the compared line. " +
                                                 "Intersection calculation is not valid for this case " +
                                                 "(may have multiple solutions or none)");
-
+                
+                // Debug.Log($"({b_2} - {_b}) / ({_a} - {a_2}) ");
                 var intersectX = (b_2 - _b) / (_a - a_2);
                 // Check if intersection is outside line segment
                 if (intersectX < _minX || intersectX > _maxX) return null;
                 var intersectY = _a * intersectX + _b;
+                // Debug.Log("Line : " + _a + "x + " + _b + " intersects with " + a_2 + "x + " + b_2 + 
+                //           " at " + intersectX + ", " + intersectY);
                 return new Vector2(intersectX, intersectY);
             }
         }

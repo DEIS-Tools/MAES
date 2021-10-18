@@ -52,9 +52,9 @@ namespace Dora
         private void GenerateSimulation()
         {
             
-            var config = new CaveMapConfig(100,
-                100,
-                (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(),
+            var config = new CaveMapConfig(60,
+                60,
+                4,
                 4,
                 2,
                 48,
@@ -69,7 +69,7 @@ namespace Dora
             //var officeConfig = new OfficeMapConfig(60, 60,  (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
             //var collisionMap = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);
             
-            _robots = RobotSpawner.SpawnRobots();
+            _robots = RobotSpawner.SpawnRobots(collisionMap);
             _explorationTracker = new ExplorationTracker(collisionMap, explorationVisualizer);
         }
 
@@ -129,7 +129,7 @@ namespace Dora
             _simulatedTimeMillis += physicsTickDeltaMillis;
             _physicsTicksSinceUpdate++;
             
-            _explorationTracker.Update(config, _robots);
+            _explorationTracker.LogicUpdate(config, _robots);
             
             if (_physicsTicksSinceUpdate >= SimConfig.PhysicsTicksPerLogicUpdate)
             {

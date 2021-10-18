@@ -42,7 +42,7 @@ namespace Dora.Statistics
             GenerateTriangleVertices();
             GenerateTriangles();
             _colors = new Color32[_vertices.Count];
-            UpdateColors(_map);
+            InitializeColors(_map);
             
             mesh = new Mesh();
             mesh.indexFormat = IndexFormat.UInt32;
@@ -127,7 +127,7 @@ namespace Dora.Statistics
         }
         
         // Colors each triangle depending on its current state
-        public void UpdateColors(SimulationMap<ExplorationCell> newMap)
+        public void InitializeColors(SimulationMap<ExplorationCell> newMap)
         {
             int count = 0;
             foreach (var (index, explorationCell) in newMap)
@@ -141,8 +141,20 @@ namespace Dora.Statistics
                 _colors[vertexIndex + 2] = color;
                 if (!explorationCell.isExplorable) count++;
             }
-
-            if(mesh != null) mesh.colors32 = _colors;
+        }
+        
+        // Colors each triangle depending on its current state
+        public void SetExplored(List<int> triangles)
+        {
+            foreach (var index in triangles)
+            {
+                var vertexIndex = index * 3;
+                _colors[vertexIndex] = _exploredColor;
+                _colors[vertexIndex + 1] = _exploredColor;
+                _colors[vertexIndex + 2] = _exploredColor;
+            }
+            
+            mesh.colors32 = _colors;
         }
     }
 }

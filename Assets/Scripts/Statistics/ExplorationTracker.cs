@@ -28,26 +28,55 @@ namespace Dora.Statistics
             _explorationVisualizer = explorationVisualizer;
             _explorationMap = collisionMap.FMap(isCellSolid => new ExplorationCell(!isCellSolid));
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.Scale, collisionMap.ScaledOffset);
+            _explorationMap.Raytrace(new Vector2(-21.8845768f, 9.14773464f), 232, 15.0f, (index, cell) => true);
+            
+            
+            Vector2 pos = new Vector2(0.1f, 0.9f);
+            for (int i = 0; i < 90 * 50; i++)
+            {
+                var angle = i * 4;
+                if (i * 2 % 45 == 0) continue;
+                    
+                _explorationMap.Raytrace(pos, angle, 15.0f, (index, cell) =>
+                {
+                    if (cell.isExplorable && !cell.IsExplored)
+                    {
+                        cell.IsExplored = true;
+                    }
+
+                    return cell.isExplorable;
+                });
+            }
+            
         }
         
-        public void Update(SimulationConfiguration config, List<MonaRobot> robots)
+        public void LogicUpdate(SimulationConfiguration config, List<MonaRobot> robots)
         {
+            return;
+            List<int> newlyExploredTriangles = new List<int>();
             float visibilityRange = 15.0f;
+
             foreach (var robot in robots)
             {
-                for (int i = 0; i < 180; i++)
+                for (int i = 0; i < 90; i++)
                 {
-                    var angle = i * 2;
+                    var angle = i * 4;
                     if (i * 2 % 45 == 0) continue;
-                    _explorationMap.Raytrace(robot.transform.position, angle, visibilityRange, cell => {
-                        cell.IsExplored = true;
+                    
+                    _explorationMap.Raytrace(robot.transform.position, angle, visibilityRange, (index, cell) =>
+                    {
+                        if (cell.isExplorable && !cell.IsExplored)
+                        {
+                            cell.IsExplored = true;
+                            newlyExploredTriangles.Add(index);
+                        }
+
                         return cell.isExplorable;
                     });
                 }
             }
 
-            _explorationVisualizer.UpdateColors(_explorationMap);
+            _explorationVisualizer.SetExplored(newlyExploredTriangles);
         }
-
     }
 }
