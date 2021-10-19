@@ -229,7 +229,7 @@ namespace Dora.MapGeneration
 
         // Sorry about this function...
         // Adds 8 'Traceable triangles' for a given tile. These triangles contain information that allows effective 
-        // raytracing. Each triangle contains a list of their neighbours indexes. Additionally it contains information
+        // raytracing. Each triangle contains a list of their neighbours' indices. Additionally it contains information
         // about the 3 lines that make up the triangle (An inclined line, a horizontal line and a vertical line
         // (in that order)
         private void AddTraceableTriangles(Vector2 bottomLeft, float vertexDistance, int index, int trianglesPerRow)
@@ -340,11 +340,9 @@ namespace Dora.MapGeneration
             );
         }
 
+        // The order in which edges are stored for each triangle
         private const int Inclined = 0, Horizontal = 1, Vertical = 2;
-
-        private static readonly int[] _triangleEdges = new[]
-            {Inclined, Horizontal, Vertical};
-
+        
         public struct TriangleTrace
         {
             public int enteringEdge;
@@ -359,8 +357,8 @@ namespace Dora.MapGeneration
 
         private class RayTracingTriangle
         {
-            public Line2D[] _lines;
-            private int[] _neighbourIndex;
+            public readonly Line2D[] _lines;
+            private readonly int[] _neighbourIndex;
             public TCell Cell;
 
             public RayTracingTriangle(Vector2 p1, Vector2 p2, Vector2 p3, int[] neighbourIndex)
@@ -391,7 +389,7 @@ namespace Dora.MapGeneration
                         // If there is a previous intersection, use that
                         if (intersection != null) break; 
                         
-                        // This is a debugging measure. Used for safety but slowes down computation slightly
+                        // This is a debugging measure. Used for safety but slows down computation slightly
                         /*if (edge == 2)
                             throw new Exception($"Triangle {trace.nextTriangleIndex} " +
                                                 $"does not have any intersection with line {a}x + {b}" +
@@ -449,7 +447,7 @@ namespace Dora.MapGeneration
             public int FindInitialEnteringEdge(float direction, float a, float b)
             {
                 List<(Vector2, int)> intersectionsAndEdge = new List<(Vector2, int)>();
-                foreach (var edge in _triangleEdges)
+                for (int edge = 0; edge < 3; edge++)
                 {
                     var intersection = _lines[edge].GetIntersection(a, b);
                     if (intersection != null) intersectionsAndEdge.Add((intersection!.Value, edge));

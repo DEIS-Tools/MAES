@@ -70,8 +70,6 @@ namespace Dora.MapGeneration
                     throw new ArgumentException("Coordinate decimals must be between 0.0 and 1.0. " +
                                                 "Coordinates were: (" + xDecimal + ", " + yDecimal + " )");
 
-                var index = 0;
-
                 if (yDecimal < 0.5)
                 {
                     // Bottom left quadrant
