@@ -29,29 +29,29 @@ namespace Dora.Statistics
             _explorationMap = collisionMap.FMap(isCellSolid => new ExplorationCell(!isCellSolid));
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.Scale, collisionMap.ScaledOffset);
             //_explorationMap.Raytrace(new Vector2(-21.8845768f, 9.14773464f), 232, 15.0f, (index, cell) => true);
-            //_explorationMap.Raytrace(new Vector2(6.42033148f, -34.4225616f), 228, 15.0f, (index, cell) => true);
+            _explorationMap.Raytrace(new Vector2(6.42033148f, -34.4225616f), 228, 15.0f, (index, cell) => true);
             
-            // Stopwatch sw = new Stopwatch();
-            // sw.Start();
-            // Vector2 pos = new Vector2(0.1f, 0.9f);
-            // const int traces = 90 * 500;
-            // for (int i = 0; i < traces; i++)
-            // {
-            //     var angle = i * 4;
-            //     if (i * 2 % 45 == 0) continue;
-            //         
-            //     _explorationMap.Raytrace(pos, angle, 15.0f, (index, cell) =>
-            //     {
-            //         if (cell.isExplorable && !cell.IsExplored)
-            //         {
-            //             cell.IsExplored = true;
-            //         }
-            //
-            //         return cell.isExplorable;
-            //     });
-            // }
-            // sw.Stop();
-            // Debug.Log($"Execution time for {traces} traces: {sw.ElapsedMilliseconds}");
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            Vector2 pos = new Vector2(0.1f, 0.9f);
+            const int traces = 90 * 500;
+            for (int i = 0; i < traces; i++)
+            {
+                var angle = i * 4;
+                if (i * 2 % 45 == 0) continue;
+                    
+                _explorationMap.Raytrace(pos, angle, 15.0f, (index, cell) =>
+                {
+                    if (cell.isExplorable && !cell.IsExplored)
+                    {
+                        cell.IsExplored = true;
+                    }
+            
+                    return cell.isExplorable;
+                });
+            }
+            sw.Stop();
+            Debug.Log($"Execution time for {traces} traces: {sw.ElapsedMilliseconds}");
         }
         
         public void LogicUpdate(SimulationConfiguration config, List<MonaRobot> robots)

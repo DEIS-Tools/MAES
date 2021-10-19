@@ -377,7 +377,7 @@ namespace Dora.MapGeneration
                 // Variable for storing an intersection and the corresponding edge
                 Vector2? intersection = null;
                 int intersectionEdge = -1;
-                foreach (var edge in _triangleEdges)
+                for (int edge = 0; edge < 3; edge++)
                 {
                     // The line must exit the triangle in one of the two edges that the line did not enter through
                     // Therefore only check intersection for these two lines
