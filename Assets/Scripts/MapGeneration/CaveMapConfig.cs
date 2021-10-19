@@ -4,35 +4,39 @@ namespace Dora.MapGeneration
 {
     public struct CaveMapConfig
     {
-        public int width;
-        public int height;
+	    // CollisionMap size is always +1 larger in both axis
+	    // due to the marching squares algorithm using 4 points per square
+        public readonly int widthInTiles;
+        public readonly int heightInTiles;
+        public readonly int bitMapWidth;
+        public readonly int bitMapHeight;
 
-        public int randomSeed;
+        public readonly int randomSeed;
 	
         // How many runs of smoothing to get from QR code like noise to groups of room or wall tiles.
-        public int smoothingRuns;
+        public readonly int smoothingRuns;
 	
         // How wide should the passages made by the connection algorithm be
-        public int connectionPassagesWidth;
+        public readonly int connectionPassagesWidth;
 
         // How much of the room should be filled with walls.
-        public int randomFillPercent;
+        public readonly int randomFillPercent;
 	
         // Minimum number of wall tiles in a group to not delete them in processing
-        public int wallThresholdSize;
+        public readonly int wallThresholdSize;
 	
         // Minimum number of rooms tiles in a group to not delete them in processing
-        public int roomThresholdSize;
+        public readonly int roomThresholdSize;
 	
         // Border size (Assured walls on the edges)
-        public int borderSize;
+        public readonly int borderSize;
 
         // This can be increased to enlarge the smallest corridors by enlarging the entire cave
-        public int scaling;
+        public readonly int scaling;
 
-        public int neighbourWallsNeededToStayWall;
+        public readonly int neighbourWallsNeededToStayWall;
 
-        public CaveMapConfig(int width, int height, int randomSeed, int smoothingRuns, int connectionPassagesWidth, int randomFillPercent, int wallThresholdSize, int roomThresholdSize, int borderSize, int scaling, int neighbourWallsNeededToStayWall = 4)
+        public CaveMapConfig(int widthInTiles, int heightInTiles, int randomSeed, int smoothingRuns, int connectionPassagesWidth, int randomFillPercent, int wallThresholdSize, int roomThresholdSize, int borderSize, int scaling, int neighbourWallsNeededToStayWall = 4)
         {
 	        // Only fill percent between and including 0 to 100 are allowed
 	        if(0 >= randomFillPercent || randomFillPercent >= 100 ){
@@ -45,8 +49,11 @@ namespace Dora.MapGeneration
 	        }
 	        
 	        
-	        this.width = width;
-	        this.height = height;
+	        this.widthInTiles = widthInTiles;
+	        this.heightInTiles = heightInTiles;
+	        this.bitMapWidth = widthInTiles + 1;
+	        this.bitMapHeight = heightInTiles + 1;
+	        
 	        this.randomSeed = randomSeed;
 	        this.smoothingRuns = smoothingRuns;
 	        this.connectionPassagesWidth = connectionPassagesWidth;

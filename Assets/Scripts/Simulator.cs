@@ -66,8 +66,8 @@ namespace Dora
                 3.0f,
                 true);
             
-            //var officeConfig = new OfficeMapConfig(60, 60,  (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
-            //var collisionMap = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);
+            /*var officeConfig = new OfficeMapConfig(60, 60,  (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(), 8, 3, 7, 3, 1, 65, 1, 2.0f);
+            var collisionMap = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);*/
             
             _robots = RobotSpawner.SpawnRobots(collisionMap);
             _explorationTracker = new ExplorationTracker(collisionMap, explorationVisualizer);
