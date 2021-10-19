@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Dora.Robot
 {
-    public class Robot: MonoBehaviour, ISimulationUnit
+    public class MonaRobot: MonoBehaviour, ISimulationUnit
     {
         
         public Transform leftWheelTransform;

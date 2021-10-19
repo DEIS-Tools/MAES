@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dora.Utilities;
+using UnityEngine;
 
 namespace Dora.MapGeneration
 {
-    internal class SimulationMapTile<TCell>
+    public class SimulationMapTile<TCell>
         {
             // A tile is a rectangle consisting of 8 triangle shaped cells.
             // The triangles are arranged in 4 different orientations
@@ -13,13 +14,19 @@ namespace Dora.MapGeneration
             ///  |4/5|6\7|
             ///  |0\1|2/3|
             private List<TCell> _triangleCells = new List<TCell>();
-            
+
             public SimulationMapTile(Functional.Factory<TCell> cellFactory)
             {
                 for (int i = 0; i < 8; i++)
                 {
                     _triangleCells.Add(cellFactory());
+                    
                 }
+            }
+
+            public void SetCellValue(int index, TCell newCellValue)
+            {
+                this._triangleCells[index] = newCellValue;
             }
 
             private SimulationMapTile(List<TCell> cells)
@@ -37,6 +44,14 @@ namespace Dora.MapGeneration
                 }
                 return new SimulationMapTile<TNewCell>(mappedCells);
             }
+            
+            public void ForEachCell(Action<TCell> cellAction)
+            {
+                foreach (var cell in _triangleCells)
+                {
+                    cellAction(cell);
+                }
+            }
 
             public TCell GetTriangleCellByCoordinateDecimals(float xDecimals, float yDecimals)
             {
@@ -49,13 +64,11 @@ namespace Dora.MapGeneration
             }
             
             
-            private int CoordinateDecimalsToTriangleIndex(float xDecimal, float yDecimal)
+            public int CoordinateDecimalsToTriangleIndex(float xDecimal, float yDecimal)
             {
                 if (xDecimal < 0.0f || xDecimal > 1.0f || yDecimal < 0.0f || yDecimal > 1.0f)
                     throw new ArgumentException("Coordinate decimals must be between 0.0 and 1.0. " +
                                                 "Coordinates were: (" + xDecimal + ", " + yDecimal + " )");
-
-                var index = 0;
 
                 if (yDecimal < 0.5)
                 {
@@ -76,6 +89,11 @@ namespace Dora.MapGeneration
                     return 7;
                 }
             }
-            
+
+            public List<TCell> GetTriangles()
+            {
+                return _triangleCells;
+            }
+
         }
 }

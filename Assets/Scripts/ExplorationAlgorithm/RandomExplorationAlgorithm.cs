@@ -6,13 +6,13 @@ namespace Dora.ExplorationAlgorithm
     public class RandomExplorationAlgorithm: IExplorationAlgorithm
     {
         
-        private Robot.Robot _robot;
+        private Robot.MonaRobot _monaRobot;
         private bool _hasJustRotated = false;
         private Random _random;
 
-        public RandomExplorationAlgorithm(Robot.Robot robot, int randomSeed) // Todo: Random seed
+        public RandomExplorationAlgorithm(Robot.MonaRobot monaRobot, int randomSeed)
         {
-            _robot = robot;
+            _monaRobot = monaRobot;
             _random = new Random(randomSeed);
         }
         
@@ -28,7 +28,7 @@ namespace Dora.ExplorationAlgorithm
 
         public void UpdateLogic(SimulationConfiguration config)
         {
-            var controller = _robot.movementController;
+            var controller = _monaRobot.movementController;
             var status = controller.GetStatus();
             if (status == RobotStatus.Idle)
             {
