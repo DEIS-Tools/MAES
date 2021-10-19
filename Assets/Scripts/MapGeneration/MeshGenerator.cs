@@ -64,7 +64,7 @@ public class MeshGenerator : MonoBehaviour {
 			for (int y = 0; y < squareGrid.squares.GetLength(1); y++) {
 				// Create triangles from all the points in the squares
 				// assigned to variables "vertices" and "triangles"
-				TriangulateSquare(squareGrid.squares[x,y], removeRoundedCorners);
+				TriangulateSquare(squareGrid.squares[x, y], removeRoundedCorners);
 			}
 		}
 
@@ -132,16 +132,16 @@ public class MeshGenerator : MonoBehaviour {
 		
 		// 1 point:
 		case 1:
-			triangles = removeRoundedCorners ? new int[]{} : new[]{0};
+			triangles = removeRoundedCorners ? new int[]{0,1} : new[]{0};
 			break;
 		case 2:
-			triangles = removeRoundedCorners ? new int[]{} : new[]{3};
+			triangles = removeRoundedCorners ? new int[]{2,3} : new[]{3};
 			break;
 		case 4:
-			triangles = removeRoundedCorners ? new int[]{} : new[]{7};
+			triangles = removeRoundedCorners ? new int[]{6,7} : new[]{7};
 			break;
 		case 8:
-			triangles = removeRoundedCorners ? new int[]{} : new[]{4};
+			triangles = removeRoundedCorners ? new int[]{4,5} : new[]{4};
 			break;
 		
 		// 2 points:
@@ -278,7 +278,6 @@ public class MeshGenerator : MonoBehaviour {
 	// Find the states in this image: https://www.google.com/url?sa=i&url=http%3A%2F%2Fjamie-wong.com%2F2014%2F08%2F19%2Fmetaballs-and-marching-squares%2F&psig=AOvVaw3GLnhyA5ZViq_fH0Ew20hb&ust=1634719811712000&source=images&cd=vfe&ved=0CA0Q3YkBahcKEwiYoNz_i9bzAhUAAAAAHQAAAAAQAw
 	// removeRoundedCorners simply ignores case 1, 2, 4, 7, 8, 11, 13, 14 by using a center point to square off the edges
 	void TriangulateSquare(Square square, bool removeRoundedCorners = false) {
-		
 		switch (square.configuration) {
 		case 0:
 			break;
