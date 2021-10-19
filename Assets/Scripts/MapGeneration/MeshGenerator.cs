@@ -275,7 +275,7 @@ public class MeshGenerator : MonoBehaviour {
 	// there are 16 cases, since there are 16 combinations of ON
 	// and OFF for a box where each of the 4 corners can have either of these 
 	// states.
-	// Find the states in this image: https://www.google.com/url?sa=i&url=http%3A%2F%2Fjamie-wong.com%2F2014%2F08%2F19%2Fmetaballs-and-marching-squares%2F&psig=AOvVaw3GLnhyA5ZViq_fH0Ew20hb&ust=1634719811712000&source=images&cd=vfe&ved=0CA0Q3YkBahcKEwiYoNz_i9bzAhUAAAAAHQAAAAAQAw
+	// Find the states in this image: http://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/#MathJax-Element-15-Frame
 	// removeRoundedCorners simply ignores case 1, 2, 4, 7, 8, 11, 13, 14 by using a center point to square off the edges
 	void TriangulateSquare(Square square, bool removeRoundedCorners = false) {
 		switch (square.configuration) {
