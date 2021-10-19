@@ -49,7 +49,7 @@ public class MeshGenerator : MonoBehaviour {
 		is2D = false;
 	}
 
-	public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D)
+	public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D, bool removeRoundedCorners)
 	{
 		this.is2D = is2D;
 		
@@ -64,7 +64,7 @@ public class MeshGenerator : MonoBehaviour {
 			for (int y = 0; y < squareGrid.squares.GetLength(1); y++) {
 				// Create triangles from all the points in the squares
 				// assigned to variables "vertices" and "triangles"
-				TriangulateSquare(squareGrid.squares[x,y]);
+				TriangulateSquare(squareGrid.squares[x,y], removeRoundedCorners);
 			}
 		}
 
@@ -73,7 +73,6 @@ public class MeshGenerator : MonoBehaviour {
 		
 		wallRoofMesh.vertices = vertices.ToArray();
 		wallRoofMesh.triangles = triangles.ToArray();
-		Debug.Log("Triangles: " + triangles.Count / 3);
 		wallRoofMesh.RecalculateNormals();
 		
 		// Apply mesh to wall roof
@@ -100,50 +99,52 @@ public class MeshGenerator : MonoBehaviour {
 			CreateWallMesh(wallHeight);
 		}
 
-		return GenerateCollisionMap(squareGrid, map.GetLength(0), map.GetLength(1), 
+		return GenerateCollisionMap(squareGrid, 
 			new Vector2(squareGrid.XOffset, squareGrid.YOffset), 
-			squareSize);
+			squareSize, removeRoundedCorners);
 	}
 
-	private SimulationMap<bool> GenerateCollisionMap(SquareGrid squareGrid, int width, int height, Vector3 offset, float mapScale)
-	{
+	private SimulationMap<bool> GenerateCollisionMap(SquareGrid squareGrid, Vector3 offset, float mapScale, bool removeRoundedCorners) {
+		var width = squareGrid.squares.GetLength(0);
+		var height = squareGrid.squares.GetLength(1);
 		// Create a bool type SimulationMap with default value of false in all cells
 		SimulationMap<bool> collisionMap = new SimulationMap<bool>(() => false, width, height, mapScale, offset);
-		
-		for (int x = 0; x < squareGrid.squares.GetLength(0); x++) {
-			for (int y = 0; y < squareGrid.squares.GetLength(1); y++)
+
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++)
 			{
 				var square = squareGrid.squares[x, y];
 				var collisionTile = collisionMap.GetTileByLocalCoordinate(x, y);
 				// Create triangles from all the points in the squares
 				// assigned to variables "vertices" and "triangles"
-				AdaptCollisionMapTile(collisionTile, square);
+				AdaptCollisionMapTile(collisionTile, square, removeRoundedCorners);
 			}
 		}
-		
+
 		return collisionMap;
 	}
 
-	private void AdaptCollisionMapTile(SimulationMapTile<bool> tile, Square square)
-	{
+	private void AdaptCollisionMapTile(SimulationMapTile<bool> tile, Square square, bool removeRoundedCorners) {
 		int[] triangles = { };
 		switch (square.configuration) {
 		case 0:
 			break;
 		
+		// 1 point:
 		case 1:
-			triangles = new[]{0};
+			triangles = removeRoundedCorners ? new int[]{} : new[]{0};
 			break;
 		case 2:
-			triangles = new[]{3};
+			triangles = removeRoundedCorners ? new int[]{} : new[]{3};
 			break;
 		case 4:
-			triangles = new[]{7};
+			triangles = removeRoundedCorners ? new int[]{} : new[]{7};
 			break;
 		case 8:
-			triangles = new[]{4};
+			triangles = removeRoundedCorners ? new int[]{} : new[]{4};
 			break;
 		
+		// 2 points:
 		case 3:
 			triangles = new[]{0,1,2,3};
 			break;
@@ -163,17 +164,18 @@ public class MeshGenerator : MonoBehaviour {
 			triangles = new[]{1,2,3,4,5,6};
 			break;
 		
+		// 3 points:
 		case 7:
-			triangles = new[]{0,1,2,3,5,6,7};
+			triangles = removeRoundedCorners ? new[]{0,1,2,3,6,7} : new[]{0,1,2,3,5,6,7};
 			break;
 		case 11:
-			triangles = new[]{0,1,2,3,4,5,6};
+			triangles = removeRoundedCorners ? new[]{0,1,2,3,4,5} : new[]{0,1,2,3,4,5,6};
 			break;
 		case 13:
-			triangles = new[]{0,1,2,4,5,6,7};
+			triangles = removeRoundedCorners ? new[]{0,1,4,5,6,7} : new[]{0,1,2,4,5,6,7};
 			break;
 		case 14:
-			triangles = new[]{1,2,3,4,5,6,7};
+			triangles = removeRoundedCorners ? new[]{2,3,4,5,6,7} : new[]{1,2,3,4,5,6,7};
 			break;
 
 		// 4 point:
@@ -273,23 +275,38 @@ public class MeshGenerator : MonoBehaviour {
 	// there are 16 cases, since there are 16 combinations of ON
 	// and OFF for a box where each of the 4 corners can have either of these 
 	// states.
-	void TriangulateSquare(Square square) {
+	// Find the states in this image: https://www.google.com/url?sa=i&url=http%3A%2F%2Fjamie-wong.com%2F2014%2F08%2F19%2Fmetaballs-and-marching-squares%2F&psig=AOvVaw3GLnhyA5ZViq_fH0Ew20hb&ust=1634719811712000&source=images&cd=vfe&ved=0CA0Q3YkBahcKEwiYoNz_i9bzAhUAAAAAHQAAAAAQAw
+	// removeRoundedCorners simply ignores case 1, 2, 4, 7, 8, 11, 13, 14 by using a center point to square off the edges
+	void TriangulateSquare(Square square, bool removeRoundedCorners = false) {
+		
 		switch (square.configuration) {
 		case 0:
 			break;
 
 		// 1 points:
 		case 1:
-			MeshFromPoints(square.centreLeft, square.centreBottom, square.bottomLeft);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.center, square.centreBottom, square.bottomLeft, square.centreLeft);
+			else
+				MeshFromPoints(square.centreLeft, square.centreBottom, square.bottomLeft);
 			break;
 		case 2:
-			MeshFromPoints(square.bottomRight, square.centreBottom, square.centreRight);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.centreRight, square.bottomRight, square.centreBottom, square.center);
+			else
+				MeshFromPoints(square.bottomRight, square.centreBottom, square.centreRight);
 			break;
 		case 4:
-			MeshFromPoints(square.topRight, square.centreRight, square.centreTop);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.topRight, square.centreRight, square.center, square.centreTop);
+			else 
+				MeshFromPoints(square.topRight, square.centreRight, square.centreTop);
 			break;
 		case 8:
-			MeshFromPoints(square.topLeft, square.centreTop, square.centreLeft);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.topLeft, square.centreTop, square.center, square.centreLeft);
+			else
+				MeshFromPoints(square.topLeft, square.centreTop, square.centreLeft);
 			break;
 
 		// 2 points:
@@ -314,16 +331,28 @@ public class MeshGenerator : MonoBehaviour {
 
 		// 3 point:
 		case 7:
-			MeshFromPoints(square.centreTop, square.topRight, square.bottomRight, square.bottomLeft, square.centreLeft);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.center, square.centreTop, square.topRight, square.bottomRight, square.bottomLeft, square.centreLeft);
+			else
+				MeshFromPoints(square.centreTop, square.topRight, square.bottomRight, square.bottomLeft, square.centreLeft);
 			break;
 		case 11:
-			MeshFromPoints(square.topLeft, square.centreTop, square.centreRight, square.bottomRight, square.bottomLeft);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.center, square.centreRight, square.bottomRight, square.bottomLeft, square.topLeft, square.centreTop);
+			else
+				MeshFromPoints(square.topLeft, square.centreTop, square.centreRight, square.bottomRight, square.bottomLeft);
 			break;
 		case 13:
-			MeshFromPoints(square.topLeft, square.topRight, square.centreRight, square.centreBottom, square.bottomLeft);
+			if (removeRoundedCorners) 
+				MeshFromPoints(square.center, square.centreBottom, square.bottomLeft, square.topLeft, square.topRight, square.centreRight);
+			else
+				MeshFromPoints(square.topLeft, square.topRight, square.centreRight, square.centreBottom, square.bottomLeft);
 			break;
 		case 14:
-			MeshFromPoints(square.topLeft, square.topRight, square.bottomRight, square.centreBottom, square.centreLeft);
+			if (removeRoundedCorners)
+				MeshFromPoints(square.center, square.centreLeft, square.topLeft, square.topRight, square.bottomRight, square.centreBottom);
+			else 
+				MeshFromPoints(square.topLeft, square.topRight, square.bottomRight, square.centreBottom, square.centreLeft);
 			break;
 
 		// 4 point:
@@ -341,7 +370,7 @@ public class MeshGenerator : MonoBehaviour {
 
 	void MeshFromPoints(params Node[] points) {
 		AssignIndexesToVertices(points);
-
+		
 		if (points.Length >= 3)
 			CreateTriangle(points[0], points[1], points[2]);
 		if (points.Length >= 4)
@@ -504,14 +533,17 @@ public class MeshGenerator : MonoBehaviour {
 				for (int y = 0; y < nodeCountY; y ++) {
 					// Divided by 2, since we start in 0,0 and can go both above and below 0.
 					Vector3 position = new Vector3( x * squareSize + XOffset, 0, y * squareSize + YOffset);
-					controlNodes[x,y] = new ControlNode(position,map[x,y] == WALL_TYPE, squareSize);
+					controlNodes[x,y] = new ControlNode(position,map[x, y] == WALL_TYPE, squareSize);
 				}
 			}
 
-			squares = new Square[nodeCountX - 1,nodeCountY - 1];
+			squares = new Square[nodeCountX - 1, nodeCountY - 1];
 			for (int x = 0; x < nodeCountX - 1; x++) {
 				for (int y = 0; y < nodeCountY - 1; y++) {
-					squares[x,y] = new Square(controlNodes[x,y + 1], controlNodes[x + 1,y + 1], controlNodes[x + 1,y], controlNodes[x,y]);
+					squares[x, y] = new Square(controlNodes[x, y + 1], 
+											  controlNodes[x + 1, y + 1], 
+										   controlNodes[x + 1, y], 
+										    controlNodes[x, y]);
 				}
 			}
 
@@ -519,11 +551,11 @@ public class MeshGenerator : MonoBehaviour {
 	}
 	
 	public class Square {
-
 		// This class is used in the marching squares algorithm.
 		// Control nodes can be either on or off
 		public ControlNode topLeft, topRight, bottomRight, bottomLeft;
 		public Node centreTop, centreRight, centreBottom, centreLeft;
+		public Node center; // Used for square off for offices. Ignoring case 1, 2, 4, 7, 8, 11, 13, 14
 		public int configuration;
 
 		public Square (ControlNode topLeft, ControlNode topRight, ControlNode bottomRight, ControlNode bottomLeft) {
@@ -537,6 +569,13 @@ public class MeshGenerator : MonoBehaviour {
 			centreRight = this.bottomRight.above;
 			centreBottom = this.bottomLeft.right;
 			centreLeft = this.bottomLeft.above;
+			
+			// Find middle
+			var xDiff = Math.Abs(topLeft.position.x - topRight.position.x);
+			var zDiff = Math.Abs(topLeft.position.z - bottomLeft.position.z);
+			var centerX = bottomLeft.position.x + (xDiff / 2f);
+			var centerZ = bottomLeft.position.z + (zDiff / 2f);
+			this.center = new Node(new Vector3(centerX, topLeft.position.y, centerZ));
 
 			// There are only 16 possible configurations
 			// Consider them in binary xxxx

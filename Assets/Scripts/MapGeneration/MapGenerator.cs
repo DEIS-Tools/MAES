@@ -61,7 +61,6 @@ public class MapGenerator : MonoBehaviour {
 		// The axis depends on whether it is 3D or 2D.
 		if (is2D)
 		{
-			Debug.Log("Correct 2D");
 			Vector3 newPosition = wallRoof.position;
 			newPosition.z = -wallHeight;
 			wallRoof.position = newPosition;
@@ -82,12 +81,12 @@ public class MapGenerator : MonoBehaviour {
 		}
 	}
 
-	private void ResizePlaneToFitMap(int height, int width, float scaling, float padding = 0.1f)
+	private void ResizePlaneToFitMap(int bitMapHeight, int bitMapWidth, float scaling, float padding = 0.1f)
 	{
 		// Resize plane below cave to fit size
-		plane.localScale = new Vector3(((width * scaling) / 10f) + padding, 
+		plane.localScale = new Vector3(((bitMapWidth * scaling) / 10f) + padding, 
 			1, 
-			((height * scaling) / 10f) + padding);
+			((bitMapHeight * scaling) / 10f) + padding);
 	}
 
 	public void clearMap()
@@ -106,7 +105,7 @@ public class MapGenerator : MonoBehaviour {
 
 		Random random = new Random(config.randomSeed);
 
-		int[,] emptyMap = GenerateEmptyMap(config.width, config.height);
+		int[,] emptyMap = GenerateEmptyMap(config.bitMapWidth, config.bitMapHeight);
 
 		var mapWithHalls = GenerateMapWithHalls(emptyMap, config, random);
 		
@@ -121,20 +120,20 @@ public class MapGenerator : MonoBehaviour {
 
 		var connectedMap = ConnectOfficesWithDoors(offices, closedHallwayMap, random, config);
 
-		var borderedMap = CreateBorderedMap(connectedMap, config.width, config.height, config.borderSize);
+		var borderedMap = CreateBorderedMap(connectedMap, config.bitMapWidth, config.bitMapHeight, config.borderSize);
 		
 		// For debugging
 		// mapToDraw = borderedMap;
-		
+
 		MeshGenerator meshGen = GetComponent<MeshGenerator>();
-		var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], 2.0f, wallHeight, is2D);
+		var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], config.scaling, wallHeight, is2D, true);
 
 		if (is2D)
 		{
 			plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
 		}
 
-		ResizePlaneToFitMap(config.height, config.width, config.scaling);
+		ResizePlaneToFitMap(config.bitMapHeight, config.bitMapWidth, config.scaling);
 
 		MovePlaneAndWallRoofToFitWallHeight(wallHeight, is2D);
 
@@ -517,7 +516,7 @@ public class MapGenerator : MonoBehaviour {
 
 		var collisionMap = CreateCaveMapWithMesh(caveConfig, wallHeight, is2D);
 
-		ResizePlaneToFitMap(caveConfig.height, caveConfig.width, caveConfig.scaling);
+		ResizePlaneToFitMap(caveConfig.bitMapHeight, caveConfig.bitMapWidth, caveConfig.scaling);
 
 		MovePlaneAndWallRoofToFitWallHeight(wallHeight, is2D);
 
@@ -544,13 +543,13 @@ public class MapGenerator : MonoBehaviour {
 		var connectedMap = ConnectAllRoomsToMainRoom(survivingRooms, cleanedMap, caveConfig);
 
 		// Ensure a border around the map
-		var borderedMap = CreateBorderedMap(connectedMap, caveConfig.width, caveConfig.height, caveConfig.borderSize);
+		var borderedMap = CreateBorderedMap(connectedMap, caveConfig.bitMapWidth, caveConfig.bitMapHeight, caveConfig.borderSize);
 		
 		// Draw gizmo of map for debugging. Will draw the map in Scene upon selection.
 		// mapToDraw = borderedMap;
 		
 		MeshGenerator meshGen = GetComponent<MeshGenerator>();
-		var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], caveConfig.scaling, wallHeight, is2D);
+		var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], caveConfig.scaling, wallHeight, is2D, false);
 
 		if (is2D)
 		{
@@ -562,7 +561,7 @@ public class MapGenerator : MonoBehaviour {
 
 	int[,] CreateBorderedMap(int[,] map, int width, int height, int borderSize)
 	{
-		int[,] borderedMap = new int[width + borderSize * 2, height + borderSize * 2];
+		int[,] borderedMap = new int[width + (borderSize * 2), height + (borderSize * 2)];
 
 		for (int x = 0; x < borderedMap.GetLength(0); x ++) {
 			for (int y = 0; y < borderedMap.GetLength(1); y ++) {
@@ -816,12 +815,12 @@ public class MapGenerator : MonoBehaviour {
 
 	int[,] CreateRandomFillMap(CaveMapConfig config)	
 	{
-		int[,] randomFillMap = new int[config.width, config.height];
+		int[,] randomFillMap = new int[config.bitMapWidth, config.bitMapHeight];
 		System.Random pseudoRandom = new System.Random(config.randomSeed);
 		
-		for (int x = 0; x < config.width; x ++) {
-			for (int y = 0; y < config.height; y ++) {
-				if (x == 0 || x == config.width - 1 || y == 0 || y == config.height -1) {
+		for (int x = 0; x < config.bitMapWidth; x ++) {
+			for (int y = 0; y < config.bitMapHeight; y ++) {
+				if (x == 0 || x == config.bitMapWidth - 1 || y == 0 || y == config.bitMapHeight -1) {
 					randomFillMap[x,y] = WALL_TYPE;
 				}
 				else {
@@ -835,8 +834,8 @@ public class MapGenerator : MonoBehaviour {
 
 	int[,] SmoothMap(int[,] map, CaveMapConfig config) {
 		var smoothedMap = map.Clone() as int[,];
-		for (int x = 0; x < config.width; x ++) {
-			for (int y = 0; y < config.height; y ++) {
+		for (int x = 0; x < config.bitMapWidth; x ++) {
+			for (int y = 0; y < config.bitMapWidth; y ++) {
 				int neighbourWallTiles = GetSurroundingWallCount(x,y, map);
 
 				if (neighbourWallTiles > config.neighbourWallsNeededToStayWall)
