@@ -3,7 +3,6 @@ namespace Dora
     // This class contains all settings related to an instance of an simulation
     public class SimulationConfiguration
     {
-        
         // Times per second that robot logic is updated
         public readonly int LogicTickDeltaMillis = 100;
         
@@ -13,6 +12,8 @@ namespace Dora
         
         public readonly float PhysicsTickDeltaSeconds;
         public readonly int PhysicsTickDeltaMillis;
+
+        public readonly bool DrawCommunication = true;
 
         public SimulationConfiguration()
         {

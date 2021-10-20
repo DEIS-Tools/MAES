@@ -10,6 +10,7 @@ namespace Dora
     public class CommunicationManager: ISimulationUnit
     {
         private RobotConstraints _robotConstraints;
+        private DebuggingVisualizer _visualizer;
 
         // Messages that will sent during the next logic update
         private List<Message> _queuedMessages = new List<Message>();
@@ -22,10 +23,10 @@ namespace Dora
         private readonly struct Message
         {
             public readonly object Contents;
-            public readonly int Sender;
+            public readonly MonaRobot Sender;
             public readonly Vector2 broadcastCenter;
 
-            public Message(object contents, int sender, Vector2 broadcastCenter)
+            public Message(object contents, MonaRobot sender, Vector2 broadcastCenter)
             {
                 Contents = contents;
                 Sender = sender;
@@ -33,15 +34,16 @@ namespace Dora
             }
         }
         
-        public CommunicationManager(SimulationMap<bool> collisionMap, RobotConstraints robotConstraints)
+        public CommunicationManager(SimulationMap<bool> collisionMap, RobotConstraints robotConstraints, DebuggingVisualizer visualizer)
         {
             _robotConstraints = robotConstraints;
+            _visualizer = visualizer;
             _rayTracingMap = new RayTracingMap<bool>(collisionMap);
         }
 
         // Adds a message to the broadcast queue
         public void BroadcastMessage(MonaRobot sender, in object messageContents) {
-            _queuedMessages.Add(new Message(messageContents, sender.id, sender.transform.position));
+            _queuedMessages.Add(new Message(messageContents, sender, sender.transform.position));
         }
 
         // Returns a list of messages sent by other robots
@@ -52,9 +54,13 @@ namespace Dora
             foreach (var message in _readableMessages)
             {
                 // The robot will not receive its own messages
-                if (message.Sender == receiver.id) continue;
+                if (message.Sender.id == receiver.id) continue;
+                
                 if (CanSignalTravelBetween(message.broadcastCenter, position))
+                {
                     messages.Add(message.Contents);
+                    _visualizer.AddCommunicationTrail(message.Sender, receiver);
+                }
             }
 
             return messages;
