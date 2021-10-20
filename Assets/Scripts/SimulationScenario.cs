@@ -10,14 +10,13 @@ namespace Dora
     // A function that spawns and returns a group of robots
     public delegate List<MonaRobot> RobotFactory(SimulationMap<bool> map, RobotSpawner spawner);
     
+    // A function that returns true if the given simulation has been completed
+    public delegate bool SimulationEndCriteriaDelegate(Simulation simulation);
+    
     // Contains all information needed for simulating a single simulation scenario
     // (One map, one type of robots)
-    
-    
-    public readonly struct SimulationScenario
+    public class SimulationScenario
     {
-        public delegate bool SimulationEndCriteriaDelegate(Simulation simulation);
-        
         private readonly int Seed;
         public readonly SimulationEndCriteriaDelegate HasFinishedSim; 
         

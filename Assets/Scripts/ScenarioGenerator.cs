@@ -11,7 +11,7 @@ namespace Dora
             
             for (int i = 0; i < 5; i++)
             {
-                int randomSeed = i * 4;
+                int randomSeed = i + 4;
                 var mapConfig = new CaveMapConfig(60,
                     60,
                     randomSeed,

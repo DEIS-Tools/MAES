@@ -18,7 +18,7 @@ namespace Dora.Robot
         // The algorithm that controls the logic of the robot
         public IExplorationAlgorithm ExplorationAlgorithm { get; set; }
 
-        private void Start()
+        private void Awake()
         {
             var rigidBody = GetComponent<Rigidbody2D>();
             movementController = new Robot2DController(rigidBody, transform, leftWheelTransform, rightWheelTransform);
