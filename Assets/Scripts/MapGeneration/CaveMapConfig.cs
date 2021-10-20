@@ -51,8 +51,8 @@ namespace Dora.MapGeneration
 	        
 	        this.widthInTiles = widthInTiles;
 	        this.heightInTiles = heightInTiles;
-	        this.bitMapWidth = widthInTiles + 1;
-	        this.bitMapHeight = heightInTiles + 1;
+	        this.bitMapWidth = widthInTiles + 1 - (borderSize * 2);
+	        this.bitMapHeight = heightInTiles + 1 - (borderSize * 2);
 	        
 	        this.randomSeed = randomSeed;
 	        this.smoothingRuns = smoothingRuns;
