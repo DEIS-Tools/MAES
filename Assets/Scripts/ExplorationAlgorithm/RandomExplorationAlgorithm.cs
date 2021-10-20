@@ -6,13 +6,18 @@ namespace Dora.ExplorationAlgorithm
     public class RandomExplorationAlgorithm: IExplorationAlgorithm
     {
         
-        private Robot.MonaRobot _monaRobot;
+        private Robot2DController _robotController;
         private bool _hasJustRotated = false;
         private Random _random;
 
-        public RandomExplorationAlgorithm(Robot.MonaRobot monaRobot, int randomSeed)
+        
+        public RandomExplorationAlgorithm(int randomSeed)
         {
-            _monaRobot = monaRobot;
+            _random = new Random(randomSeed);
+        }
+        public RandomExplorationAlgorithm(Robot2DController robotControllerController, int randomSeed)
+        {
+            _robotController = robotControllerController;
             _random = new Random(randomSeed);
         }
         
@@ -28,23 +33,26 @@ namespace Dora.ExplorationAlgorithm
 
         public void UpdateLogic(SimulationConfiguration config)
         {
-            var controller = _monaRobot.movementController;
-            var status = controller.GetStatus();
+            var status = _robotController.GetStatus();
             if (status == RobotStatus.Idle)
             {
                 if (!_hasJustRotated)
                 {
                     var direction = _random.Next(0, 1) == 0 ? -1 : 1;
                     var degrees = _random.Next(50, 180);
-                    controller.Rotate(degrees * direction);
+                    _robotController.Rotate(degrees * direction);
                     _hasJustRotated = true;
                 }
                 else
                 {
-                    controller.StartMovingForwards();
+                    _robotController.StartMovingForwards();
                     _hasJustRotated = false;
                 }
             }
+        }
+
+        public void SetController(Robot2DController controller) {
+            this._robotController = controller;
         }
     }
 }

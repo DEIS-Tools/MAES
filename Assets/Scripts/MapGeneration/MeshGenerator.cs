@@ -49,7 +49,7 @@ public class MeshGenerator : MonoBehaviour {
 		is2D = false;
 	}
 
-	public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D, bool removeRoundedCorners)
+	public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D, bool removeRoundedCorners, List<Room> rooms)
 	{
 		this.is2D = is2D;
 		
@@ -101,14 +101,14 @@ public class MeshGenerator : MonoBehaviour {
 
 		return GenerateCollisionMap(squareGrid, 
 			new Vector2(squareGrid.XOffset, squareGrid.YOffset), 
-			squareSize, removeRoundedCorners);
+			squareSize, removeRoundedCorners, rooms);
 	}
 
-	private SimulationMap<bool> GenerateCollisionMap(SquareGrid squareGrid, Vector3 offset, float mapScale, bool removeRoundedCorners) {
+	private SimulationMap<bool> GenerateCollisionMap(SquareGrid squareGrid, Vector3 offset, float mapScale, bool removeRoundedCorners, List<Room> rooms) {
 		var width = squareGrid.squares.GetLength(0);
 		var height = squareGrid.squares.GetLength(1);
 		// Create a bool type SimulationMap with default value of false in all cells
-		SimulationMap<bool> collisionMap = new SimulationMap<bool>(() => false, width, height, mapScale, offset);
+		SimulationMap<bool> collisionMap = new SimulationMap<bool>(() => false, width, height, mapScale, offset, rooms);
 
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++)

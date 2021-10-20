@@ -20,12 +20,16 @@ namespace Dora.MapGeneration
         // The scaled offset in world space
         public readonly Vector2 ScaledOffset;
 
+        // These rooms do not include the passages between them.
+        // They are used for robot spawning
+        public readonly List<Room> rooms;
+
         // The tiles of the map (each tile containing 8 triangle cells) 
         private readonly SimulationMapTile<TCell>[,] _tiles;
 
         public SimulationMap(Functional.Factory<TCell> cellFactory, int widthInTiles, int heightInTiles, float scale,
-            Vector2 scaledOffset)
-        {
+            Vector2 scaledOffset, List<Room> rooms) {
+            this.rooms = rooms;
             ScaledOffset = scaledOffset;
             Scale = scale;
             WidthInTiles = widthInTiles;

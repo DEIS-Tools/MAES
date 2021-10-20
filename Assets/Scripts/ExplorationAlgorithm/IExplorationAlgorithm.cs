@@ -5,5 +5,6 @@
 
         public void UpdateLogic(SimulationConfiguration configuration);
 
+        public void SetController(Robot2DController controller);
     }
 }
