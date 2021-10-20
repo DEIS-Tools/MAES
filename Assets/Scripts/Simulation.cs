@@ -24,6 +24,9 @@ namespace Dora
 
         private ExplorationTracker _explorationTracker;
         private CommunicationManager _communicationManager;
+        
+        // The debugging visualizer provides 
+        private DebuggingVisualizer _debugVisualizer = new DebuggingVisualizer();
 
         // Sets up the simulation by generating the map and spawning the robots
         public void SetScenario(SimulationScenario scenario)
@@ -32,13 +35,16 @@ namespace Dora
             _collisionMap = scenario.MapSpawner(MapGenerator);
             _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
             _explorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer);
+            _communicationManager =
+                new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
         }
-        
+
         public void LogicUpdate(SimulationConfiguration config)
         {
             _explorationTracker.LogicUpdate(config, _robots);
             _robots.ForEach(robot => robot.LogicUpdate(config));
             SimulatedLogicTicks++;
+            _debugVisualizer.LogicUpdate(config);
         }
 
         public void PhysicsUpdate(SimulationConfiguration config)
@@ -47,9 +53,14 @@ namespace Dora
             Physics2D.Simulate(config.PhysicsTickDeltaSeconds);
             SimulateTimeSeconds+= config.PhysicsTickDeltaSeconds;
             SimulatedPhysicsTicks++;
+            _debugVisualizer.PhysicsUpdate(config);
         }
-        
-        
+
+        private void OnDrawGizmos()
+        {
+            _debugVisualizer.Render();
+        }
+
         // ----- Future work -------
         public object SaveState()
         {
