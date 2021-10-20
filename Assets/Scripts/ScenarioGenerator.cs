@@ -25,7 +25,7 @@ namespace Dora
                 
                 scenarios.Enqueue(new SimulationScenario(
                     seed: randomSeed,
-                    hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 15,
+                    hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60,
                     mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 3.0f, true),
                     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobots(map, randomSeed),
                     new RobotConstraints()

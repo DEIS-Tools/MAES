@@ -17,12 +17,10 @@ namespace Dora
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 
         public GameObject SimulationPrefab;
-        
-        private List<MonaRobot> _robots;
-
         private Queue<SimulationScenario> _scenarios;
 
-        public Text TestingText;
+        public SimulationSpeedController UISpeedController;
+        public Text SimulationStatusText;
         private int _physicsTicksSinceUpdate = 0;
 
         private SimulationScenario _currentScenario;
@@ -55,6 +53,7 @@ namespace Dora
             _playState = targetState;
             // Reset next update time when changing play mode to avoid skipping ahead
             _nextUpdateTimeMillis = TimeUtils.CurrentTimeMillis();
+            UISpeedController.UpdateButtonsUI(_playState);
             return _playState;
         }
 
@@ -71,7 +70,7 @@ namespace Dora
             long startTimeMillis = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             int millisPerFixedUpdate = (int) (1000f * Time.fixedDeltaTime);
             // Subtract 5 milliseconds to allow for other procedures such as rendering to occur between updates 
-            millisPerFixedUpdate -= 5;
+            millisPerFixedUpdate -= 8;
             long fixedUpdateEndTime = startTimeMillis + millisPerFixedUpdate;
 
             // ReSharper disable once PossibleLossOfFraction
@@ -112,7 +111,6 @@ namespace Dora
                     AttemptSetPlayState(SimulationPlayState.Paused);
                     return false;
                 }
-                    
                 
                 CreateSimulation(_scenarios.Dequeue());
             }
@@ -128,7 +126,7 @@ namespace Dora
             
             var simulatedTimeSpan = TimeSpan.FromSeconds(_currentSimulation.SimulateTimeSeconds);
             var output = simulatedTimeSpan.ToString(@"hh\:mm\:ss");
-            TestingText.text = "Phys. ticks: " + _currentSimulation.SimulatedPhysicsTicks + 
+            SimulationStatusText.text = "Phys. ticks: " + _currentSimulation.SimulatedPhysicsTicks + 
                         "\nLogic ticks: " + _currentSimulation.SimulatedLogicTicks + 
                         "\nSimulated: " + output;
 
