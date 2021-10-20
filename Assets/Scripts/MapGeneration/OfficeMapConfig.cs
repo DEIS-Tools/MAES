@@ -4,26 +4,30 @@ namespace Dora.MapGeneration
 {
     public struct OfficeMapConfig
     {
-        public int width;
-        public int height;
+        // Bitmap size is always +1 larger in both axis
+        // due to the marching squares algorithm using 4 points per square
+        public readonly int widthInTiles;
+        public readonly int heightInTiles;
+        public readonly int bitMapWidth;
+        public readonly int bitMapHeight;
 
-        public int randomSeed;
+        public readonly int randomSeed;
 
-        public float maxHallInPercent;
+        public readonly float maxHallInPercent;
 
-        public int hallWidth;
-        public float minRoomSideLength;
-        public uint doorWidth;
-        public int doorPadding;
+        public readonly int hallWidth;
+        public readonly float minRoomSideLength;
+        public readonly uint doorWidth;
+        public readonly int doorPadding;
         // Value in [0,100] determining the likelihood of an office being split
         // Higher value = more but smaller rooms.
-        public uint officeSplitChancePercent;
+        public readonly uint officeSplitChancePercent;
 
-        public int borderSize;
+        public readonly int borderSize;
 
-        public float scaling;
+        public readonly float scaling;
 
-        public OfficeMapConfig(int width, int height, int randomSeed, float maxHallInPercent, int hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint officeSplitChancePercent, int borderSize, float scaling) {
+        public OfficeMapConfig(int widthInTiles, int heightInTiles, int randomSeed, float maxHallInPercent, int hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint officeSplitChancePercent, int borderSize, float scaling) {
             if ((2 * doorPadding  + doorWidth) > minRoomSideLength) {
                 throw new ArgumentOutOfRangeException("Door width cannot be bigger than the smallest side lenght of rooms plus two times doorPadding");
             }
@@ -32,8 +36,12 @@ namespace Dora.MapGeneration
                 throw new ArgumentOutOfRangeException("officeSplitChance cannot be greater than 100");
             }
             
-            this.width = width;
-            this.height = height;
+            this.widthInTiles = widthInTiles;
+            this.heightInTiles = heightInTiles;
+            this.bitMapWidth = widthInTiles + 1;
+            this.bitMapHeight = heightInTiles + 1;
+
+            
             this.randomSeed = randomSeed;
             this.maxHallInPercent = maxHallInPercent;
             this.hallWidth = hallWidth;
@@ -45,4 +53,6 @@ namespace Dora.MapGeneration
             this.scaling = scaling;
         }
     }
+    
+    
 }
