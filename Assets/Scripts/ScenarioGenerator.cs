@@ -22,12 +22,25 @@ namespace Dora
                     1,
                     1,
                     2);
+
+                var officeConfig = new OfficeMapConfig(
+                    60,
+                    60,
+                    randomSeed, 
+                    58,
+                    4,
+                    5,
+                    3,
+                    1,
+                    70,
+                    2,
+                    2f);
                 
                 scenarios.Enqueue(new SimulationScenario(
                     seed: randomSeed,
-                    hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60,
-                    mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 3.0f, true),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobots(map, randomSeed),
+                    hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 300,
+                    mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true),
+                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogetherBiggestRoom(map, randomSeed, 20),
                     new RobotConstraints()
                 ));
             }
