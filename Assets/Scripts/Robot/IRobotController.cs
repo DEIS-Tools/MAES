@@ -29,6 +29,13 @@ namespace Dora.Robot
         /* Stops performing the current task (rotating or moving) */
         void StopCurrentTask();
         
+        // Broadcasts the given data to all robots within range (range determined by simulation configuration)
+        // The data will be available to nearby robots in the next logic update
+        void Broadcast(object data);
+        
+        // Receives broadcast data sent by nearby robots the previous logic tick
+        List<object> ReceiveBroadcast();
+        
         // TODO:
         // Instructs the robot to move forward until it has travelled **approximately** the given distance.
         //void MoveForward(float distanceInMeters);
@@ -36,12 +43,7 @@ namespace Dora.Robot
         // Instructs the robot to move backward until it has travelled **approximately** the given distance.
         // void MoveBackward(float distanceInMeters);
         
-        // Broadcasts the given data to all robots within range (range determined by simulation configuration)
-        // The data will be available to nearby robots in the next logic update
-        // void Broadcast(object data);
         
-        // Receives broadcast data sent by nearby robots the previous logic tick
-        // List<object> ReceiveBroadcast();
 
         // Returns the current SLAM map 
         // SlamMap GetSlamMap()

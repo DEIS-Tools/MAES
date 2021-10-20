@@ -33,10 +33,12 @@ namespace Dora
         {
             _scenario = scenario;
             _collisionMap = scenario.MapSpawner(MapGenerator);
+            
+            _communicationManager = new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
+            RobotSpawner.CommunicationManager = _communicationManager;
+            
             _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
             _explorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer);
-            _communicationManager =
-                new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
         }
 
         public void LogicUpdate(SimulationConfiguration config)
@@ -45,6 +47,7 @@ namespace Dora
             _robots.ForEach(robot => robot.LogicUpdate(config));
             SimulatedLogicTicks++;
             _debugVisualizer.LogicUpdate(config);
+            _communicationManager.LogicUpdate(config);
         }
 
         public void PhysicsUpdate(SimulationConfiguration config)
@@ -54,6 +57,7 @@ namespace Dora
             SimulateTimeSeconds+= config.PhysicsTickDeltaSeconds;
             SimulatedPhysicsTicks++;
             _debugVisualizer.PhysicsUpdate(config);
+            _communicationManager.PhysicsUpdate(config);
         }
 
         private void OnDrawGizmos()

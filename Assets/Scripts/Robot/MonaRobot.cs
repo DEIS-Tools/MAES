@@ -21,7 +21,7 @@ namespace Dora.Robot
         private void Awake()
         {
             var rigidBody = GetComponent<Rigidbody2D>();
-            movementController = new Robot2DController(rigidBody, transform, leftWheelTransform, rightWheelTransform);
+            movementController = new Robot2DController(rigidBody, transform, leftWheelTransform, rightWheelTransform, this);
         }
 
         public void LogicUpdate(SimulationConfiguration config)
