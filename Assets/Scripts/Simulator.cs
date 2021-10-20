@@ -16,66 +16,53 @@ namespace Dora
         public SimulationConfiguration SimConfig = new SimulationConfiguration(); // Should this be a struct?!
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 
-        public Transform simulationContainer;
-        public MapGenerator MapGenerator;
-        public RobotSpawner RobotSpawner;
+        public GameObject SimulationPrefab;
+        private Queue<SimulationScenario> _scenarios;
 
-        private ExplorationTracker _explorationTracker;
-        public ExplorationVisualizer explorationVisualizer;
-        private List<MonaRobot> _robots;
-
-        public Text TestingText;
-        private int _physicsTickCount = 0;
-        private int _robotLogicTickCount = 0;
+        public SimulationSpeedController UISpeedController;
+        public Text SimulationStatusText;
         private int _physicsTicksSinceUpdate = 0;
-        private int _simulatedTimeMillis = 0;
+
+        private SimulationScenario _currentScenario;
+        private Simulation _currentSimulation;
+        private GameObject _simulationGameObject;
 
         public SimulationPlayState PlayState { get; }
 
+        
+        // Runs once when starting the program
+        private void Start()
+        {
+            // This simulation handles physics updates custom time factors, so disable built in real time physics calls
+            Physics.autoSimulation = false;
+            Physics2D.simulationMode = SimulationMode2D.Script;
+            
+            _scenarios = ScenarioGenerator.GenerateBallisticScenarios();
+            CreateSimulation(_scenarios.Dequeue());
+        }
+        
         public SimulationPlayState AttemptSetPlayState(SimulationPlayState targetState)
         {
             if (targetState == _playState) return _playState;
-            // TODO: Check if possible to change (For example, not possible if no map is generated)
+
+            if (_currentScenario == null)
+            {
+                targetState = SimulationPlayState.Paused;
+            }
+            
             _playState = targetState;
             // Reset next update time when changing play mode to avoid skipping ahead
             _nextUpdateTimeMillis = TimeUtils.CurrentTimeMillis();
+            UISpeedController.UpdateButtonsUI(_playState);
             return _playState;
         }
 
-        private void Start()
-        {
-            Physics.autoSimulation = false;
-            Physics2D.simulationMode = SimulationMode2D.Script;
-            GenerateSimulation();
-        }
-
-        private void GenerateSimulation()
-        {
-            
-            var config = new CaveMapConfig(60,
-                60,
-                4,
-                4,
-                2,
-                48,
-                10,
-                1,
-                1,
-                2);
-            var collisionMap = MapGenerator.GenerateCaveMap(config, 
-                3.0f,
-                true);
-            
-            /*var officeConfig = new OfficeMapConfig(60, 60,  (int)new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds(), 8, 3, 7, 3, 1, 65, 1, 2.0f);
-            var collisionMap = MapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true);*/
-            
-            _robots = RobotSpawner.SpawnRobots(collisionMap);
-            _explorationTracker = new ExplorationTracker(collisionMap, explorationVisualizer);
-        }
 
         // Timing variables for controlling the simulation in a manner that is decoupled from Unity's update system
         private long _nextUpdateTimeMillis = 0;
-
+        
+        // This method is responsible for executing simulation updates at an appropriate speed, to provide simulation in
+        // real time (or whatever speed setting is chosen)
         private void FixedUpdate()
         {
             if (_playState == SimulationPlayState.Paused) return;
@@ -83,7 +70,7 @@ namespace Dora
             long startTimeMillis = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             int millisPerFixedUpdate = (int) (1000f * Time.fixedDeltaTime);
             // Subtract 5 milliseconds to allow for other procedures such as rendering to occur between updates 
-            millisPerFixedUpdate -= 5;
+            millisPerFixedUpdate -= 8;
             long fixedUpdateEndTime = startTimeMillis + millisPerFixedUpdate;
 
             // ReSharper disable once PossibleLossOfFraction
@@ -95,7 +82,12 @@ namespace Dora
                 // Yield if no more updates are needed this FixedUpdate cycle
                 if (_nextUpdateTimeMillis > fixedUpdateEndTime) break;
 
-                UpdateSimulation(physicsTickDeltaMillis, SimConfig);
+                var shouldContinue = UpdateSimulation(SimConfig);
+                if (!shouldContinue)
+                {
+                    AttemptSetPlayState(SimulationPlayState.Paused);
+                    return;
+                }
                 
                 // The delay before simulating the next update is dependant on the current simulation play speed
                 int updateDelayMillis = physicsTickDeltaMillis / (int) _playState;
@@ -104,51 +96,58 @@ namespace Dora
                 long maxDelayMillis = Math.Max(500, physicsTickDeltaMillis * 10);
                 _nextUpdateTimeMillis = Math.Max(_nextUpdateTimeMillis, TimeUtils.CurrentTimeMillis() - maxDelayMillis);
             }
-            var simulatedTimeSpan = TimeSpan.FromMilliseconds(_simulatedTimeMillis);
-            var output = simulatedTimeSpan.ToString(@"hh\:mm\:ss");
-            var following = CameraController.SingletonInstance.movementTransform == null
-                ? ""
-                : "\nPress Esc to release camera";
-            TestingText.text = "Phys. ticks: " + _physicsTickCount + 
-                        "\nLogic ticks: " + _robotLogicTickCount + 
-                        "\nSimulated: " + output + following;
         }
 
         // Calls update on all children of SimulationContainer that are of type SimulationUnit
-        private void UpdateSimulation(int physicsTickDeltaMillis, SimulationConfiguration config)
+        private bool UpdateSimulation(SimulationConfiguration config)
         {
-            List<ISimulationUnit> simUnits = new List<ISimulationUnit>();
+            if (_currentScenario != null && _currentScenario.HasFinishedSim(_currentSimulation))
+                RemoveCurrentSimulation();
 
-            AddAllSimulationUnitsInChildren(simulationContainer, simUnits);
-            simUnits.ForEach(simUnit => simUnit.PhysicsUpdate(config));
+            if (_currentScenario == null)
+            {
+                if (_scenarios.Count == 0)
+                {
+                    AttemptSetPlayState(SimulationPlayState.Paused);
+                    return false;
+                }
+                
+                CreateSimulation(_scenarios.Dequeue());
+            }
             
-            float physicsTickDeltaSeconds = physicsTickDeltaMillis / 1000.0f;
-            //Physics.Simulate(physicsTickDeltaSeconds);
-            Physics2D.Simulate(physicsTickDeltaSeconds);
-            _physicsTickCount += 1; 
-            _simulatedTimeMillis += physicsTickDeltaMillis;
+            _currentSimulation.PhysicsUpdate(config);
             _physicsTicksSinceUpdate++;
             
-            _explorationTracker.LogicUpdate(config, _robots);
-            
-            if (_physicsTicksSinceUpdate >= SimConfig.PhysicsTicksPerLogicUpdate)
+            if (_physicsTicksSinceUpdate >= config.PhysicsTicksPerLogicUpdate)
             {
-                simUnits.ForEach(simUnit => simUnit.LogicUpdate(config));
+                _currentSimulation.LogicUpdate(config);
                 _physicsTicksSinceUpdate = 0;
-                _robotLogicTickCount += 1;
             }
+            
+            var simulatedTimeSpan = TimeSpan.FromSeconds(_currentSimulation.SimulateTimeSeconds);
+            var output = simulatedTimeSpan.ToString(@"hh\:mm\:ss");
+            SimulationStatusText.text = "Phys. ticks: " + _currentSimulation.SimulatedPhysicsTicks + 
+                        "\nLogic ticks: " + _currentSimulation.SimulatedLogicTicks + 
+                        "\nSimulated: " + output;
+
+            return true;
         }
 
-        // Recursively finds all children that are of type SimulationUnit
-        // Children are added depth first 
-        private void AddAllSimulationUnitsInChildren(Transform parent, List<ISimulationUnit> simUnits)
+        public void CreateSimulation(SimulationScenario scenario)
         {
-            foreach (Transform child in parent)
-            {
-                AddAllSimulationUnitsInChildren(child, simUnits);
-                ISimulationUnit unit = child.GetComponent<ISimulationUnit>();
-                if (unit != null) simUnits.Add(unit);
-            }
+            _currentScenario = scenario;
+            _simulationGameObject = Instantiate(SimulationPrefab, transform);
+            _currentSimulation = _simulationGameObject.GetComponent<Simulation>();
+            _currentSimulation.SetScenario(scenario);
         }
+
+        public void RemoveCurrentSimulation()
+        {
+            Destroy(_simulationGameObject);
+            _currentScenario = null;
+            _currentSimulation = null;
+            _simulationGameObject = null;
+        }
+        
     }
 }

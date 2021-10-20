@@ -504,7 +504,7 @@ public class MapGenerator : MonoBehaviour {
 
 		return (amountOfHall / (float)mapSize) * 100f;
 	}
-	
+
 	/**
 	 * METHODS for creating cave
 	 */

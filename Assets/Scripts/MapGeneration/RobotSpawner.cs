@@ -9,17 +9,16 @@ namespace Dora.MapGeneration
     {
 
         public GameObject robotPrefab;
-        public Transform simulationContainer;
-        
+
         // Temporary method for testing! Return list of robots?
-        public List<MonaRobot> SpawnRobots(SimulationMap<bool> collsionMap)
+        public List<MonaRobot> SpawnRobots(SimulationMap<bool> collsionMap, int seed)
         {
             List<MonaRobot> robots = new List<MonaRobot>();
             
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 5; i++)
             {
                 var robotID = i;
-                var robotGameObject = Instantiate(robotPrefab, parent: simulationContainer);
+                var robotGameObject = Instantiate(robotPrefab, parent: transform);
                 var robot = robotGameObject.GetComponent<MonaRobot>();
 
                 robot.transform.position = new Vector3(0.1f, 0.1f);

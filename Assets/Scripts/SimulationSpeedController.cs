@@ -24,7 +24,7 @@ namespace Dora
             fastAsPossibleButton.onClick.AddListener(FastAsPossible);
         }
 
-        private void UpdateButtonsUI(SimulationPlayState currentState)
+        public void UpdateButtonsUI(SimulationPlayState currentState)
         {
             pauseButton.image.color = (currentState == SimulationPlayState.Paused)? Color.green : Color.white;
             playButton.image.color = (currentState == SimulationPlayState.Play)? Color.green : Color.white;
