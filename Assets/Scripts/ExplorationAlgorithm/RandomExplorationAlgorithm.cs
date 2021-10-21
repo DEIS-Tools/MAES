@@ -15,9 +15,9 @@ namespace Dora.ExplorationAlgorithm
         {
             _random = new Random(randomSeed);
         }
-        public RandomExplorationAlgorithm(Robot2DController robotControllerController, int randomSeed)
+        public RandomExplorationAlgorithm(Robot2DController robotController, int randomSeed)
         {
-            _robotController = robotControllerController;
+            _robotController = robotController;
             _random = new Random(randomSeed);
         }
         
