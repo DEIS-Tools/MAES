@@ -32,7 +32,7 @@ namespace Dora
         // Debugging measure to visualize communication between robots
         public void AddCommunicationTrail(MonaRobot robot1, MonaRobot robot2)
         {
-            _links.Enqueue(new CommunicationLink(robot1, robot2, _currentTick, _currentTick + 30));
+            _links.Enqueue(new CommunicationLink(robot1, robot2, _currentTick, _currentTick + 10));
         }
 
         public void Render()

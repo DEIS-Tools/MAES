@@ -36,6 +36,9 @@ namespace Dora.ExplorationAlgorithm
             // Testing
             _robotController.ReceiveBroadcast();
             
+            // Testing
+            _robotController.Broadcast("Test!");
+            
             var status = _robotController.GetStatus();
             if (status == RobotStatus.Idle)
             {
@@ -46,8 +49,6 @@ namespace Dora.ExplorationAlgorithm
                     _robotController.Rotate(degrees * direction);
                     _hasJustRotated = true;
                     
-                    // Testing
-                    _robotController.Broadcast("Test!");
                 }
                 else
                 {
