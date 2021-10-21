@@ -117,12 +117,9 @@ public class MapGenerator : MonoBehaviour {
 		var offices = GetSortedOfficeRooms(closedHallwayMap);
 
 		var connectedMap = ConnectOfficesWithDoors(offices, closedHallwayMap, random, config);
-		
-		Debug.Log($"ConnectedMapSize: {connectedMap.GetLength(0)},{connectedMap.GetLength(1)}");
 
 		var borderedMap = CreateBorderedMap(connectedMap, config.bitMapWidth, config.bitMapHeight, config.borderSize);
 		
-		Debug.Log($"borderedMapSize: {borderedMap.GetLength(0)},{borderedMap.GetLength(1)}");
 		// For debugging
 		// mapToDraw = borderedMap;
 		
@@ -841,7 +838,7 @@ public class MapGenerator : MonoBehaviour {
 	int[,] SmoothMap(int[,] map, CaveMapConfig config) {
 		var smoothedMap = map.Clone() as int[,];
 		for (int x = 0; x < config.bitMapWidth; x ++) {
-			for (int y = 0; y < config.bitMapWidth; y ++) {
+			for (int y = 0; y < config.bitMapHeight; y ++) {
 				int neighbourWallTiles = GetSurroundingWallCount(x,y, map);
 
 				if (neighbourWallTiles > config.neighbourWallsNeededToStayWall)
