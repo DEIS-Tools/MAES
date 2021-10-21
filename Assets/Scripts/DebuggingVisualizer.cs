@@ -44,7 +44,7 @@ namespace Dora
                 Gizmos.DrawLine(link.RobotOne.transform.position + offset, link.RobotTwo.transform.position + offset);
         }
 
-        public void PhysicsUpdate(SimulationConfiguration config)
+        public void PhysicsUpdate()
         {
             _currentTick++;
             // Remove old links
@@ -52,7 +52,7 @@ namespace Dora
                 _links.Dequeue();
         }
         
-        public void LogicUpdate(SimulationConfiguration config)
+        public void LogicUpdate()
         {
             
         }

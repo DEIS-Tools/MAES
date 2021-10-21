@@ -31,7 +31,7 @@ namespace Dora.ExplorationAlgorithm
             throw new System.NotImplementedException();
         }
 
-        public void UpdateLogic(SimulationConfiguration config)
+        public void UpdateLogic()
         {
             // Testing
             _robotController.ReceiveBroadcast();

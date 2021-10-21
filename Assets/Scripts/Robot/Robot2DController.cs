@@ -56,7 +56,7 @@ namespace Dora
 
         
 
-        public void UpdateLogic(SimulationConfiguration config)
+        public void UpdateLogic()
         {
             // Clear the collision flag
             _newCollisionSinceLastUpdate = false;
@@ -89,7 +89,7 @@ namespace Dora
             throw new System.NotImplementedException();
         }
 
-        public void UpdateMotorPhysics(SimulationConfiguration config)
+        public void UpdateMotorPhysics()
         {
             // Calculate movement delta between current and last physics tick
             var leftWheelVelocityVector = _leftWheel.transform.position - _previousLeftWheelPosition ?? Vector3.zero;

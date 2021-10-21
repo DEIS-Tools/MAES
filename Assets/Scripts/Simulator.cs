@@ -13,7 +13,6 @@ namespace Dora
 {
     public class Simulator : MonoBehaviour
     {
-        public SimulationConfiguration SimConfig = new SimulationConfiguration(); // Should this be a struct?!
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 
         public GameObject SimulationPrefab;
@@ -74,7 +73,7 @@ namespace Dora
             long fixedUpdateEndTime = startTimeMillis + millisPerFixedUpdate;
 
             // ReSharper disable once PossibleLossOfFraction
-            int physicsTickDeltaMillis = SimConfig.LogicTickDeltaMillis / SimConfig.PhysicsTicksPerLogicUpdate;
+            int physicsTickDeltaMillis = GlobalSettings.LogicTickDeltaMillis / GlobalSettings.PhysicsTicksPerLogicUpdate;
 
             // Only calculate updates if there is still time left in the current update
             while (TimeUtils.CurrentTimeMillis() - startTimeMillis < millisPerFixedUpdate)
@@ -82,7 +81,7 @@ namespace Dora
                 // Yield if no more updates are needed this FixedUpdate cycle
                 if (_nextUpdateTimeMillis > fixedUpdateEndTime) break;
 
-                var shouldContinue = UpdateSimulation(SimConfig);
+                var shouldContinue = UpdateSimulation();
                 if (!shouldContinue)
                 {
                     AttemptSetPlayState(SimulationPlayState.Paused);
@@ -99,7 +98,7 @@ namespace Dora
         }
 
         // Calls update on all children of SimulationContainer that are of type SimulationUnit
-        private bool UpdateSimulation(SimulationConfiguration config)
+        private bool UpdateSimulation()
         {
             if (_currentScenario != null && _currentScenario.HasFinishedSim(_currentSimulation))
                 RemoveCurrentSimulation();
@@ -115,12 +114,12 @@ namespace Dora
                 CreateSimulation(_scenarios.Dequeue());
             }
             
-            _currentSimulation.PhysicsUpdate(config);
+            _currentSimulation.PhysicsUpdate();
             _physicsTicksSinceUpdate++;
             
-            if (_physicsTicksSinceUpdate >= config.PhysicsTicksPerLogicUpdate)
+            if (_physicsTicksSinceUpdate >= GlobalSettings.PhysicsTicksPerLogicUpdate)
             {
-                _currentSimulation.LogicUpdate(config);
+                _currentSimulation.LogicUpdate();
                 _physicsTicksSinceUpdate = 0;
             }
             

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Statistics;
@@ -33,7 +34,7 @@ namespace Dora
         {
             _scenario = scenario;
             _collisionMap = scenario.MapSpawner(MapGenerator);
-            
+
             _communicationManager = new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
             RobotSpawner.CommunicationManager = _communicationManager;
             
@@ -41,23 +42,23 @@ namespace Dora
             _explorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer);
         }
 
-        public void LogicUpdate(SimulationConfiguration config)
+        public void LogicUpdate()
         {
-            _explorationTracker.LogicUpdate(config, _robots);
-            _robots.ForEach(robot => robot.LogicUpdate(config));
+            _explorationTracker.LogicUpdate(_robots);
+            _robots.ForEach(robot => robot.LogicUpdate());
             SimulatedLogicTicks++;
-            _debugVisualizer.LogicUpdate(config);
-            _communicationManager.LogicUpdate(config);
+            _debugVisualizer.LogicUpdate();
+            _communicationManager.LogicUpdate();
         }
 
-        public void PhysicsUpdate(SimulationConfiguration config)
+        public void PhysicsUpdate()
         {
-            _robots.ForEach(simUnit => simUnit.PhysicsUpdate(config));
-            Physics2D.Simulate(config.PhysicsTickDeltaSeconds);
-            SimulateTimeSeconds+= config.PhysicsTickDeltaSeconds;
+            _robots.ForEach(simUnit => simUnit.PhysicsUpdate());
+            Physics2D.Simulate(GlobalSettings.PhysicsTickDeltaSeconds);
+            SimulateTimeSeconds += GlobalSettings.PhysicsTickDeltaSeconds;
             SimulatedPhysicsTicks++;
-            _debugVisualizer.PhysicsUpdate(config);
-            _communicationManager.PhysicsUpdate(config);
+            _debugVisualizer.PhysicsUpdate();
+            _communicationManager.PhysicsUpdate();
         }
 
         private void OnDrawGizmos()

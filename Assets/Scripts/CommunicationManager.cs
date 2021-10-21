@@ -42,7 +42,8 @@ namespace Dora
         }
 
         // Adds a message to the broadcast queue
-        public void BroadcastMessage(MonaRobot sender, in object messageContents) {
+        public void BroadcastMessage(MonaRobot sender, in object messageContents)
+        {
             _queuedMessages.Add(new Message(messageContents, sender, sender.transform.position));
         }
 
@@ -50,32 +51,36 @@ namespace Dora
         public List<object> ReadMessages(MonaRobot receiver)
         {
             List<object> messages = new List<object>();
-            Vector2 position = receiver.transform.position;
+            Vector2 receiverPosition = receiver.transform.position;
             foreach (var message in _readableMessages)
             {
                 // The robot will not receive its own messages
                 if (message.Sender.id == receiver.id) continue;
                 
-                if (CanSignalTravelBetween(message.broadcastCenter, position))
+                if (CanSignalTravelBetween(message.broadcastCenter, receiverPosition))
                 {
                     messages.Add(message.Contents);
-                    _visualizer.AddCommunicationTrail(message.Sender, receiver);
+                    if (GlobalSettings.DrawCommunication) 
+                        _visualizer.AddCommunicationTrail(message.Sender, receiver);
                 }
             }
 
             return messages;
         }
-
+        
         private bool CanSignalTravelBetween(Vector2 pos1, Vector2 pos2)
         {
             if (Vector2.Distance(pos1, pos2) > _robotConstraints.BroadcastRange)
                 return false;
 
+            // If walls can be ignored, then simply continue
             if (!_robotConstraints.BroadcastBlockedByWalls) 
                 return true; 
             
             // If walls cannot be ignored, perform a raycast to check line of sight between the given points
-            var angle = Vector2.Angle(pos1, pos2);
+            var angle = Vector2.Angle(Vector2.right, pos2 - pos1);
+            if (pos1.y > pos2.y) angle = 180 + (180 - angle);
+            
             bool canTravel = true;
             _rayTracingMap.Raytrace(pos1, angle, _robotConstraints.BroadcastRange,
                 (_, cellIsSolid) =>
@@ -87,7 +92,7 @@ namespace Dora
             return canTravel;
         }
 
-        public void LogicUpdate(SimulationConfiguration config)
+        public void LogicUpdate()
         {
             // Move messages sent last tick into readable messages
             _readableMessages.Clear();
@@ -97,7 +102,7 @@ namespace Dora
         
         
         
-        public void PhysicsUpdate(SimulationConfiguration config)
+        public void PhysicsUpdate()
         {
             // No physics update needed
         }
