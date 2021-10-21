@@ -18,7 +18,7 @@ namespace Dora
             ProgressPercentageText.text = (progress * 100f).ToString("#.00") + "%";
         }
 
-        public void Update(Simulation currentSimulation)
+        public void UpdateStatistics(Simulation currentSimulation)
         {
             SetExplorationProgress(currentSimulation.ExplorationTracker.ExploredProportion);
             ExplorationRateText.text = "Exploration rate (cells/minute): " +

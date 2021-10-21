@@ -141,7 +141,7 @@ namespace Dora
 
         private void UpdateStatisticsUI()
         {
-            statisticsUIController.Update(_currentSimulation);
+            statisticsUIController.UpdateStatistics(_currentSimulation);
         }
 
         public void CreateSimulation(SimulationScenario scenario)
