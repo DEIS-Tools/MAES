@@ -15,27 +15,7 @@ namespace Dora.MapGeneration
         public GameObject robotPrefab;
 
         public CommunicationManager CommunicationManager;
-        
-        // Temporary method for testing! Return list of robots?
-        public List<MonaRobot> SpawnRobots(SimulationMap<bool> collisionMap, int seed, int numberOfRobots)
-        {
-            List<MonaRobot> robots = new List<MonaRobot>();
-            
-            for (int i = 0; i < numberOfRobots; i++)
-            {
-                robots.Add(CreateRobot(
-                    x: 0.1f * i,
-                    y: 0.1f * i,
-                    relativeSize: 1f,
-                    robotId: i,
-                    algorithm: new RandomExplorationAlgorithm(seed),
-                    collisionMap: collisionMap
-                ));
-            }
 
-            return robots;
-        }
-        
         public List<MonaRobot> SpawnRobotsInBiggestRoom(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize) {
             List<MonaRobot> robots = new List<MonaRobot>();
 
@@ -201,7 +181,7 @@ namespace Dora.MapGeneration
         }
         
         private MonaRobot CreateRobot(float x, float y, float relativeSize, int robotId, IExplorationAlgorithm algorithm, SimulationMap<bool> collisionMap) {
-            var robotID = robotId++;
+            var robotID = robotId;
             var robotGameObject = Instantiate(robotPrefab, parent: transform);
             var robot = robotGameObject.GetComponent<MonaRobot>();
             // robotRelativeSize is a floating point value in ]0,1.0]. 1.0 = robot is the same size as a tile.
