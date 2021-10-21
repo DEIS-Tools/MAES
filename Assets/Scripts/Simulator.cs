@@ -13,7 +13,6 @@ namespace Dora
 {
     public class Simulator : MonoBehaviour
     {
-        public SimulationConfiguration SimConfig = new SimulationConfiguration(); // Should this be a struct?!
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 
         public GameObject SimulationPrefab;
@@ -74,7 +73,7 @@ namespace Dora
             long fixedUpdateEndTime = startTimeMillis + millisPerFixedUpdate;
 
             // ReSharper disable once PossibleLossOfFraction
-            int physicsTickDeltaMillis = SimConfig.LogicTickDeltaMillis / SimConfig.PhysicsTicksPerLogicUpdate;
+            int physicsTickDeltaMillis = GlobalSettings.LogicTickDeltaMillis / GlobalSettings.PhysicsTicksPerLogicUpdate;
 
             // Only calculate updates if there is still time left in the current update
             while (TimeUtils.CurrentTimeMillis() - startTimeMillis < millisPerFixedUpdate)
@@ -82,7 +81,7 @@ namespace Dora
                 // Yield if no more updates are needed this FixedUpdate cycle
                 if (_nextUpdateTimeMillis > fixedUpdateEndTime) break;
 
-                var shouldContinue = UpdateSimulation(SimConfig);
+                var shouldContinue = UpdateSimulation();
                 if (!shouldContinue)
                 {
                     AttemptSetPlayState(SimulationPlayState.Paused);
@@ -99,7 +98,7 @@ namespace Dora
         }
 
         // Calls update on all children of SimulationContainer that are of type SimulationUnit
-        private bool UpdateSimulation(SimulationConfiguration config)
+        private bool UpdateSimulation()
         {
             if (_currentScenario != null && _currentScenario.HasFinishedSim(_currentSimulation))
                 RemoveCurrentSimulation();
@@ -108,20 +107,24 @@ namespace Dora
             {
                 if (_scenarios.Count == 0)
                 {
-                    AttemptSetPlayState(SimulationPlayState.Paused);
+                    // Indicate that no further updates are needed
                     return false;
                 }
                 
+                // Otherwise continue to next simulation in the queue
                 CreateSimulation(_scenarios.Dequeue());
             }
             
-            _currentSimulation.PhysicsUpdate(config);
+            _currentSimulation.PhysicsUpdate();
             _physicsTicksSinceUpdate++;
-            
-            if (_physicsTicksSinceUpdate >= config.PhysicsTicksPerLogicUpdate)
+            var shouldContinueSim = true;
+            if (_physicsTicksSinceUpdate >= GlobalSettings.PhysicsTicksPerLogicUpdate)
             {
-                _currentSimulation.LogicUpdate(config);
+                _currentSimulation.LogicUpdate();
                 _physicsTicksSinceUpdate = 0;
+                // If the simulator is in step mode, then automatically pause after logic step has been performed
+                if (_playState == SimulationPlayState.Step) 
+                    shouldContinueSim = false;
             }
             
             var simulatedTimeSpan = TimeSpan.FromSeconds(_currentSimulation.SimulateTimeSeconds);
@@ -130,7 +133,7 @@ namespace Dora
                         "\nLogic ticks: " + _currentSimulation.SimulatedLogicTicks + 
                         "\nSimulated: " + output;
 
-            return true;
+            return shouldContinueSim;
         }
 
         public void CreateSimulation(SimulationScenario scenario)

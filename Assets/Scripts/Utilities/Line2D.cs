@@ -7,7 +7,7 @@ namespace Dora.Utilities
     public class Line2D
     {
 
-        public readonly Vector2 Start, End;
+        public readonly Vector2 Start, End, MidPoint;
         private readonly float _minY, _maxY;
         private readonly float _minX, _maxX;
         
@@ -22,7 +22,8 @@ namespace Dora.Utilities
         {
             Start = start;
             End = end;
-
+            MidPoint = (start + end) / 2f;
+            
             if (start.x > end.x)
                 (start, end) = (end, start);
 
@@ -59,12 +60,12 @@ namespace Dora.Utilities
             else if(this._isHorizontal) // Optimization
             {
                 // Parallel lines case
-                if (Mathf.Abs(a_2) < 0.01f)
+                if (Mathf.Abs(a_2) < 0.0001f)
                 {
-                    throw new ArgumentException("Due to floating point imprecision intersection can only be " +
-                                                "measured for lines that are not near-constant " +
-                                                "(the slope, a, must satisfy: a > 0.01f || a < -0.01f)" +
-                                                "+ | Given slope: " + a_2);
+                    if (Mathf.Abs(b_2 - _b) < 0.0001f)
+                        return MidPoint;
+                    else
+                        return null;
                 }
                 
                 // y = ax + b, solved for x gives x = (y - b) / a (using the y of this horizontal line)
@@ -78,10 +79,14 @@ namespace Dora.Utilities
             else
             {
                 // Parallel lines case
-                if (Mathf.Abs(a_2 - _a) <= 0.001f)
-                    throw new ArgumentException("The given line is approximate parallel to the compared line. " +
-                                                "Intersection calculation is not valid for this case " +
-                                                "(may have multiple solutions or none)");
+                if (Mathf.Abs(a_2 - _a) <= 0.0001f)
+                {
+                    // If the two parallel lines intersect then return the midpoint of this line as intersection
+                    if (Mathf.Abs(b_2 - _b) < 0.0001f)
+                        return MidPoint;
+                    else
+                        return null;
+                }
                 
                 // Debug.Log($"({b_2} - {_b}) / ({_a} - {a_2}) ");
                 var intersectX = (b_2 - _b) / (_a - a_2);

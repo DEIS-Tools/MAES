@@ -14,6 +14,8 @@ namespace Dora.MapGeneration
 
         public GameObject robotPrefab;
 
+        public CommunicationManager CommunicationManager;
+        
         // Temporary method for testing! Return list of robots?
         public List<MonaRobot> SpawnRobots(SimulationMap<bool> collisionMap, int seed, int numberOfRobots)
         {
@@ -205,6 +207,7 @@ namespace Dora.MapGeneration
                 
             robot.id = robotID;
             robot.ExplorationAlgorithm = algorithm;
+            robot.movementController.CommunicationManager = CommunicationManager;
             algorithm.SetController(robot.movementController);
 
             return robot;

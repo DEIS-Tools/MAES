@@ -118,9 +118,12 @@ public class MapGenerator : MonoBehaviour {
 		var offices = GetSortedOfficeRooms(closedHallwayMap);
 
 		var connectedMap = ConnectOfficesWithDoors(offices, closedHallwayMap, random, config);
+		
+		Debug.Log($"ConnectedMapSize: {connectedMap.GetLength(0)},{connectedMap.GetLength(1)}");
 
 		var borderedMap = CreateBorderedMap(connectedMap, config.bitMapWidth, config.bitMapHeight, config.borderSize);
 		
+		Debug.Log($"borderedMapSize: {borderedMap.GetLength(0)},{borderedMap.GetLength(1)}");
 		// For debugging
 		// mapToDraw = borderedMap;
 		

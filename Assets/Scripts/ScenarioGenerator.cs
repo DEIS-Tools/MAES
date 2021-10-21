@@ -36,12 +36,17 @@ namespace Dora
                     2,
                     2f);
                 
+                var robotConstraints = new RobotConstraints(
+                    broadcastRange: 15.0f,
+                    broadcastBlockedByWalls: true
+                );
+                
                 scenarios.Enqueue(new SimulationScenario(
                     seed: randomSeed,
                     hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 300,
                     mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true),
                     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(map, randomSeed, 40),
-                    robotConstraints: new RobotConstraints()
+                    robotConstraints
                 ));
             }
 

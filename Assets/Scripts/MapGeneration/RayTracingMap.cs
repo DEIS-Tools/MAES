@@ -244,9 +244,9 @@ namespace Dora.MapGeneration
                     if (edge == trace.enteringEdge) continue;
 
                     // Find the intersection for the current edge
-                    var edgeIntersection = Lines[edge].GetIntersection(a, b);
+                    var currentIntersection = Lines[edge].GetIntersection(a, b);
                     
-                    if (edgeIntersection == null) // No intersection with this edge
+                    if (currentIntersection == null) // No intersection with this edge
                     {
                         // If an intersection was found with a previously checked edge, then just use that
                         if (intersection != null) break;
@@ -262,7 +262,7 @@ namespace Dora.MapGeneration
                         // If there is no previous intersection, just use this one
                         if (intersection == null)
                         {
-                            intersection = edgeIntersection;
+                            intersection = currentIntersection;
                             intersectionEdge = edge;
                         }
                         // Otherwise, if there is another conflicting intersection,
@@ -270,18 +270,47 @@ namespace Dora.MapGeneration
                         // This is a conflict resolution measure to avoid infinite loops.
                         else if (angle >= 0 && angle <= 180)
                         {
-                            if (edgeIntersection!.Value.y > intersection!.Value.y)
+                            if (currentIntersection!.Value.y > intersection!.Value.y)
                             {
-                                intersection = edgeIntersection;
+                                intersection = currentIntersection;
                                 intersectionEdge = edge;
+                            } else if (Mathf.Abs(currentIntersection!.Value.y - intersection!.Value.y) < 0.0001f)
+                            {
+                                // If the y-axis is the same choose by x-axis instead
+                                if (angle < 90 && currentIntersection!.Value.x > intersection!.Value.x)
+                                {
+                                    // For 0-90 degrees prefer intersection with highest x value
+                                    intersection = currentIntersection;
+                                    intersectionEdge = edge;
+                                } else if (angle > 90 && currentIntersection!.Value.x < intersection!.Value.x)
+                                {
+                                    // For 90-180 degrees prefer intersection with lowest x value
+                                    intersection = currentIntersection;
+                                    intersectionEdge = edge;
+                                }
                             }
                         }
                         else
                         {
-                            if (edgeIntersection!.Value.y < intersection!.Value.y)
+                            // For 180-360 degrees prefer intersection with lowest y-value
+                            if (currentIntersection!.Value.y < intersection!.Value.y)
                             {
-                                intersection = edgeIntersection;
+                                intersection = currentIntersection;
                                 intersectionEdge = edge;
+                            }else if (Mathf.Abs(currentIntersection!.Value.y - intersection!.Value.y) < 0.0001f)
+                            {
+                                // If the y-axis is the same choose by x-axis instead
+                                if (angle < 270 && currentIntersection!.Value.x < intersection!.Value.x)
+                                {
+                                    // For 180-270 degrees prefer intersection with highest x value
+                                    intersection = currentIntersection;
+                                    intersectionEdge = edge;
+                                } else if (angle > 270 && currentIntersection!.Value.x > intersection!.Value.x)
+                                {
+                                    // For 270-360 degrees prefer intersection with lowest x value
+                                    intersection = currentIntersection;
+                                    intersectionEdge = edge;
+                                }
                             }
                         }
                     }
