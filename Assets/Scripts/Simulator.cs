@@ -107,20 +107,24 @@ namespace Dora
             {
                 if (_scenarios.Count == 0)
                 {
-                    AttemptSetPlayState(SimulationPlayState.Paused);
+                    // Indicate that no further updates are needed
                     return false;
                 }
                 
+                // Otherwise continue to next simulation in the queue
                 CreateSimulation(_scenarios.Dequeue());
             }
             
             _currentSimulation.PhysicsUpdate();
             _physicsTicksSinceUpdate++;
-            
+            var shouldContinueSim = true;
             if (_physicsTicksSinceUpdate >= GlobalSettings.PhysicsTicksPerLogicUpdate)
             {
                 _currentSimulation.LogicUpdate();
                 _physicsTicksSinceUpdate = 0;
+                // If the simulator is in step mode, then automatically pause after logic step has been performed
+                if (_playState == SimulationPlayState.Step) 
+                    shouldContinueSim = false;
             }
             
             var simulatedTimeSpan = TimeSpan.FromSeconds(_currentSimulation.SimulateTimeSeconds);
@@ -129,7 +133,7 @@ namespace Dora
                         "\nLogic ticks: " + _currentSimulation.SimulatedLogicTicks + 
                         "\nSimulated: " + output;
 
-            return true;
+            return shouldContinueSim;
         }
 
         public void CreateSimulation(SimulationScenario scenario)

@@ -14,6 +14,7 @@ namespace Dora
         public Button playButton;
         public Button fastForwardButton;
         public Button fastAsPossibleButton;
+        public Button stepperButton;
 
         private void Start()
         {
@@ -22,10 +23,14 @@ namespace Dora
             playButton.onClick.AddListener(Play);
             fastForwardButton.onClick.AddListener(FastForward);
             fastAsPossibleButton.onClick.AddListener(FastAsPossible);
+            stepperButton.onClick.AddListener(Step);
         }
 
         public void UpdateButtonsUI(SimulationPlayState currentState)
         {
+            // Do not change ui for the duration of the step
+            if (currentState == SimulationPlayState.Step) return; 
+            
             pauseButton.image.color = (currentState == SimulationPlayState.Paused)? Color.green : Color.white;
             playButton.image.color = (currentState == SimulationPlayState.Play)? Color.green : Color.white;
             fastForwardButton.image.color = (currentState == SimulationPlayState.FastForward)? Color.green : Color.white;
@@ -50,6 +55,12 @@ namespace Dora
         public void FastAsPossible()
         {
             AttemptSwitchState(SimulationPlayState.FastAsPossible);
+        }
+
+        // Perform a single logic step then stop again
+        public void Step()
+        {
+            AttemptSwitchState(SimulationPlayState.Step);
         }
 
         private void AttemptSwitchState(SimulationPlayState newPlayState)

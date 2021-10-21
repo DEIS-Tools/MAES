@@ -99,9 +99,7 @@ namespace Dora
             _readableMessages.AddRange(_queuedMessages);
             _queuedMessages.Clear();
         }
-        
-        
-        
+
         public void PhysicsUpdate()
         {
             // No physics update needed
