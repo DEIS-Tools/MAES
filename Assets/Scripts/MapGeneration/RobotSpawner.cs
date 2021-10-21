@@ -55,7 +55,6 @@ namespace Dora.MapGeneration
             
             
             int robotId = 0;
-            numberOfRobots = possibleSpawnTiles.Count;
             foreach (var tile in possibleSpawnTiles) {
                 if (robotId == numberOfRobots)
                     break;
@@ -147,6 +146,50 @@ namespace Dora.MapGeneration
                 );
                 robots.Add(robot);
             }
+
+            return robots;
+        }
+
+        public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots) {
+            var robots = new List<MonaRobot>();
+
+            var hallWays = collisionMap.rooms.FindAll(r => r.isHallWay).ToList();
+            List<Coord> possibleSpawnTiles = new List<Coord>();
+            foreach (var hallWay in hallWays) {
+                possibleSpawnTiles.AddRange(hallWay.tiles.Except(hallWay.edgeTiles));
+            }
+            
+            possibleSpawnTiles.Sort((c1, c2) => {
+                var c1DistanceFromTop = collisionMap.HeightInTiles - c1.y;
+                var c1DistanceFromBottom = c1.y;
+                var c1DistanceFromLeft = c1.x;
+                var c1DistanceFromRight = collisionMap.WidthInTiles - c1.x;
+                var c1Best = Math.Min(Math.Min(c1DistanceFromLeft, c1DistanceFromRight),Math.Min(c1DistanceFromTop, c1DistanceFromBottom));
+                
+                var c2DistanceFromTop = collisionMap.HeightInTiles - c2.y;
+                var c2DistanceFromBottom = c2.y;
+                var c2DistanceFromLeft = c2.x;
+                var c2DistanceFromRight = collisionMap.WidthInTiles - c2.x;
+                var c2Best = Math.Min(Math.Min(c2DistanceFromLeft, c2DistanceFromRight),Math.Min(c2DistanceFromTop, c2DistanceFromBottom));
+                
+                return c1Best - c2Best;
+            });
+            
+            
+            int robotId = 0;
+            foreach (var tile in possibleSpawnTiles) {
+                if (robotId == numberOfRobots)
+                    break;
+                
+                robots.Add(CreateRobot(
+                    x: (tile.x * collisionMap.Scale) - collisionMap.WidthInTiles,
+                    y: (tile.y * collisionMap.Scale) - collisionMap.HeightInTiles,
+                    scale: collisionMap.Scale,
+                    robotId: robotId++,
+                    algorithm: new RandomExplorationAlgorithm(seed + robotId)
+                ));
+            }
+            
 
             return robots;
         }

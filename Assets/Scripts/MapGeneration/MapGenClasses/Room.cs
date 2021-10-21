@@ -13,6 +13,7 @@ namespace Dora.MapGeneration {
 		public int roomSize;
 		public bool isAccessibleFromMainRoom;
 		public bool isMainRoom;
+		public bool isHallWay;
 
 		public Room() {
 		}
@@ -34,6 +35,8 @@ namespace Dora.MapGeneration {
 					}
 				}
 			}
+
+			this.isHallWay = map[tiles[0].x, tiles[0].y] == BitMapTypes.HALL_TYPE;
 		}
 
 		public bool IsWithinRangeOf(Room other, int range) {

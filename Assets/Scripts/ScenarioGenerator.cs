@@ -39,8 +39,8 @@ namespace Dora
                 scenarios.Enqueue(new SimulationScenario(
                     seed: randomSeed,
                     hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 300,
-                    mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 3.0f, true),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(map, randomSeed, 40, new Coord(40,20)),
+                    mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true),
+                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(map, randomSeed, 40),
                     robotConstraints: new RobotConstraints()
                 ));
             }

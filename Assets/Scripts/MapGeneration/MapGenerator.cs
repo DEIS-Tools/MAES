@@ -114,6 +114,7 @@ public class MapGenerator : MonoBehaviour {
 		var closedHallwayMap = CloseOffHallwayEnds(mapWithOfficeRooms);
 
 		// Offices and halls sorted according to biggest hall first. Biggest hall set to main room.
+		// If both rooms are halls, sort according to size
 		var offices = GetSortedOfficeRooms(closedHallwayMap);
 
 		var connectedMap = ConnectOfficesWithDoors(offices, closedHallwayMap, random, config);
