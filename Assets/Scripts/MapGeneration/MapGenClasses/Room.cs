@@ -88,13 +88,7 @@ namespace Dora.MapGeneration {
 
             var intersect = walls.Intersect(otherWalls).ToList();
 
-            foreach (var p in intersect) {
-                if (p.x > 59 || p.y > 59) {
-                    Debug.Log("Too large point at x:" + p.x + ", y:" + p.y);
-                }
-            }
-
-            return walls.Intersect(otherWalls).ToList();
+            return intersect;
         }
 
         public void SetAccessibleFromMainRoom() {

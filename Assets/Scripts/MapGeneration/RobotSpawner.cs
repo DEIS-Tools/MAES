@@ -130,7 +130,7 @@ namespace Dora.MapGeneration
                         var newStartingPoint = possibleSpawnTiles.FirstOrDefault(c => !spawnTilesSelected.Contains(c));
                         queue.Enqueue(newStartingPoint);
                     }
-                    catch (InvalidOperationException e) {
+                    catch (InvalidOperationException) {
                         throw new ArgumentException(
                             $"Could not find enough adjacent spawn tiles. Queue empty, but still needs {numberOfRobots - spawnTilesSelected.Count}");
                     }
