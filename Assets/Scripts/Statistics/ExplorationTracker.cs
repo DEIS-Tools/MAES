@@ -20,18 +20,29 @@ namespace Dora.Statistics
         private readonly int _explorationMapWidth;
         private readonly int _explorationMapHeight;
 
-        private const int UpperLeftTriangle = 0;
-        private const int LowerRightTriangle = 1;
+        private readonly int _totalExplorableTriangles;
+        public int ExploredTriangles { get; private set; }
+
+        public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
 
         public ExplorationTracker(SimulationMap<bool> collisionMap, ExplorationVisualizer explorationVisualizer)
         {
+            var explorableTriangles = 0;
             _collisionMap = collisionMap;
             _explorationVisualizer = explorationVisualizer;
-            _explorationMap = collisionMap.FMap(isCellSolid => new ExplorationCell(!isCellSolid));
+            _explorationMap = collisionMap.FMap(isCellSolid =>
+            {
+                if (!isCellSolid)
+                    explorableTriangles++;
+                
+                return new ExplorationCell(!isCellSolid);
+            });
+            _totalExplorableTriangles = explorableTriangles;
+            
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.Scale, collisionMap.ScaledOffset);
             _rayTracingMap = new RayTracingMap<ExplorationCell>(_explorationMap);
         }
-        
+
         public void LogicUpdate(List<MonaRobot> robots)
         {
             List<int> newlyExploredTriangles = new List<int>();
@@ -50,6 +61,7 @@ namespace Dora.Statistics
                         {
                             cell.IsExplored = true;
                             newlyExploredTriangles.Add(index);
+                            ExploredTriangles++;
                         }
                         return cell.isExplorable;
                     });

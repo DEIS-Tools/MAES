@@ -22,6 +22,8 @@ namespace Dora
         public Text SimulationStatusText;
         private int _physicsTicksSinceUpdate = 0;
 
+        public StatisticsUIController statisticsUIController;
+
         private SimulationScenario _currentScenario;
         private Simulation _currentSimulation;
         private GameObject _simulationGameObject;
@@ -122,6 +124,7 @@ namespace Dora
             {
                 _currentSimulation.LogicUpdate();
                 _physicsTicksSinceUpdate = 0;
+                UpdateStatisticsUI();
                 // If the simulator is in step mode, then automatically pause after logic step has been performed
                 if (_playState == SimulationPlayState.Step) 
                     shouldContinueSim = false;
@@ -134,6 +137,11 @@ namespace Dora
                         "\nSimulated: " + output;
 
             return shouldContinueSim;
+        }
+
+        private void UpdateStatisticsUI()
+        {
+            statisticsUIController.Update(_currentSimulation);
         }
 
         public void CreateSimulation(SimulationScenario scenario)

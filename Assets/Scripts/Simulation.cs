@@ -23,7 +23,7 @@ namespace Dora
         private SimulationMap<bool> _collisionMap;
         private List<MonaRobot> _robots;
 
-        private ExplorationTracker _explorationTracker;
+        public ExplorationTracker ExplorationTracker { get; private set; }
         private CommunicationManager _communicationManager;
         
         // The debugging visualizer provides 
@@ -39,12 +39,12 @@ namespace Dora
             RobotSpawner.CommunicationManager = _communicationManager;
             
             _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
-            _explorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer);
+            ExplorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer);
         }
 
         public void LogicUpdate()
         {
-            _explorationTracker.LogicUpdate(_robots);
+            ExplorationTracker.LogicUpdate(_robots);
             _robots.ForEach(robot => robot.LogicUpdate());
             SimulatedLogicTicks++;
             _debugVisualizer.LogicUpdate();

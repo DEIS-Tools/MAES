@@ -7,9 +7,10 @@ namespace Dora
 {
     public class StatisticsUIController : MonoBehaviour
     {
-        
         public Image Mask;
         public Text ProgressPercentageText;
+
+        public Text ExplorationRateText;
 
         public void SetExplorationProgress(float progress)
         {
@@ -20,6 +21,9 @@ namespace Dora
         public void Update(Simulation currentSimulation)
         {
             SetExplorationProgress(currentSimulation.ExplorationTracker.ExploredProportion);
+            ExplorationRateText.text = "Exploration rate (cells/minute): " +
+                                       (currentSimulation.ExplorationTracker.ExploredTriangles /
+                                        currentSimulation.SimulateTimeSeconds).ToString("#.0");
         }
     }
 }
