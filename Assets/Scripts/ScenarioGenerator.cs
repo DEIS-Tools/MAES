@@ -22,20 +22,20 @@ namespace Dora
                     10,
                     1,
                     1,
-                    2);
+                    1f);
 
                 var officeConfig = new OfficeMapConfig(
-                    80,
-                    80,
+                    60,
+                    60,
                     randomSeed, 
                     58,
                     4,
                     5,
-                    3,
+                    2,
                     1,
                     75,
-                    2,
-                    2f);
+                    1,
+                    1f);
                 
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
@@ -45,8 +45,8 @@ namespace Dora
                 scenarios.Enqueue(new SimulationScenario(
                     seed: randomSeed,
                     hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 300,
-                    mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 3.0f, true),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(map, randomSeed, 40),
+                    mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 4.0f),
+                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(map, randomSeed, 40, 0.6f,new Coord(20,20)),
                     robotConstraints
                 ));
             }
