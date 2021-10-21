@@ -21,18 +21,18 @@ namespace Dora.Robot
         private void Awake()
         {
             var rigidBody = GetComponent<Rigidbody2D>();
-            movementController = new Robot2DController(rigidBody, transform, leftWheelTransform, rightWheelTransform);
+            movementController = new Robot2DController(rigidBody, transform, leftWheelTransform, rightWheelTransform, this);
         }
 
-        public void LogicUpdate(SimulationConfiguration config)
+        public void LogicUpdate()
         {
-            ExplorationAlgorithm.UpdateLogic(config);
-            movementController.UpdateLogic(config);
+            ExplorationAlgorithm.UpdateLogic();
+            movementController.UpdateLogic();
         }
 
-        public void PhysicsUpdate(SimulationConfiguration config)
+        public void PhysicsUpdate()
         {
-            movementController.UpdateMotorPhysics(config);
+            movementController.UpdateMotorPhysics();
         }
 
         private void OnCollisionEnter2D(Collision2D other)

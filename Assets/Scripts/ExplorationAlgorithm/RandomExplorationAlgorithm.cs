@@ -31,8 +31,14 @@ namespace Dora.ExplorationAlgorithm
             throw new System.NotImplementedException();
         }
 
-        public void UpdateLogic(SimulationConfiguration config)
+        public void UpdateLogic()
         {
+            // Testing
+            _robotController.ReceiveBroadcast();
+            
+            // Testing
+            _robotController.Broadcast("Test!");
+            
             var status = _robotController.GetStatus();
             if (status == RobotStatus.Idle)
             {
@@ -42,6 +48,7 @@ namespace Dora.ExplorationAlgorithm
                     var degrees = _random.Next(50, 180);
                     _robotController.Rotate(degrees * direction);
                     _hasJustRotated = true;
+                    
                 }
                 else
                 {

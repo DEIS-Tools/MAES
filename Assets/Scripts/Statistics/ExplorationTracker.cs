@@ -32,7 +32,7 @@ namespace Dora.Statistics
             _rayTracingMap = new RayTracingMap<ExplorationCell>(_explorationMap);
         }
         
-        public void LogicUpdate(SimulationConfiguration config, List<MonaRobot> robots)
+        public void LogicUpdate(List<MonaRobot> robots)
         {
             List<int> newlyExploredTriangles = new List<int>();
             float visibilityRange = 15.0f;

@@ -10,7 +10,6 @@ namespace Dora
 {
     public class Robot2DController : IRobotController
     {
-
         private Rigidbody2D _rigidbody;
         private Transform _transform;
         private Transform _leftWheel;
@@ -23,8 +22,11 @@ namespace Dora
         private Vector3? _previousLeftWheelPosition = null;
         private Vector3? _previousRightWheelPosition = null;
 
+        private MonaRobot _robot;
         private RobotStatus _currentStatus = RobotStatus.Idle;
         [CanBeNull] private ITask _currentTask;
+        
+        public CommunicationManager CommunicationManager { get; set; }
         
         // Whether the rigidbody is currently colliding with something
         private bool _isCurrentlyColliding = false;
@@ -40,16 +42,21 @@ namespace Dora
         // updates to wait before re-declaring the collision.
         private readonly int _movementUpdatesBeforeRedeclaringCollision = 2;
         private int _physicsUpdatesSinceStartingMovement = 0;
+        
+        
 
-        public Robot2DController(Rigidbody2D rigidbody, Transform transform, Transform leftWheel, Transform rightWheel)
+        public Robot2DController(Rigidbody2D rigidbody, Transform transform, Transform leftWheel, Transform rightWheel, MonaRobot robot)
         {
             _rigidbody = rigidbody;
             _transform = transform;
             _leftWheel = leftWheel;
             _rightWheel = rightWheel;
+            _robot = robot;
         }
+
         
-        public void UpdateLogic(SimulationConfiguration config)
+
+        public void UpdateLogic()
         {
             // Clear the collision flag
             _newCollisionSinceLastUpdate = false;
@@ -82,7 +89,7 @@ namespace Dora
             throw new System.NotImplementedException();
         }
 
-        public void UpdateMotorPhysics(SimulationConfiguration config)
+        public void UpdateMotorPhysics()
         {
             // Calculate movement delta between current and last physics tick
             var leftWheelVelocityVector = _leftWheel.transform.position - _previousLeftWheelPosition ?? Vector3.zero;
@@ -228,6 +235,16 @@ namespace Dora
         public void StopCurrentTask()
         {
             _currentTask = null;
+        }
+
+        public void Broadcast(object data)
+        {
+            CommunicationManager.BroadcastMessage(_robot, data);
+        }
+
+        public List<object> ReceiveBroadcast()
+        {
+            return CommunicationManager.ReadMessages(_robot);
         }
     }
 }
