@@ -38,7 +38,7 @@ namespace Dora.Robot
         
         // TODO:
         // Instructs the robot to move forward until it has travelled **approximately** the given distance.
-        //void MoveForward(float distanceInMeters);
+        void MoveForward(float distanceInMeters);
         
         // Instructs the robot to move backward until it has travelled **approximately** the given distance.
         // void MoveBackward(float distanceInMeters);

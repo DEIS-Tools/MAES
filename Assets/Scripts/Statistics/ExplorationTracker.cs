@@ -46,14 +46,14 @@ namespace Dora.Statistics
         public void LogicUpdate(List<MonaRobot> robots)
         {
             List<int> newlyExploredTriangles = new List<int>();
-            float visibilityRange = 15.0f;
+            float visibilityRange = GlobalSettings.LidarRange;
 
             foreach (var robot in robots)
             {
-                for (int i = 0; i < 90; i++)
+                for (int i = 0; i < 60; i++)
                 {
-                    var angle = i * 4;
-                    if (i * 2 % 45 == 0) continue;
+                    var angle = i * 6;
+                    if (angle % 45 == 0) angle += 1;
                     
                     _rayTracingMap.Raytrace(robot.transform.position, angle, visibilityRange, (index, cell) =>
                     {

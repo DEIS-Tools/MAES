@@ -15,8 +15,8 @@ namespace Dora
         private Transform _leftWheel;
         private Transform _rightWheel;
 
-        private const int RotateForce = 20;
-        private const int MoveForce = 30;
+        private const int RotateForce = 8;
+        private const int MoveForce = 15;
 
         // Used for calculating wheel rotation for animation
         private Vector3? _previousLeftWheelPosition = null;
@@ -171,7 +171,7 @@ namespace Dora
         private void AnimateWheelRotation(Transform wheel, float direction, float magnitude)
         {
             // This factor determines how forward movement of the wheel translates into rotation
-            const float rotationFactor = 80f;
+            const float rotationFactor = 180f;
             wheel.Rotate(new Vector3(rotationFactor * direction * magnitude, 0f, 0f));
         }
         
@@ -245,6 +245,11 @@ namespace Dora
         public List<object> ReceiveBroadcast()
         {
             return CommunicationManager.ReadMessages(_robot);
+        }
+
+        public void MoveForward(float distanceInMeters)
+        {
+            
         }
     }
 }
