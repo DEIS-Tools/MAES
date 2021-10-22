@@ -639,6 +639,10 @@ PrefabInstance:
       propertyPath: explorationVisualizer
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
+      propertyPath: statisticsUIController
+      value: 
+      objectReference: {fileID: 1521632100}
     - target: {fileID: 4230307919047253350, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: m_Name
       value: Simulator
@@ -775,6 +779,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 673f6a3e43a254e0aa73ab5a867bcdf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1521632100 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 189432250955968459, guid: f7c4507a951c3a949afaf7218d16696e, type: 3}
+  m_PrefabInstance: {fileID: 7778036604355858319}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb5c3308544d2b346b446526a91cd87c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1709085577
@@ -1034,7 +1049,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 189432250955968458, guid: f7c4507a951c3a949afaf7218d16696e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -2.4999695
+      value: -2.5
       objectReference: {fileID: 0}
     - target: {fileID: 189432250955968458, guid: f7c4507a951c3a949afaf7218d16696e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
