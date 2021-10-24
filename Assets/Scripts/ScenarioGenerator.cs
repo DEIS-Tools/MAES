@@ -13,8 +13,8 @@ namespace Dora
             {
                 int randomSeed = i + 4;
                 var mapConfig = new CaveMapConfig(
-                    140,
-                    140,
+                    60,
+                    60,
                     randomSeed,
                     4,
                     2,
@@ -46,7 +46,7 @@ namespace Dora
                     seed: randomSeed,
                     hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 300,
                     mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 4.0f),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(map, randomSeed, 40, 0.6f,new Coord(20,20)),
+                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(map, randomSeed, 10, 0.6f,new Coord(20,20)),
                     robotConstraints
                 ));
             }
