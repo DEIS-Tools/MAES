@@ -36,21 +36,19 @@ namespace Dora.Robot
         // Receives broadcast data sent by nearby robots the previous logic tick
         List<object> ReceiveBroadcast();
         
-        // TODO:
         // Instructs the robot to move forward until it has travelled **approximately** the given distance.
-        void MoveForward(float distanceInMeters);
-        
-        // Instructs the robot to move backward until it has travelled **approximately** the given distance.
-        // void MoveBackward(float distanceInMeters);
-        
-        
+        void Move(float distanceInMeters, bool reverse = false);
 
+
+        // TODO:
         // Returns the current SLAM map 
         // SlamMap GetSlamMap()
         
         // Synchronizes the current the current SLAM map with nearby robots.
         // Synchronization will be completed in the next logic update
         // void SynchronizeSlamMap()
+        
+        // + Sense nearby robots and walls
     }
     
 }

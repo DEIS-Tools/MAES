@@ -1,5 +1,6 @@
-﻿using System;
-using Dora.Robot;
+﻿using Dora.Robot;
+using UnityEngine;
+using Random = System.Random;
 
 namespace Dora.ExplorationAlgorithm
 {
@@ -9,6 +10,10 @@ namespace Dora.ExplorationAlgorithm
         private Robot2DController _robotController;
         private bool _hasJustRotated = false;
         private Random _random;
+        
+        
+        // TODO: Testing!
+        private bool _hasMoved = false;
 
         
         public RandomExplorationAlgorithm(int randomSeed)
@@ -31,6 +36,8 @@ namespace Dora.ExplorationAlgorithm
             throw new System.NotImplementedException();
         }
 
+        private Vector2 startingPosition;
+        
         public void UpdateLogic()
         {
             // Testing
@@ -42,13 +49,16 @@ namespace Dora.ExplorationAlgorithm
             var status = _robotController.GetStatus();
             if (status == RobotStatus.Idle)
             {
+                if (_hasMoved) return;
+                _robotController.Move(3.0f);
+                _hasMoved = true;
+                return;
                 if (!_hasJustRotated)
                 {
                     var direction = _random.Next(0, 1) == 0 ? -1 : 1;
                     var degrees = _random.Next(50, 180);
                     _robotController.Rotate(degrees * direction);
                     _hasJustRotated = true;
-                    
                 }
                 else
                 {

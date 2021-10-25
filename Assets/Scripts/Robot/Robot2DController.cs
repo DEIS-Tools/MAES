@@ -54,8 +54,6 @@ namespace Dora
             _robot = robot;
         }
 
-        
-
         public void UpdateLogic()
         {
             // Clear the collision flag
@@ -159,10 +157,12 @@ namespace Dora
 
             var forward = _transform.up;
 
+            // Force changes depending on whether the robot is rotating or accelerating
             var force = MoveForce;
             if (directive.IsRotational()) 
                 force = RotateForce;
             
+            // Apply force at teach wheel
             _rigidbody.AddForceAtPosition(forward * force * directive.LeftWheelSpeed, leftPosition);
             _rigidbody.AddForceAtPosition(forward * force * directive.RightWheelSpeed, rightPosition);
         }
@@ -247,9 +247,10 @@ namespace Dora
             return CommunicationManager.ReadMessages(_robot);
         }
 
-        public void MoveForward(float distanceInMeters)
+        public void Move(float distanceInMeters, bool reverse = false)
         {
-            
+            AssertRobotIsInIdleState($"Move forwards {distanceInMeters} meters");
+            _currentTask = new FiniteMovementTask(_transform, distanceInMeters, reverse);
         }
     }
 }

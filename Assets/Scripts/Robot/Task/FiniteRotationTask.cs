@@ -6,9 +6,8 @@ namespace Dora.Robot.Task
     // Represents a task to rotate the robot by a given amount of degrees
     public class FiniteRotationTask: ITask
     {
-
         private readonly float _degreesToRotate;
-        private readonly Transform _transform;
+        private readonly Transform _robotTransform;
         
         private readonly float _startingAngle;
         private bool _isCompleted = false;
@@ -17,7 +16,7 @@ namespace Dora.Robot.Task
         // as the rotation might never reach max velocity if the rotation distance is short enough
         private readonly float _forceApplicationStopAngle;
         
-        public FiniteRotationTask(Transform transform, float degreesToRotate)
+        public FiniteRotationTask(Transform robotTransform, float degreesToRotate)
         {
             _degreesToRotate = degreesToRotate;
             
@@ -42,8 +41,8 @@ namespace Dora.Robot.Task
             else if (absRotation <= 9.2f) 
                 _forceApplicationStopAngle = 4.5f; 
 
-            _transform = transform;
-            _startingAngle = transform.rotation.eulerAngles.z;
+            _robotTransform = robotTransform;
+            _startingAngle = robotTransform.rotation.eulerAngles.z;
         }
 
         public MovementDirective GetNextDirective()
@@ -74,7 +73,7 @@ namespace Dora.Robot.Task
         // Returns the amount of degrees that has been rotated since starting this task
         private float GetAbsoluteDegreesRotated()
         {
-            return Math.Abs(Mathf.DeltaAngle(_transform.rotation.eulerAngles.z, _startingAngle));
+            return Math.Abs(Mathf.DeltaAngle(_robotTransform.rotation.eulerAngles.z, _startingAngle));
         }
 
     }
