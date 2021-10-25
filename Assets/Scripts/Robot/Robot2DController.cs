@@ -42,8 +42,6 @@ namespace Dora
         // updates to wait before re-declaring the collision.
         private readonly int _movementUpdatesBeforeRedeclaringCollision = 2;
         private int _physicsUpdatesSinceStartingMovement = 0;
-        
-        
 
         public Robot2DController(Rigidbody2D rigidbody, Transform transform, Transform leftWheel, Transform rightWheel, MonaRobot robot)
         {
@@ -52,6 +50,11 @@ namespace Dora
             _leftWheel = leftWheel;
             _rightWheel = rightWheel;
             _robot = robot;
+        }
+
+        public int GetRobotID()
+        {
+            return _robot.id;
         }
 
         public void UpdateLogic()
@@ -174,7 +177,8 @@ namespace Dora
             const float rotationFactor = 180f;
             wheel.Rotate(new Vector3(rotationFactor * direction * magnitude, 0f, 0f));
         }
-        
+
+
         public RobotStatus GetStatus()
         {
             if (_currentStatus == RobotStatus.Idle && _currentTask != null) return RobotStatus.Moving;

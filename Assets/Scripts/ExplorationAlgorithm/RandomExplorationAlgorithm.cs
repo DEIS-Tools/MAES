@@ -9,9 +9,8 @@ namespace Dora.ExplorationAlgorithm
         
         private Robot2DController _robotController;
         private bool _hasJustRotated = false;
-        private Random _random;
-
-
+        private readonly Random _random;
+        
         public RandomExplorationAlgorithm(int randomSeed)
         {
             _random = new Random(randomSeed);
