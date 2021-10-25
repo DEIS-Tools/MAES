@@ -53,9 +53,7 @@ namespace Dora
             _rightWheel = rightWheel;
             _robot = robot;
         }
-
         
-
         public void UpdateLogic()
         {
             // Clear the collision flag

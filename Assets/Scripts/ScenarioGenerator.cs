@@ -11,10 +11,11 @@ namespace Dora
             
             for (int i = 0; i < 5; i++)
             {
-                int randomSeed = i + 4;
+                int randomSeed = i + 4 + 1;
+                int minute = 60;
                 var mapConfig = new CaveMapConfig(
-                    60,
-                    60,
+                    80,
+                    80,
                     randomSeed,
                     4,
                     2,
@@ -25,8 +26,8 @@ namespace Dora
                     1f);
 
                 var officeConfig = new OfficeMapConfig(
-                    60,
-                    60,
+                    80,
+                    80,
                     randomSeed, 
                     58,
                     4,
@@ -41,14 +42,36 @@ namespace Dora
                     broadcastRange: 15.0f,
                     broadcastBlockedByWalls: true
                 );
+
+                if (i % 2 == 0) {
+                    scenarios.Enqueue(new SimulationScenario(
+                        seed: randomSeed,
+                        hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                            map, 
+                            randomSeed, 
+                            30, 
+                            0.6f,
+                            new Coord(20,20)),
+                        robotConstraints: robotConstraints
+                    ));
+                }
+                else {
+                    scenarios.Enqueue(new SimulationScenario(
+                        seed: randomSeed,
+                        hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 2.0f),
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                            map, 
+                            randomSeed, 
+                            30, 
+                            0.6f,
+                            new Coord(20,20)),
+                        robotConstraints: robotConstraints
+                    )); 
+                }
                 
-                scenarios.Enqueue(new SimulationScenario(
-                    seed: randomSeed,
-                    hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 300,
-                    mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 4.0f),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(map, randomSeed, 10, 0.6f,new Coord(20,20)),
-                    robotConstraints
-                ));
             }
 
             return scenarios;

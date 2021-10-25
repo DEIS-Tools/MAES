@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Dora.ExplorationAlgorithm;
+using UnityEditor.UI;
 using UnityEngine;
 
 namespace Dora.Robot
@@ -18,14 +20,15 @@ namespace Dora.Robot
         // The algorithm that controls the logic of the robot
         public IExplorationAlgorithm ExplorationAlgorithm { get; set; }
 
+        public List<GameObject> _collidingGameObjects = new List<GameObject>();
+
         private void Awake()
         {
             var rigidBody = GetComponent<Rigidbody2D>();
             movementController = new Robot2DController(rigidBody, transform, leftWheelTransform, rightWheelTransform, this);
         }
 
-        public void LogicUpdate()
-        {
+        public void LogicUpdate() {
             ExplorationAlgorithm.UpdateLogic();
             movementController.UpdateLogic();
         }
@@ -37,13 +40,18 @@ namespace Dora.Robot
 
         private void OnCollisionEnter2D(Collision2D other)
         {
+            if (!_collidingGameObjects.Contains(other.gameObject))
+                _collidingGameObjects.Add(other.gameObject);
+            
             movementController.NotifyCollided();
         }
 
         private void OnCollisionExit2D(Collision2D other)
         {
-            // TODO? Check that all collisions have exited before calling collision exit on controller
-            movementController.NotifyCollisionExit();
+            _collidingGameObjects.Remove(other.gameObject);
+            
+            if (_collidingGameObjects.Count == 0)
+                movementController.NotifyCollisionExit();
         }
 
         public object SaveState()
