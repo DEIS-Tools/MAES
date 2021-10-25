@@ -10,12 +10,8 @@ namespace Dora.ExplorationAlgorithm
         private Robot2DController _robotController;
         private bool _hasJustRotated = false;
         private Random _random;
-        
-        
-        // TODO: Testing!
-        private bool _hasMoved = false;
 
-        
+
         public RandomExplorationAlgorithm(int randomSeed)
         {
             _random = new Random(randomSeed);
@@ -49,10 +45,6 @@ namespace Dora.ExplorationAlgorithm
             var status = _robotController.GetStatus();
             if (status == RobotStatus.Idle)
             {
-                if (_hasMoved) return;
-                _robotController.Move(3.0f);
-                _hasMoved = true;
-                return;
                 if (!_hasJustRotated)
                 {
                     var direction = _random.Next(0, 1) == 0 ? -1 : 1;

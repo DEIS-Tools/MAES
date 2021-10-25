@@ -53,6 +53,7 @@ namespace Dora.Statistics
                 for (int i = 0; i < 60; i++)
                 {
                     var angle = i * 6;
+                    // Avoid ray casts that can be parallel to the lines of a triangle
                     if (angle % 45 == 0) angle += 1;
                     
                     _rayTracingMap.Raytrace(robot.transform.position, angle, visibilityRange, (index, cell) =>

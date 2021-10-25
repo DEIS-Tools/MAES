@@ -45,11 +45,25 @@ namespace Dora.Robot.Task
         // The applied force depends on how large a distance is remaining and how fast the robot is currently moving
         private float GetForceFactor(float remainingDistance, float currentVelocity)
         {
-            Debug.Log($"Velocity: {currentVelocity}, distance: {remainingDistance}");
-            if (remainingDistance <= 0.0f) return 0.0f;
-            //if (remainingDistance < 0.05f) return 0.0f;
-            //if (remainingDistance < 0.1f) return 0.5f;
-            return 1.0f;
+            int stopTimeTicks = GetStopTime(currentVelocity);
+            float stopDistance = GetDistanceTraveled(currentVelocity, stopTimeTicks);
+            if (stopDistance <= remainingDistance - 0.01f) return 1.0f;
+            else return 0f;
+        }
+
+        // Returns the time (in ticks from now) at which the velocity of the robot will be approximately 0 (<0.001) 
+        private int GetStopTime(float currentVelocity)
+        {
+            return (int) (11f * (Mathf.Log(currentVelocity) + 3 * Mathf.Log(10)) / 2f);
+        }
+
+        // Returns the distance traveled in the given ticks when starting at the given velocity
+        private float GetDistanceTraveled(float currentVelocity, int ticks)
+        {
+            // Get offset by solving for C in:
+            // 0 = (-11/2)*v0*e^(-t*2/11)+C
+            var offset = (float) ((11f * currentVelocity * Math.Pow(Math.E, (-2 / 11) * 0)) / 2f); 
+            return (float) ((11f * currentVelocity * Math.Pow(Math.E, (-2 / 11) * ticks)) / 2f) + offset; 
         }
 
         public bool IsCompleted()
