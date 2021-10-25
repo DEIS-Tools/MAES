@@ -85,6 +85,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   leftWheelTransform: {fileID: 3562388383311551113}
   rightWheelTransform: {fileID: 5898286729133033185}
+  id: -1
 --- !u!1001 &9210634985911898445
 PrefabInstance:
   m_ObjectHideFlags: 0
