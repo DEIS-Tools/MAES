@@ -7,20 +7,19 @@ namespace Dora.Robot.Task
     public class FiniteRotationTask: ITask
     {
         private readonly float _degreesToRotate;
-        private readonly Transform _robotTransform;
-        
         private readonly float _startingAngle;
-        private bool _isCompleted = false;
-
+        
+        private readonly Transform _robotTransform;
         private float _previousRotation = 0f;
         
-        // The robot stops applying force when the close enough to target rotation
-        // The point at which force application should stop depends on how far the robot should be rotated,
-        // as the rotation might never reach max velocity if the rotation distance is short enough
-        private readonly float _forceApplicationStopAngle;
-        
+        private bool _isCompleted = false;
+        public bool IsCompleted() => _isCompleted;
+
         public FiniteRotationTask(Transform robotTransform, float degreesToRotate)
         {
+            if (degreesToRotate < -180f || degreesToRotate > 180f)
+                throw new ArgumentException($"Given rotation must be between -180° and 180° " +
+                                            $"but target rotation was {degreesToRotate}");
             _degreesToRotate = degreesToRotate;
             _robotTransform = robotTransform;
             _startingAngle = robotTransform.rotation.eulerAngles.z;
@@ -43,7 +42,6 @@ namespace Dora.Robot.Task
             // Calculate how often we need 
             int stopTimeTicks = GetStopTime(currentRotationRate);
             float degreesRotatedBeforeStop = GetDegreesRotated(currentRotationRate, stopTimeTicks);
-            Debug.Log($"Current rotation: {absRotation} and rotation rate: {currentRotationRate}\nTicks before stopping: {stopTimeTicks}. Degrees rotated before stopping: {degreesRotatedBeforeStop}");
 
             // Calculate how far the robot is from reaching the target rotation if we stop applying force now
             var targetDelta = remainingRotation - degreesRotatedBeforeStop;
@@ -65,16 +63,13 @@ namespace Dora.Robot.Task
                 _isCompleted = true;
             }
 
+            // Determine rotation direction
+            if (_degreesToRotate < 0) forceMultiplier *= -1;
+
             return new MovementDirective(forceMultiplier, -forceMultiplier);
         }
 
-        public bool IsCompleted()
-        {
-            Debug.Log($"Degrees turned: {GetAbsoluteDegreesRotated()}");
-            return false;
-            return _isCompleted;
-        }
-        
+
         // Returns the time (in ticks from now) at which the velocity of the robot will be approximately 0 (<0.001) 
         private int GetStopTime(float currentRotationRate)
         {
@@ -98,11 +93,13 @@ namespace Dora.Robot.Task
             return rotation;
         }
 
+        // Returns the speed of rotaion (measured in degrees per tick) after waiting the given amount of ticks without
+        // applying force
         private float GetRotationRate(float startingRate, int ticks)
         {
             return (float) (startingRate * Math.Pow(Math.E, -ticks / 3.81f));
         }
-        
+
 
         // Returns the amount of degrees that has been rotated since starting this task
         private float GetAbsoluteDegreesRotated()

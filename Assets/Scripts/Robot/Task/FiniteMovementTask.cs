@@ -24,9 +24,11 @@ namespace Dora.Robot.Task
         
         public MovementDirective GetNextDirective()
         {
+            if (_isCompleted)
+                return MovementDirective.NoMovement;
             
             float remainingDistance =  _targetDistance - Vector2.Distance(_startingPosition, _robotTransform.position);
-            if (remainingDistance > 0 || true)
+            if (remainingDistance > 0.1f)
             {
                 var currentPosition = _robotTransform.position;
                 var currentVelocity = Vector2.Distance(_previousPosition, currentPosition);
@@ -40,7 +42,6 @@ namespace Dora.Robot.Task
                 _isCompleted = true;
                 return MovementDirective.NoMovement;
             }
-
         }
         
         // The applied force depends on how large a distance is remaining and how fast the robot is currently moving
@@ -69,8 +70,8 @@ namespace Dora.Robot.Task
 
         public bool IsCompleted()
         {
-            Debug.Log($"Distance traveled: {Vector2.Distance(_startingPosition, _robotTransform.position)}");
-            return false; //_isCompleted || Vector2.Distance(_startingPosition, _robotTransform.position) >= _targetDistance;
+            //Debug.Log($"Distance traveled: {Vector2.Distance(_startingPosition, _robotTransform.position)}");
+            return _isCompleted; 
         }
     }
 }

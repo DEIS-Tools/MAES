@@ -15,23 +15,12 @@ namespace Dora.ExplorationAlgorithm
         {
             _random = new Random(randomSeed);
         }
+        
         public RandomExplorationAlgorithm(Robot2DController robotControllerController, int randomSeed)
         {
             _robotController = robotControllerController;
             _random = new Random(randomSeed);
         }
-        
-        public object SaveState()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void RestoreState(object stateInfo)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        private bool testingVar = false;
 
         public void UpdateLogic()
         {
@@ -44,13 +33,6 @@ namespace Dora.ExplorationAlgorithm
             var status = _robotController.GetStatus();
             if (status == RobotStatus.Idle)
             {
-                if (!testingVar)
-                {
-                    _robotController.Rotate(1.2f);
-                }
-
-                testingVar = true;
-                return;
                 if (!_hasJustRotated)
                 {
                     var direction = _random.Next(0, 1) == 0 ? -1 : 1;
@@ -69,5 +51,16 @@ namespace Dora.ExplorationAlgorithm
         public void SetController(Robot2DController controller) {
             this._robotController = controller;
         }
+        
+        public object SaveState()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void RestoreState(object stateInfo)
+        {
+            throw new System.NotImplementedException();
+        }
+        
     }
 }
