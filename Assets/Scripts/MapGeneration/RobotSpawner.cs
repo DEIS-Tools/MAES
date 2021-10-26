@@ -188,9 +188,11 @@ namespace Dora.MapGeneration
             if (0.001f > relativeSize && relativeSize > 1.0000001f)
                 throw new ArgumentException(
                     "Robot relative size cannot exceed 1.0f or be below 0.001f. Otherwise some areas of the map may be impossible to explore");
-            robot.transform.localScale = new Vector3(0.495f * relativeSize * collisionMap.Scale,
+            robot.transform.localScale = new Vector3(
                 0.495f * relativeSize * collisionMap.Scale,
-                0.495f * relativeSize * collisionMap.Scale);
+                0.495f * relativeSize * collisionMap.Scale,
+                0.495f * relativeSize * collisionMap.Scale
+                );
 
             float RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
             robot.transform.position = new Vector3((x * collisionMap.Scale) + RTOffset + collisionMap.ScaledOffset.x, (y * collisionMap.Scale) + RTOffset + collisionMap.ScaledOffset.y);
