@@ -22,28 +22,6 @@ namespace Dora.Robot.Task
         public FiniteRotationTask(Transform robotTransform, float degreesToRotate)
         {
             _degreesToRotate = degreesToRotate;
-            
-            var absRotation = Math.Abs(degreesToRotate);
-            
-            // !Disclaimer!: This is not the prettiest solution, but it works for now.
-            // In the future this should be replaced by a force calculation that determines 
-            // how much force to apply based on remaining rotation and current angular velocity
-            
-            // By default stop applying force when within 5.0 degrees of the target.
-            // This results in stopping **roughly** at the target
-            _forceApplicationStopAngle = 5.0f;
-            // Special cases for lower rotation amounts, where maximum angular velocity is never reached
-            if (absRotation <= 2.0f) 
-                _forceApplicationStopAngle = Math.Max(0.2f, absRotation - 0.4f);
-            else if (absRotation <= 3.0f)
-                _forceApplicationStopAngle = 2.5f;
-            else if (absRotation <= 5.5f)
-                _forceApplicationStopAngle = 3.0f;
-            else if (absRotation <= 7.0f) 
-                _forceApplicationStopAngle = 4.0f;
-            else if (absRotation <= 9.2f) 
-                _forceApplicationStopAngle = 4.5f; 
-
             _robotTransform = robotTransform;
             _startingAngle = robotTransform.rotation.eulerAngles.z;
         }
@@ -52,41 +30,42 @@ namespace Dora.Robot.Task
         {
             if (_isCompleted) return MovementDirective.NoMovement;
             
+            // Find the current amount of rotation since starting the task
             var absRotation = GetAbsoluteDegreesRotated();
+            
+            // Find the speed of the rotation during the previous tick
             var currentRotationRate = absRotation - _previousRotation;
             _previousRotation = absRotation;
             
-            var remainingRotation = Math.Abs(_degreesToRotate) - absRotation; 
-            if (currentRotationRate > 0)
-            {
-                int stopTimeTicks = GetStopTime(currentRotationRate);
-                float degreesRotatedBeforeStop = GetDegreesRotated(currentRotationRate, stopTimeTicks);
-                Debug.Log($"Current rotation: {absRotation} and rotation rate: {currentRotationRate}\nTicks before stopping: {stopTimeTicks}. Degrees rotated before stopping: {degreesRotatedBeforeStop}");
-                if (degreesRotatedBeforeStop <= remainingRotation) return _degreesToRotate < 0 ? MovementDirective.Left : MovementDirective.Right;
-                else
-                {
-                    _isCompleted = true;
-                    return MovementDirective.NoMovement;
-                }
-            }
-            else
-            {
-                return _degreesToRotate < 0 ? MovementDirective.Left : MovementDirective.Right;
-            }
-            
+            // Calculate how much more we need to rotate before reaching the goal
+            var remainingRotation = Math.Abs(_degreesToRotate) - absRotation;
+        
+            // Calculate how often we need 
+            int stopTimeTicks = GetStopTime(currentRotationRate);
+            float degreesRotatedBeforeStop = GetDegreesRotated(currentRotationRate, stopTimeTicks);
+            Debug.Log($"Current rotation: {absRotation} and rotation rate: {currentRotationRate}\nTicks before stopping: {stopTimeTicks}. Degrees rotated before stopping: {degreesRotatedBeforeStop}");
 
-            var absDegreesRotated = GetAbsoluteDegreesRotated();
-            // If near target rotation, stop rotation by applying force in the opposite direction
-            if (Math.Abs(_degreesToRotate) - absDegreesRotated <= _forceApplicationStopAngle)
+            // Calculate how far the robot is from reaching the target rotation if we stop applying force now
+            var targetDelta = remainingRotation - degreesRotatedBeforeStop;
+
+            var forceMultiplier = 1f;
+            if (targetDelta < 2.28f)
             {
-                _isCompleted = true;
-               /* if (_degreesToRotate < 0) return MovementDirective.Right;
-                else return MovementDirective.Left;*/
-               return MovementDirective.NoMovement;
+                // We need to apply some amount of force to rotate the last amount
+                // It has been observed that if we apply maximum force (1.0) we will rotate an additional 2.28 degrees 
+                // To find the appropriate amount of force, use linear interpolation on the target delta. 
+                forceMultiplier = (1f / 2.28f) * targetDelta * 0.85f; // 0.85 is a magic number, sorry
             }
-            // Otherwise keep rotating
-            if (_degreesToRotate < 0) return MovementDirective.Left;
-            else return MovementDirective.Right;
+
+            if (targetDelta < 0.1f)
+            {
+                // The robot will be within acceptable range when rotation has stopped by itself.
+                // Stop applying force and consider task completed
+                forceMultiplier = 0;
+                _isCompleted = true;
+            }
+
+            return new MovementDirective(forceMultiplier, -forceMultiplier);
         }
 
         public bool IsCompleted()
@@ -101,7 +80,7 @@ namespace Dora.Robot.Task
         {
             return (int) (-3.81f * Mathf.Log(0.01f/currentRotationRate));
         }
-        
+
         // Returns the degrees rotated over the given ticks when starting at the given rotation rate
         private float GetDegreesRotated(float currentRotationRate, int ticks)
         {

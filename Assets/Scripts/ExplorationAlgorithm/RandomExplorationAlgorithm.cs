@@ -46,7 +46,7 @@ namespace Dora.ExplorationAlgorithm
             {
                 if (!testingVar)
                 {
-                    _robotController.Rotate(166.0f);
+                    _robotController.Rotate(1.2f);
                 }
 
                 testingVar = true;
