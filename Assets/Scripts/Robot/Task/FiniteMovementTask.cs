@@ -24,6 +24,7 @@ namespace Dora.Robot.Task
         
         public MovementDirective GetNextDirective()
         {
+            
             float remainingDistance =  _targetDistance - Vector2.Distance(_startingPosition, _robotTransform.position);
             if (remainingDistance > 0 || true)
             {

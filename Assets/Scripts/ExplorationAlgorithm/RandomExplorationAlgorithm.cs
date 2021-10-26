@@ -31,8 +31,8 @@ namespace Dora.ExplorationAlgorithm
             throw new System.NotImplementedException();
         }
 
-        private Vector2 startingPosition;
-        
+        private bool testingVar = false;
+
         public void UpdateLogic()
         {
             // Testing
@@ -44,6 +44,13 @@ namespace Dora.ExplorationAlgorithm
             var status = _robotController.GetStatus();
             if (status == RobotStatus.Idle)
             {
+                if (!testingVar)
+                {
+                    _robotController.Rotate(166.0f);
+                }
+
+                testingVar = true;
+                return;
                 if (!_hasJustRotated)
                 {
                     var direction = _random.Next(0, 1) == 0 ? -1 : 1;

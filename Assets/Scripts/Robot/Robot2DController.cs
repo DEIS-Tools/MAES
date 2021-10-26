@@ -15,7 +15,7 @@ namespace Dora
         private Transform _leftWheel;
         private Transform _rightWheel;
 
-        private const int RotateForce = 8;
+        private const int RotateForce = 5;
         private const int MoveForce = 15;
 
         // Used for calculating wheel rotation for animation
