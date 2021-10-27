@@ -211,18 +211,12 @@ namespace Dora
         }
         
         
-        public void StartMovingForwards()
+        public void StartMoving(bool reverse = false)
         {
             AssertRobotIsInIdleState("Moving Forwards");
-            _currentTask = new MovementTask();
+            _currentTask = new MovementTask(reverse);
         }
-
-        public void StartMovingBackwards()
-        {
-            AssertRobotIsInIdleState("Moving Backwards");
-            _currentTask = new MovementTask(reverse:true);
-        }
-
+        
         // Asserts that the current status is idle, and throws an exception if not
         private void AssertRobotIsInIdleState(String attemptedActionName)
         {

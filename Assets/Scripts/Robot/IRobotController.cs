@@ -15,12 +15,12 @@ namespace Dora.Robot
         // Returns true if the robot has encountered a new collision since the previous logic update
         bool HasCollided();
         
-        // Instructs the robot to start moving forwards. Continues until encountering a collision or until
-        // stopped through a StopCurrentTask()
-        void StartMovingForwards();
+        // Instructs the robot to move forward until it has travelled **approximately** the given distance.
+        void Move(float distanceInMeters, bool reverse = false);
+        
         // Instructs the robot to start moving backwards. Continues until encountering a collision or until
         // stopped through a StopCurrentTask()
-        void StartMovingBackwards();
+        void StartMoving(bool reverse = false);
         
         // Instruct the robot to keep rotating the robot until the robot has rotated **approximately**
         // the given amount of degrees 
@@ -38,9 +38,6 @@ namespace Dora.Robot
         
         // Receives broadcast data sent by nearby robots the previous logic tick
         List<object> ReceiveBroadcast();
-        
-        // Instructs the robot to move forward until it has travelled **approximately** the given distance.
-        void Move(float distanceInMeters, bool reverse = false);
 
 
         // TODO:
