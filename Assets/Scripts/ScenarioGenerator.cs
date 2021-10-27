@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Dora.ExplorationAlgorithm;
 using Dora.MapGeneration;
 
 namespace Dora
@@ -51,9 +52,10 @@ namespace Dora
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
-                            30, 
-                            0.6f,
-                            new Coord(20,20)),
+                            1, 
+                            1.0f,
+                            new Coord(20,20),
+                        (seed) => new RandomExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints
                     ));
                 }
@@ -65,9 +67,10 @@ namespace Dora
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
-                            30, 
-                            0.6f,
-                            new Coord(20,20)),
+                            1, 
+                            1.0f,
+                            new Coord(20,20),
+                            (seed) => new RandomExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints
                     )); 
                 }
