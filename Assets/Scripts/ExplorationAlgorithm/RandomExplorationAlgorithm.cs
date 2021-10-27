@@ -7,7 +7,7 @@ namespace Dora.ExplorationAlgorithm
     public class RandomExplorationAlgorithm: IExplorationAlgorithm
     {
         
-        private Robot2DController _robotController;
+        private IRobotController _robotController;
         private bool _hasJustRotated = false;
         private readonly Random _random;
         

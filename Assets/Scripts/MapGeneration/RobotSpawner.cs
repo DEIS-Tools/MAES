@@ -58,8 +58,6 @@ namespace Dora.MapGeneration
         public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, Coord? suggestedStartingPoint = null) {
             List<MonaRobot> robots = new List<MonaRobot>();
             
-            
-            
             // Get all spawnable tiles. We cannot spawn adjacent to a wall
             List<Coord> possibleSpawnTiles = new List<Coord>();
             foreach (var room in collisionMap.rooms) {

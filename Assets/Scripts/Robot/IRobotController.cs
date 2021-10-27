@@ -39,10 +39,9 @@ namespace Dora.Robot
         // Receives broadcast data sent by nearby robots the previous logic tick
         List<object> ReceiveBroadcast();
 
-
         // TODO:
         // Returns the current SLAM map 
-        // SlamMap GetSlamMap()
+        // SlamMap UpdateSlamMap()
         
         // Synchronizes the current the current SLAM map with nearby robots.
         // Synchronization will be completed in the next logic update
