@@ -11,30 +11,25 @@ namespace Dora.Robot
         private readonly float _tileSize;
         private readonly int _widthInTiles, _heightInTiles;
         
-        private SlamTile[,] _tiles;
+        private SlamTileStatus[,] _tiles;
         private SimulationMap<bool> _collisionMap;
+
+        private readonly float _scale;
+        private readonly Vector2 _scaledOffset;
+        
 
         public SlamMap(SimulationMap<bool> collisionMap)
         {
             _collisionMap = collisionMap;
             _widthInTiles = collisionMap.WidthInTiles * 2; 
             _heightInTiles = collisionMap.HeightInTiles * 2;
-            _tiles = new SlamTile[_widthInTiles, _heightInTiles];
+            _scale = collisionMap.Scale;
+            _scaledOffset = collisionMap.ScaledOffset;
+            _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
             
-            for (int x = 0; x < collisionMap.WidthInTiles; x++)
-            {
-                for (int y = 0; y < collisionMap.HeightInTiles; y++)
-                {
-                    int slamY = y * 2;
-                    int slamX = x * 2;
-
-                    var collisionTriangles = collisionMap.GetTileByLocalCoordinate(x, y).GetTriangles();
-                    _tiles[slamX, slamY] = new SlamTile(collisionTriangles[0] || collisionTriangles[1]);
-                    _tiles[slamX + 1, slamY] = new SlamTile(collisionTriangles[2] || collisionTriangles[3]);
-                    _tiles[slamX, slamY + 1] = new SlamTile(collisionTriangles[4] || collisionTriangles[5]);
-                    _tiles[slamX + 1, slamY + 1] = new SlamTile(collisionTriangles[6] || collisionTriangles[7]);
-                }
-            }
+            for (int x = 0; x < _widthInTiles; x++)
+                for (int y = 0; y < _heightInTiles; y++)
+                    _tiles[x, y] = SlamTileStatus.Unseen;
         }
 
         public Vector2Int TriangleIndexToCoordinate(int triangleIndex)
@@ -47,28 +42,28 @@ namespace Dora.Robot
             var yOffset = localTriangleIndex > 3 ? 1 : 0; 
             // X offset is 1 if the triangle is in the right half of tile
             var xOffset = (localTriangleIndex % 4 > 1) ? 1 : 0;
-            return new Vector2Int(collisionX + xOffset, collisionY + yOffset);
+            return new Vector2Int((collisionX * 2) + xOffset, (collisionY * 2) + yOffset);
         }
 
-        public void SetExploredByTriangle(int triangleIndex)
+        public void SetExploredByTriangle(int triangleIndex, bool isOpen)
         {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
-            _tiles[localCoordinate.x, localCoordinate.y].Visible = true;
+            if (_tiles[localCoordinate.x, localCoordinate.y] != SlamTileStatus.Solid) 
+                _tiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+        }
+
+        public SlamTileStatus GetTileByTriangleIndex (int triangleIndex)
+        {
+            var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
+            return _tiles[localCoordinate.x, localCoordinate.y];
         }
 
         // Represents the current approximate position of the given robot
         public Vector2 ApproximatePosition { get; private set; }
 
-        // Added the template
-        private class SlamTile
+        public enum SlamTileStatus
         {
-            public bool IsSolid;
-            public bool Visible = false;
-
-            public SlamTile(bool isSolid)
-            {
-                IsSolid = isSolid;
-            }
+            Unseen, Open, Solid
         }
 
         // Synchronizes the given slam maps to create a new one

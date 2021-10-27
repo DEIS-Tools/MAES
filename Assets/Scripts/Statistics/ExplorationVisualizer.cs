@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using Dora.MapGeneration;
+using Dora.Robot;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -152,6 +154,26 @@ namespace Dora.Statistics
                 _colors[vertexIndex] = _exploredColor;
                 _colors[vertexIndex + 1] = _exploredColor;
                 _colors[vertexIndex + 2] = _exploredColor;
+            }
+            
+            mesh.colors32 = _colors;
+        }
+
+        public void SetExplored(SlamMap map)
+        {
+            var triangleCount = _triangles.Count / 3;
+            for (int i = 0; i < triangleCount; i += 2)
+            {
+                var status = map.GetTileByTriangleIndex(i);
+                Color32 color;
+                if (status == SlamMap.SlamTileStatus.Unseen) color = _unexploredColor;     
+                else if (status == SlamMap.SlamTileStatus.Solid) color = _solidColor;     
+                else color = _exploredColor;     
+                
+                // Set the color of the next 2 triangles (as a single Slam tile covers 2 triangles)
+                var vertexIndex = i * 3;
+                for (int vertexOffset = 0; vertexOffset < 6; vertexOffset++)
+                    _colors[vertexIndex + vertexOffset] = color;
             }
             
             mesh.colors32 = _colors;

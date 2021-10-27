@@ -10,10 +10,11 @@ namespace Dora.Robot
         public Transform leftWheelTransform;
         public Transform rightWheelTransform;
 
+        
         public int id = -1;
 
         // The controller that provides an interface for moving the robot
-        public Robot2DController movementController { get; private set; }
+        public Robot2DController Controller { get; private set; }
 
         // The algorithm that controls the logic of the robot
         public IExplorationAlgorithm ExplorationAlgorithm { get; set; }
@@ -21,29 +22,29 @@ namespace Dora.Robot
         private void Awake()
         {
             var rigidBody = GetComponent<Rigidbody2D>();
-            movementController = new Robot2DController(rigidBody, transform, leftWheelTransform, rightWheelTransform, this);
+            Controller = new Robot2DController(rigidBody, transform, leftWheelTransform, rightWheelTransform, this);
         }
 
         public void LogicUpdate()
         {
             ExplorationAlgorithm.UpdateLogic();
-            movementController.UpdateLogic();
+            Controller.UpdateLogic();
         }
 
         public void PhysicsUpdate()
         {
-            movementController.UpdateMotorPhysics();
+            Controller.UpdateMotorPhysics();
         }
 
         private void OnCollisionEnter2D(Collision2D other)
         {
-            movementController.NotifyCollided();
+            Controller.NotifyCollided();
         }
 
         private void OnCollisionExit2D(Collision2D other)
         {
             // TODO? Check that all collisions have exited before calling collision exit on controller
-            movementController.NotifyCollisionExit();
+            Controller.NotifyCollisionExit();
         }
 
         public object SaveState()

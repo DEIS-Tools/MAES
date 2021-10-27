@@ -50,6 +50,7 @@ namespace Dora.Statistics
 
             foreach (var robot in robots)
             {
+                var slamMap = robot.Controller.SlamMap;
                 for (int i = 0; i < 60; i++)
                 {
                     var angle = i * 6;
@@ -64,11 +65,12 @@ namespace Dora.Statistics
                             newlyExploredTriangles.Add(index);
                             ExploredTriangles++;
                         }
+                        slamMap.SetExploredByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
                         return cell.isExplorable;
                     });
                 }
             }
-
+            
             _explorationVisualizer.SetExplored(newlyExploredTriangles);
         }
     }

@@ -5,7 +5,6 @@ namespace Dora.Robot
 {
     public interface IRobotController
     {
-
         int GetRobotID();
         
         // Returns information about the robots current state {Idle, Moving, Stopping}

@@ -46,7 +46,7 @@ namespace Dora
                     seed: randomSeed,
                     hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 300,
                     mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(map, randomSeed, 1, 0.6f,new Coord(20,20)),
+                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(map, randomSeed, 15, 0.6f,new Coord(20,20)),
                     robotConstraints
                 ));
             }

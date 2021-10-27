@@ -195,8 +195,9 @@ namespace Dora.MapGeneration
                 
             robot.id = robotID;
             robot.ExplorationAlgorithm = algorithm;
-            robot.movementController.CommunicationManager = CommunicationManager;
-            algorithm.SetController(robot.movementController);
+            robot.Controller.CommunicationManager = CommunicationManager;
+            robot.Controller.SlamMap = new SlamMap(collisionMap);
+            algorithm.SetController(robot.Controller);
 
             return robot;
         }

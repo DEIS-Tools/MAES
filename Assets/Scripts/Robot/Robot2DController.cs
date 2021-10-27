@@ -27,6 +27,7 @@ namespace Dora
         [CanBeNull] private ITask _currentTask;
         
         public CommunicationManager CommunicationManager { get; set; }
+        public SlamMap SlamMap { get; set; }
         
         // Whether the rigidbody is currently colliding with something
         private bool _isCurrentlyColliding = false;
