@@ -5,12 +5,14 @@ using UnityEngine.UI;
 
 namespace Dora
 {
-    public class StatisticsUIController : MonoBehaviour
+    public class SimulationInfoUIController : MonoBehaviour
     {
         public Image Mask;
         public Text ProgressPercentageText;
         public Text ExplorationRateText;
-        
+
+        public Text AlgorithmDebugText;
+        public Text ControllerDebugText;
 
         public void SetExplorationProgress(float progress)
         {
@@ -24,6 +26,17 @@ namespace Dora
             ExplorationRateText.text = "Exploration rate (cells/minute): " +
                                        (currentSimulation.ExplorationTracker.ExploredTriangles /
                                         currentSimulation.SimulateTimeSeconds).ToString("#.0");
+        }
+
+        public void UpdateAlgorithmDebugInfo(string info)
+        {
+            AlgorithmDebugText.text = info;
+        }
+
+
+        public void UpdateControllerDebugInfo(string info)
+        {
+            ControllerDebugText.text = info;
         }
     }
 }

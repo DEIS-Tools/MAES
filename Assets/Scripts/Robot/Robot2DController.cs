@@ -250,8 +250,8 @@ namespace Dora
         public string GetDebugInfo()
         {
             var info = new StringBuilder();
-            info.Append($"World Position: {_transform.position.x}, {_transform.position.y}");
-            info.Append($"Current task: {_currentTask?.GetType()}");
+            info.AppendLine($"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
+            info.AppendLine($"Current task: {_currentTask?.GetType()}");
             return info.ToString();
         }
 

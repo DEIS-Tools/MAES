@@ -22,7 +22,7 @@ namespace Dora
         public Text SimulationStatusText;
         private int _physicsTicksSinceUpdate = 0;
 
-        public StatisticsUIController statisticsUIController;
+        public SimulationInfoUIController simulationInfoUIController;
 
         private SimulationScenario _currentScenario;
         private Simulation _currentSimulation;
@@ -138,10 +138,6 @@ namespace Dora
             return shouldContinueSim;
         }
 
-        private void UpdateStatisticsUI()
-        {
-            statisticsUIController.UpdateStatistics(_currentSimulation);
-        }
 
         public void CreateSimulation(SimulationScenario scenario)
         {
@@ -149,6 +145,15 @@ namespace Dora
             _simulationGameObject = Instantiate(SimulationPrefab, transform);
             _currentSimulation = _simulationGameObject.GetComponent<Simulation>();
             _currentSimulation.SetScenario(scenario);
+            _currentSimulation.SimInfoUIController = simulationInfoUIController;
+        }
+        
+        
+        private void UpdateStatisticsUI()
+        {
+            simulationInfoUIController.UpdateStatistics(_currentSimulation);
+            if (_currentSimulation != null)
+                _currentSimulation.UpdateDebugInfo();
         }
 
         public void RemoveCurrentSimulation()

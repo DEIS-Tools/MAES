@@ -24,11 +24,15 @@ namespace Dora
         private SimulationMap<bool> _collisionMap;
         private List<MonaRobot> _robots;
 
+        [CanBeNull] private MonaRobot _selectedRobot;
+
         public ExplorationTracker ExplorationTracker { get; private set; }
         private CommunicationManager _communicationManager;
         
         // The debugging visualizer provides 
         private DebuggingVisualizer _debugVisualizer = new DebuggingVisualizer();
+
+        public SimulationInfoUIController SimInfoUIController;
 
         // Sets up the simulation by generating the map and spawning the robots
         public void SetScenario(SimulationScenario scenario)
@@ -48,7 +52,9 @@ namespace Dora
 
         public void SetSelectedRobot([CanBeNull] MonaRobot robot)
         {
+            _selectedRobot = robot;
             ExplorationTracker.SetVisualizedRobot(robot);
+            UpdateDebugInfo();
         }
 
         public void LogicUpdate()
@@ -84,6 +90,16 @@ namespace Dora
         public void RestoreState(object stateInfo)
         {
             throw new NotImplementedException();
+        }
+
+        public void UpdateDebugInfo()
+        {
+            if (_selectedRobot != null)
+            {
+                SimInfoUIController.UpdateAlgorithmDebugInfo(_selectedRobot.ExplorationAlgorithm.GetDebugInfo());
+                SimInfoUIController.UpdateControllerDebugInfo(_selectedRobot.Controller.GetDebugInfo());
+            }
+            
         }
     }
 }
