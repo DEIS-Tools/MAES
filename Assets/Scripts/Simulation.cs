@@ -36,13 +36,14 @@ namespace Dora {
             _scenario = scenario;
             _collisionMap = scenario.MapSpawner(MapGenerator);
 
-            _communicationManager =
-                new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
+            _communicationManager = new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
             RobotSpawner.CommunicationManager = _communicationManager;
-
+            
             _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
             foreach (var robot in _robots)
                 robot.OnRobotSelected = SetSelectedRobot;
+            
+            _communicationManager.SetRobotReferences(_robots);
 
             ExplorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer);
         }

@@ -122,7 +122,7 @@ namespace Dora.MapGeneration
             return robots;
         }
 
-        public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, int robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
+        public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
             var robots = new List<MonaRobot>();
 
             var hallWays = collisionMap.rooms.FindAll(r => r.isHallWay).ToList();
