@@ -1,16 +1,12 @@
 using System.Collections.Generic;
 using Dora.MapGeneration;
 
-namespace Dora
-{
-    public class ScenarioGenerator
-    {
-        public static Queue<SimulationScenario> GenerateBallisticScenarios()
-        {
+namespace Dora {
+    public class ScenarioGenerator {
+        public static Queue<SimulationScenario> GenerateBallisticScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            
-            for (int i = 0; i < 5; i++)
-            {
+
+            for (int i = 0; i < 5; i++) {
                 int randomSeed = i + 4 + 1;
                 int minute = 60;
                 var mapConfig = new CaveMapConfig(
@@ -28,7 +24,7 @@ namespace Dora
                 var officeConfig = new OfficeMapConfig(
                     60,
                     60,
-                    randomSeed, 
+                    randomSeed,
                     58,
                     4,
                     5,
@@ -37,7 +33,7 @@ namespace Dora
                     75,
                     1,
                     1f);
-                
+
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
                     broadcastBlockedByWalls: true
@@ -49,11 +45,11 @@ namespace Dora
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
                         mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                            map, 
-                            randomSeed, 
-                            30, 
+                            map,
+                            randomSeed,
+                            30,
                             0.6f,
-                            new Coord(20,20)),
+                            new Coord(20, 20)),
                         robotConstraints: robotConstraints
                     ));
                 }
@@ -63,15 +59,14 @@ namespace Dora
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
                         mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                            map, 
-                            randomSeed, 
-                            30, 
+                            map,
+                            randomSeed,
+                            30,
                             0.6f,
-                            new Coord(20,20)),
+                            new Coord(20, 20)),
                         robotConstraints: robotConstraints
-                    )); 
+                    ));
                 }
-                
             }
 
             return scenarios;

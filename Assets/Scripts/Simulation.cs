@@ -7,19 +7,16 @@ using Dora.Statistics;
 using JetBrains.Annotations;
 using UnityEngine;
 
-namespace Dora
-{
-    public class Simulation: MonoBehaviour, ISimulationUnit
-    {
-        
+namespace Dora {
+    public class Simulation : MonoBehaviour, ISimulationUnit {
         public int SimulatedLogicTicks { get; private set; } = 0;
         public int SimulatedPhysicsTicks { get; private set; } = 0;
         public float SimulateTimeSeconds { get; private set; } = 0;
-        
+
         public MapGenerator MapGenerator;
         public RobotSpawner RobotSpawner;
         public ExplorationVisualizer explorationVisualizer;
-        
+
         private SimulationScenario _scenario;
         private SimulationMap<bool> _collisionMap;
         private List<MonaRobot> _robots;
@@ -28,37 +25,35 @@ namespace Dora
 
         public ExplorationTracker ExplorationTracker { get; private set; }
         private CommunicationManager _communicationManager;
-        
+
         // The debugging visualizer provides 
         private DebuggingVisualizer _debugVisualizer = new DebuggingVisualizer();
 
         public SimulationInfoUIController SimInfoUIController;
 
         // Sets up the simulation by generating the map and spawning the robots
-        public void SetScenario(SimulationScenario scenario)
-        {
+        public void SetScenario(SimulationScenario scenario) {
             _scenario = scenario;
             _collisionMap = scenario.MapSpawner(MapGenerator);
 
-            _communicationManager = new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
+            _communicationManager =
+                new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
             RobotSpawner.CommunicationManager = _communicationManager;
-            
+
             _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
             foreach (var robot in _robots)
                 robot.OnRobotSelected = SetSelectedRobot;
-            
+
             ExplorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer);
         }
 
-        public void SetSelectedRobot([CanBeNull] MonaRobot robot)
-        {
+        public void SetSelectedRobot([CanBeNull] MonaRobot robot) {
             _selectedRobot = robot;
             ExplorationTracker.SetVisualizedRobot(robot);
             UpdateDebugInfo();
         }
 
-        public void LogicUpdate()
-        {
+        public void LogicUpdate() {
             ExplorationTracker.LogicUpdate(_robots);
             _robots.ForEach(robot => robot.LogicUpdate());
             SimulatedLogicTicks++;
@@ -66,8 +61,7 @@ namespace Dora
             _communicationManager.LogicUpdate();
         }
 
-        public void PhysicsUpdate()
-        {
+        public void PhysicsUpdate() {
             _robots.ForEach(simUnit => simUnit.PhysicsUpdate());
             Physics2D.Simulate(GlobalSettings.PhysicsTickDeltaSeconds);
             SimulateTimeSeconds += GlobalSettings.PhysicsTickDeltaSeconds;
@@ -76,30 +70,24 @@ namespace Dora
             _communicationManager.PhysicsUpdate();
         }
 
-        private void OnDrawGizmos()
-        {
+        private void OnDrawGizmos() {
             _debugVisualizer.Render();
         }
 
         // ----- Future work -------
-        public object SaveState()
-        {
+        public object SaveState() {
             throw new NotImplementedException();
         }
 
-        public void RestoreState(object stateInfo)
-        {
+        public void RestoreState(object stateInfo) {
             throw new NotImplementedException();
         }
 
-        public void UpdateDebugInfo()
-        {
-            if (_selectedRobot != null)
-            {
+        public void UpdateDebugInfo() {
+            if (_selectedRobot != null) {
                 SimInfoUIController.UpdateAlgorithmDebugInfo(_selectedRobot.ExplorationAlgorithm.GetDebugInfo());
                 SimInfoUIController.UpdateControllerDebugInfo(_selectedRobot.Controller.GetDebugInfo());
             }
-            
         }
     }
 }

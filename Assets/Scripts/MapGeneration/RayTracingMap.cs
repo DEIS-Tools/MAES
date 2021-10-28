@@ -3,29 +3,23 @@ using System.Collections.Generic;
 using Dora.Utilities;
 using UnityEngine;
 
-namespace Dora.MapGeneration
-{
-    public class RayTracingMap<TCell>
-    {
-
+namespace Dora.MapGeneration {
+    public class RayTracingMap<TCell> {
         private readonly SimulationMap<TCell> _map;
         private readonly RayTracingTriangle[] _traceableTriangles;
 
         // The order in which edges are stored for each RayTracingTriangle
         private const int Inclined = 0, Horizontal = 1, Vertical = 2;
-        
-        public RayTracingMap(SimulationMap<TCell> map)
-        {
+
+        public RayTracingMap(SimulationMap<TCell> map) {
             _map = map;
             var totalTriangles = map.WidthInTiles * map.HeightInTiles * 8;
             var trianglesPerRow = map.WidthInTiles * 8;
             var vertexDistance = map.Scale / 2.0f;
 
             _traceableTriangles = new RayTracingTriangle[totalTriangles];
-            for (int x = 0; x < map.WidthInTiles; x++)
-            {
-                for (int y = 0; y < map.HeightInTiles; y++)
-                {
+            for (int x = 0; x < map.WidthInTiles; x++) {
+                for (int y = 0; y < map.HeightInTiles; y++) {
                     int index = x * 8 + y * trianglesPerRow;
                     AddTraceableTriangles(new Vector2(x, y) * map.Scale + map.ScaledOffset, vertexDistance, index,
                         trianglesPerRow);
@@ -40,8 +34,7 @@ namespace Dora.MapGeneration
         // raytracing. Each triangle contains a list of their neighbours' indices. Additionally it contains information
         // about the 3 lines that make up the triangle (An inclined line, a horizontal line and a vertical line
         // , in that order)
-        private void AddTraceableTriangles(Vector2 bottomLeft, float vertexDistance, int index, int trianglesPerRow)
-        {
+        private void AddTraceableTriangles(Vector2 bottomLeft, float vertexDistance, int index, int trianglesPerRow) {
             var x = bottomLeft.x;
             var y = bottomLeft.y;
             // Triangle 0
@@ -148,26 +141,24 @@ namespace Dora.MapGeneration
             );
         }
 
-        public struct TriangleTrace
-        {
+        public struct TriangleTrace {
             public int enteringEdge;
             public int nextTriangleIndex;
 
-            public TriangleTrace(int enteringEdge, int nextTriangleIndex)
-            {
+            public TriangleTrace(int enteringEdge, int nextTriangleIndex) {
                 this.enteringEdge = enteringEdge;
                 this.nextTriangleIndex = nextTriangleIndex;
             }
         }
-        
-        
+
+
         public delegate bool CellFunction(int index, TCell cell);
 
         // Casts a trace starting at given point, moving in the given direction. The given function will be called on
         // each cell that is encountered. If the function returns true the trace will continue to the next cell,
         // if it returns false the trace will terminate. The trace automatically terminates when it exits map bounds.
-        public void Raytrace(Vector2 startingPoint, float angleDegrees, float distance, CellFunction shouldContinueFromCell)
-        {
+        public void Raytrace(Vector2 startingPoint, float angleDegrees, float distance,
+            CellFunction shouldContinueFromCell) {
             int startingIndex = _map.GetTriangleIndex(startingPoint);
 
             // Convert given angle and starting point to a linear equation: ax + b
@@ -182,10 +173,8 @@ namespace Dora.MapGeneration
             // If a trace travels diagonally in the bottom half of a tile, it will cross at least 4 tiles
             float maxTraceLengthPerTriangle = Mathf.Sqrt(_map.Scale * _map.Scale + 1) / 4f;
             int minimumTracesBeforeDistanceCheck = (int) (distance / maxTraceLengthPerTriangle);
-            while (true)
-            {
-                if (traceCount > 150)
-                { // Safety measure for avoiding infinite loops 
+            while (true) {
+                if (traceCount > 150) { // Safety measure for avoiding infinite loops 
                     Debug.Log($"Equation: {a}x + {b}");
                     throw new Exception($"INFINITE LOOP: {startingPoint.x}, {startingPoint.y}");
                 }
@@ -205,8 +194,7 @@ namespace Dora.MapGeneration
                 triangle = _traceableTriangles[trace.nextTriangleIndex];
 
                 // Optimization - Only start performance distance checks once we have performed a certain amount of traces
-                if (traceCount >= minimumTracesBeforeDistanceCheck)
-                {
+                if (traceCount >= minimumTracesBeforeDistanceCheck) {
                     // All vertices of the triangle must be within range for the triangle to be considered visible
                     bool withinRange = Vector2.Distance(startingPoint, triangle.Lines[0].Start) <= distance;
                     withinRange &= Vector2.Distance(startingPoint, triangle.Lines[0].End) <= distance;
@@ -217,14 +205,12 @@ namespace Dora.MapGeneration
             }
         }
 
-        private class RayTracingTriangle
-        {
+        private class RayTracingTriangle {
             public readonly Line2D[] Lines;
             private readonly int[] _neighbourIndex;
             public TCell Cell;
 
-            public RayTracingTriangle(Vector2 p1, Vector2 p2, Vector2 p3, int[] neighbourIndex)
-            {
+            public RayTracingTriangle(Vector2 p1, Vector2 p2, Vector2 p3, int[] neighbourIndex) {
                 Lines = new Line2D[3] {new Line2D(p1, p2), new Line2D(p2, p3), new Line2D(p3, p1)};
                 _neighbourIndex = neighbourIndex;
             }
@@ -232,20 +218,18 @@ namespace Dora.MapGeneration
             // Returns the side at which the trace exited the triangle, the exit intersection point
             // and the index of the triangle that the trace enters next
             // Takes the edge that this tile was entered from, and the linear equation ax+b for the trace 
-            public void RayTrace(ref TriangleTrace trace, in float angle, in float a, in float b)
-            {
+            public void RayTrace(ref TriangleTrace trace, in float angle, in float a, in float b) {
                 // Variable for storing an intersection and the corresponding edge
                 Vector2? intersection = null;
                 int intersectionEdge = -1;
-                for (int edge = 0; edge < 3; edge++)
-                {
+                for (int edge = 0; edge < 3; edge++) {
                     // The line must exit the triangle in one of the two edges that the line did not enter through
                     // Therefore only check intersection for these two lines
                     if (edge == trace.enteringEdge) continue;
 
                     // Find the intersection for the current edge
                     var currentIntersection = Lines[edge].GetIntersection(a, b);
-                    
+
                     if (currentIntersection == null) // No intersection with this edge
                     {
                         // If an intersection was found with a previously checked edge, then just use that
@@ -260,53 +244,46 @@ namespace Dora.MapGeneration
                     else // There is an intersection for this edge
                     {
                         // If there is no previous intersection, just use this one
-                        if (intersection == null)
-                        {
+                        if (intersection == null) {
                             intersection = currentIntersection;
                             intersectionEdge = edge;
                         }
                         // Otherwise, if there is another conflicting intersection,
                         // then choose the highest one if angle is between 0-180 otherwise choose the lowest one.
                         // This is a conflict resolution measure to avoid infinite loops.
-                        else if (angle >= 0 && angle <= 180)
-                        {
-                            if (currentIntersection!.Value.y > intersection!.Value.y)
-                            {
+                        else if (angle >= 0 && angle <= 180) {
+                            if (currentIntersection!.Value.y > intersection!.Value.y) {
                                 intersection = currentIntersection;
                                 intersectionEdge = edge;
-                            } else if (Mathf.Abs(currentIntersection!.Value.y - intersection!.Value.y) < 0.0001f)
-                            {
+                            }
+                            else if (Mathf.Abs(currentIntersection!.Value.y - intersection!.Value.y) < 0.0001f) {
                                 // If the y-axis is the same choose by x-axis instead
-                                if (angle < 90 && currentIntersection!.Value.x > intersection!.Value.x)
-                                {
+                                if (angle < 90 && currentIntersection!.Value.x > intersection!.Value.x) {
                                     // For 0-90 degrees prefer intersection with highest x value
                                     intersection = currentIntersection;
                                     intersectionEdge = edge;
-                                } else if (angle > 90 && currentIntersection!.Value.x < intersection!.Value.x)
-                                {
+                                }
+                                else if (angle > 90 && currentIntersection!.Value.x < intersection!.Value.x) {
                                     // For 90-180 degrees prefer intersection with lowest x value
                                     intersection = currentIntersection;
                                     intersectionEdge = edge;
                                 }
                             }
                         }
-                        else
-                        {
+                        else {
                             // For 180-360 degrees prefer intersection with lowest y-value
-                            if (currentIntersection!.Value.y < intersection!.Value.y)
-                            {
+                            if (currentIntersection!.Value.y < intersection!.Value.y) {
                                 intersection = currentIntersection;
                                 intersectionEdge = edge;
-                            }else if (Mathf.Abs(currentIntersection!.Value.y - intersection!.Value.y) < 0.0001f)
-                            {
+                            }
+                            else if (Mathf.Abs(currentIntersection!.Value.y - intersection!.Value.y) < 0.0001f) {
                                 // If the y-axis is the same choose by x-axis instead
-                                if (angle < 270 && currentIntersection!.Value.x < intersection!.Value.x)
-                                {
+                                if (angle < 270 && currentIntersection!.Value.x < intersection!.Value.x) {
                                     // For 180-270 degrees prefer intersection with highest x value
                                     intersection = currentIntersection;
                                     intersectionEdge = edge;
-                                } else if (angle > 270 && currentIntersection!.Value.x > intersection!.Value.x)
-                                {
+                                }
+                                else if (angle > 270 && currentIntersection!.Value.x > intersection!.Value.x) {
                                     // For 270-360 degrees prefer intersection with lowest x value
                                     intersection = currentIntersection;
                                     intersectionEdge = edge;
@@ -316,8 +293,7 @@ namespace Dora.MapGeneration
                     }
                 }
 
-                if (intersectionEdge != -1)
-                {
+                if (intersectionEdge != -1) {
                     // Modify out parameter (Slight performance increase over returning a value)
                     trace.enteringEdge = intersectionEdge;
                     trace.nextTriangleIndex = _neighbourIndex[intersectionEdge];
@@ -326,30 +302,26 @@ namespace Dora.MapGeneration
 
                 throw new Exception("Triangle does not have any intersections with the given line");
             }
-            
-            
+
+
             // When starting a ray trace, it must be determined which of the 3 edges are to be considered to the
             // initial "entering" edge
-            public int FindInitialEnteringEdge(float direction, float a, float b)
-            {
+            public int FindInitialEnteringEdge(float direction, float a, float b) {
                 List<(Vector2, int)> intersectionsAndEdge = new List<(Vector2, int)>();
-                for (int edge = 0; edge < 3; edge++)
-                {
+                for (int edge = 0; edge < 3; edge++) {
                     var intersection = Lines[edge].GetIntersection(a, b);
                     if (intersection != null) intersectionsAndEdge.Add((intersection!.Value, edge));
                 }
 
                 var intersectionOneX = intersectionsAndEdge[0].Item1.x;
                 var intersectionTwoX = intersectionsAndEdge[1].Item1.x;
-                if (direction <= 90 || direction >= 270)
-                {
+                if (direction <= 90 || direction >= 270) {
                     // Entering point must be the left most intersection
                     return intersectionOneX < intersectionTwoX
                         ? intersectionsAndEdge[0].Item2
                         : intersectionsAndEdge[1].Item2;
                 }
-                else
-                {
+                else {
                     // Entering point must be the right most intersection
                     return intersectionOneX > intersectionTwoX
                         ? intersectionsAndEdge[0].Item2
