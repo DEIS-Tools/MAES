@@ -9,14 +9,14 @@ namespace Dora.Statistics
 {
     public class ExplorationVisualizer: MonoBehaviour
     {
-
         public MeshRenderer meshRenderer;
         public MeshFilter meshFilter;
         private Mesh mesh;
 
         private readonly Color32 _solidColor = new Color32(0, 0, 0, 255);
         private readonly Color32 _exploredColor = new Color32(50, 220, 126, 255);
-        private readonly Color32 _unexploredColor = new Color32(125, 125, 125, 255);
+        private readonly Color32 _slamSeenColor = new Color32(50, 160, 240, 255);
+        private readonly Color32 _unexploredColor = new Color32(100, 100, 100, 255);
 
         private int _widthInTiles, _heightInTiles;
         private int _widthInVertices, _heightInVertices;
@@ -158,6 +158,24 @@ namespace Dora.Statistics
             
             mesh.colors32 = _colors;
         }
+        
+        // Colors each triangle depending on its current state
+        public void SetExplored(SimulationMap<ExplorationCell> map)
+        {
+            foreach (var (index, cell) in map)
+            {
+                var vertexIndex = index * 3;
+                var color = _unexploredColor;
+                if (!cell.isExplorable) color = _solidColor;
+                else if (cell.IsExplored) color = _exploredColor;
+                
+                _colors[vertexIndex] = color;
+                _colors[vertexIndex + 1] = color;
+                _colors[vertexIndex + 2] = color;
+            }
+            
+            mesh.colors32 = _colors;
+        }
 
         public void SetExplored(SlamMap map)
         {
@@ -168,7 +186,7 @@ namespace Dora.Statistics
                 Color32 color;
                 if (status == SlamMap.SlamTileStatus.Unseen) color = _unexploredColor;     
                 else if (status == SlamMap.SlamTileStatus.Solid) color = _solidColor;     
-                else color = _exploredColor;     
+                else color = _slamSeenColor;     
                 
                 // Set the color of the next 2 triangles (as a single Slam tile covers 2 triangles)
                 var vertexIndex = i * 3;

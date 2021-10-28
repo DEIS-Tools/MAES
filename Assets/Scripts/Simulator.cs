@@ -30,7 +30,6 @@ namespace Dora
 
         public SimulationPlayState PlayState { get; }
 
-        
         // Runs once when starting the program
         private void Start()
         {
@@ -159,6 +158,10 @@ namespace Dora
             _currentSimulation = null;
             _simulationGameObject = null;
         }
-        
+
+        public Simulation GetCurrentSimulation()
+        {
+            return _currentSimulation;
+        }
     }
 }

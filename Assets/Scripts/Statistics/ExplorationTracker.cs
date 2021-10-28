@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using Dora.MapGeneration;
 using Dora.Robot;
+using JetBrains.Annotations;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
@@ -22,6 +23,8 @@ namespace Dora.Statistics
 
         private readonly int _totalExplorableTriangles;
         public int ExploredTriangles { get; private set; }
+
+        [CanBeNull] private MonaRobot _selectedRobot;
 
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
 
@@ -71,7 +74,26 @@ namespace Dora.Statistics
                 }
             }
             
-            _explorationVisualizer.SetExplored(newlyExploredTriangles);
+            if (_selectedRobot == null)
+                _explorationVisualizer.SetExplored(newlyExploredTriangles);
+            else 
+                _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap);
+        }
+
+        public void SetVisualizedRobot([CanBeNull] MonaRobot robot)
+        {
+            _selectedRobot = robot;
+            if (robot != null)
+            {
+                // Update map to show slam map for given robot
+                _explorationVisualizer.SetExplored(robot.Controller.SlamMap);
+            }
+            else
+            {
+                // Update map to show exploration progress for all robots
+                _explorationVisualizer.SetExplored(_explorationMap);
+            }
+            
         }
     }
 }

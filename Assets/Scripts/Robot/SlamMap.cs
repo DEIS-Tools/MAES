@@ -17,7 +17,6 @@ namespace Dora.Robot
         private readonly float _scale;
         private readonly Vector2 _scaledOffset;
         
-
         public SlamMap(SimulationMap<bool> collisionMap)
         {
             _collisionMap = collisionMap;

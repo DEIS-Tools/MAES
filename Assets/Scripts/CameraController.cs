@@ -15,6 +15,8 @@ namespace Dora
         public Camera cam;
         public Transform cameraTransform;
 
+        public Simulator Simulator;
+        
         public float movementSpeed;
         public float movementTime;
         public float rotationAmount;
@@ -65,6 +67,8 @@ namespace Dora
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 movementTransform = null;
+                // Notify current simulation that no robot is selected
+                Simulator.GetCurrentSimulation().SetSelectedRobot(null);
             }
         }
 

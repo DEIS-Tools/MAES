@@ -4,6 +4,7 @@ using System.Linq;
 using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Statistics;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Dora
@@ -39,7 +40,15 @@ namespace Dora
             RobotSpawner.CommunicationManager = _communicationManager;
             
             _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
+            foreach (var robot in _robots)
+                robot.OnRobotSelected = SetSelectedRobot;
+            
             ExplorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer);
+        }
+
+        public void SetSelectedRobot([CanBeNull] MonaRobot robot)
+        {
+            ExplorationTracker.SetVisualizedRobot(robot);
         }
 
         public void LogicUpdate()

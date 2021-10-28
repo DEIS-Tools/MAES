@@ -9,12 +9,14 @@ namespace Dora.Robot
         
         public Transform leftWheelTransform;
         public Transform rightWheelTransform;
-
         
         public int id = -1;
 
         // The controller that provides an interface for moving the robot
         public Robot2DController Controller { get; private set; }
+
+        public delegate void OnRobotSelectedDelegate(MonaRobot robot);
+        public OnRobotSelectedDelegate OnRobotSelected = (r) => { };
 
         // The algorithm that controls the logic of the robot
         public IExplorationAlgorithm ExplorationAlgorithm { get; set; }
@@ -60,6 +62,7 @@ namespace Dora.Robot
         public void OnMouseDown()
         {
             CameraController.SingletonInstance.movementTransform = transform;
+            OnRobotSelected(this);
         }
 
     }
