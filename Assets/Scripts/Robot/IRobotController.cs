@@ -38,11 +38,5 @@ namespace Dora.Robot {
 
         // Returns debugging information about the robot that will be shown when the robot is selected
         String GetDebugInfo();
-        
-        // Synchronizes the current the current SLAM map with nearby robots.
-        // Synchronization will be completed in the next logic update
-        void SynchronizeSlamMap();
-
-        // + Sense nearby robots and walls
     }
 }
