@@ -143,7 +143,7 @@ namespace Dora {
 
             List<HashSet<int>> groups = new List<HashSet<int>>();
             foreach (var r1 in _robots) {
-                if(!groups.Exists(g => g.Contains(r1.id))); {
+                if(!groups.Exists(g => g.Contains(r1.id))) {
                     groups.Add(GetCommunicationGroup(r1.id, canCommunicateMatrix));
                 }
             }

@@ -39,7 +39,8 @@ namespace Dora {
                     broadcastRange: 15.0f,
                     broadcastBlockedByWalls: true,
                     shouldAutomaticallyUpdateSlam: true,
-                    slamUpdateIntervalInTicks: 10
+                    slamUpdateIntervalInTicks: 10,
+                    positionInaccuracy: 0.1f
                 );
 
                 if (true) {

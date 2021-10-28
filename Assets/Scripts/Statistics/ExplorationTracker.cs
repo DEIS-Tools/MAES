@@ -48,6 +48,7 @@ namespace Dora.Statistics {
 
             foreach (var robot in robots) {
                 var slamMap = robot.Controller.SlamMap;
+                slamMap.UpdateApproxPosition(robot.transform.position);
                 for (int i = 0; i < 60; i++) {
                     var angle = i * 6;
                     // Avoid ray casts that can be parallel to the lines of a triangle
