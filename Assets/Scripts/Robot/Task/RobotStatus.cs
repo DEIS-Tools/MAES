@@ -1,7 +1,7 @@
-namespace Dora.Robot
-{
-    public enum RobotStatus
-    {
-        Moving, Stopping, Idle
+namespace Dora.Robot {
+    public enum RobotStatus {
+        Moving,
+        Stopping,
+        Idle
     }
 }

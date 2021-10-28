@@ -8,8 +8,7 @@ using UnityEngine.Tilemaps;
 
 namespace Dora.MapGeneration
 {
-    public class RobotSpawner: MonoBehaviour
-    {
+    public class RobotSpawner: MonoBehaviour {
         public delegate IExplorationAlgorithm CreateAlgorithmDelegate(int randomSeed);
 
         public GameObject robotPrefab;
@@ -35,13 +34,13 @@ namespace Dora.MapGeneration
                     return c1.y - c2.y;
                 return c1.x - c2.x;
             });
-            
-            
+
+
             int robotId = 0;
             foreach (var tile in possibleSpawnTiles) {
                 if (robotId == numberOfRobots)
                     break;
-                
+
                 robots.Add(CreateRobot(
                     x: tile.x,
                     y: tile.y,
@@ -49,7 +48,7 @@ namespace Dora.MapGeneration
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
                     collisionMap: collisionMap
-                    ));
+                ));
             }
 
             return robots;
@@ -73,7 +72,7 @@ namespace Dora.MapGeneration
             // Flooding algorithm to find next tiles from neighbors
             var spawnTilesSelected = new List<Coord>();
             var startCoord = possibleSpawnTiles[0];
-            Queue<Coord> queue = new Queue<Coord> ();
+            Queue<Coord> queue = new Queue<Coord>();
             queue.Enqueue(startCoord);
             while (queue.Count > 0 && spawnTilesSelected.Count < numberOfRobots) {
                 Coord tile = queue.Dequeue();
@@ -85,7 +84,7 @@ namespace Dora.MapGeneration
                         if (IsInMapRange(x, y, collisionMap.WidthInTiles, collisionMap.HeightInTiles)
                             && (y == tile.y || x == tile.x)) {
                             var neighbourCoord = new Coord(x, y);
-                            if (!spawnTilesSelected.Contains(neighbourCoord) 
+                            if (!spawnTilesSelected.Contains(neighbourCoord)
                                 && possibleSpawnTiles.Contains(neighbourCoord)
                                 && !queue.Contains(neighbourCoord)) {
                                 queue.Enqueue(neighbourCoord);
@@ -131,29 +130,31 @@ namespace Dora.MapGeneration
             foreach (var hallWay in hallWays) {
                 possibleSpawnTiles.AddRange(hallWay.tiles.Except(hallWay.edgeTiles));
             }
-            
+
             possibleSpawnTiles.Sort((c1, c2) => {
                 var c1DistanceFromTop = collisionMap.HeightInTiles - c1.y;
                 var c1DistanceFromBottom = c1.y;
                 var c1DistanceFromLeft = c1.x;
                 var c1DistanceFromRight = collisionMap.WidthInTiles - c1.x;
-                var c1Best = Math.Min(Math.Min(c1DistanceFromLeft, c1DistanceFromRight),Math.Min(c1DistanceFromTop, c1DistanceFromBottom));
-                
+                var c1Best = Math.Min(Math.Min(c1DistanceFromLeft, c1DistanceFromRight),
+                    Math.Min(c1DistanceFromTop, c1DistanceFromBottom));
+
                 var c2DistanceFromTop = collisionMap.HeightInTiles - c2.y;
                 var c2DistanceFromBottom = c2.y;
                 var c2DistanceFromLeft = c2.x;
                 var c2DistanceFromRight = collisionMap.WidthInTiles - c2.x;
-                var c2Best = Math.Min(Math.Min(c2DistanceFromLeft, c2DistanceFromRight),Math.Min(c2DistanceFromTop, c2DistanceFromBottom));
-                
+                var c2Best = Math.Min(Math.Min(c2DistanceFromLeft, c2DistanceFromRight),
+                    Math.Min(c2DistanceFromTop, c2DistanceFromBottom));
+
                 return c1Best - c2Best;
             });
-            
-            
+
+
             int robotId = 0;
             foreach (var tile in possibleSpawnTiles) {
                 if (robotId == numberOfRobots)
                     break;
-                
+
                 robots.Add(CreateRobot(
                     x: tile.x,
                     y: tile.y,
@@ -163,12 +164,13 @@ namespace Dora.MapGeneration
                     collisionMap: collisionMap
                 ));
             }
-            
+
 
             return robots;
         }
-        
-        private MonaRobot CreateRobot(float x, float y, float relativeSize, int robotId, IExplorationAlgorithm algorithm, SimulationMap<bool> collisionMap) {
+
+        private MonaRobot CreateRobot(float x, float y, float relativeSize, int robotId,
+            IExplorationAlgorithm algorithm, SimulationMap<bool> collisionMap) {
             var robotID = robotId;
             var robotGameObject = Instantiate(robotPrefab, parent: transform);
             var robot = robotGameObject.GetComponent<MonaRobot>();
@@ -180,20 +182,23 @@ namespace Dora.MapGeneration
                 0.495f * relativeSize * collisionMap.Scale,
                 0.495f * relativeSize * collisionMap.Scale,
                 0.495f * relativeSize * collisionMap.Scale
-                );
+            );
 
-            float RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
-            robot.transform.position = new Vector3((x * collisionMap.Scale) + RTOffset + collisionMap.ScaledOffset.x, (y * collisionMap.Scale) + RTOffset + collisionMap.ScaledOffset.y);
-                
+            float
+                RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
+            robot.transform.position = new Vector3((x * collisionMap.Scale) + RTOffset + collisionMap.ScaledOffset.x,
+                (y * collisionMap.Scale) + RTOffset + collisionMap.ScaledOffset.y);
+
             robot.id = robotID;
             robot.ExplorationAlgorithm = algorithm;
-            robot.movementController.CommunicationManager = CommunicationManager;
-            algorithm.SetController(robot.movementController);
+            robot.Controller.CommunicationManager = CommunicationManager;
+            robot.Controller.SlamMap = new SlamMap(collisionMap);
+            algorithm.SetController(robot.Controller);
 
             return robot;
         }
-        
-        
+
+
         private bool IsInMapRange(int x, int y, int mapWidth, int mapHeight) {
             return x >= 0 && x < mapWidth && y >= 0 && y < mapHeight;
         }

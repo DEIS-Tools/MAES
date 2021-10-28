@@ -2,21 +2,17 @@ using System.Collections.Generic;
 using Dora.ExplorationAlgorithm;
 using Dora.MapGeneration;
 
-namespace Dora
-{
-    public class ScenarioGenerator
-    {
-        public static Queue<SimulationScenario> GenerateBallisticScenarios()
-        {
+namespace Dora {
+    public class ScenarioGenerator {
+        public static Queue<SimulationScenario> GenerateBallisticScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            
-            for (int i = 0; i < 5; i++)
-            {
+
+            for (int i = 0; i < 5; i++) {
                 int randomSeed = i + 4 + 1;
                 int minute = 60;
                 var mapConfig = new CaveMapConfig(
-                    80,
-                    80,
+                    60,
+                    60,
                     randomSeed,
                     4,
                     2,
@@ -27,9 +23,9 @@ namespace Dora
                     1f);
 
                 var officeConfig = new OfficeMapConfig(
-                    80,
-                    80,
-                    randomSeed, 
+                    60,
+                    60,
+                    randomSeed,
                     58,
                     4,
                     5,
@@ -38,7 +34,7 @@ namespace Dora
                     75,
                     1,
                     1f);
-                
+
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
                     broadcastBlockedByWalls: true
@@ -52,8 +48,8 @@ namespace Dora
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
-                            1, 
-                            1.0f,
+                            20, 
+                            0.6f,
                             new Coord(20,20),
                         (seed) => new RandomExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints
@@ -67,14 +63,13 @@ namespace Dora
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
-                            1, 
-                            1.0f,
+                            20, 
+                            0.6f,
                             new Coord(20,20),
                             (seed) => new RandomExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints
-                    )); 
+                    ));
                 }
-                
             }
 
             return scenarios;

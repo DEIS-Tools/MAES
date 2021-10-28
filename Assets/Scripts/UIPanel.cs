@@ -2,15 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Dora
-{
+namespace Dora {
     [RequireComponent(typeof(RectTransform))]
-    public class UIPanel : MonoBehaviour
-    {
+    public class UIPanel : MonoBehaviour {
         public CameraController cameraController;
-        
-        void Start()
-        {
+
+        void Start() {
             var t = GetComponent<RectTransform>();
             cameraController.Subscribe(t);
         }
