@@ -51,7 +51,12 @@ namespace Dora.ExplorationAlgorithm
         public void SetController(Robot2DController controller) {
             this._robotController = controller;
         }
-        
+
+        public string GetDebugInfo()
+        {
+            return "";
+        }
+
         public object SaveState()
         {
             throw new System.NotImplementedException();

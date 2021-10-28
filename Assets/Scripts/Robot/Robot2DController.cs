@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using Dora.Robot;
 using Dora.Robot.Task;
 using JetBrains.Annotations;
@@ -244,6 +245,14 @@ namespace Dora
         public List<object> ReceiveBroadcast()
         {
             return CommunicationManager.ReadMessages(_robot);
+        }
+
+        public string GetDebugInfo()
+        {
+            var info = new StringBuilder();
+            info.Append($"World Position: {_transform.position.x}, {_transform.position.y}");
+            info.Append($"Current task: {_currentTask?.GetType()}");
+            return info.ToString();
         }
 
         public void Move(float distanceInMeters, bool reverse = false)
