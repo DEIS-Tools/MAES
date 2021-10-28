@@ -7,6 +7,7 @@ namespace Dora {
         public readonly bool BroadcastBlockedByWalls;
         public readonly bool ShouldAutomaticallyUpdateSlam;
         public readonly int SlamUpdateIntervalInTicks;
+        public readonly float PositionInaccuracy;
 
         // TODO: Movement imprecision
         //public readonly float MaxMovementDeviation;
@@ -15,11 +16,12 @@ namespace Dora {
 
         // TODO: SLAM imprecision
 
-        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, bool shouldAutomaticallyUpdateSlam, int slamUpdateIntervalInTicks) {
+        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, bool shouldAutomaticallyUpdateSlam, int slamUpdateIntervalInTicks, float positionInaccuracy) {
             BroadcastRange = broadcastRange;
             BroadcastBlockedByWalls = broadcastBlockedByWalls;
             ShouldAutomaticallyUpdateSlam = shouldAutomaticallyUpdateSlam;
             SlamUpdateIntervalInTicks = slamUpdateIntervalInTicks;
+            PositionInaccuracy = positionInaccuracy;
         }
     }
 }

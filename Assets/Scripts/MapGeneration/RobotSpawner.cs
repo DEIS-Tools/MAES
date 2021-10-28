@@ -15,6 +15,8 @@ namespace Dora.MapGeneration
 
         public CommunicationManager CommunicationManager;
 
+        public RobotConstraints RobotConstraints;
+
         public List<MonaRobot> SpawnRobotsInBiggestRoom(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
             List<MonaRobot> robots = new List<MonaRobot>();
 
@@ -47,7 +49,8 @@ namespace Dora.MapGeneration
                     relativeSize: robotRelativeSize,
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
-                    collisionMap: collisionMap
+                    collisionMap: collisionMap,
+                    seed: seed + robotId
                 ));
             }
 
@@ -114,7 +117,8 @@ namespace Dora.MapGeneration
                     relativeSize: robotRelativeSize,
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
-                    collisionMap: collisionMap
+                    collisionMap: collisionMap,
+                    seed: seed + robotId
                 );
                 robots.Add(robot);
             }
@@ -161,7 +165,8 @@ namespace Dora.MapGeneration
                     relativeSize: robotRelativeSize,
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
-                    collisionMap: collisionMap
+                    collisionMap: collisionMap,
+                    seed: seed + robotId
                 ));
             }
 
@@ -170,7 +175,7 @@ namespace Dora.MapGeneration
         }
 
         private MonaRobot CreateRobot(float x, float y, float relativeSize, int robotId,
-            IExplorationAlgorithm algorithm, SimulationMap<bool> collisionMap) {
+            IExplorationAlgorithm algorithm, SimulationMap<bool> collisionMap, int seed) {
             var robotID = robotId;
             var robotGameObject = Instantiate(robotPrefab, parent: transform);
             var robot = robotGameObject.GetComponent<MonaRobot>();
@@ -192,7 +197,8 @@ namespace Dora.MapGeneration
             robot.id = robotID;
             robot.ExplorationAlgorithm = algorithm;
             robot.Controller.CommunicationManager = CommunicationManager;
-            robot.Controller.SlamMap = new SlamMap(collisionMap);
+            robot.Controller.SlamMap = new SlamMap(collisionMap, RobotConstraints, seed);
+            robot.Controller.Constraints = RobotConstraints; 
             algorithm.SetController(robot.Controller);
 
             return robot;

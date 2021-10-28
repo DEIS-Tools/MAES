@@ -38,6 +38,7 @@ namespace Dora {
 
             _communicationManager = new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
             RobotSpawner.CommunicationManager = _communicationManager;
+            RobotSpawner.RobotConstraints = scenario.RobotConstraints;
             
             _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
             foreach (var robot in _robots)

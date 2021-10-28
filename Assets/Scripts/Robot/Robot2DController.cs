@@ -43,6 +43,7 @@ namespace Dora {
         // updates to wait before re-declaring the collision.
         private readonly int _movementUpdatesBeforeRedeclaringCollision = 2;
         private int _physicsUpdatesSinceStartingMovement = 0;
+        public RobotConstraints Constraints;
 
         public Robot2DController(Rigidbody2D rigidbody, Transform transform, Transform leftWheel, Transform rightWheel,
             MonaRobot robot) {
@@ -228,9 +229,11 @@ namespace Dora {
 
         public string GetDebugInfo() {
             var info = new StringBuilder();
+            var aproxPosition = SlamMap.ApproximatePosition;
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
             info.AppendLine($"Current task: {_currentTask?.GetType()}");
+            info.Append($"Slam position: {aproxPosition.x.ToString("#.00")}, {aproxPosition.y.ToString("#.00")}");
             return info.ToString();
         }
 
