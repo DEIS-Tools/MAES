@@ -37,21 +37,22 @@ namespace Dora {
 
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
-                    broadcastBlockedByWalls: true
+                    broadcastBlockedByWalls: true,
+                    shouldAutomaticallyUpdateSlam: true,
+                    slamUpdateIntervalInTicks: 10
                 );
 
-                if (i % 2 == 0) {
+                if (true) {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
                         mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
-                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
-                            20, 
+                            10, 
                             0.6f,
-                            new Coord(20,20),
-                        (seed) => new RandomExplorationAlgorithm(seed)),
+                            (seed) => new RandomExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints
                     ));
                 }

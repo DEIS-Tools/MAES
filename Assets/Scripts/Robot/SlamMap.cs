@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Dora.MapGeneration;
+using UnityEditor.UI;
 using UnityEngine;
 
 namespace Dora.Robot {
@@ -24,8 +26,8 @@ namespace Dora.Robot {
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
 
             for (int x = 0; x < _widthInTiles; x++)
-            for (int y = 0; y < _heightInTiles; y++)
-                _tiles[x, y] = SlamTileStatus.Unseen;
+                for (int y = 0; y < _heightInTiles; y++)
+                    _tiles[x, y] = SlamTileStatus.Unseen;
         }
 
         public Vector2Int TriangleIndexToCoordinate(int triangleIndex) {
@@ -59,10 +61,26 @@ namespace Dora.Robot {
             Open,
             Solid
         }
-
+        
         // Synchronizes the given slam maps to create a new one
-        public static SlamMap Combine(out List<SlamMap> maps) {
-            throw new NotImplementedException();
+        public static void Combine(List<SlamMap> maps) {
+            var globalMap = new SlamTileStatus[maps[0]._widthInTiles, maps[0]._heightInTiles];
+            for (int x = 0; x < globalMap.GetLength(0); x++) 
+                for (int y = 0; y < globalMap.GetLength(1); y++) 
+                    globalMap[x, y] = SlamTileStatus.Unseen;
+
+            foreach (var map in maps) {
+                for (int x = 0; x < map._widthInTiles; x++) {
+                    for (int y = 0; y < map._heightInTiles; y++) {
+                        if (map._tiles[x, y] != SlamTileStatus.Unseen)
+                            globalMap[x, y] = map._tiles[x, y];
+                    }
+                }
+            }
+
+            foreach (var map in maps) {
+                map._tiles = globalMap.Clone() as SlamTileStatus[,];
+            }
         }
     }
 }
