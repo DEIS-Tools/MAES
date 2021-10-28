@@ -138,7 +138,6 @@ namespace Dora
             return shouldContinueSim;
         }
 
-
         public void CreateSimulation(SimulationScenario scenario)
         {
             _currentScenario = scenario;

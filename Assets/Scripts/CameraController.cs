@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,20 +12,20 @@ namespace Dora
     {
         public static CameraController SingletonInstance;
         public Transform movementTransform;
-        
-        public Camera cam;
-        public Transform cameraTransform;
+
+        private List<CamAssembly> _cams;
+        public Camera currentCam;
 
         public Simulator Simulator;
         
         public float movementSpeed;
         public float movementTime;
         public float rotationAmount;
-        public Vector3 zoomAmount;
+        // public Vector3 zoomAmount;
 
         public Vector3 newPosition;
         public Quaternion newRotation;
-        public Vector3 newZoom;
+        // public Vector3 newZoom;
 
         public Vector3 dragStartPosition;
         public Vector3 dragCurrentPosition;
@@ -43,7 +44,15 @@ namespace Dora
             var t = transform; // Temp storage of build-in is (apparently) more efficient than repeated access.
             newPosition = t.position;
             newRotation = t.rotation;
-            newZoom = cameraTransform.localPosition;
+            _cams = new List<CamAssembly>();
+            foreach (var c in GetComponentsInChildren<Camera>())
+            {
+                var ct = c.transform;
+                _cams.Add(new CamAssembly{camera = c, newZoom = ct.localPosition, zoomAmount = -1 * ct.up});
+                c.gameObject.SetActive(false);
+            }
+            currentCam = _cams.Find(c => c.camera.name == "Camera45").camera;
+            currentCam.gameObject.SetActive(true);
         }
 
         // Update is called once per frame
@@ -59,7 +68,8 @@ namespace Dora
             {
                 newPosition = movementTransform.position;
             }
-            
+
+            HandleCameraSelect();
             HandleMouseRotateZoomInput();
             HandleKeyboardRotateZoomInput();
             ApplyMovement();
@@ -72,13 +82,43 @@ namespace Dora
             }
         }
 
+        private void HandleCameraSelect()
+        {
+            if (Input.GetKey(KeyCode.Alpha1))
+            {
+                SwitchCameraTo("Camera45");
+            }
+
+            if (Input.GetKey(KeyCode.Alpha2))
+            {
+                SwitchCameraTo("Camera70");
+            }
+
+            if (Input.GetKey(KeyCode.Alpha3))
+            {
+                SwitchCameraTo("Camera90");
+            }
+        }
+
+        private void SwitchCameraTo(string camName)
+        {
+            currentCam.gameObject.SetActive(false);
+            currentCam = _cams.Find(c => c.camera.name == camName).camera;
+            currentCam.gameObject.SetActive(true);
+        }
+
         private void ApplyMovement()
         {
             var t = transform;
             t.position = Vector3.Lerp(t.position, newPosition, Time.deltaTime * movementTime);
             t.rotation = Quaternion.Lerp(t.rotation, newRotation, Time.deltaTime * movementTime);
-            cameraTransform.localPosition =
-                Vector3.Lerp(cameraTransform.localPosition, newZoom, Time.deltaTime * movementTime);
+            foreach (var c in _cams)
+            {
+                var ct = c.camera.transform;
+                ct.localPosition =
+                    Vector3.Lerp(ct.localPosition, c.newZoom, Time.deltaTime * movementTime);
+            }
+            
         }
 
         private void HandleKeyboardRotateZoomInput()
@@ -97,13 +137,13 @@ namespace Dora
             if (Input.GetKey(KeyCode.Period) || Input.GetKey(KeyCode.Plus) || Input.GetKey(KeyCode.KeypadPlus) ||
                 buttons[(int) UIMovementButton.Direction.In].isActive)
             {
-                newZoom += zoomAmount;
+                PrepareZoom(1f);
             }
 
             if (Input.GetKey(KeyCode.Comma) || Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus) ||
                 buttons[(int) UIMovementButton.Direction.Out].isActive)
             {
-                newZoom -= zoomAmount;
+                PrepareZoom(-1f);
             }
         }
 
@@ -113,7 +153,7 @@ namespace Dora
 
             if (Input.mouseScrollDelta.y != 0)
             {
-                newZoom += Input.mouseScrollDelta.y * zoomAmount;
+                PrepareZoom(Input.mouseScrollDelta.y);
             }
 
             #endregion
@@ -135,6 +175,16 @@ namespace Dora
             newRotation *= Quaternion.Euler(Vector3.up * (-1 * diff.x / 5f));
 
             #endregion
+        }
+        
+        // Positive direction = zoom in
+        // Negative direction = zoom out
+        private void PrepareZoom(float direction)
+        {
+            foreach (var cam in _cams)
+            {
+                cam.newZoom += direction * cam.zoomAmount;
+            }
         }
 
         public void Subscribe(UIMovementButton button)
@@ -166,7 +216,7 @@ namespace Dora
             {
                 // Create temp plane along playing field, and a ray from clicked point
                 var plane = new Plane(Vector3.forward, Vector3.zero);
-                var ray = cam.ScreenPointToRay(Input.mousePosition);
+                var ray = currentCam.ScreenPointToRay(Input.mousePosition);
 
                 if (plane.Raycast(ray, out var entry)) // If ray intersects plane
                 {
@@ -178,7 +228,7 @@ namespace Dora
             if (Input.GetMouseButton(0))
             {
                 var plane = new Plane(Vector3.forward, Vector3.zero);
-                var ray = cam.ScreenPointToRay(Input.mousePosition);
+                var ray = currentCam.ScreenPointToRay(Input.mousePosition);
 
                 if (!plane.Raycast(ray, out var entry)) return;
                 dragCurrentPosition = ray.GetPoint(entry);
@@ -212,6 +262,13 @@ namespace Dora
             {
                 newPosition += t.right * movementSpeed;
             }
+        }
+        
+        private class CamAssembly
+        {
+            public Vector3 newZoom;
+            public Vector3 zoomAmount;
+            public Camera camera;
         }
     }
 }

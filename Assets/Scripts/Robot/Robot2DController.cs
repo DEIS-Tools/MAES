@@ -179,8 +179,7 @@ namespace Dora
             const float rotationFactor = 180f;
             wheel.Rotate(new Vector3(rotationFactor * direction * magnitude, 0f, 0f));
         }
-
-
+        
         public RobotStatus GetStatus()
         {
             if (_currentStatus == RobotStatus.Idle && _currentTask != null) return RobotStatus.Moving;
