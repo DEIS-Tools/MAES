@@ -9,8 +9,8 @@ namespace Dora
     {
         public Image Mask;
         public Text ProgressPercentageText;
-
         public Text ExplorationRateText;
+        
 
         public void SetExplorationProgress(float progress)
         {
