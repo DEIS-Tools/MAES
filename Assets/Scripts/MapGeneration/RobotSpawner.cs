@@ -6,16 +6,16 @@ using Dora.Robot;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-namespace Dora.MapGeneration {
-    public class RobotSpawner : MonoBehaviour {
-        private delegate IExplorationAlgorithm AlgorithmDelegate(MonaRobot robot, int randomSeed);
+namespace Dora.MapGeneration
+{
+    public class RobotSpawner: MonoBehaviour {
+        public delegate IExplorationAlgorithm CreateAlgorithmDelegate(int randomSeed);
 
         public GameObject robotPrefab;
 
         public CommunicationManager CommunicationManager;
 
-        public List<MonaRobot> SpawnRobotsInBiggestRoom(SimulationMap<bool> collisionMap, int seed, int numberOfRobots,
-            float robotRelativeSize) {
+        public List<MonaRobot> SpawnRobotsInBiggestRoom(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
             List<MonaRobot> robots = new List<MonaRobot>();
 
             // Sort by room size
@@ -46,7 +46,7 @@ namespace Dora.MapGeneration {
                     y: tile.y,
                     relativeSize: robotRelativeSize,
                     robotId: robotId++,
-                    algorithm: new RandomExplorationAlgorithm(seed + robotId),
+                    algorithm: createAlgorithmDelegate(seed + robotId),
                     collisionMap: collisionMap
                 ));
             }
@@ -54,8 +54,7 @@ namespace Dora.MapGeneration {
             return robots;
         }
 
-        public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots,
-            float robotRelativeSize, Coord? suggestedStartingPoint = null) {
+        public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, Coord? suggestedStartingPoint, CreateAlgorithmDelegate createAlgorithmDelegate) {
             List<MonaRobot> robots = new List<MonaRobot>();
 
             // Get all spawnable tiles. We cannot spawn adjacent to a wall
@@ -63,23 +62,13 @@ namespace Dora.MapGeneration {
             foreach (var room in collisionMap.rooms) {
                 possibleSpawnTiles.AddRange(room.tiles.Except(room.edgeTiles));
             }
-
-            // If no starting point suggested, simply start as close as 0,0 as possible.
-            if (suggestedStartingPoint == null) {
-                // Make them spawn in a ordered fashion
-                possibleSpawnTiles.Sort((c1, c2) => {
-                    if (c1.x == c2.x)
-                        return c1.y - c2.y;
-                    return c1.x - c2.x;
-                });
-            }
-            else {
-                possibleSpawnTiles.Sort((c1, c2) => {
-                    return c1.ManhattanDistanceTo(suggestedStartingPoint.Value) -
-                           c2.ManhattanDistanceTo(suggestedStartingPoint.Value);
-                });
-            }
-
+            
+            possibleSpawnTiles.Sort((c1, c2) => {
+                return c1.ManhattanDistanceTo(suggestedStartingPoint.Value) -
+                        c2.ManhattanDistanceTo(suggestedStartingPoint.Value);
+            });
+            
+            
             // Flooding algorithm to find next tiles from neighbors
             var spawnTilesSelected = new List<Coord>();
             var startCoord = possibleSpawnTiles[0];
@@ -124,7 +113,7 @@ namespace Dora.MapGeneration {
                     y: spawnTile.y,
                     relativeSize: robotRelativeSize,
                     robotId: robotId++,
-                    algorithm: new RandomExplorationAlgorithm(seed + robotId),
+                    algorithm: createAlgorithmDelegate(seed + robotId),
                     collisionMap: collisionMap
                 );
                 robots.Add(robot);
@@ -133,8 +122,7 @@ namespace Dora.MapGeneration {
             return robots;
         }
 
-        public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots,
-            int robotRelativeSize) {
+        public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, int robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
             var robots = new List<MonaRobot>();
 
             var hallWays = collisionMap.rooms.FindAll(r => r.isHallWay).ToList();
@@ -172,7 +160,7 @@ namespace Dora.MapGeneration {
                     y: tile.y,
                     relativeSize: robotRelativeSize,
                     robotId: robotId++,
-                    algorithm: new RandomExplorationAlgorithm(seed + robotId),
+                    algorithm: createAlgorithmDelegate(seed + robotId),
                     collisionMap: collisionMap
                 ));
             }

@@ -45,11 +45,12 @@ namespace Dora {
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
                         mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                            map,
-                            randomSeed,
-                            30,
-                            0.6f,
-                            new Coord(20, 20)),
+                            map, 
+                            randomSeed, 
+                            1, 
+                            1.0f,
+                            new Coord(20,20),
+                        (seed) => new RandomExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints
                     ));
                 }
@@ -59,11 +60,12 @@ namespace Dora {
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
                         mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                            map,
-                            randomSeed,
-                            30,
-                            0.6f,
-                            new Coord(20, 20)),
+                            map, 
+                            randomSeed, 
+                            1, 
+                            1.0f,
+                            new Coord(20,20),
+                            (seed) => new RandomExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints
                     ));
                 }
