@@ -37,7 +37,7 @@ namespace Dora.Statistics {
             _widthInVertices = _widthInTiles * ResolutionMultiplier + 1;
             _heightInVertices = _heightInTiles * ResolutionMultiplier + 1;
 
-            //GenerateVertices();
+            // GenerateVertices();
             GenerateTriangleVertices();
             GenerateTriangles();
             _colors = new Color32[_vertices.Count];
