@@ -14,8 +14,8 @@ namespace Dora
                 int randomSeed = i + 4 + 1;
                 int minute = 60;
                 var mapConfig = new CaveMapConfig(
-                    80,
-                    80,
+                    60,
+                    60,
                     randomSeed,
                     4,
                     2,
@@ -26,8 +26,8 @@ namespace Dora
                     1f);
 
                 var officeConfig = new OfficeMapConfig(
-                    80,
-                    80,
+                    60,
+                    60,
                     randomSeed, 
                     58,
                     4,
