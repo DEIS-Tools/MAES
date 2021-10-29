@@ -13,12 +13,11 @@ namespace Dora {
 
         // Messages that will sent during the next logic update
         private List<Message> _queuedMessages = new List<Message>();
-
+        
         // Messages that were sent last tick and can now be read 
         private List<Message> _readableMessages = new List<Message>();
 
         private RayTracingMap<bool> _rayTracingMap;
-
         private List<MonaRobot> _robots;
         
         private int _localTickCounter = 0;
