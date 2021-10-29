@@ -22,6 +22,11 @@ namespace Dora.MapGeneration {
             this._tileSize = collisionMap.Scale;
             this._scaledOffset = collisionMap.ScaledOffset;
             _tagLists = new List<EnvironmentTag>[_widthInTiles, _heightInTiles];
+            for (int x = 0; x < _widthInTiles; x++) {
+                for (int y = 0; y < _heightInTiles; y++) {
+                    _tagLists[x, y] = new List<EnvironmentTag>();
+                }
+            }
         }
         
         public void AddTag(Vector2 worldPosition, object data) {
@@ -36,9 +41,9 @@ namespace Dora.MapGeneration {
             var maxTileRadius = (int) Math.Ceiling(radius / _tileSize);
             // Find bounding box of cells to check
             int minX = Math.Max(gridPosition.x - maxTileRadius, 0);
-            int maxX = Math.Max(gridPosition.x + maxTileRadius, _widthInTiles);
+            int maxX = Math.Min(gridPosition.x + maxTileRadius, _widthInTiles);
             int minY = Math.Max(gridPosition.y - maxTileRadius, 0);
-            int maxY = Math.Max(gridPosition.y + maxTileRadius, _heightInTiles);
+            int maxY = Math.Min(gridPosition.y + maxTileRadius, _heightInTiles);
 
             for (int x = minX; x < maxX; x++) {
                 for (int y = minY; y < maxY; y++) {

@@ -141,7 +141,6 @@ namespace Dora {
                         var r2Vector2 = new Vector2(r2Position.x, r2Position.y);
                         canCommunicateMatrix[(r1.id, r2.id)] = CanSignalTravelBetween(r1Vector2, r2Vector2);
                     }
-                        
                 }
             }
 
@@ -179,12 +178,24 @@ namespace Dora {
         }
 
         public void DepositTag(MonaRobot robot, object data) {
-            _visualizer.AddEnvironmentTag(robot.transform.position);
+            if (GlobalSettings.ShowEnvironmentTags)
+                _visualizer.AddEnvironmentTag(robot.transform.position);
+            
             _environmentTaggingMap.AddTag(robot.transform.position, data);
         }
 
         public List<EnvironmentTag> ReadNearbyTags(MonaRobot robot) {
-            return _environmentTaggingMap.GetTagsNear(robot.transform.position, _robotConstraints.EnvironmentTagReadRange);
+            var tags = _environmentTaggingMap.GetTagsNear(robot.transform.position,
+                _robotConstraints.EnvironmentTagReadRange);
+
+            // Debugging visualize tags that are readable by robots
+            if (GlobalSettings.ShowEnvironmentTags){
+                foreach (var tag in tags) {
+                    _visualizer.AddReadableTag(tag.WorldPosition);
+                }
+            }
+
+            return tags;
         }
 
         public void SetRobotReferences(List<MonaRobot> robots) {

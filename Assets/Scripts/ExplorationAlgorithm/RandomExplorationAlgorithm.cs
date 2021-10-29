@@ -24,9 +24,14 @@ namespace Dora.ExplorationAlgorithm {
             // Testing
             _robotController.Broadcast("Test!");
 
+            _robotController.ReadNearbyTags();
             var status = _robotController.GetStatus();
             if (status == RobotStatus.Idle) {
                 if (!_hasJustRotated) {
+                    // TODO: ---------------------------------
+                    _robotController.DepositTag("test");
+                    // TODO: ---------------------------------
+                    
                     var direction = _random.Next(0, 1) == 0 ? -1 : 1;
                     var degrees = _random.Next(50, 180);
                     _robotController.Rotate(degrees * direction);
