@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Robot.Task;
 using JetBrains.Annotations;
@@ -240,6 +241,16 @@ namespace Dora {
         public void Move(float distanceInMeters, bool reverse = false) {
             AssertRobotIsInIdleState($"Move forwards {distanceInMeters} meters");
             _currentTask = new FiniteMovementTask(_transform, distanceInMeters, reverse);
+        }
+
+        // Deposits an environment tag at the current position of the robot
+        public void DepositTag(object data) {
+            CommunicationManager.DepositTag(_robot, data);
+        }
+
+        // Returns a list of all environment tags that are within sensor range
+        public List<EnvironmentTaggingMap.EnvironmentTag> ReadNearbyTags() {
+            return CommunicationManager.ReadNearbyTags(_robot);
         }
     }
 }

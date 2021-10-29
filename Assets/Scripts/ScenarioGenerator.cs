@@ -40,7 +40,8 @@ namespace Dora {
                     broadcastBlockedByWalls: true,
                     shouldAutomaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
-                    positionInaccuracy: 0.1f
+                    positionInaccuracy: 0.1f,
+                    environmentTagReadRange: 4.0f
                 );
 
                 if (true) {
