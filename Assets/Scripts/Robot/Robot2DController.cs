@@ -230,11 +230,11 @@ namespace Dora {
 
         public string GetDebugInfo() {
             var info = new StringBuilder();
-            var aproxPosition = SlamMap.ApproximatePosition;
+            var approxPosition = SlamMap.ApproximatePosition;
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
             info.AppendLine($"Current task: {_currentTask?.GetType()}");
-            info.Append($"Slam position: {aproxPosition.x.ToString("#.00")}, {aproxPosition.y.ToString("#.00")}");
+            info.Append($"Slam position: {approxPosition.x.ToString("#.00")}, {approxPosition.y.ToString("#.00")}");
             return info.ToString();
         }
 

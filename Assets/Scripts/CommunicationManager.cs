@@ -179,6 +179,7 @@ namespace Dora {
         }
 
         public void DepositTag(MonaRobot robot, object data) {
+            _visualizer.AddEnvironmentTag(robot.transform.position);
             _environmentTaggingMap.AddTag(robot.transform.position, data);
         }
 
