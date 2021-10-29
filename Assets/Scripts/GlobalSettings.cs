@@ -10,9 +10,11 @@ namespace Dora {
 
         public static readonly int PhysicsTickDeltaMillis = LogicTickDeltaMillis / PhysicsTicksPerLogicUpdate;
         public static readonly float PhysicsTickDeltaSeconds = PhysicsTickDeltaMillis / 1000f;
-
-        public static readonly bool DrawCommunication = true;
-
+        
         public static readonly float LidarRange = 4f;
+        
+        // Debug visualizer
+        public static readonly bool DrawCommunication = true;
+        public static readonly bool ShowEnvironmentTags = true;
     }
 }

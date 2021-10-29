@@ -4,11 +4,19 @@ using UnityEngine;
 
 namespace Dora {
     public class DebuggingVisualizer : ISimulationUnit {
+        
         private Queue<CommunicationLink> _links = new Queue<CommunicationLink>();
-
         private Color _linkColor = new Color(50f / 255f, 120f / 255f, 255f / 255f);
-
         private int _currentTick = 0;
+
+        // Environment tags
+        private readonly List<Vector2> _environmentTags = new List<Vector2>();
+        private readonly List<Vector2> _readableTags = new List<Vector2>();
+        private const float TagSquareSize = 0.3f;
+        private readonly Vector3 _tagCubeSize = new Vector3(TagSquareSize, TagSquareSize, TagSquareSize);
+        private readonly Vector3 _readableCubeSize = new Vector3(TagSquareSize + 0.01f, TagSquareSize + 0.01f, TagSquareSize + 0.01f);
+        private readonly Color _tagColor = new Color(50f / 255f, 120f / 255f, 255f / 255f);
+        private readonly Color _readableTagColor = new Color(255f / 255f, 150f / 255f, 255f / 255f);
 
         private readonly struct CommunicationLink {
             public readonly MonaRobot RobotOne;
@@ -24,6 +32,15 @@ namespace Dora {
             }
         }
 
+        // Debugging measure to visualize all environment tags
+        public void AddEnvironmentTag(Vector2 position) {
+            _environmentTags.Add(position);
+        }
+
+        public void AddReadableTag(Vector2 position) {
+            _readableTags.Add(position);
+        }
+
         // Debugging measure to visualize communication between robots
         public void AddCommunicationTrail(MonaRobot robot1, MonaRobot robot2) {
             _links.Enqueue(new CommunicationLink(robot1, robot2, _currentTick, _currentTick + 10));
@@ -35,6 +52,14 @@ namespace Dora {
             Vector3 offset = new Vector3(0.5f, 0.5f, 1);
             foreach (var link in _links)
                 Gizmos.DrawLine(link.RobotOne.transform.position + offset, link.RobotTwo.transform.position + offset);
+
+            Gizmos.color = _tagColor;
+            foreach (var tagPosition in _environmentTags) 
+                Gizmos.DrawCube(new Vector3(tagPosition.x, tagPosition.y, -_tagCubeSize.z / 2f), _tagCubeSize);
+
+            Gizmos.color = _readableTagColor;
+            foreach (var readableTag in _readableTags) 
+                Gizmos.DrawCube(new Vector3(readableTag.x, readableTag.y, -_tagCubeSize.z / 2f), _readableCubeSize);
         }
 
         public void PhysicsUpdate() {
@@ -45,6 +70,7 @@ namespace Dora {
         }
 
         public void LogicUpdate() {
+            _readableTags.Clear();
         }
 
         public object SaveState() {

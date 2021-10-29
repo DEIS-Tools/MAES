@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static Dora.MapGeneration.EnvironmentTaggingMap;
 
 namespace Dora.Robot {
     public interface IRobotController {
@@ -35,6 +36,13 @@ namespace Dora.Robot {
 
         // Receives broadcast data sent by nearby robots the previous logic tick
         List<object> ReceiveBroadcast();
+
+
+        // Deposits a tag into the environment at the current position of the robot
+        void DepositTag(object data);
+        
+        // Returns a list of all environment tags that are within sensor range 
+        List<EnvironmentTag> ReadNearbyTags();
 
         // Returns debugging information about the robot that will be shown when the robot is selected
         String GetDebugInfo();

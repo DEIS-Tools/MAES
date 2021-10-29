@@ -3,6 +3,7 @@ using System.Linq;
 using Dora.MapGeneration;
 using Dora.Robot;
 using UnityEngine;
+using static Dora.MapGeneration.EnvironmentTaggingMap;
 
 namespace Dora {
     // Messages sent through this class will be subject to communication range and line of sight.
@@ -13,13 +14,15 @@ namespace Dora {
 
         // Messages that will sent during the next logic update
         private List<Message> _queuedMessages = new List<Message>();
-
+        
         // Messages that were sent last tick and can now be read 
         private List<Message> _readableMessages = new List<Message>();
 
-        private RayTracingMap<bool> _rayTracingMap;
-
+        private readonly RayTracingMap<bool> _rayTracingMap;
         private List<MonaRobot> _robots;
+
+        // Map for storing and retrieving all tags deposited by robots
+        private readonly EnvironmentTaggingMap _environmentTaggingMap;
         
         private int _localTickCounter = 0;
 
@@ -40,6 +43,7 @@ namespace Dora {
             _robotConstraints = robotConstraints;
             _visualizer = visualizer;
             _rayTracingMap = new RayTracingMap<bool>(collisionMap);
+            _environmentTaggingMap = new EnvironmentTaggingMap(collisionMap);
         }
 
         // Adds a message to the broadcast queue
@@ -137,7 +141,6 @@ namespace Dora {
                         var r2Vector2 = new Vector2(r2Position.x, r2Position.y);
                         canCommunicateMatrix[(r1.id, r2.id)] = CanSignalTravelBetween(r1Vector2, r2Vector2);
                     }
-                        
                 }
             }
 
@@ -174,8 +177,30 @@ namespace Dora {
             return resultSet;
         }
 
+        public void DepositTag(MonaRobot robot, object data) {
+            if (GlobalSettings.ShowEnvironmentTags)
+                _visualizer.AddEnvironmentTag(robot.transform.position);
+            
+            _environmentTaggingMap.AddTag(robot.transform.position, data);
+        }
+
+        public List<EnvironmentTag> ReadNearbyTags(MonaRobot robot) {
+            var tags = _environmentTaggingMap.GetTagsNear(robot.transform.position,
+                _robotConstraints.EnvironmentTagReadRange);
+
+            // Debugging visualize tags that are readable by robots
+            if (GlobalSettings.ShowEnvironmentTags){
+                foreach (var tag in tags) {
+                    _visualizer.AddReadableTag(tag.WorldPosition);
+                }
+            }
+
+            return tags;
+        }
+
         public void SetRobotReferences(List<MonaRobot> robots) {
             this._robots = robots;
         }
+
     }
 }

@@ -56,10 +56,10 @@ namespace Dora {
         }
 
         public void LogicUpdate() {
+            _debugVisualizer.LogicUpdate();
             ExplorationTracker.LogicUpdate(_robots);
             _robots.ForEach(robot => robot.LogicUpdate());
             SimulatedLogicTicks++;
-            _debugVisualizer.LogicUpdate();
             _communicationManager.LogicUpdate();
         }
 

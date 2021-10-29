@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Robot.Task;
 using JetBrains.Annotations;
@@ -229,17 +230,27 @@ namespace Dora {
 
         public string GetDebugInfo() {
             var info = new StringBuilder();
-            var aproxPosition = SlamMap.ApproximatePosition;
+            var approxPosition = SlamMap.ApproximatePosition;
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
             info.AppendLine($"Current task: {_currentTask?.GetType()}");
-            info.Append($"Slam position: {aproxPosition.x.ToString("#.00")}, {aproxPosition.y.ToString("#.00")}");
+            info.Append($"Slam position: {approxPosition.x.ToString("#.00")}, {approxPosition.y.ToString("#.00")}");
             return info.ToString();
         }
 
         public void Move(float distanceInMeters, bool reverse = false) {
             AssertRobotIsInIdleState($"Move forwards {distanceInMeters} meters");
             _currentTask = new FiniteMovementTask(_transform, distanceInMeters, reverse);
+        }
+
+        // Deposits an environment tag at the current position of the robot
+        public void DepositTag(object data) {
+            CommunicationManager.DepositTag(_robot, data);
+        }
+
+        // Returns a list of all environment tags that are within sensor range
+        public List<EnvironmentTaggingMap.EnvironmentTag> ReadNearbyTags() {
+            return CommunicationManager.ReadNearbyTags(_robot);
         }
     }
 }

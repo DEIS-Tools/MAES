@@ -5,23 +5,23 @@ namespace Dora {
         // Broadcasting
         public readonly float BroadcastRange;
         public readonly bool BroadcastBlockedByWalls;
+        
+        // SLAM
         public readonly bool ShouldAutomaticallyUpdateSlam;
         public readonly int SlamUpdateIntervalInTicks;
         public readonly float PositionInaccuracy;
+        
+        // Environment tagging
+        public readonly float EnvironmentTagReadRange;
 
-        // TODO: Movement imprecision
-        //public readonly float MaxMovementDeviation;
-        // Should probably use some distribution to provide a random distance based on the MaxMovementDeviation
-        //public float NextMovementImprecision(Random random, float targetDistance) { throw new NotImplementedException(); }
-
-        // TODO: SLAM imprecision
-
-        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, bool shouldAutomaticallyUpdateSlam, int slamUpdateIntervalInTicks, float positionInaccuracy) {
+        
+        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, bool shouldAutomaticallyUpdateSlam, int slamUpdateIntervalInTicks, float positionInaccuracy, float environmentTagReadRange) {
             BroadcastRange = broadcastRange;
             BroadcastBlockedByWalls = broadcastBlockedByWalls;
             ShouldAutomaticallyUpdateSlam = shouldAutomaticallyUpdateSlam;
             SlamUpdateIntervalInTicks = slamUpdateIntervalInTicks;
             PositionInaccuracy = positionInaccuracy;
+            EnvironmentTagReadRange = environmentTagReadRange;
         }
     }
 }
