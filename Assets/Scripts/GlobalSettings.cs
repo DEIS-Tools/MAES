@@ -15,6 +15,6 @@ namespace Dora {
         
         // Debug visualizer
         public static readonly bool DrawCommunication = true;
-        public static readonly bool ShowEnvironmentTags = false;
+        public static readonly bool ShowEnvironmentTags = true;
     }
 }
