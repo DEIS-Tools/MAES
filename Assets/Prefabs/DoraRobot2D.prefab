@@ -86,6 +86,7 @@ MonoBehaviour:
   leftWheelTransform: {fileID: 3562388383311551113}
   rightWheelTransform: {fileID: 5898286729133033185}
   id: -1
+  _collidingGameObjects: []
 --- !u!1001 &9210634985911898445
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -131,7 +132,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b47685ce264a64d6b97f34b3b826262e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b47685ce264a64d6b97f34b3b826262e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z

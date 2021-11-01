@@ -24,8 +24,8 @@ namespace Dora.ExplorationAlgorithm {
             // Testing
             _robotController.Broadcast("Test!");
 
-            if (_robotController.GetRobotID() == 0)
-                _robotController.SenseNearbyRobots();
+            // if (_robotController.GetRobotID() == 30)
+                // _robotController.SenseNearbyRobots();
 
             _robotController.ReadNearbyTags();
             var status = _robotController.GetStatus();
