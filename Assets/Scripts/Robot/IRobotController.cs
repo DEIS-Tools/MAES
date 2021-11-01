@@ -46,6 +46,6 @@ namespace Dora.Robot {
         // Returns debugging information about the robot that will be shown when the robot is selected
         String GetDebugInfo();
 
-        List<MonaRobot> SenseNearbyRobots();
+        List<CommunicationManager.SensedObject<int>> SenseNearbyRobots();
     }
 }

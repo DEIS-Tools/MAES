@@ -254,21 +254,8 @@ namespace Dora {
             return CommunicationManager.ReadNearbyTags(_robot);
         }
 
-        public List<MonaRobot> SenseNearbyRobots() {
-            if (_robot.id == 0) {
-                var nearbyRobots = CommunicationManager.SenseNearbyRobots(_robot.id);
-
-                string otherRobots = "";
-                foreach (var r in nearbyRobots) {
-                    otherRobots += r.item + ",";
-                }
-                
-                
-                Debug.Log($"Nearby robots: {nearbyRobots.Count}, \\[{otherRobots}\\]");
-            }
-
-            return new List<MonaRobot>();
-
+        public List<CommunicationManager.SensedObject<int>> SenseNearbyRobots() {
+            return CommunicationManager.SenseNearbyRobots(_robot.id);
         }
     }
 }
