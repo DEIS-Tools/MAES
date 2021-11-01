@@ -105,8 +105,9 @@ namespace Dora {
         private CommunicationInfo RayTraceCommunication(Vector2 pos1, Vector2 pos2) {
             var distance = Vector2.Distance(pos1, pos2);
             var angle = Vector2.Angle(Vector2.right, pos2 - pos1);
-            if (pos1.y > pos2.y) angle = 180 + (180 - angle); // Possibly not needed.
-            // Converts 315 to 45. We don't know why
+            // If p1.y > p2.y then angle should be 360 minus the angle difference between the vectors
+            // to make the angle relative to the x axis. (Moving from oregon along the x axis is 0 degrees in out system)
+            if (pos1.y > pos2.y) angle = 360f - angle;
 
             if (distance > _robotConstraints.MaxRayCastRange)
                 return new CommunicationInfo(distance, angle, -1);
