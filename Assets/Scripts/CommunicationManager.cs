@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using Dora.MapGeneration;
 using Dora.Robot;
 using UnityEngine;
@@ -25,6 +27,8 @@ namespace Dora {
         private readonly EnvironmentTaggingMap _environmentTaggingMap;
         
         private int _localTickCounter = 0;
+        
+        private Dictionary<(int, int), CommunicationInfo> _adjacencyMatrix = new Dictionary<(int, int), CommunicationInfo>();
 
         private readonly struct Message {
             public readonly object Contents;
@@ -35,6 +39,30 @@ namespace Dora {
                 Contents = contents;
                 Sender = sender;
                 this.broadcastCenter = broadcastCenter;
+            }
+        }
+
+        private readonly struct CommunicationInfo {
+            public readonly float Distance;
+            public readonly float Angle;
+            public readonly int WallsCellsPassedThrough;
+
+            public CommunicationInfo(float distance, float angle, int wallsCellsPassedThrough) {
+                Distance = distance;
+                Angle = angle;
+                WallsCellsPassedThrough = wallsCellsPassedThrough;
+            }
+        }
+
+        public readonly struct SensedObject<T> {
+            public readonly float Distance;
+            public readonly float Angle;
+            public readonly T item;
+
+            public SensedObject(float distance, float angle, T t) {
+                Distance = distance;
+                Angle = angle;
+                this.item = t;
             }
         }
 
@@ -53,13 +81,18 @@ namespace Dora {
 
         // Returns a list of messages sent by other robots
         public List<object> ReadMessages(MonaRobot receiver) {
+            this.PopulateAdjacencyMatrix();
             List<object> messages = new List<object>();
             Vector2 receiverPosition = receiver.transform.position;
             foreach (var message in _readableMessages) {
                 // The robot will not receive its own messages
                 if (message.Sender.id == receiver.id) continue;
 
-                if (CanSignalTravelBetween(message.broadcastCenter, receiverPosition)) {
+                var communicationTrace = _adjacencyMatrix[(message.Sender.id, receiver.id)];
+                if (communicationTrace.Distance <= _robotConstraints.BroadcastRange) {
+                    if(_robotConstraints.BroadcastBlockedByWalls && communicationTrace.WallsCellsPassedThrough != 0)
+                        continue;
+                    
                     messages.Add(message.Contents);
                     if (GlobalSettings.DrawCommunication)
                         _visualizer.AddCommunicationTrail(message.Sender, receiver);
@@ -69,26 +102,24 @@ namespace Dora {
             return messages;
         }
 
-        private bool CanSignalTravelBetween(Vector2 pos1, Vector2 pos2) {
-            if (Vector2.Distance(pos1, pos2) > _robotConstraints.BroadcastRange)
-                return false;
-
-            // If walls can be ignored, then simply continue
-            if (!_robotConstraints.BroadcastBlockedByWalls)
-                return true;
-
-            // If walls cannot be ignored, perform a raycast to check line of sight between the given points
+        private CommunicationInfo RayTraceCommunication(Vector2 pos1, Vector2 pos2) {
+            var distance = Vector2.Distance(pos1, pos2);
             var angle = Vector2.Angle(Vector2.right, pos2 - pos1);
-            if (pos1.y > pos2.y) angle = 180 + (180 - angle);
+            if (pos1.y > pos2.y) angle = 180 + (180 - angle); // Possibly not needed.
+            // Converts 315 to 45. We don't know why
 
-            bool canTravel = true;
-            _rayTracingMap.Raytrace(pos1, angle, _robotConstraints.BroadcastRange,
+            if (distance > _robotConstraints.MaxRayCastRange)
+                return new CommunicationInfo(distance, angle, -1);
+            
+            var wallsTravelledThrough = 0;
+            _rayTracingMap.Raytrace(pos1, angle, distance,
                 (_, cellIsSolid) => {
-                    if (cellIsSolid)
-                        canTravel = false;
-                    return canTravel;
+                    if (cellIsSolid) {
+                        wallsTravelledThrough++;
+                    }
+                    return true;
                 });
-            return canTravel;
+            return new CommunicationInfo(distance, angle, wallsTravelledThrough);
         }
 
         public void LogicUpdate() {
@@ -101,7 +132,8 @@ namespace Dora {
                 && _localTickCounter % _robotConstraints.SlamUpdateIntervalInTicks == 0) {
                 SynchronizeSlamMaps();
             }
-                
+
+            _adjacencyMatrix = null;
         }
 
         private void SynchronizeSlamMaps() {
@@ -129,9 +161,12 @@ namespace Dora {
             throw new System.NotImplementedException();
         }
 
-        public List<HashSet<int>> GetCommunicationGroups() {
-            var canCommunicateMatrix = new Dictionary<(int, int), bool>();
-
+        private void PopulateAdjacencyMatrix() {
+            if (_adjacencyMatrix != null)
+                return;
+            
+            _adjacencyMatrix = new Dictionary<(int, int), CommunicationInfo>();
+            
             foreach (var r1 in _robots) {
                 foreach (var r2 in _robots) {
                     if (r1.id != r2.id) {
@@ -139,22 +174,26 @@ namespace Dora {
                         var r2Position = r2.transform.position;
                         var r1Vector2 = new Vector2(r1Position.x, r1Position.y);
                         var r2Vector2 = new Vector2(r2Position.x, r2Position.y);
-                        canCommunicateMatrix[(r1.id, r2.id)] = CanSignalTravelBetween(r1Vector2, r2Vector2);
+                        _adjacencyMatrix[(r1.id, r2.id)] = RayTraceCommunication(r1Vector2, r2Vector2);
                     }
                 }
             }
+        }
+
+        public List<HashSet<int>> GetCommunicationGroups() {
+            PopulateAdjacencyMatrix();
 
             List<HashSet<int>> groups = new List<HashSet<int>>();
             foreach (var r1 in _robots) {
                 if(!groups.Exists(g => g.Contains(r1.id))); {
-                    groups.Add(GetCommunicationGroup(r1.id, canCommunicateMatrix));
+                    groups.Add(GetCommunicationGroup(r1.id));
                 }
             }
 
             return groups;
         }
 
-        private HashSet<int> GetCommunicationGroup(int robotId, Dictionary<(int, int), bool> adjacencyMatrix) {
+        private HashSet<int> GetCommunicationGroup(int robotId) {
             var keys = new Queue<int>();
             keys.Enqueue(robotId);
             var resultSet = new HashSet<int>(){robotId};
@@ -162,8 +201,8 @@ namespace Dora {
             while (keys.Count > 0) {
                 var currentKey = keys.Dequeue();
 
-                var inRange = adjacencyMatrix
-                    .Where((kv) => kv.Key.Item1 == currentKey && kv.Value)
+                var inRange = _adjacencyMatrix
+                    .Where((kv) => kv.Key.Item1 == currentKey && kv.Value.Distance < _robotConstraints.BroadcastRange && kv.Value.WallsCellsPassedThrough == 0)
                     .Select((e) => e.Key.Item2);
 
                 foreach (var rInRange in inRange) {
@@ -197,6 +236,14 @@ namespace Dora {
 
             return tags;
         }
+
+        public List<SensedObject<int>> SenseNearbyRobots() {
+            var nearbyRobots = new List<MonaRobot>();
+            
+            
+
+            return new List<SensedObject<int>>();
+        } 
 
         public void SetRobotReferences(List<MonaRobot> robots) {
             this._robots = robots;

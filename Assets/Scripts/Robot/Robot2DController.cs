@@ -252,5 +252,9 @@ namespace Dora {
         public List<EnvironmentTaggingMap.EnvironmentTag> ReadNearbyTags() {
             return CommunicationManager.ReadNearbyTags(_robot);
         }
+
+        public List<MonaRobot> SenseNearbyRobots() {
+            throw new NotImplementedException();
+        }
     }
 }

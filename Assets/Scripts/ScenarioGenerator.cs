@@ -41,7 +41,9 @@ namespace Dora {
                     shouldAutomaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
                     positionInaccuracy: 0.1f,
-                    environmentTagReadRange: 4.0f
+                    environmentTagReadRange: 4.0f,
+                    senseNearbyRobotRange: 5f,
+                    senseNearbyRobotBlockedByWalls: true
                 );
 
                 if (true) {
@@ -52,7 +54,7 @@ namespace Dora {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
-                            10, 
+                            40, 
                             0.6f,
                             (seed) => new RandomExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints
