@@ -231,6 +231,7 @@ namespace Dora {
         public string GetDebugInfo() {
             var info = new StringBuilder();
             var approxPosition = SlamMap.ApproximatePosition;
+            info.Append($"id: {this._robot.id}\n");
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
             info.AppendLine($"Current task: {_currentTask?.GetType()}");
@@ -254,7 +255,20 @@ namespace Dora {
         }
 
         public List<MonaRobot> SenseNearbyRobots() {
-            throw new NotImplementedException();
+            if (_robot.id == 0) {
+                var nearbyRobots = CommunicationManager.SenseNearbyRobots(_robot.id);
+
+                string otherRobots = "";
+                foreach (var r in nearbyRobots) {
+                    otherRobots += r.item + ",";
+                }
+                
+                
+                Debug.Log($"Nearby robots: {nearbyRobots.Count}, \\[{otherRobots}\\]");
+            }
+
+            return new List<MonaRobot>();
+
         }
     }
 }

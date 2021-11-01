@@ -28,7 +28,7 @@ namespace Dora {
         
         private int _localTickCounter = 0;
         
-        private Dictionary<(int, int), CommunicationInfo> _adjacencyMatrix = new Dictionary<(int, int), CommunicationInfo>();
+        private Dictionary<(int, int), CommunicationInfo> _adjacencyMatrix = null;
 
         private readonly struct Message {
             public readonly object Contents;
@@ -237,12 +237,24 @@ namespace Dora {
             return tags;
         }
 
-        public List<SensedObject<int>> SenseNearbyRobots() {
-            var nearbyRobots = new List<MonaRobot>();
-            
-            
+        public List<SensedObject<int>> SenseNearbyRobots(int id) {
+            PopulateAdjacencyMatrix();
+            var sensedObjects = new List<SensedObject<int>>();
 
-            return new List<SensedObject<int>>();
+            foreach (var robot in _robots) {
+                if(robot.id == id) continue;
+
+                
+                var comInfo = _adjacencyMatrix[(id, robot.id)];
+                if(comInfo.Distance > _robotConstraints.SenseNearbyRobotRange 
+                   || (comInfo.WallsCellsPassedThrough > 0 && _robotConstraints.SenseNearbyRobotBlockedByWalls))
+                    continue;
+
+                sensedObjects.Add(new SensedObject<int>(comInfo.Distance, comInfo.Angle, robot.id));
+                
+            }
+            
+            return sensedObjects;
         } 
 
         public void SetRobotReferences(List<MonaRobot> robots) {
