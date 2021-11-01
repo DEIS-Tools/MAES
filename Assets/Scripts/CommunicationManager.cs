@@ -177,23 +177,16 @@ namespace Dora {
             return resultSet;
         }
 
-        public void DepositTag(MonaRobot robot, object data) {
-            if (GlobalSettings.ShowEnvironmentTags)
-                _visualizer.AddEnvironmentTag(robot.transform.position);
+        public void DepositTag(MonaRobot robot, ITag tag) {
+            var placedTag = _environmentTaggingMap.AddTag(robot.transform.position, tag);
             
-            _environmentTaggingMap.AddTag(robot.transform.position, data);
+            if (GlobalSettings.ShowEnvironmentTags)
+                _visualizer.AddEnvironmentTag(placedTag);
         }
 
-        public List<EnvironmentTag> ReadNearbyTags(MonaRobot robot) {
+        public List<PlacedTag> ReadNearbyTags(MonaRobot robot) {
             var tags = _environmentTaggingMap.GetTagsNear(robot.transform.position,
                 _robotConstraints.EnvironmentTagReadRange);
-
-            // Debugging visualize tags that are readable by robots
-            if (GlobalSettings.ShowEnvironmentTags){
-                foreach (var tag in tags) {
-                    _visualizer.AddReadableTag(tag.WorldPosition);
-                }
-            }
 
             return tags;
         }

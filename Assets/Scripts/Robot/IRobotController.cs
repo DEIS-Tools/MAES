@@ -39,10 +39,10 @@ namespace Dora.Robot {
 
 
         // Deposits a tag into the environment at the current position of the robot
-        void DepositTag(object data);
+        void DepositTag(ITag tag);
         
         // Returns a list of all environment tags that are within sensor range 
-        List<EnvironmentTag> ReadNearbyTags();
+        List<PlacedTag> ReadNearbyTags();
 
         // Returns debugging information about the robot that will be shown when the robot is selected
         String GetDebugInfo();

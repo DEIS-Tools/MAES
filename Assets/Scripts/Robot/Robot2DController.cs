@@ -2,11 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Robot.Task;
 using JetBrains.Annotations;
 using UnityEngine;
+using static Dora.MapGeneration.EnvironmentTaggingMap;
 
 namespace Dora {
     public class Robot2DController : IRobotController {
@@ -244,12 +244,12 @@ namespace Dora {
         }
 
         // Deposits an environment tag at the current position of the robot
-        public void DepositTag(object data) {
-            CommunicationManager.DepositTag(_robot, data);
+        public void DepositTag(ITag tag) {
+            CommunicationManager.DepositTag(_robot, tag);
         }
 
         // Returns a list of all environment tags that are within sensor range
-        public List<EnvironmentTaggingMap.EnvironmentTag> ReadNearbyTags() {
+        public List<PlacedTag> ReadNearbyTags() {
             return CommunicationManager.ReadNearbyTags(_robot);
         }
     }

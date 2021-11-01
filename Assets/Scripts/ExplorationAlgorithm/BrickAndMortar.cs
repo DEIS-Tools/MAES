@@ -34,7 +34,6 @@ namespace Dora.ExplorationAlgorithm {
             _maximumAxialDistance = Mathf.Sqrt(Mathf.Pow(_maximumAxialDistance, 2f) / 2f);
             
             _preferredAxialDistance = _maximumAxialDistance / 2f;
-
         }
 
         private class EnvironmentTag {
