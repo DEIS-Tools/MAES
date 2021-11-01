@@ -173,10 +173,11 @@ namespace Dora.MapGeneration {
             // If a trace travels diagonally in the bottom half of a tile, it will cross at least 4 tiles
             float maxTraceLengthPerTriangle = Mathf.Sqrt(_map.Scale * _map.Scale + 1) / 4f;
             int minimumTracesBeforeDistanceCheck = (int) (distance / maxTraceLengthPerTriangle);
+            var maxTraces = distance * 8;
             while (true) {
-                if (traceCount > 150) { // Safety measure for avoiding infinite loops 
+                if (traceCount > maxTraces) { // Safety measure for avoiding infinite loops 
                     Debug.Log($"Equation: {a}x + {b}");
-                    throw new Exception($"INFINITE LOOP: {startingPoint.x}, {startingPoint.y}");
+                    throw new Exception($"INFINITE LOOP: {startingPoint.x}, {startingPoint.y}. Distance: {distance}");
                 }
 
                 // Invoke the given function on the cell, and only continue if it returns true

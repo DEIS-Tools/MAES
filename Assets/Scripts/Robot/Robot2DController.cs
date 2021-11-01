@@ -1,12 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Robot.Task;
 using JetBrains.Annotations;
 using UnityEngine;
+using static Dora.CommunicationManager;
 
 namespace Dora {
     public class Robot2DController : IRobotController {
@@ -231,6 +233,7 @@ namespace Dora {
         public string GetDebugInfo() {
             var info = new StringBuilder();
             var approxPosition = SlamMap.ApproximatePosition;
+            info.Append($"id: {this._robot.id}\n");
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
             info.AppendLine($"Current task: {_currentTask?.GetType()}");
@@ -251,6 +254,17 @@ namespace Dora {
         // Returns a list of all environment tags that are within sensor range
         public List<EnvironmentTaggingMap.EnvironmentTag> ReadNearbyTags() {
             return CommunicationManager.ReadNearbyTags(_robot);
+        }
+
+        public List<SensedObject<int>> SenseNearbyRobots() {
+            return CommunicationManager.SenseNearbyRobots(_robot.id)
+                .Select(e => new SensedObject<int>(
+                    e.Distance, 
+                    Vector2.SignedAngle(this._robot.transform.up, 
+                                                new Vector2(Mathf.Cos(e.Angle * Mathf.Deg2Rad), 
+                                                            Mathf.Sin(e.Angle * Mathf.Deg2Rad))),
+                    e.item))
+                .ToList();
         }
     }
 }
