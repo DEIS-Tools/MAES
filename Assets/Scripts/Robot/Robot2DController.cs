@@ -240,14 +240,18 @@ namespace Dora {
             if (globalAngle < 0) globalAngle += 360;
             globalAngle %= 360;
             
-            Debug.Log("Trace angle: " + globalAngle);
-            
             var result = CommunicationManager.DetectWall(_robot, globalAngle);
             if (result != null) {
                 var intersection = result!.Value.Item1;
                 var distance = Vector2.Distance(intersection, _robot.transform.position);
                 var intersectingWallAngle = result!.Value.Item2;
-                var relativeWallAngle = intersectingWallAngle - GetForwardAngleRelativeToXAxis();
+                
+                // Calculate angle of wall relative to current forward angle of the robot
+                var relativeWallAngle = Math.Abs(intersectingWallAngle - GetForwardAngleRelativeToXAxis());
+                
+                // Convert to relative wall angle to range 0-90
+                relativeWallAngle %= 180;
+                if (relativeWallAngle > 90) relativeWallAngle = 180 - relativeWallAngle;
                 return new IRobotController.DetectedWall(distance, relativeWallAngle);
             }
             return null;
