@@ -221,11 +221,11 @@ namespace Dora.MapGeneration {
             // Convert given angle and starting point to a linear equation: ax + b
             var a = Mathf.Tan(Mathf.PI / 180 * angleDegrees);
             
-            // TODO: Temp fix for 90 and 270 degree angles
+            // TODO: Temp fix for 90 and 270 degree angles. Should be replaced with special case logic.
             if (Math.Abs(angleDegrees - 90f) < 0.01f)
-                a = 90.0f;
+                a = 99.9f;
             else if (Math.Abs(angleDegrees - 270f) < 0.01f)
-                a = -90.0f;
+                a = -99.9f;
             
             var b = startingPoint.y - a * startingPoint.x;
 
