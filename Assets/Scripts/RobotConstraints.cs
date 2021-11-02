@@ -10,27 +10,35 @@ namespace Dora {
         public readonly bool SenseNearbyRobotBlockedByWalls;
         
         // SLAM
-        public readonly bool ShouldAutomaticallyUpdateSlam;
+        public readonly bool AutomaticallyUpdateSlam;
         public readonly int SlamUpdateIntervalInTicks;
-        public readonly float PositionInaccuracy;
+        public readonly int SlamSynchronizeIntervalInTicks;
+        public readonly float SlamPositionInaccuracy;
+        public readonly bool DistributeSlam;
+        
         
         // Environment tagging
         public readonly float EnvironmentTagReadRange;
 
         public readonly float MaxRayCastRange;
 
-        
-        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, bool shouldAutomaticallyUpdateSlam, int slamUpdateIntervalInTicks, float positionInaccuracy, float environmentTagReadRange, float senseNearbyRobotRange, bool senseNearbyRobotBlockedByWalls) {
+
+        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyRobotRange, bool senseNearbyRobotBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks, int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam, float environmentTagReadRange) : this() {
             BroadcastRange = broadcastRange;
             BroadcastBlockedByWalls = broadcastBlockedByWalls;
-            ShouldAutomaticallyUpdateSlam = shouldAutomaticallyUpdateSlam;
-            SlamUpdateIntervalInTicks = slamUpdateIntervalInTicks;
-            PositionInaccuracy = positionInaccuracy;
-            EnvironmentTagReadRange = environmentTagReadRange;
             SenseNearbyRobotRange = senseNearbyRobotRange;
             SenseNearbyRobotBlockedByWalls = senseNearbyRobotBlockedByWalls;
             
+            AutomaticallyUpdateSlam = automaticallyUpdateSlam;
+            SlamUpdateIntervalInTicks = slamUpdateIntervalInTicks;
+            SlamSynchronizeIntervalInTicks = slamSynchronizeIntervalInTicks;
+            SlamPositionInaccuracy = slamPositionInaccuracy;
+            DistributeSlam = distributeSlam;
+            
+            EnvironmentTagReadRange = environmentTagReadRange;
+            
             MaxRayCastRange = Math.Max(SenseNearbyRobotRange, BroadcastRange);
         }
+
     }
 }

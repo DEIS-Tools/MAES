@@ -47,8 +47,12 @@ namespace Dora.Statistics {
             float visibilityRange = GlobalSettings.LidarRange;
 
             foreach (var robot in robots) {
-                var slamMap = robot.Controller.SlamMap;
-                slamMap.UpdateApproxPosition(robot.transform.position);
+                SlamMap slamMap = null;
+                if (robot.Controller.Constraints.AutomaticallyUpdateSlam) {
+                    slamMap = robot.Controller.SlamMap;
+                    slamMap.UpdateApproxPosition(robot.transform.position);
+                }
+                
                 for (int i = 0; i < 60; i++) {
                     var angle = i * 6;
                     // Avoid ray casts that can be parallel to the lines of a triangle
@@ -60,8 +64,8 @@ namespace Dora.Statistics {
                             newlyExploredTriangles.Add(index);
                             ExploredTriangles++;
                         }
-
-                        slamMap.SetExploredByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
+                        if (robot.Controller.Constraints.AutomaticallyUpdateSlam) 
+                            slamMap.SetExploredByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
                         return cell.isExplorable;
                     });
                 }

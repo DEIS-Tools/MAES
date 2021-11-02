@@ -129,8 +129,9 @@ namespace Dora {
             _readableMessages.AddRange(_queuedMessages);
             _queuedMessages.Clear();
             _localTickCounter++;
-            if (_robotConstraints.ShouldAutomaticallyUpdateSlam 
-                && _localTickCounter % _robotConstraints.SlamUpdateIntervalInTicks == 0) {
+            if (_robotConstraints.AutomaticallyUpdateSlam // Are we using slam?
+                && _robotConstraints.DistributeSlam // Are we distributing slam?
+                && _localTickCounter % _robotConstraints.SlamSynchronizeIntervalInTicks == 0) {
                 SynchronizeSlamMaps();
             }
 

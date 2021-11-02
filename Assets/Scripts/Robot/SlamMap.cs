@@ -78,17 +78,17 @@ namespace Dora.Robot {
         public void UpdateApproxPosition(Vector2 worldPosition) {
             var sign = random.Next(2) == 1 ? -1 : 1;
             var multiplier = random.NextDouble() * sign;
-            var newInaccuracy = _lastInaccuracyX + multiplier * (_robotConstraints.PositionInaccuracy / 10f);
-            newInaccuracy = MathUtilities.Clamp(newInaccuracy, -_robotConstraints.PositionInaccuracy,
-                _robotConstraints.PositionInaccuracy);
+            var newInaccuracy = _lastInaccuracyX + multiplier * (_robotConstraints.SlamPositionInaccuracy / 10f);
+            newInaccuracy = MathUtilities.Clamp(newInaccuracy, -_robotConstraints.SlamPositionInaccuracy,
+                _robotConstraints.SlamPositionInaccuracy);
             var newXAprox = (float)newInaccuracy + worldPosition.x;
             _lastInaccuracyX = (float)newInaccuracy;
             
             sign = random.Next(2) == 1 ? -1 : 1;
             multiplier = random.NextDouble() * sign;
-            newInaccuracy = _lastInaccuracyY + multiplier * (_robotConstraints.PositionInaccuracy / 10f);
-            newInaccuracy = MathUtilities.Clamp(newInaccuracy, -_robotConstraints.PositionInaccuracy,
-                _robotConstraints.PositionInaccuracy);
+            newInaccuracy = _lastInaccuracyY + multiplier * (_robotConstraints.SlamPositionInaccuracy / 10f);
+            newInaccuracy = MathUtilities.Clamp(newInaccuracy, -_robotConstraints.SlamPositionInaccuracy,
+                _robotConstraints.SlamPositionInaccuracy);
             var newYAprox = (float)newInaccuracy + worldPosition.y;
             _lastInaccuracyY = (float)newInaccuracy;
 
