@@ -43,7 +43,7 @@ namespace Dora.ExplorationAlgorithm {
                     test = true;
                 }
                 else {
-                    var result = _controller.DetectWall(90f);
+                    var result = _controller.DetectWall(-180f);
                     if (result != null) {
                         var wall = result!.Value;
                         Debug.Log($"The wall is at distance: {wall.distance}, and relative angle: {wall.relativeAngle}");

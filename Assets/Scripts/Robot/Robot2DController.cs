@@ -31,7 +31,7 @@ namespace Dora {
 
         // Returns the counterclockwise angle in degrees between the forward orientation of the robot and the x-axis
         private float GetForwardAngleRelativeToXAxis() {
-            var angle = Vector2.SignedAngle(_transform.up, Vector2.right);
+            var angle = Vector2.SignedAngle(Vector2.right, _transform.up);
             if (angle < 0) angle = 360 + angle;
             return angle;
         } 
@@ -237,6 +237,11 @@ namespace Dora {
 
         public IRobotController.DetectedWall? DetectWall(float relativeAngle) {
             var globalAngle = GetForwardAngleRelativeToXAxis() - relativeAngle;
+            if (globalAngle < 0) globalAngle += 360;
+            globalAngle %= 360;
+            
+            Debug.Log("Trace angle: " + globalAngle);
+            
             var result = CommunicationManager.DetectWall(_robot, globalAngle);
             if (result != null) {
                 var intersection = result!.Value.Item1;

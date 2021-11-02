@@ -213,10 +213,20 @@ namespace Dora.MapGeneration {
         // return false. This function returns the intersection point in world space, and the angle in degrees of the
         // intersecting line (relative to the x-axis) 
         public (Vector2, float)? FindIntersection(Vector2 startingPoint, float angleDegrees, float distance, CellFunction shouldContinue) {
+            if (angleDegrees < 0f || angleDegrees > 360f)
+                throw new ArgumentException($"Given angle must be range 0-360 degrees. Angle was: {angleDegrees}");
+            
             int startingIndex = _map.GetTriangleIndex(startingPoint);
 
             // Convert given angle and starting point to a linear equation: ax + b
             var a = Mathf.Tan(Mathf.PI / 180 * angleDegrees);
+            
+            // TODO: Temp fix for 90 and 270 degree angles
+            if (Math.Abs(angleDegrees - 90f) < 0.01f)
+                a = 90.0f;
+            else if (Math.Abs(angleDegrees - 270f) < 0.01f)
+                a = -90.0f;
+            
             var b = startingPoint.y - a * startingPoint.x;
 
             var triangle = _traceableTriangles[startingIndex];
