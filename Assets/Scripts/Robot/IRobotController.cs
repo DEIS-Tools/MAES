@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.U2D;
 using static Dora.MapGeneration.EnvironmentTaggingMap;
 
 namespace Dora.Robot {
@@ -43,6 +44,20 @@ namespace Dora.Robot {
         
         // Returns a list of all environment tags that are within sensor range 
         List<PlacedTag> ReadNearbyTags();
+        
+        
+        public readonly struct DetectedWall {
+            public readonly float distance;
+            public readonly float relativeAngle;
+
+            public DetectedWall(float distance, float relativeAngle) {
+                this.distance = distance;
+                this.relativeAngle = relativeAngle;
+            }
+        }
+
+        // Performs a raycast (lidar) to detect a wall in the given direction if present and within range
+        public DetectedWall? DetectWall(float relativeAngle);
 
         // Returns debugging information about the robot that will be shown when the robot is selected
         String GetDebugInfo();

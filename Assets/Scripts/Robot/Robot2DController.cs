@@ -29,6 +29,9 @@ namespace Dora {
         public CommunicationManager CommunicationManager { get; set; }
         public SlamMap SlamMap { get; set; }
 
+        // Returns the counterclockwise angle in degrees between the forward orientation of the robot and the x-axis
+        private float GetForwardAngleRelativeToXAxis => Vector2.SignedAngle(_transform.up, Vector2.right);
+
         // Whether the rigidbody is currently colliding with something
         private bool _isCurrentlyColliding = false;
 
@@ -226,6 +229,17 @@ namespace Dora {
 
         public List<object> ReceiveBroadcast() {
             return CommunicationManager.ReadMessages(_robot);
+        }
+
+        public IRobotController.DetectedWall? DetectWall(float relativeAngle) {
+            var globalAngle = GetForwardAngleRelativeToXAxis - relativeAngle;
+            var result = CommunicationManager.DetectWall(_robot, globalAngle);
+            if (result != null) {
+                var intersection = result!.Value.Item1;
+                var intersectingWallAngle = result!.Value.Item2;
+                var relativeWallAngle = intersectingWallAngle - GetForwardAngleRelativeToXAxis;
+            }
+            return null;
         }
 
         public string GetDebugInfo() {

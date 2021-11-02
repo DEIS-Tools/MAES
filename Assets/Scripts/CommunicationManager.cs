@@ -195,5 +195,13 @@ namespace Dora {
             this._robots = robots;
         }
 
+        
+        // Attempts to detect a wall in the given direction. If present, it will return the intersection point and the
+        // global angle (relative to x-axis) in degrees of the intersecting line
+        public (Vector2, float)? DetectWall(MonaRobot robot, float globalAngle) {
+            var range = _robotConstraints.EnvironmentTagReadRange;
+            return _rayTracingMap.FindIntersection(robot.transform.position, globalAngle, range, (_, isSolid) => !isSolid);
+        }
+
     }
 }

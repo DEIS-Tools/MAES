@@ -121,12 +121,12 @@ namespace Dora {
                 
                 scenarios.Enqueue(new SimulationScenario(
                     seed: randomSeed,
-                    hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
+                    hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
                     mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
                     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                         map, 
                         randomSeed, 
-                        10, 
+                        1, 
                         0.6f,
                         (seed) => new RandomExplorationAlgorithm(seed)),
                     robotConstraints: robotConstraints
