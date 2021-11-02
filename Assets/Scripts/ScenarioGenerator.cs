@@ -128,10 +128,9 @@ namespace Dora {
                         randomSeed, 
                         1, 
                         0.6f,
-                        (seed) => new RandomExplorationAlgorithm(seed)),
+                        (seed) => new BrickAndMortar(robotConstraints, seed)),
                     robotConstraints: robotConstraints
                 ));
-                
             }
 
             return scenarios;

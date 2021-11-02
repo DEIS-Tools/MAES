@@ -159,6 +159,9 @@ namespace Dora.MapGeneration {
         // if it returns false the trace will terminate. The trace automatically terminates when it exits map bounds.
         public void Raytrace(Vector2 startingPoint, float angleDegrees, float distance,
             CellFunction shouldContinueFromCell) {
+            if (angleDegrees < 0f || angleDegrees > 360f)
+                throw new ArgumentException($"Given angle must be between 0-360 degrees. Angle was: {angleDegrees}");
+            
             int startingIndex = _map.GetTriangleIndex(startingPoint);
 
             // Convert given angle and starting point to a linear equation: ax + b

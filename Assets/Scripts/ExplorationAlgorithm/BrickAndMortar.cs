@@ -1,4 +1,5 @@
 using System;
+using Dora.MapGeneration;
 using Dora.Robot;
 using UnityEngine;
 
@@ -22,11 +23,9 @@ namespace Dora.ExplorationAlgorithm {
 
         private readonly float _preferredAxialDistance;
         
-
-        public BrickAndMortar(IRobotController controller, RobotConstraints constraints, int randomSeed) {
+        public BrickAndMortar(RobotConstraints constraints, int randomSeed) {
             _constraints = constraints;
             _randomSeed = randomSeed;
-            _controller = controller;
             
             _maximumDiagonalDistance = constraints.EnvironmentTagReadRange / 2f - MaxExpectedPositioningError;
             // Axial distance formula derived from a² + b² = c²  (And since we operate in a grid we have a = b)
@@ -36,20 +35,31 @@ namespace Dora.ExplorationAlgorithm {
             _preferredAxialDistance = _maximumAxialDistance / 2f;
         }
 
-        private class EnvironmentTag {
-            public readonly int Id;
-        }
-        
+        private bool test = false;
         public void UpdateLogic() {
-            throw new System.NotImplementedException();
+            if (_controller.GetStatus() == RobotStatus.Idle) {
+                if (test) {
+                    _controller.Rotate(-42);
+                    test = true;
+                }
+                else {
+                    var result = _controller.DetectWall(90f);
+                    if (result != null) {
+                        var wall = result!.Value;
+                        Debug.Log($"The wall is at distance: {wall.distance}, and relative angle: {wall.relativeAngle}");
+                    }
+                }
+            }
+            
+            
         }
 
         public void SetController(Robot2DController controller) {
-            throw new System.NotImplementedException();
+            this._controller = controller;
         }
 
         public string GetDebugInfo() {
-            throw new System.NotImplementedException();
+            return "";
         }
         
         public object SaveState() {
