@@ -54,8 +54,8 @@ namespace Dora.Robot {
             }
         }
 
-        // Performs a raycast (lidar) to detect a wall in the given direction if present and within range
-        public DetectedWall? DetectWall(float relativeAngle);
+        // Performs a raycast (lidar) to detect a wall in the given global direction, if wall is present and within range
+        public DetectedWall? DetectWall(float globalAngle);
 
         // Returns debugging information about the robot that will be shown when the robot is selected
         String GetDebugInfo();

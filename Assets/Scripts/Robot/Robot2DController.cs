@@ -236,10 +236,10 @@ namespace Dora {
             return CommunicationManager.ReadMessages(_robot);
         }
 
-        public IRobotController.DetectedWall? DetectWall(float relativeAngle) {
-            var globalAngle = GetForwardAngleRelativeToXAxis() - relativeAngle;
-            if (globalAngle < 0) globalAngle += 360;
-            globalAngle %= 360;
+        public IRobotController.DetectedWall? DetectWall(float globalAngle) {
+            if (globalAngle < 0 || globalAngle > 360)
+                throw new ArgumentException("Global angle argument must be between 0 and 360." +
+                                            $"Given angle was {globalAngle}");
             
             var result = CommunicationManager.DetectWall(_robot, globalAngle);
             if (result != null) {
