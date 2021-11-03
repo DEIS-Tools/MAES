@@ -31,9 +31,10 @@ namespace Dora.ExplorationAlgorithm {
         private readonly float _maximumAxialDistance;
 
         private readonly float _preferredAxialDistance;
-        
-        private BrickAndMortarTag? _targetTag;
+
+        // TODO Determine architecture for planning a move (find target -> go there -> exec func -> 
         private BrickAndMortarTag? _lastTag;
+        private BrickAndMortarTag? _targetTag;
         private Action _onTargetReached;
         
         public enum TileStatus {
@@ -50,13 +51,14 @@ namespace Dora.ExplorationAlgorithm {
             public RelativePosition<BrickAndMortarTag>? Tag;
             public int Direction;
 
-            public NeighbourTile(TileStatus status, RelativePosition<BrickAndMortarTag> tag, int direction) {
+            public NeighbourTile(TileStatus status, RelativePosition<BrickAndMortarTag>? tag, int direction) {
                 Status = status;
                 Tag = tag;
                 Direction = direction;
             }
         }
 
+        // TODO: Convert Direction to a class
         private const int CardinalDirectionsCount = 8;
         // Index representing 8 neighbouring tags/tiles
         private const int
@@ -71,6 +73,7 @@ namespace Dora.ExplorationAlgorithm {
         
         private int OppositeDirection(int direction) => (direction + 4) % 8;
         private int DirectionToAngle(int direction) => ((8 - direction) % 8) * 45;
+        private bool IsDirectionDiagonal(int direction) => direction % 2 != 0;
         
         public BrickAndMortar(RobotConstraints constraints, int randomSeed) {
             _constraints = constraints;
@@ -94,16 +97,19 @@ namespace Dora.ExplorationAlgorithm {
                 _controller.DepositTag(CreateNextTag());
             }
 
+            var nextTarget = 
             return;
         }
 
         private RelativePosition<BrickAndMortarTag?> ChooseNextTile(RelativePosition<BrickAndMortarTag> currentTag) {
-            var neighbourTags = currentTag.Item.NeighbourIds;
+            var neighbours = GetNeighbours(currentTag);
+            var firstUnexplored = neighbours.First(tile => tile.Status == TileStatus.Unexplored);
             
-            return null;
+            return new RelativePosition<BrickAndMortarTag?>(_preferredAxialDistance, DirectionToAngle(firstUnexplored.Direction), null);
         }
 
-        private RelativePosition<BrickAndMortarTag?>[] GetNeighbours(RelativePosition<BrickAndMortarTag> currentTag) {
+        // Finds all neighbours of the given tag
+        private NeighbourTile[] GetNeighbours(RelativePosition<BrickAndMortarTag> currentTag) {
             var nearbyTags = _controller
                 .ReadNearbyTags()
                 // Cast ITag to BrickAndMortarTag
@@ -121,10 +127,23 @@ namespace Dora.ExplorationAlgorithm {
                     var tag = nearbyTags.First(item => item.Item.ID == neighbourID)!;
                     neighbours[currentDir] = new NeighbourTile(tag.Item.Status, tag, currentDir);
                 } else {
+                    // No registered tags. Detect if the neighbour tile is traversable or solid
                     var globalAngle = DirectionToAngle(currentDir);
+                    var possibleWall = _controller.DetectWall(globalAngle);
+                    var maximumWallDistance = IsDirectionDiagonal(currentDir)
+                        ? _maximumDiagonalDistance
+                        : _maximumAxialDistance;
+                    
+                    if (possibleWall != null && possibleWall.Value.distance <= maximumWallDistance) {
+                        // This tile is not traversable, mark it as solid
+                        neighbours[currentDir] = new NeighbourTile(TileStatus.Solid,null, currentDir);
+                    } else {
+                        // This tile is not solid, consider it unexplored
+                        neighbours[currentDir] = new NeighbourTile(TileStatus.Unexplored,null, currentDir);
+                    }
                 }
             }
-            return null;
+            return neighbours;
         }
 
         private BrickAndMortarTag CreateNextTag() {
