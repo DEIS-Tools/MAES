@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Dora.Robot;
 using UnityEngine;
 using Random = System.Random;
@@ -36,13 +37,25 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             if(_shouldRecalculateRegions)
                 RecalculateVoronoiRegions();
             
-            // Find unexplored cells
-            
-            
-            // If local region contains unexplored cells
-                // Move to them in ordered fashion (north, east, south and west
+            // Find unexplored tiles
+            // TODO: The voronoi region may be empty, if the robot is 1/4 the size of a slam tile and is located between tiles, but surrounded by other robots
+            var myRegion = _localVoronoiRegions.First(k => k.RobotId == this._robotController.GetRobotID());
+            var unexploredTiles = FindUnexploredTiles(myRegion);
+
+            // If local region contains unexplored tiles
+            // Move to them in ordered fashion (north, east, south and west
             // Else
-                // Enter search mode
+            // Enter search mode
+        }
+
+        private List<Vector2> FindUnexploredTiles(VoronoiRegion region) {
+            var exploredTilesCoords = this._robotController.GetSlamMap().GetExploredTiles()
+                                                    .Select(e => e.Item1)
+                                                    .ToList();
+
+            // Remove all already explored tiles from region.
+            return region.Tiles.Where(e => !exploredTilesCoords.Contains(e)).ToList();
+
         }
 
         private void RecalculateVoronoiRegions() {
