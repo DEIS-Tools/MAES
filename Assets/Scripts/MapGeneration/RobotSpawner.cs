@@ -66,6 +66,10 @@ namespace Dora.MapGeneration
                 possibleSpawnTiles.AddRange(room.tiles.Except(room.edgeTiles));
             }
             
+            // Offset suggested starting point to map
+            suggestedStartingPoint = new Coord(suggestedStartingPoint.Value.x - (int)collisionMap.ScaledOffset.x,
+                suggestedStartingPoint.Value.y - (int)collisionMap.ScaledOffset.y);
+            
             possibleSpawnTiles.Sort((c1, c2) => {
                 return c1.ManhattanDistanceTo(suggestedStartingPoint.Value) -
                         c2.ManhattanDistanceTo(suggestedStartingPoint.Value);
