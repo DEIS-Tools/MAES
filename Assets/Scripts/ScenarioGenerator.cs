@@ -16,7 +16,7 @@ namespace Dora {
                     randomSeed,
                     4,
                     2,
-                    48,
+                    0,
                     10,
                     1,
                     1,
@@ -49,7 +49,7 @@ namespace Dora {
                     environmentTagReadRange: 4.0f
                 );
 
-                if (true) {
+                if (false) {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,

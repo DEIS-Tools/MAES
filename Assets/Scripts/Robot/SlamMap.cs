@@ -9,7 +9,7 @@ using UnityEngine;
 using Random = System.Random;
 
 namespace Dora.Robot {
-    public class SlamMap {
+    public class SlamMap : SlamAlgorithmInterface{
         // Size of a tile in world space
         private readonly float _tileSize;
         private readonly int _widthInTiles, _heightInTiles;
@@ -66,9 +66,7 @@ namespace Dora.Robot {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
             return _tiles[localCoordinate.x, localCoordinate.y];
         }
-
         
-
         public enum SlamTileStatus {
             Unseen,
             Open,
@@ -114,6 +112,23 @@ namespace Dora.Robot {
             foreach (var map in maps) {
                 map._tiles = globalMap.Clone() as SlamTileStatus[,];
             }
+        }
+
+        public Vector2 GetApproxPosition() {
+            return ApproximatePosition;
+        }
+
+        public List<(Vector2, SlamTileStatus)> GetExploredTiles() {
+            var res = new List<(Vector2, SlamTileStatus)>();
+
+            for (int x = 0; x < _widthInTiles; x++) {
+                for (int y = 0; y < _heightInTiles; y++) {
+                    if (_tiles[x,y] != SlamTileStatus.Unseen)
+                        res.Add((new Vector2(x,y), _tiles[x,y]));
+                }
+            }
+
+            return res;
         }
     }
 }

@@ -266,5 +266,9 @@ namespace Dora {
                     e.item))
                 .ToList();
         }
+
+        public SlamAlgorithmInterface GetSlamMap() {
+            return this.SlamMap;
+        }
     }
 }

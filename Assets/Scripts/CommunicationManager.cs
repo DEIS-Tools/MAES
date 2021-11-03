@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Security.Cryptography;
 using Dora.MapGeneration;
 using Dora.Robot;
 using UnityEngine;
 using static Dora.MapGeneration.EnvironmentTaggingMap;
+using Vector2 = UnityEngine.Vector2;
 
 namespace Dora {
     // Messages sent through this class will be subject to communication range and line of sight.
@@ -60,9 +62,15 @@ namespace Dora {
             public readonly T item;
 
             public SensedObject(float distance, float angle, T t) {
-                Distance = distance;
-                Angle = angle;
+                this.Distance = distance;
+                this.Angle = angle;
                 this.item = t;
+            }
+
+            public Vector2 GetRelativePosition(Vector2 myPosition) {
+                var x = myPosition.x + (Distance * Mathf.Cos(Mathf.Deg2Rad * Angle));
+                var y = myPosition.y + (Distance * Mathf.Sin(Mathf.Deg2Rad * Angle));
+                return new Vector2(x, y);
             }
         }
 
