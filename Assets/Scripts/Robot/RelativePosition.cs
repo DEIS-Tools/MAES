@@ -5,7 +5,7 @@ namespace Dora.Robot {
 
         public readonly float Distance;
         public readonly float RelativeAngle;
-        public readonly T Item;
+        public T Item;
 
         public RelativePosition(float distance, float relativeAngle, T item) {
             Distance = distance;

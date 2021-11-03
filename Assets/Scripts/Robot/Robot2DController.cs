@@ -35,7 +35,12 @@ namespace Dora {
             var angle = Vector2.SignedAngle(Vector2.right, _transform.up);
             if (angle < 0) angle = 360 + angle;
             return angle;
-        } 
+        }
+
+        private Vector2 GetRobotDirectionVector() {
+            var angle = GetForwardAngleRelativeToXAxis();
+            return new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+        }
 
         // Whether the rigidbody is currently colliding with something
         private bool _isCurrentlyColliding = false;
@@ -273,6 +278,10 @@ namespace Dora {
             _currentTask = new FiniteMovementTask(_transform, distanceInMeters, reverse);
         }
 
+        public float GetGlobalAngle() {
+            return GetForwardAngleRelativeToXAxis();
+        }
+
         // Deposits an environment tag at the current position of the robot
         public void DepositTag(ITag tag) {
             CommunicationManager.DepositTag(_robot, tag);
@@ -288,8 +297,7 @@ namespace Dora {
             var robotPosition = (Vector2) _robot.transform.position;
             var distance = Vector2.Distance(robotPosition, tagPosition);
             // If walls cannot be ignored, perform a raycast to check line of sight between the given points
-            var angle = Vector2.Angle(tagPosition, tagPosition - robotPosition);
-            if (robotPosition.y > tagPosition.y) angle = 180 + (180 - angle);
+            var angle = Vector2.SignedAngle(GetRobotDirectionVector(), tagPosition - robotPosition);
             return new RelativePosition<T>(distance, angle, item);
         }
     }
