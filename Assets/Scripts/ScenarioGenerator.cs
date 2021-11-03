@@ -35,15 +35,18 @@ namespace Dora {
                     1,
                     1f);
 
+                
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
                     broadcastBlockedByWalls: true,
-                    shouldAutomaticallyUpdateSlam: true,
-                    slamUpdateIntervalInTicks: 10,
-                    positionInaccuracy: 0.1f,
-                    environmentTagReadRange: 4.0f,
                     senseNearbyRobotRange: 5f,
-                    senseNearbyRobotBlockedByWalls: true
+                    senseNearbyRobotBlockedByWalls: true,
+                    automaticallyUpdateSlam: true,
+                    slamUpdateIntervalInTicks: 10,
+                    slamSynchronizeIntervalInTicks: 10,
+                    slamPositionInaccuracy: 0.5f,
+                    distributeSlam: false,
+                    environmentTagReadRange: 4.0f
                 );
 
                 if (true) {
