@@ -176,13 +176,14 @@ namespace Dora.ExplorationAlgorithm {
         // center is the position of the center tile relative to the robot
         // neighbour is the position of the neighbour relative to the center tile
         public RelativePosition<T> GetNeighbourPosRelativeToRobot<T>(RelativePosition<T> center, RelativePosition<T> neighbour, float globalRobotAngle) {
+            var robotAngleVector = new Vector2(Mathf.Cos(globalRobotAngle * Mathf.Deg2Rad), Mathf.Sin(globalRobotAngle * Mathf.Deg2Rad));
             var absoluteAngleToCenter = (globalRobotAngle + center.RelativeAngle) % 360;
             var robotToCenter = new Vector2(Mathf.Cos(absoluteAngleToCenter * Mathf.Deg2Rad), Mathf.Sin(absoluteAngleToCenter * Mathf.Deg2Rad)) * center.Distance;
             var centerToNeighbour = new Vector2(Mathf.Cos(neighbour.RelativeAngle * Mathf.Deg2Rad), Mathf.Sin(neighbour.RelativeAngle * Mathf.Deg2Rad)) * neighbour.Distance;
             var robotToNeighbour = robotToCenter + centerToNeighbour;
-
+            
             // Find angle of neighbour relative to the robot
-            var angleRelativeToRobot = Vector2.SignedAngle(Vector2.right, robotToNeighbour) - globalRobotAngle;
+            var angleRelativeToRobot = Vector2.SignedAngle(robotAngleVector, robotToNeighbour);
             var distanceFromRobot = robotToNeighbour.magnitude;
             return new RelativePosition<T>(distanceFromRobot, angleRelativeToRobot, neighbour.Item);
         } 
