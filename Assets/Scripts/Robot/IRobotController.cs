@@ -38,13 +38,11 @@ namespace Dora.Robot {
         // Receives broadcast data sent by nearby robots the previous logic tick
         List<object> ReceiveBroadcast();
 
-
         // Deposits a tag into the environment at the current position of the robot
         void DepositTag(ITag tag);
         
         // Returns a list of all environment tags that are within sensor range 
-        List<PlacedTag> ReadNearbyTags();
-        
+        List<RelativePosition<ITag>> ReadNearbyTags();
         
         public readonly struct DetectedWall {
             public readonly float distance;
