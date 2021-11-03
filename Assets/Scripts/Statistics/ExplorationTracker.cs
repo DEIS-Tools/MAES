@@ -51,6 +51,7 @@ namespace Dora.Statistics {
                 if (robot.Controller.Constraints.AutomaticallyUpdateSlam) {
                     slamMap = robot.Controller.SlamMap;
                     slamMap.UpdateApproxPosition(robot.transform.position);
+                    slamMap.SetApproxRobotAngle(robot.Controller.GetForwardAngleRelativeToXAxis());
                 }
                 
                 for (int i = 0; i < 60; i++) {

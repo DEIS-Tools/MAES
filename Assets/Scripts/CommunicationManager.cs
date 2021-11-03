@@ -67,9 +67,9 @@ namespace Dora {
                 this.item = t;
             }
 
-            public Vector2 GetRelativePosition(Vector2 myPosition) {
-                var x = myPosition.x + (Distance * Mathf.Cos(Mathf.Deg2Rad * Angle));
-                var y = myPosition.y + (Distance * Mathf.Sin(Mathf.Deg2Rad * Angle));
+            public Vector2 GetRelativePosition(Vector2 myPosition, float globalAngle) {
+                var x = myPosition.x + (Distance * Mathf.Cos(Mathf.Deg2Rad * ((Angle + globalAngle) % 360)));
+                var y = myPosition.y + (Distance * Mathf.Sin(Mathf.Deg2Rad * ((Angle + globalAngle) % 360)));
                 return new Vector2(x, y);
             }
         }

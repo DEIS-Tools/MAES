@@ -7,5 +7,7 @@ namespace Dora.Robot {
         public Vector2 GetApproxPosition();
 
         public List<(Vector2, SlamTileStatus)> GetExploredTiles();
+
+        public float getRobotAngleDeg();
     }
 }

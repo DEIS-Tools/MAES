@@ -56,6 +56,13 @@ namespace Dora {
             _rightWheel = rightWheel;
             _robot = robot;
         }
+        
+        // Returns the counterclockwise angle in degrees between the forward orientation of the robot and the x-axis
+        public float GetForwardAngleRelativeToXAxis() {
+            var angle = Vector2.SignedAngle(Vector2.right, _transform.up);
+            if (angle < 0) angle = 360 + angle;
+            return angle;
+        } 
 
         public int GetRobotID() {
             return _robot.id;

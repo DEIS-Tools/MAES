@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Dora.ExplorationAlgorithm;
+using Dora.ExplorationAlgorithm.Voronoi;
 using Dora.MapGeneration;
 
 namespace Dora {
@@ -71,10 +72,10 @@ namespace Dora {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
-                            20, 
+                            2, 
                             0.6f,
                             new Coord(20,20),
-                            (seed) => new RandomExplorationAlgorithm(seed)),
+                            (seed) => new VoronoiExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints
                     ));
                 }

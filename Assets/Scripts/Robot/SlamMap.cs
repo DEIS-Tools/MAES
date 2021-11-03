@@ -24,6 +24,7 @@ namespace Dora.Robot {
         private float _lastInaccuracyY = 0f;
         // Represents the current approximate position of the given robot
         public Vector2 ApproximatePosition { get; private set; }
+        private float _robotAngle = 0;
         private int _randomSeed;
         private Random random;
 
@@ -129,6 +130,14 @@ namespace Dora.Robot {
             }
 
             return res;
+        }
+
+        public float getRobotAngleDeg() {
+            return _robotAngle;
+        }
+
+        public void SetApproxRobotAngle(float robotAngle) {
+            _robotAngle = robotAngle;
         }
     }
 }
