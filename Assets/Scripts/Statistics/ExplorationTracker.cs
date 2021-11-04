@@ -48,8 +48,10 @@ namespace Dora.Statistics {
 
             foreach (var robot in robots) {
                 SlamMap slamMap = null;
+                
                 if (robot.Controller.Constraints.AutomaticallyUpdateSlam) {
                     slamMap = robot.Controller.SlamMap;
+                    slamMap.ResetRobotVisibility();
                     slamMap.UpdateApproxPosition(robot.transform.position);
                     slamMap.SetApproxRobotAngle(robot.Controller.GetForwardAngleRelativeToXAxis());
                 }
@@ -67,6 +69,7 @@ namespace Dora.Statistics {
                         }
                         if (robot.Controller.Constraints.AutomaticallyUpdateSlam) 
                             slamMap.SetExploredByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
+                            slamMap.SetCurrentlyVisibleByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
                         return cell.isExplorable;
                     });
                 }

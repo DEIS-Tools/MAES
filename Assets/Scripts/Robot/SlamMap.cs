@@ -15,6 +15,7 @@ namespace Dora.Robot {
         private readonly int _widthInTiles, _heightInTiles;
 
         private SlamTileStatus[,] _tiles;
+        private SlamTileStatus[,] _currentlyVisibleTiles;
         private SimulationMap<bool> _collisionMap;
 
         private readonly float _scale;
@@ -61,6 +62,26 @@ namespace Dora.Robot {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
             if (_tiles[localCoordinate.x, localCoordinate.y] != SlamTileStatus.Solid)
                 _tiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+        }
+
+        public Vector2Int GetCurrentPositionTile() {
+            var currentPosition = this.GetApproxPosition();
+            var x = Convert.ToInt32(currentPosition.x);
+            var y = Convert.ToInt32(currentPosition.y);
+            var slamX = (x - (int)_scaledOffset.x) * 2;
+            var slamY = (y - (int)_scaledOffset.y) * 2;
+
+            return new Vector2Int(slamX, slamY);
+        }
+
+        public void ResetRobotVisibility() {
+            _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
+        }
+
+        public void SetCurrentlyVisibleByTriangle(int triangleIndex, bool isOpen) {
+            var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
+            if (_currentlyVisibleTiles[localCoordinate.x, localCoordinate.y] != SlamTileStatus.Solid)
+                _currentlyVisibleTiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
         }
 
         public SlamTileStatus GetTileByTriangleIndex(int triangleIndex) {
@@ -119,13 +140,26 @@ namespace Dora.Robot {
             return ApproximatePosition;
         }
 
-        public List<(Vector2, SlamTileStatus)> GetExploredTiles() {
-            var res = new List<(Vector2, SlamTileStatus)>();
+       public Dictionary<Vector2Int, SlamTileStatus> GetExploredTiles() {
+            var res = new Dictionary<Vector2Int, SlamTileStatus>();
 
             for (int x = 0; x < _widthInTiles; x++) {
                 for (int y = 0; y < _heightInTiles; y++) {
-                    if (_tiles[x,y] != SlamTileStatus.Unseen)
-                        res.Add((new Vector2(x,y), _tiles[x,y]));
+                    if (_tiles[x, y] != SlamTileStatus.Unseen)
+                        res[new Vector2Int(x, y)] = _tiles[x, y];
+                }
+            }
+
+            return res;
+        }
+
+        public Dictionary<Vector2Int, SlamTileStatus> GetCurrentlyVisibleTiles() {
+            var res = new Dictionary<Vector2Int, SlamTileStatus>();
+            
+            for (int x = 0; x < _widthInTiles; x++) {
+                for (int y = 0; y < _heightInTiles; y++) {
+                    if (_currentlyVisibleTiles[x, y] != SlamTileStatus.Unseen)
+                        res[new Vector2Int(x, y)] = _currentlyVisibleTiles[x, y];
                 }
             }
 

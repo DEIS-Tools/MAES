@@ -72,9 +72,9 @@ namespace Dora {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
-                            2, 
+                            1, 
                             0.6f,
-                            new Coord(20,20),
+                            new Coord(-30,-30),
                             (seed) => new VoronoiExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints
                     ));

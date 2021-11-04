@@ -59,6 +59,7 @@ namespace Dora {
         
         // Returns the counterclockwise angle in degrees between the forward orientation of the robot and the x-axis
         public float GetForwardAngleRelativeToXAxis() {
+            // TODO: Possibly add inaccuracy? - Philip
             var angle = Vector2.SignedAngle(Vector2.right, _transform.up);
             if (angle < 0) angle = 360 + angle;
             return angle;
@@ -244,7 +245,8 @@ namespace Dora {
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
             info.AppendLine($"Current task: {_currentTask?.GetType()}");
-            info.Append($"Slam position: {approxPosition.x.ToString("#.00")}, {approxPosition.y.ToString("#.00")}");
+            info.Append($"Slam position: {approxPosition.x.ToString("#.00")}, {approxPosition.y.ToString("#.00")}\n");
+            info.Append($"Slam tile: {SlamMap.GetCurrentPositionTile()}");
             return info.ToString();
         }
 

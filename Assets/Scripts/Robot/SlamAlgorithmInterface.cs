@@ -6,7 +6,11 @@ namespace Dora.Robot {
     public interface SlamAlgorithmInterface {
         public Vector2 GetApproxPosition();
 
-        public List<(Vector2, SlamTileStatus)> GetExploredTiles();
+        public Dictionary<Vector2Int, SlamTileStatus> GetExploredTiles();
+        
+        public Dictionary<Vector2Int, SlamTileStatus> GetCurrentlyVisibleTiles();
+
+        public Vector2Int GetCurrentPositionTile();
 
         public float getRobotAngleDeg();
     }

@@ -261,7 +261,6 @@ namespace Dora {
                     continue;
 
                 sensedObjects.Add(new SensedObject<int>(comInfo.Distance, comInfo.Angle, robot.id));
-                
             }
             
             return sensedObjects;
