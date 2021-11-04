@@ -5,6 +5,7 @@ using System.Linq;
 using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Robot.Task;
+using Dora.Utilities;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
@@ -28,8 +29,10 @@ namespace Dora.ExplorationAlgorithm {
         
         // The maximum diagonal distance between two tags
         private readonly float _maximumDiagonalDistance;
+        private readonly float _minimumDiagonalDistance;
         // The maximum distance between along either axis (x or y)
         private readonly float _maximumAxialDistance;
+        private readonly float _minimumAxialDistance;
 
         private readonly float _preferredAxialDistance;
         private readonly float _preferredDiagonalDistance;
@@ -79,11 +82,11 @@ namespace Dora.ExplorationAlgorithm {
                 } else {
                     // Calculate the relative position of this tile based on the relative position to the center
                     var centerRelativeToRobot = tags.First(t => t.Item.ID == CenterTag.ID);
-                    var neighbourAngle = _bm.DirectionToAngle(DirectionFromCenter);
+                    var neighbourAngle = DirectionToAngle(DirectionFromCenter);
                     var robotGlobalAngle = _bm._controller.GetGlobalAngle();
                     
                     // The distance to this tile depends on whether it is diagonal from the center
-                    var neighbourDistance = _bm.IsDirectionDiagonal(DirectionFromCenter)
+                    var neighbourDistance = IsDirectionDiagonal(DirectionFromCenter)
                         ? _bm._preferredDiagonalDistance
                         : _bm._preferredAxialDistance;
                     var neighbourRelativeToCenter = new RelativePosition<BrickAndMortarTag?>(neighbourDistance, neighbourAngle, null);
@@ -106,21 +109,26 @@ namespace Dora.ExplorationAlgorithm {
             North = 6,
             NorthEast = 7;
         
-        private int OppositeDirection(int direction) => (direction + 4) % 8;
-        private int DirectionToAngle(int direction) => ((8 - direction) % 8) * 45;
-        private bool IsDirectionDiagonal(int direction) => direction % 2 != 0;
+        private static int OppositeDirection(int direction) => (direction + 4) % 8;
+        private static int DirectionToAngle(int direction) => ((8 - direction) % 8) * 45;
+        private static bool IsDirectionDiagonal(int direction) => direction % 2 != 0;
         
         public BrickAndMortar(RobotConstraints constraints, int randomSeed) {
             _constraints = constraints;
             _randomSeed = randomSeed;
             _tagIdGenerator = new Random(randomSeed);
+            
+            // The maximum diagonal distance between two points is 1.5 tiles
             _maximumDiagonalDistance = constraints.EnvironmentTagReadRange / 2f - TolerablePositioningError;
             // Axial distance formula derived from a² + b² = c²  (And since we operate in a grid we have a = b)
             // This gives   2a² = c²  then rearranging to:  a = sqrt(c²/2)
             _maximumAxialDistance = Mathf.Sqrt(Mathf.Pow(_maximumDiagonalDistance, 2f) / 2f);
-            
-            _preferredAxialDistance = _maximumAxialDistance / 2f;
-            _preferredDiagonalDistance = _maximumDiagonalDistance / 2f;
+
+            _preferredDiagonalDistance = _maximumDiagonalDistance * (2f/3f);
+            _preferredAxialDistance = _maximumAxialDistance * (2f/3f);
+
+            _minimumDiagonalDistance = _maximumDiagonalDistance * (1f / 3f);
+            _minimumAxialDistance = _maximumAxialDistance * (1f / 3f);
         }
 
         public void UpdateLogic() {
@@ -156,7 +164,6 @@ namespace Dora.ExplorationAlgorithm {
             var neighbours = GetNeighbours(currentTag);
             var firstUnexplored = neighbours.First(tile => tile.Status == TileStatus.Unexplored);
             return firstUnexplored;
-            //return new RelativePosition<BrickAndMortarTag?>(_preferredAxialDistance, DirectionToAngle(firstUnexplored.Direction), null);
         }
 
         // Finds all neighbours of the given tag
@@ -255,6 +262,7 @@ namespace Dora.ExplorationAlgorithm {
         }
         
         // Updates the given tag (and its neighbours) to have correct neighbour ids
+        // This method assumes that the current tag 
         private void UpdateTagNeighbours(NeighbourTile newTile, BrickAndMortarTag lastTag) {
             // TODO: Look for new nearby tags and merge grid! (Our main contribution)
             // TODO: Also merge relevant neighbours of previous tile
@@ -266,10 +274,47 @@ namespace Dora.ExplorationAlgorithm {
             // ie. if the new tag is the WEST neighbour of the old tile,
             // then the old tag is the EAST neighbour of the new tag
             newTag.NeighbourIds[OppositeDirection(newTile.DirectionFromCenter)] = lastTag.ID;
-        }
-        
 
-        
+            var otherTags = GetNearbyTags()
+                .Where(relativeTag => relativeTag.Item.ID != newTag.ID)
+                .ToList();
+            // Attempt to identify all unknown neighbours
+            for (int direction = 0; direction < CardinalDirectionsCount; direction++) {
+                if (newTag.NeighbourIds[direction] == BrickAndMortarTag.UnknownNeighbour) {
+                    var neighbour = IdentifyNeighbour(otherTags, direction);
+                    if (neighbour != null) {
+                        newTag.NeighbourIds[direction] = neighbour.ID;
+                        neighbour.NeighbourIds[OppositeDirection(direction)] = newTag.ID;
+                    }
+                }
+            }
+        }
+
+        // Looks for a tag that is within the given neighbour tile region(relative to the current position of the robot)
+        private BrickAndMortarTag? IdentifyNeighbour(List<RelativePosition<BrickAndMortarTag>> relativeTags, int cardinalDirection) {
+            bool isDiagonal = IsDirectionDiagonal(cardinalDirection);
+            float maximumDistance = isDiagonal ? _maximumDiagonalDistance : _maximumAxialDistance;
+            float minimumDistance = isDiagonal ? _minimumDiagonalDistance : _minimumAxialDistance;
+            float globalNeighbourAngle = DirectionToAngle(cardinalDirection);
+            float robotAngle = this._controller.GetGlobalAngle();
+
+            // Create a bounding box for the neighbour region
+            var minimumVector = Geometry.VectorFromDegreesAndMagnitude(globalNeighbourAngle,minimumDistance);
+            var maximumVector = Geometry.VectorFromDegreesAndMagnitude(globalNeighbourAngle,maximumDistance);
+            var tileSize = Mathf.Max(Mathf.Abs(maximumVector.x - minimumVector.x), Mathf.Abs(maximumVector.y - minimumVector.y));
+            var bounds = new Bounds((minimumVector + maximumVector) / 2f, new Vector2(tileSize, tileSize));
+            
+            // Check if any of the given tags are within the neighbour bounding box 
+            foreach (var relativeTag in relativeTags) {
+                var globalTagAngle = robotAngle + relativeTag.RelativeAngle;
+                var tagVector = Geometry.VectorFromDegreesAndMagnitude(globalTagAngle, relativeTag.Distance);
+                if (bounds.Contains(tagVector))
+                    return relativeTag.Item;
+            }
+
+            // No neighbour was found
+            return null;
+        }
         
         public void SetController(Robot2DController controller) {
             this._controller = controller;
