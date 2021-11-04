@@ -94,6 +94,10 @@ namespace Dora.ExplorationAlgorithm {
                         .Map(_ => this);
                 }
             }
+
+            public bool IsTraversable() {
+                return Status == TileStatus.Unexplored || Status == TileStatus.Explored;
+            }
         }
 
         // TODO: Convert Direction to a class
@@ -137,11 +141,10 @@ namespace Dora.ExplorationAlgorithm {
             
             // If uninitialized, then init the algorithm by dropping tag at current position
             _lastTag ??= DepositNewTag();
-
+            
             // If no target tile is currently chosen, then update the current tile status and find next tile to visit
-            _targetTile ??= ChooseNextTile(_lastTag);
-            
-            
+            _targetTile ??= UpdateTargetTile(_lastTag);
+
             var targetRelativePosition = _targetTile.GetRelativePosition();
 
             // If we are not already at this tile, start rotating/moving towards it
@@ -160,22 +163,26 @@ namespace Dora.ExplorationAlgorithm {
             _targetTile = null;
         }
 
-        private NeighbourTile ChooseNextTile(BrickAndMortarTag currentTag) {
+        private NeighbourTile UpdateTargetTile(BrickAndMortarTag currentTag) {
             var neighbours = GetNeighbours(currentTag);
+
+            // Update status of current tile
+            if (!CenterBlocksPathBetweenNeighbours(neighbours)) {
+                currentTag.Status = TileStatus.Visited;
+            }
 
             int bestTileIndex = 0;
             var bestScore = -1;
             for (int i = 0; i < CardinalDirectionsCount; i+=2) {
-                // Skip if not traversable (TODO: Also allow explored later)
-                if (neighbours[i].Status != TileStatus.Unexplored)
+                // Ignore visited and solid tiles
+                if (!neighbours[i].IsTraversable())
                     continue;
+                
                 var score = 0;
 
                 // Check if the two neighbours of this tile are solid/visited, if so increase the score
-                var neighbour1 = neighbours[(i + 7) % CardinalDirectionsCount];
-                var neighbour2 = neighbours[(i + 1) % CardinalDirectionsCount];
-                if (neighbour1.Status == TileStatus.Solid || neighbour1.Status == TileStatus.Visited) score++;
-                if (neighbour2.Status == TileStatus.Solid || neighbour2.Status == TileStatus.Visited) score++;
+                if (!neighbours[(i + 7) % CardinalDirectionsCount].IsTraversable()) score++;
+                if (!neighbours[(i + 1) % CardinalDirectionsCount].IsTraversable()) score++;
 
                 if (score > bestScore) {
                     bestScore = score;
@@ -184,6 +191,49 @@ namespace Dora.ExplorationAlgorithm {
             }
             
             return neighbours[bestTileIndex];
+        }
+
+        // Returns true if the center tile must be traversed to travel between two of the given neighbours
+        private bool CenterBlocksPathBetweenNeighbours(NeighbourTile[] neighbours) {
+            // First find all tiles reachable via the center
+            HashSet<int> tilesReachableViaCenter = new HashSet<int>();
+            for (int direction = 0; direction < CardinalDirectionsCount; direction+=2) {
+                if (neighbours[direction].IsTraversable()) {
+                    tilesReachableViaCenter.Add(direction);
+                    // Also add immediate neighbours if they are traversable 
+                    if (neighbours[(direction + 7) % 8].IsTraversable()) 
+                        tilesReachableViaCenter.Add((direction + 7) % 8);
+                    if (neighbours[(direction + 1) % 8].IsTraversable())
+                        tilesReachableViaCenter.Add((direction + 1) % 8);
+                }
+            }
+            
+            // If 7 (or 8) of the 8 neighbours are traversable then all traversable
+            // tiles are reachable without going through the center 
+            if (tilesReachableViaCenter.Count >= 7) return false;
+            
+            // Otherwise assert that all these are directly reachable via each other
+            var firstNeighbour = tilesReachableViaCenter.First();
+            var tilesReachableFromFirstNeighbour = new HashSet<int>() {firstNeighbour};
+            
+            // Add all neighbours reachable by going counter clockwise:
+            var tempIndex = firstNeighbour;
+            do {
+                tilesReachableFromFirstNeighbour.Add(tempIndex);
+                tempIndex = (tempIndex + 7) % 8; // Equivalent to subtracting 1, but avoids going into negatives
+            } while (neighbours[tempIndex].IsTraversable() && tempIndex != firstNeighbour);
+            
+            // Add all neighbours reachable by going clockwise:
+            tempIndex = firstNeighbour;
+            do {
+                tilesReachableFromFirstNeighbour.Add(tempIndex);
+                tempIndex = (tempIndex + 1) % 8;
+            } while (neighbours[tempIndex].IsTraversable() && tempIndex != firstNeighbour);
+
+            // The center blocks a path between two neighbours if the amount of neighbours reachable from the first
+            // neighbour is not the same as the number of tiles reachable via the center
+            var centerBlocksPath = tilesReachableFromFirstNeighbour.Count != tilesReachableViaCenter.Count;
+            return centerBlocksPath;
         }
 
         // Finds all neighbours of the given tag

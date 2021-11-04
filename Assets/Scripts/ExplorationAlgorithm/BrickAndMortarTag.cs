@@ -21,9 +21,12 @@ namespace Dora.ExplorationAlgorithm {
         // Debug drawing
         private const float TagSquareSize = 0.3f;
         private readonly Vector3 _tagCubeSize = new Vector3(TagSquareSize, TagSquareSize, TagSquareSize);
-        private readonly Vector3 _readableCubeSize = new Vector3(TagSquareSize + 0.01f, TagSquareSize + 0.01f, TagSquareSize + 0.01f);
+
+        private Color _exploredColor = new Color(50f / 255f, 200f / 255f, 180f / 255f, 1f);
+        private Color _visitedColor = new Color(50f / 255f, 50f / 255f, 50f / 255f, 1f);
 
         public void DrawGizmos(Vector3 position) {
+            Gizmos.color = Status == TileStatus.Visited ? _visitedColor : _exploredColor;
             Gizmos.DrawCube(new Vector3(position.x, position.y, -_tagCubeSize.z / 2f), _tagCubeSize);
         }
         
