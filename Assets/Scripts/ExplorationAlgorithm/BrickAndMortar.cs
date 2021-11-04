@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Dora.MapGeneration;
 using Dora.Robot;
@@ -35,7 +36,7 @@ namespace Dora.ExplorationAlgorithm {
 
         // TODO Determine architecture for planning a move (find target -> go there -> exec func) ... Not flexible (Collisions, other robot places tag etc)
         private BrickAndMortarTag? _lastTag;
-        private Action _onTargetReached;
+        private NeighbourTile? _targetTile;
         
         public enum TileStatus {
             // Unexplored indicates that no robot has been here
@@ -45,16 +46,50 @@ namespace Dora.ExplorationAlgorithm {
             Unexplored = 0, Explored = 1, Visited = 2, Solid = 3
         }
 
-        // Represents an immediate neighbour of a tag 
+        // Represents an immediate neighbour of a tag/tile 
         private class NeighbourTile {
+            private BrickAndMortar _bm;
+            
+            // The tile may be solid, unexplored, explored or visisted
             public TileStatus Status;
-            public RelativePosition<BrickAndMortarTag?>? Tag;
-            public int Direction;
 
-            public NeighbourTile(TileStatus status, RelativePosition<BrickAndMortarTag?>? tag, int direction) {
+            // The center tag of which this tile is a neighbour
+            public BrickAndMortarTag CenterTag;
+            // The neighbour tag, if it exists
+            public BrickAndMortarTag? Tag;
+            
+            // Direction of the neighbour from the center tag/tile
+            public int DirectionFromCenter;
+
+            public NeighbourTile(BrickAndMortar bm, TileStatus status, int directionFromCenter, 
+                BrickAndMortarTag centerTag, BrickAndMortarTag? neighbour) {
                 Status = status;
-                Tag = tag;
-                Direction = direction;
+                CenterTag = centerTag;
+                Tag = neighbour;
+                _bm = bm;
+                DirectionFromCenter = directionFromCenter;
+            }
+
+            // Returns the position of this tile relative to the robot
+            public RelativePosition<NeighbourTile> GetRelativePosition() {
+                var tags = _bm.GetNearbyTags();
+                if (Tag != null) {
+                    // Just get the relative position of the tag from the robot sensors
+                    return tags.First(t => t.Item.ID == Tag.ID).Map(_ => this);
+                } else {
+                    // Calculate the relative position of this tile based on the relative position to the center
+                    var centerRelativeToRobot = tags.First(t => t.Item.ID == CenterTag.ID);
+                    var neighbourAngle = _bm.DirectionToAngle(DirectionFromCenter);
+                    var robotGlobalAngle = _bm._controller.GetGlobalAngle();
+                    
+                    // The distance to this tile depends on whether it is diagonal from the center
+                    var neighbourDistance = _bm.IsDirectionDiagonal(DirectionFromCenter)
+                        ? _bm._preferredDiagonalDistance
+                        : _bm._preferredAxialDistance;
+                    var neighbourRelativeToCenter = new RelativePosition<BrickAndMortarTag?>(neighbourDistance, neighbourAngle, null);
+                    return _bm.GetNeighbourPosRelativeToRobot(centerRelativeToRobot, neighbourRelativeToCenter, robotGlobalAngle)
+                        .Map(_ => this);
+                }
             }
         }
 
@@ -95,22 +130,26 @@ namespace Dora.ExplorationAlgorithm {
             // If uninitialized, then init the algorithm by dropping tag at current position
             _lastTag ??= DepositNewTag();
 
-            // Update status of current tile and calculate the best tile to visit next
-            var targetTile = ChooseNextTile(_lastTag);
+            // If no target tile is currently chosen, then update the current tile status and find next tile to visit
+            _targetTile ??= ChooseNextTile(_lastTag);
+            
+            
+            var targetRelativePosition = _targetTile.GetRelativePosition();
 
             // If we are not already at this tile, start rotating/moving towards it
-            if (targetTile.Tag!.Distance > TolerablePositioningError) {
-                MoveToTag(targetTile.Tag);
+            if (targetRelativePosition.Distance > TolerablePositioningError) {
+                MoveToTag(targetRelativePosition);
                 return;
             }
             
             // If there is no tag at this tile, ie. it is unexplored, place a new tag and use that instead
-            targetTile.Tag.Item ??= DepositNewTag();
+            _targetTile.Tag ??= DepositNewTag();
             // Update neighbour information for this tag and its neighbours
-            UpdateTagNeighbours(targetTile, _lastTag);
+            UpdateTagNeighbours(_targetTile, _lastTag);
             
-            // Lastly, update the 'last tag' to be the one we are currently standing on
-            _lastTag = targetTile.Tag.Item;
+            // Lastly, update the 'last tag' to be the one we are currently standing on and clear the target tile
+            _lastTag = _targetTile.Tag;
+            _targetTile = null;
         }
 
         private NeighbourTile ChooseNextTile(BrickAndMortarTag currentTag) {
@@ -122,16 +161,8 @@ namespace Dora.ExplorationAlgorithm {
 
         // Finds all neighbours of the given tag
         private NeighbourTile[] GetNeighbours(BrickAndMortarTag centerTag) {
-            var allTags = _controller
-                .ReadNearbyTags()
-                // Cast ITag to BrickAndMortarTag
-                .Select(item => item.Map((tag) => (BrickAndMortarTag) tag))
-                .ToList();
-            
-            // Find the relative position of the current tag
-            var centerRelativeToRobot = allTags.First(t => t.Item.ID == centerTag.ID);
-            var robotGlobalAngle = _controller.GetGlobalAngle();
-            
+            var allTags = GetNearbyTags();
+
             // Filter out the current tag to get a list of all surrounding tags
             var nearbyTags = 
                 allTags
@@ -145,7 +176,7 @@ namespace Dora.ExplorationAlgorithm {
                 // Ignore unknown neighbours
                 if (neighbourID != BrickAndMortarTag.UnknownNeighbour) {
                     var tag = nearbyTags.First(item => item.Item.ID == neighbourID)!;
-                    neighbours[currentDir] = new NeighbourTile(tag.Item.Status, tag, currentDir);
+                    neighbours[currentDir] = new NeighbourTile(this, tag.Item.Status, currentDir, centerTag, tag.Item);
                 } else {
                     // No registered tags. Detect if the neighbour tile is traversable or solid
                     var neighbourAngle = DirectionToAngle(currentDir);
@@ -156,20 +187,22 @@ namespace Dora.ExplorationAlgorithm {
                     
                     if (possibleWall != null && possibleWall.Value.distance <= maximumWallDistance) {
                         // This tile is not traversable, mark it as solid
-                        neighbours[currentDir] = new NeighbourTile(TileStatus.Solid,null, currentDir);
+                        neighbours[currentDir] = new NeighbourTile(this, TileStatus.Solid, currentDir, centerTag, null);
                     } else {
                         // This tile is not solid, consider it unexplored. 
-                        // Find the position of this tile relative to the robot
-                        var neighbourDistance = IsDirectionDiagonal(currentDir)
-                            ? _preferredDiagonalDistance
-                            : _preferredAxialDistance;
-                        var neighbourRelativeToCenter = new RelativePosition<BrickAndMortarTag?>(neighbourDistance, neighbourAngle, null);
-                        var neighbourRelativeToRobot = GetNeighbourPosRelativeToRobot(centerRelativeToRobot, neighbourRelativeToCenter, robotGlobalAngle);
-                        neighbours[currentDir] = new NeighbourTile(TileStatus.Unexplored, neighbourRelativeToRobot, currentDir);
+                        neighbours[currentDir] = new NeighbourTile(this, TileStatus.Unexplored, currentDir, centerTag, null);
                     }
                 }
             }
             return neighbours;
+        }
+
+        private List<RelativePosition<BrickAndMortarTag>> GetNearbyTags() {
+            return _controller
+                .ReadNearbyTags()
+                // Cast ITag to BrickAndMortarTag
+                .Select(item => item.Map((tag) => (BrickAndMortarTag) tag))
+                .ToList();
         }
 
         // Returns the position of the neighbour relative to the robot
@@ -224,14 +257,15 @@ namespace Dora.ExplorationAlgorithm {
         // Updates the given tag (and its neighbours) to have correct neighbour ids
         private void UpdateTagNeighbours(NeighbourTile newTile, BrickAndMortarTag lastTag) {
             // TODO: Look for new nearby tags and merge grid! (Our main contribution)
+            // TODO: Also merge relevant neighbours of previous tile
             
-            var newTag = newTile.Tag!.Item!;
+            var newTag = newTile.Tag!;
             // Update the old tag to have the new tag as neighbour
-            lastTag.NeighbourIds[newTile.Direction] = newTag.ID;
+            lastTag.NeighbourIds[newTile.DirectionFromCenter] = newTag.ID;
             // The new tile must have the old tile as the neighbour in the opposite direction
             // ie. if the new tag is the WEST neighbour of the old tile,
             // then the old tag is the EAST neighbour of the new tag
-            newTag.NeighbourIds[OppositeDirection(newTile.Direction)] = lastTag.ID;
+            newTag.NeighbourIds[OppositeDirection(newTile.DirectionFromCenter)] = lastTag.ID;
         }
         
 
