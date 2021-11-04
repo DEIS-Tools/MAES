@@ -119,7 +119,7 @@ namespace Dora.ExplorationAlgorithm {
             _tagIdGenerator = new Random(randomSeed);
             
             // The maximum diagonal distance between two points is 1.5 tiles
-            _maximumDiagonalDistance = constraints.EnvironmentTagReadRange / 2f - TolerablePositioningError;
+            _maximumDiagonalDistance = constraints.EnvironmentTagReadRange - TolerablePositioningError - 1f;
             // Axial distance formula derived from a² + b² = c²  (And since we operate in a grid we have a = b)
             // This gives   2a² = c²  then rearranging to:  a = sqrt(c²/2)
             _maximumAxialDistance = Mathf.Sqrt(Mathf.Pow(_maximumDiagonalDistance, 2f) / 2f);
@@ -162,8 +162,28 @@ namespace Dora.ExplorationAlgorithm {
 
         private NeighbourTile ChooseNextTile(BrickAndMortarTag currentTag) {
             var neighbours = GetNeighbours(currentTag);
-            var firstUnexplored = neighbours.First(tile => tile.Status == TileStatus.Unexplored);
-            return firstUnexplored;
+
+            int bestTileIndex = 0;
+            var bestScore = -1;
+            for (int i = 0; i < CardinalDirectionsCount; i+=2) {
+                // Skip if not traversable (TODO: Also allow explored later)
+                if (neighbours[i].Status != TileStatus.Unexplored)
+                    continue;
+                var score = 0;
+
+                // Check if the two neighbours of this tile are solid/visited, if so increase the score
+                var neighbour1 = neighbours[(i + 7) % CardinalDirectionsCount];
+                var neighbour2 = neighbours[(i + 1) % CardinalDirectionsCount];
+                if (neighbour1.Status == TileStatus.Solid || neighbour1.Status == TileStatus.Visited) score++;
+                if (neighbour2.Status == TileStatus.Solid || neighbour2.Status == TileStatus.Visited) score++;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestTileIndex = i;
+                }
+            }
+            
+            return neighbours[bestTileIndex];
         }
 
         // Finds all neighbours of the given tag
