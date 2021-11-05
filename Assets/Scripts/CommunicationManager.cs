@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Dora.MapGeneration;
 using Dora.Robot;
+using Dora.Utilities;
 using UnityEngine;
 using static Dora.MapGeneration.EnvironmentTaggingMap;
 
@@ -200,7 +201,24 @@ namespace Dora {
         // global angle (relative to x-axis) in degrees of the intersecting line
         public (Vector2, float)? DetectWall(MonaRobot robot, float globalAngle) {
             var range = _robotConstraints.EnvironmentTagReadRange;
-            return _rayTracingMap.FindIntersection(robot.transform.position, globalAngle, range, (_, isSolid) => !isSolid);
+            // Perform 3 parallel traces from the robot to determine if
+            // a wall will be encountered if the robot moves straight ahead
+            
+            // Perform trace from the center of the robot
+            var result = _rayTracingMap.FindIntersection(robot.transform.position, globalAngle, range, (_, isSolid) => !isSolid);
+            if (result != null) return result;
+            Debug.Log($"Angle: {globalAngle}");
+            var robotSize = 0.6f; // TODO! Get actual size of robot
+            // Perform trace from the left side perimeter of the robot
+            var offsetLeft = Geometry.VectorFromDegreesAndMagnitude((globalAngle + 90) % 360, robotSize / 2f);
+            Debug.Log($"Left: {(Vector2) robot.transform.position + offsetLeft}");
+            result = _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetLeft, globalAngle, range, (_, isSolid) => !isSolid);
+            if (result != null) return result;
+            
+            // Finally perform trace from the right side perimeter of the robot
+            var offsetRight = Geometry.VectorFromDegreesAndMagnitude((globalAngle + 270) % 360, robotSize / 2f);
+            Debug.Log($"Right: {(Vector2) robot.transform.position + offsetRight}");
+            return _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetRight, globalAngle, range, (_, isSolid) => !isSolid);
         }
 
     }
