@@ -143,7 +143,17 @@ namespace Dora.ExplorationAlgorithm {
             _lastTag ??= DepositNewTag();
             
             // If no target tile is currently chosen, then update the current tile status and find next tile to visit
-            _targetTile ??= UpdateTargetTile(_lastTag);
+            if (_targetTile == null) {
+                var neighbours = GetNeighbours(_lastTag);
+
+                // Update status of current tile
+                if (!CenterBlocksPathBetweenNeighbours(neighbours)) 
+                    _lastTag.Status = TileStatus.Visited;
+
+                // Find next target tile
+                _targetTile ??= DetermineNextTarget(neighbours);
+            }
+            
 
             var targetRelativePosition = _targetTile.GetRelativePosition();
 
@@ -163,22 +173,18 @@ namespace Dora.ExplorationAlgorithm {
             _targetTile = null;
         }
 
-        private NeighbourTile UpdateTargetTile(BrickAndMortarTag currentTag) {
-            var neighbours = GetNeighbours(currentTag);
-
-            // Update status of current tile
-            if (!CenterBlocksPathBetweenNeighbours(neighbours)) {
-                currentTag.Status = TileStatus.Visited;
-            }
-
+        private NeighbourTile DetermineNextTarget(NeighbourTile[] neighbours) {
             int bestTileIndex = 0;
             var bestScore = -1;
+            
             for (int i = 0; i < CardinalDirectionsCount; i+=2) {
                 // Ignore visited and solid tiles
                 if (!neighbours[i].IsTraversable())
                     continue;
                 
                 var score = 0;
+                // Prefer unexplored tiles over explored ones
+                if (neighbours[i].Status == TileStatus.Unexplored) score += 10;
 
                 // Check if the two neighbours of this tile are solid/visited, if so increase the score
                 if (!neighbours[(i + 7) % CardinalDirectionsCount].IsTraversable()) score++;
