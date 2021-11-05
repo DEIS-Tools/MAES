@@ -40,7 +40,8 @@ namespace Dora.ExplorationAlgorithm {
         // TODO Determine architecture for planning a move (find target -> go there -> exec func) ... Not flexible (Collisions, other robot places tag etc)
         private BrickAndMortarTag? _lastTag;
         private NeighbourTile? _targetTile;
-        
+        private bool _allTilesVisited = false;
+
         public enum TileStatus {
             // Unexplored indicates that no robot has been here
             // Explored indicated that one or more robots have been here, but may need to traverse it again
@@ -135,10 +136,11 @@ namespace Dora.ExplorationAlgorithm {
             _minimumAxialDistance = _maximumAxialDistance * (1f / 3f);
         }
 
+        // Main loop of the algorithm
         public void UpdateLogic() {
-            if (_controller.GetStatus() != RobotStatus.Idle)
+            if (_allTilesVisited || _controller.GetStatus() != RobotStatus.Idle)
                 return;
-            
+
             // If uninitialized, then init the algorithm by dropping tag at current position
             _lastTag ??= DepositNewTag();
             
@@ -152,8 +154,12 @@ namespace Dora.ExplorationAlgorithm {
 
                 // Find next target tile
                 _targetTile ??= DetermineNextTarget(neighbours);
+                if (_targetTile == null) {
+                    // No tiles left to explore, exploration has been completed
+                    _allTilesVisited = true;
+                    return;
+                }
             }
-            
 
             var targetRelativePosition = _targetTile.GetRelativePosition();
 
@@ -173,7 +179,7 @@ namespace Dora.ExplorationAlgorithm {
             _targetTile = null;
         }
 
-        private NeighbourTile DetermineNextTarget(NeighbourTile[] neighbours) {
+        private NeighbourTile? DetermineNextTarget(NeighbourTile[] neighbours) {
             int bestTileIndex = 0;
             var bestScore = -1;
             
@@ -195,6 +201,10 @@ namespace Dora.ExplorationAlgorithm {
                     bestTileIndex = i;
                 }
             }
+            
+            // If no neighbour is traversable, the algorithm must have terminated
+            if (bestScore == -1) 
+                return null;
             
             return neighbours[bestTileIndex];
         }
