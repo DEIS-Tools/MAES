@@ -203,22 +203,37 @@ namespace Dora {
             var range = _robotConstraints.EnvironmentTagReadRange;
             // Perform 3 parallel traces from the robot to determine if
             // a wall will be encountered if the robot moves straight ahead
+
+            var robotPosition = robot.transform.position;
             
             // Perform trace from the center of the robot
-            var result = _rayTracingMap.FindIntersection(robot.transform.position, globalAngle, range, (_, isSolid) => !isSolid);
-            if (result != null) return result;
-            Debug.Log($"Angle: {globalAngle}");
+            var result1 = _rayTracingMap.FindIntersection(robot.transform.position, globalAngle, range, (_, isSolid) => !isSolid);
+            var distance1 = result1 == null ? float.MaxValue : Vector2.Distance(robotPosition, result1.Value.Item1);
             var robotSize = 0.6f; // TODO! Get actual size of robot
+            
             // Perform trace from the left side perimeter of the robot
             var offsetLeft = Geometry.VectorFromDegreesAndMagnitude((globalAngle + 90) % 360, robotSize / 2f);
-            Debug.Log($"Left: {(Vector2) robot.transform.position + offsetLeft}");
-            result = _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetLeft, globalAngle, range, (_, isSolid) => !isSolid);
-            if (result != null) return result;
-            
+            var result2 = _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetLeft, globalAngle, range, (_, isSolid) => !isSolid);
+            var distance2 = result2 == null ? float.MaxValue : Vector2.Distance(robotPosition, result2.Value.Item1);
+
             // Finally perform trace from the right side perimeter of the robot
             var offsetRight = Geometry.VectorFromDegreesAndMagnitude((globalAngle + 270) % 360, robotSize / 2f);
-            Debug.Log($"Right: {(Vector2) robot.transform.position + offsetRight}");
-            return _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetRight, globalAngle, range, (_, isSolid) => !isSolid);
+            var result3 = _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetRight, globalAngle, range, (_, isSolid) => !isSolid);
+            var distance3 = result3 == null ? float.MaxValue : Vector2.Distance(robotPosition, result3.Value.Item1);
+
+            // Return the detected wall that is closest to the robot
+            var closestWall = result1;
+            var closestWallDistance = distance1;
+            
+            if (distance2 < closestWallDistance) {
+                closestWall = result2;
+                closestWallDistance = distance2;
+            }
+
+            if (distance3 < closestWallDistance) 
+                closestWall = result3;
+            
+            return closestWall;
         }
 
     }

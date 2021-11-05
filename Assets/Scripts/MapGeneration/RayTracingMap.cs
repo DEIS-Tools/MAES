@@ -384,19 +384,22 @@ namespace Dora.MapGeneration {
                     if (intersection != null) intersectionsAndEdge.Add((intersection!.Value, edge));
                 }
 
+                
                 var intersectionOneX = intersectionsAndEdge[0].Item1.x;
                 var intersectionTwoX = intersectionsAndEdge[1].Item1.x;
                 if (direction <= 90 || direction >= 270) {
                     // Entering point must be the left most intersection
-                    return intersectionOneX < intersectionTwoX
-                        ? intersectionsAndEdge[0].Item2
-                        : intersectionsAndEdge[1].Item2;
+                    return Functional
+                        .TakeBest(intersectionsAndEdge, (intersection1, intersection2) 
+                            => intersection1.Item1.x < intersection2.Item1.x)
+                        .Item2;
                 }
                 else {
                     // Entering point must be the right most intersection
-                    return intersectionOneX > intersectionTwoX
-                        ? intersectionsAndEdge[0].Item2
-                        : intersectionsAndEdge[1].Item2;
+                    return Functional
+                        .TakeBest(intersectionsAndEdge, (intersection1, intersection2) 
+                            => intersection1.Item1.x > intersection2.Item1.x)
+                        .Item2;
                 }
             }
 
