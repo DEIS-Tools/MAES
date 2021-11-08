@@ -39,6 +39,7 @@ namespace Dora.Robot {
             _scale = collisionMap.Scale;
             _scaledOffset = collisionMap.ScaledOffset;
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
+            _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
             this.random = new Random(randomSeed);
 
             for (int x = 0; x < _widthInTiles; x++)
