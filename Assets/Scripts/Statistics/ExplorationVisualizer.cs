@@ -163,10 +163,10 @@ namespace Dora.Statistics {
             mesh.colors32 = _colors;
         }
 
-        public void SetExplored(SlamMap map) {
+        public void SetExplored(SlamMap map, bool onlyShowCurrentlyVisible = false) {
             var triangleCount = _triangles.Count / 3;
             for (int i = 0; i < triangleCount; i += 2) {
-                var status = map.GetTileByTriangleIndex(i);
+                var status = onlyShowCurrentlyVisible ? map.GetVisibleTileByTriangleIndex(i) : map.GetTileByTriangleIndex(i);
                 Color32 color;
                 if (status == SlamMap.SlamTileStatus.Unseen) color = _unexploredColor;
                 else if (status == SlamMap.SlamTileStatus.Solid) color = _solidColor;

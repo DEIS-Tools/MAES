@@ -50,7 +50,7 @@ namespace Dora {
                     environmentTagReadRange: 4.0f
                 );
 
-                if (false) {
+                if (true) {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
@@ -58,9 +58,9 @@ namespace Dora {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
-                            40, 
+                            1, 
                             0.6f,
-                            (seed) => new RandomExplorationAlgorithm(seed)),
+                            (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 14)),
                         robotConstraints: robotConstraints
                     ));
                 }
@@ -74,8 +74,8 @@ namespace Dora {
                             randomSeed, 
                             1, 
                             0.6f,
-                            new Coord(-30,-30),
-                            (seed) => new VoronoiExplorationAlgorithm(seed)),
+                            new Coord(0,0),
+                            (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 7)),
                         robotConstraints: robotConstraints
                     ));
                 }

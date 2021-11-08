@@ -55,11 +55,13 @@ namespace Dora.Statistics {
                     slamMap.UpdateApproxPosition(robot.transform.position);
                     slamMap.SetApproxRobotAngle(robot.Controller.GetForwardAngleRelativeToXAxis());
                 }
-                
-                for (int i = 0; i < 60; i++) {
-                    var angle = i * 6;
+
+                int traces = 90;
+                float ratio = 360 / traces;
+                for (int i = 0; i < traces; i++) {
+                    var angle = i * ratio;
                     // Avoid ray casts that can be parallel to the lines of a triangle
-                    if (angle % 45 == 0) angle += 1;
+                    if (angle % 45 == 0) angle += 0.5f;
 
                     _rayTracingMap.Raytrace(robot.transform.position, angle, visibilityRange, (index, cell) => {
                         if (cell.isExplorable && !cell.IsExplored) {
@@ -78,14 +80,16 @@ namespace Dora.Statistics {
             if (_selectedRobot == null)
                 _explorationVisualizer.SetExplored(newlyExploredTriangles);
             else
-                _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap);
+                _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, true);
         }
 
         public void SetVisualizedRobot([CanBeNull] MonaRobot robot) {
             _selectedRobot = robot;
+
             if (robot != null) {
+                _explorationVisualizer.SetExplored(robot.Controller.SlamMap, true);
                 // Update map to show slam map for given robot
-                _explorationVisualizer.SetExplored(robot.Controller.SlamMap);
+                // _explorationVisualizer.SetExplored(robot.Controller.SlamMap);
             }
             else {
                 // Update map to show exploration progress for all robots

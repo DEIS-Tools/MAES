@@ -76,12 +76,22 @@ namespace Dora.Robot {
 
         public void ResetRobotVisibility() {
             _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
+            for (int x = 0; x < _currentlyVisibleTiles.GetLength(0); x++) {
+                for (int y = 0; y < _currentlyVisibleTiles.GetLength(1); y++) {
+                    _currentlyVisibleTiles[x, y] = SlamTileStatus.Unseen;
+                }
+            }
         }
 
         public void SetCurrentlyVisibleByTriangle(int triangleIndex, bool isOpen) {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
             if (_currentlyVisibleTiles[localCoordinate.x, localCoordinate.y] != SlamTileStatus.Solid)
                 _currentlyVisibleTiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+        }
+
+        public SlamTileStatus GetVisibleTileByTriangleIndex(int triangleIndex) {
+            var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
+            return _currentlyVisibleTiles[localCoordinate.x, localCoordinate.y];
         }
 
         public SlamTileStatus GetTileByTriangleIndex(int triangleIndex) {
