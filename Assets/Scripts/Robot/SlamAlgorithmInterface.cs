@@ -12,6 +12,8 @@ namespace Dora.Robot {
 
         public Vector2Int GetCurrentPositionTile();
 
+        public SlamTileStatus GetStatusOfTile(Vector2Int tile);
+
         public float getRobotAngleDeg();
     }
 }

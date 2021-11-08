@@ -177,6 +177,10 @@ namespace Dora.Robot {
             return res;
         }
 
+        public SlamTileStatus GetStatusOfTile(Vector2Int tile) {
+            return _tiles[tile.x, tile.y];
+        }
+
         public float getRobotAngleDeg() {
             return _robotAngle;
         }

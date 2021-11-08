@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -11,6 +12,7 @@ using UnityEditor.UI;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.WSA;
+using Debug = UnityEngine.Debug;
 using Random = System.Random;
 
 namespace Dora.ExplorationAlgorithm.Voronoi {
@@ -30,13 +32,16 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         private readonly int EXPAND_VORONOI_RECALC_INTERVAL = 1;
         private readonly int SEARCH_MODE_RECALC_INTERVAL = 2;
         private readonly int EXPLORE_MODE_RECALC_INTERVAL = 10;
+        private readonly int MAX_DISTANCE_TO_OCCLUSION_POINTS = 2; // How close must we be to mark an occlusion point as visited
+        private List<(Vector2Int, int)> _occlusionPointsVisitedThisSearchMode = new List<(Vector2Int, int)>();
+        private bool _hasReachedMovementTarget = false;
 
         // Debugging variables
         private Vector2Int? _closestOcclusionPoint = null;
-        private Vector2? _currentTarget = null;
+        private Vector2Int? _currentMovementTarget = null;
         private int _regionSize;
         private int _unexploredTilesInRegion;
-        private int _recentlyVisitedOcclusionPoints;
+        
 
         private enum VoronoiSearchPhase {
             SEARCH_MODE, // If not unexplored tiles within view 
@@ -75,7 +80,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
                 _robotController.Move(1);
             }
             
-            UpdateAdjacentTilesToExplored();
+            UpdateExploredStatusOfTiles();
 
             // Divide into voronoi regions with local robots
             if (ShouldRecalculate()) {
@@ -88,6 +93,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
 
                 if (unexploredTiles.Count != 0) {
                     this._currentSearchPhase = VoronoiSearchPhase.EXPLORE_MODE;
+                    _occlusionPointsVisitedThisSearchMode.Clear();
                     // Sorted by north, west, east, south
                     unexploredTiles.Sort((t1, t2) => {
                         if (t2.x.CompareTo(t1.x) == 0)
@@ -96,7 +102,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
                     });
 
                     // Move to 
-                    _currentTarget = new Vector2(unexploredTiles[0].x, unexploredTiles[0].y);
+                    _currentMovementTarget = new Vector2Int(unexploredTiles[0].x, unexploredTiles[0].y);
                 }
                 else {
                     EnterSearchMode();
@@ -106,7 +112,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             _currentTick++;
         }
 
-        private void UpdateAdjacentTilesToExplored() {
+        private void UpdateExploredStatusOfTiles() {
             var currentPosition = this._robotController.GetSlamMap().GetCurrentPositionTile();
             var currentlyVisibleTiles = this._robotController.GetSlamMap().GetCurrentlyVisibleTiles();
 
@@ -118,11 +124,41 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
                     }
                 }
             }
+
+            // Check if movement target reached
+            if (_currentMovementTarget.HasValue) {
+                switch(_currentSearchPhase){
+                    case VoronoiSearchPhase.SEARCH_MODE:
+                        // Check distance to occlusion points. Add to recently visited occlusion points
+                        var distanceToOcc = Geometry.DistanceBetween(currentPosition, _currentMovementTarget.Value);
+                        if(distanceToOcc < MAX_DISTANCE_TO_OCCLUSION_POINTS)
+                            // If occlusion is not already in list
+                            if (!_occlusionPointsVisitedThisSearchMode.Select(e => e.Item1).Contains(_currentMovementTarget.Value)) {
+                                _occlusionPointsVisitedThisSearchMode.Add((_currentMovementTarget.Value, _currentTick));
+                                _hasReachedMovementTarget = true;
+                            }
+                        break;
+                    case VoronoiSearchPhase.EXPLORE_MODE:
+                        if(_exploredTiles.Contains(_currentMovementTarget.Value))
+                            _hasReachedMovementTarget = true;
+                        break;
+                    case VoronoiSearchPhase.EXPAND_VORONOI:
+                        if(_exploredTiles.Contains(_currentMovementTarget.Value))
+                            _hasReachedMovementTarget = true;
+                        break;
+                }
+            }
+            
         }
 
         private bool ShouldRecalculate() {
             if (_robotController.HasCollided())
                 return true;
+
+            if (_hasReachedMovementTarget) {
+                _hasReachedMovementTarget = false;
+                return true;
+            }
 
             switch (_currentSearchPhase) {
                 case VoronoiSearchPhase.SEARCH_MODE:
@@ -138,13 +174,12 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
 
         private void EnterSearchMode() {
             var occlusionPoints = FindClosestOcclusionPoints();
+            var occlusionPointsNotVisitedThisSearchMode =
+                occlusionPoints.Where(e => !_occlusionPointsVisitedThisSearchMode.Select(e => e.Item1).Contains(e)).ToList();
 
-            if (occlusionPoints.Count == 0) {
-                _currentSearchPhase = VoronoiSearchPhase.EXPAND_VORONOI;
-                _currentTarget = FindClosestVoronoiBoundary();
-                _closestOcclusionPoint = null;
-            }
-            else {
+
+            // If we have some unvisited occlusion points, visit them. 
+            if (occlusionPointsNotVisitedThisSearchMode.Count > 0) {
                 this._currentSearchPhase = VoronoiSearchPhase.SEARCH_MODE;
                 // Find occlusion point closest to robot
                 var robotPosition = _robotController.GetSlamMap().GetCurrentPositionTile();
@@ -154,13 +189,34 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
                     return c1Distance.CompareTo(c2Distance);
                 });
                 _closestOcclusionPoint = occlusionPoints[0];
-                _currentTarget = occlusionPoints[0]; 
+                _currentMovementTarget = occlusionPoints[0]; 
+            }
+            else if (occlusionPointsNotVisitedThisSearchMode.Count == 0) {
+                // If we have visited all occlusion points, but we still see several
+                // Visit least recently visited occlusion point
+                if (occlusionPoints.Count > 1) {
+                    this._currentSearchPhase = VoronoiSearchPhase.SEARCH_MODE;
+                    _occlusionPointsVisitedThisSearchMode.Sort((e1, e2) => e1.Item2.CompareTo(e2.Item2));
+                    var leastRecentlyVisitedOcclusionPoint = occlusionPointsNotVisitedThisSearchMode[0];
+                    _currentMovementTarget = leastRecentlyVisitedOcclusionPoint;
+                }
+                // If we see no occlusion points or the only occlusion point is already visited, expand region
+                else if (occlusionPoints.Count == 0 || (occlusionPoints.Count == 1 && occlusionPointsNotVisitedThisSearchMode.Count == 0)) {
+                    _currentSearchPhase = VoronoiSearchPhase.EXPAND_VORONOI;
+                    _currentMovementTarget = FindClosestVoronoiBoundary();
+                    _closestOcclusionPoint = null;
+                }
             }
         }
 
         private Vector2Int FindClosestVoronoiBoundary() {
             // Should move to closest voronoi boundary, that is not a wall
             var edgeTiles = FindEdgeTiles(_currentRegion.Tiles);
+            var slamMap = _robotController.GetSlamMap();
+            // Check if any of the tiles are not solid. 
+            var openEdgeTiles = edgeTiles.Where(e => slamMap.GetStatusOfTile(e) != SlamMap.SlamTileStatus.Solid).ToList();
+            if (openEdgeTiles.Count > 0)
+                edgeTiles = openEdgeTiles;
             
             var robotPosition = _robotController.GetSlamMap().GetCurrentPositionTile();
             edgeTiles.Sort((c1, c2) => {
@@ -350,11 +406,11 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
                     // Only go through tiles within line of sight of the robot
                     if (currentlyVisibleTiles.ContainsKey(new Vector2Int(x, y))) {
                         var tilePosition = new Vector2Int(x, y);
-                        float bestDistance = Utilities.Geometry.DistanceBetween(myPosition, tilePosition);
+                        float bestDistance = Geometry.DistanceBetween(myPosition, tilePosition);
                         int bestRobotId = this._robotController.GetRobotID();
                         foreach (var robot in nearbyRobots) {
                             var otherPosition = robot.GetRelativePosition(myPosition, this._robotController.GetSlamMap().getRobotAngleDeg());
-                            float distance = Utilities.Geometry.DistanceBetween(otherPosition, tilePosition);
+                            float distance = Geometry.DistanceBetween(otherPosition, tilePosition);
                             if (distance < bestDistance) {
                                 bestDistance = distance;
                                 bestRobotId = robot.item;
@@ -393,8 +449,8 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         public string GetDebugInfo() {
             var info = new StringBuilder();
             
-            if (_currentTarget.HasValue)
-                info.Append($"Voronoi current target: x:{_currentTarget.Value.x}, y:{_currentTarget.Value.y}\n");
+            if (_currentMovementTarget.HasValue)
+                info.Append($"Voronoi current target: x:{_currentMovementTarget.Value.x}, y:{_currentMovementTarget.Value.y}\n");
             else info.Append("Voronoi has no target\n");
             
             if (_closestOcclusionPoint.HasValue)
