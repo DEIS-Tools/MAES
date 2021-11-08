@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Dora.MapGeneration;
 using UnityEngine;
 using static Dora.ExplorationAlgorithm.BrickAndMortar;
@@ -10,12 +11,31 @@ namespace Dora.ExplorationAlgorithm {
         public const int UnknownNeighbour = -1;
         public int[] NeighbourIds = new int[8];
 
+        public int LoopController = -1;
+
+        private Dictionary<int, int> _robotIdToLastTraversalDirection = new Dictionary<int, int>();
+
         public BrickAndMortarTag(TileStatus status, int id) {
             Status = status;
             ID = id;
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 8; i++) 
                 NeighbourIds[i] = UnknownNeighbour;
-            }
+        }
+
+        // Returns the last direction that the given robot traveled when traversing through this tile
+        public int? GetLastExitDirection(int robotID) {
+            if (_robotIdToLastTraversalDirection.ContainsKey(robotID))
+                return _robotIdToLastTraversalDirection[robotID];
+            return null;
+        }
+        public void SetLastExitDirection(int robotID, int direction) {
+            this._robotIdToLastTraversalDirection[robotID] = direction;
+        }
+
+        // Performs a loop cleaning action on the for the given robot
+        public void Clean(int robotID) {
+            _robotIdToLastTraversalDirection.Remove(robotID);
+            if (LoopController == robotID) LoopController = -1;
         }
 
         // Debug drawing

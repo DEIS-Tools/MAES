@@ -115,9 +115,21 @@ namespace Dora {
                     shouldAutomaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
                     positionInaccuracy: 0.1f,
-                    environmentTagReadRange: 4.0f
+                    environmentTagReadRange: 5.0f
                 );
                 
+                /*scenarios.Enqueue(new SimulationScenario(
+                    seed: randomSeed,
+                    hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
+                    mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 2.0f),
+                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsInBiggestRoom(
+                        map, 
+                        randomSeed, 
+                        1, 
+                        0.6f,
+                        (seed) => new BrickAndMortar(robotConstraints, seed)),
+                    robotConstraints: robotConstraints
+                ));*/
                 
                 scenarios.Enqueue(new SimulationScenario(
                     seed: randomSeed,

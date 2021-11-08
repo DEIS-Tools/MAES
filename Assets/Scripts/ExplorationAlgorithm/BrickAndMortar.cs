@@ -36,12 +36,27 @@ namespace Dora.ExplorationAlgorithm {
 
         private readonly float _preferredAxialDistance;
         private readonly float _preferredDiagonalDistance;
-
-        // TODO Determine architecture for planning a move (find target -> go there -> exec func) ... Not flexible (Collisions, other robot places tag etc)
-        private BrickAndMortarTag? _lastTag;
+        
+        private BrickAndMortarTag? _currentTile;
         private NeighbourTile? _targetTile;
         private bool _allTilesVisited = false;
+        private int _previousDirection = 0;
 
+        private int _robotID = -1;
+        
+        private Stack<int> _controlledTiles = new Stack<int>();
+
+        // The order of directions will prefer to go
+        private readonly int[] _directionPriority = new[] { 0, 2, 4, 6};
+
+        private AlgorithmState _currentState = AlgorithmState.Regular;
+        private enum AlgorithmState {
+            Regular,
+            LoopControl,
+            LoopClosing,
+            LoopCleaning
+        }
+        
         public enum TileStatus {
             // Unexplored indicates that no robot has been here
             // Explored indicated that one or more robots have been here, but may need to traverse it again
@@ -124,7 +139,7 @@ namespace Dora.ExplorationAlgorithm {
             _tagIdGenerator = new Random(randomSeed);
             
             // The maximum diagonal distance between two points is 1.5 tiles
-            _maximumDiagonalDistance = constraints.EnvironmentTagReadRange - TolerablePositioningError - 1f;
+            _maximumDiagonalDistance = constraints.EnvironmentTagReadRange - TolerablePositioningError - 2f;
             // Axial distance formula derived from a² + b² = c²  (And since we operate in a grid we have a = b)
             // This gives   2a² = c²  then rearranging to:  a = sqrt(c²/2)
             _maximumAxialDistance = Mathf.Sqrt(Mathf.Pow(_maximumDiagonalDistance, 2f) / 2f);
@@ -142,15 +157,14 @@ namespace Dora.ExplorationAlgorithm {
                 return;
 
             // If uninitialized, then init the algorithm by dropping tag at current position
-            _lastTag ??= DepositNewTag();
+            _currentTile ??= DepositNewTag();
             
             // If no target tile is currently chosen, then update the current tile status and find next tile to visit
             if (_targetTile == null) {
-                var neighbours = GetNeighbours(_lastTag);
+                var neighbours = GetNeighbours(_currentTile);
 
                 // Update status of current tile
-                if (!CenterBlocksPathBetweenNeighbours(neighbours)) 
-                    _lastTag.Status = TileStatus.Visited;
+                UpdateTileStatus(_currentTile, neighbours, _previousDirection);
 
                 // Find next target tile
                 _targetTile ??= DetermineNextTarget(neighbours);
@@ -172,23 +186,111 @@ namespace Dora.ExplorationAlgorithm {
             // If there is no tag at this tile, ie. it is unexplored, place a new tag and use that instead
             _targetTile.Tag ??= DepositNewTag();
             // Update neighbour information for this tag and its neighbours
-            UpdateTagNeighbours(_targetTile, _lastTag);
-            
-            // Lastly, update the 'last tag' to be the one we are currently standing on and clear the target tile
-            _lastTag = _targetTile.Tag;
+            UpdateTagNeighbours(_targetTile, _currentTile);
+
+            // Note which direction we took this step, to avoid going back the same way
+            _previousDirection = _targetTile.DirectionFromCenter;
+            _currentTile.SetLastExitDirection(_controller.GetRobotID(), _previousDirection);
+
+            // Lastly, update the 'current tag' to be the one we are currently standing on and clear the target tile
+            _currentTile = _targetTile.Tag;
             _targetTile = null;
         }
 
-        private NeighbourTile? DetermineNextTarget(NeighbourTile[] neighbours) {
-            int bestTileIndex = 0;
-            var bestScore = -1;
+        private void UpdateTileStatus(BrickAndMortarTag tile, NeighbourTile[] neighbours, int enterDirection) {
+            if (_currentState == AlgorithmState.Regular) {
+                // Check if tile can be marked as visited
+                if (!CenterBlocksPathBetweenNeighbours(neighbours))
+                    tile.Status = TileStatus.Visited;
+                else {
+                    var previousExitDirection = tile.GetLastExitDirection(_controller.GetRobotID());
+                    if (previousExitDirection != null && OppositeDirection(enterDirection) != previousExitDirection)
+                        _currentState = AlgorithmState.LoopControl;
+                }
+                return;
+            }
+
+            if (_currentState == AlgorithmState.LoopControl) {
+                var lastExitDirection = tile.GetLastExitDirection(_controller.GetRobotID());
+                if (lastExitDirection == null || OppositeDirection(enterDirection) == lastExitDirection) {
+                    _currentState = AlgorithmState.LoopCleaning;
+                }
+                else {
+                    var controllingRobot = tile.LoopController;
+                    if (controllingRobot == _robotID) {
+                        // Start loop closing
+                        _currentState = AlgorithmState.LoopClosing;
+                        // Reverse the controlled tiles stack when first entering the loop closing phase,
+                        // as we want to close the tiles in the direction we initially controlled them
+                        _controlledTiles.Reverse();
+                        _controlledTiles.Pop();
+                        return;
+                        Debug.Log("STARTED LOOP CLOSING");
+                    } else if (controllingRobot < _robotID) {
+                        // Take control of the loop
+                        tile.LoopController = _robotID;
+                        _controlledTiles.Push(tile.ID);
+                    } else if (controllingRobot > _robotID) {
+                        // Start loop cleaning if this robot was in loop control phase and another robot with higher id
+                        // is trying to control the same tiles
+                        if (_controlledTiles.Count > 0) {
+                            _currentState = AlgorithmState.LoopCleaning;
+                            Debug.Log("STARTED LOOP CLEANING 1");
+                        }
+                    }
+                }
+            }
+
+            if (_currentState == AlgorithmState.LoopClosing) {
+                // Loop closing phase
+                // Detect if we are at an 'intersection' (a tile with traversable neighbour tile(s) that
+                // does not belong to the loop). If not, mark the cell as visited
+                if (!HasUncontrolledNeighbour(neighbours)) {
+                    tile.Status = TileStatus.Visited;
+                } else {
+                    // Stop loop controlling and start loop cleaning
+                    _currentState = AlgorithmState.LoopCleaning;
+                    tile.Clean(_robotID);
+                    Debug.Log("STARTED LOOP CLEANING 2");
+                }
+            }
             
+            if (_currentState == AlgorithmState.LoopCleaning) {
+                tile.Clean(_robotID);
+            }
+        }
+
+        // Returns true if any of the given neighbours are not 
+        private bool HasUncontrolledNeighbour(NeighbourTile[] neighbours) {
+            return neighbours.Any(n => n.IsTraversable() && n.Tag != null && n.Tag.LoopController != _robotID);
+        }
+
+        private NeighbourTile? DetermineNextTarget(NeighbourTile[] neighbours) {
+            if (_currentState == AlgorithmState.LoopCleaning || _currentState == AlgorithmState.LoopClosing) {
+                if (_controlledTiles.Count == 0) {
+                    // Loop cleaning completed
+                    _currentState = AlgorithmState.Regular;
+                } else {
+                    var tile = _controlledTiles.Pop();
+                    return neighbours.First(n => n.Tag != null && n.Tag!.ID == tile);
+                }
+            }
+            
+            int bestTileIndex = 0;
+            var bestScore = Int32.MinValue;
+            var bestDirPriority = 5;
+
             for (int i = 0; i < CardinalDirectionsCount; i+=2) {
                 // Ignore visited and solid tiles
                 if (!neighbours[i].IsTraversable())
                     continue;
                 
                 var score = 0;
+                
+                // Prioritize not going the same direction that you came from, unless necessary
+                if (OppositeDirection(i) == _previousDirection)
+                    score -= 100;
+                
                 // Prefer unexplored tiles over explored ones
                 if (neighbours[i].Status == TileStatus.Unexplored) score += 10;
 
@@ -196,9 +298,11 @@ namespace Dora.ExplorationAlgorithm {
                 if (!neighbours[(i + 7) % CardinalDirectionsCount].IsTraversable()) score++;
                 if (!neighbours[(i + 1) % CardinalDirectionsCount].IsTraversable()) score++;
 
-                if (score > bestScore) {
+                int directionPriority = Array.IndexOf(_directionPriority, i);
+                if (score > bestScore || (score == bestScore && directionPriority < bestDirPriority)) {
                     bestScore = score;
                     bestTileIndex = i;
+                    bestDirPriority = directionPriority;
                 }
             }
             
@@ -404,6 +508,9 @@ namespace Dora.ExplorationAlgorithm {
         
         public void SetController(Robot2DController controller) {
             this._controller = controller;
+            this._robotID = _controller.GetRobotID();
+            for (int i = 0; i < _directionPriority.Length; i++)
+                _directionPriority[i] = (_directionPriority[i] + controller.GetRobotID() * 2) % 8;
         }
 
         public string GetDebugInfo() {
