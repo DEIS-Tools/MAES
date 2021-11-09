@@ -76,10 +76,16 @@ namespace Dora.Robot {
 
         public Vector2Int GetCurrentPositionTile() {
             var currentPosition = this.GetApproxPosition();
-            var x = Convert.ToInt32(currentPosition.x);
-            var y = Convert.ToInt32(currentPosition.y);
-            var slamX = (x - (int)_scaledOffset.x) * 2;
-            var slamY = (y - (int)_scaledOffset.y) * 2;
+            // Since the resolution of the slam map is double, we round to nearest half
+            // This is done by multiplying by 2 and then rounding to nearest number.
+            // Dividing by two then gives us number with a possible fraction of 0.5
+            // We then multiply by 2 again to get to the right slam tile
+            var xFloat = Math.Round(currentPosition.x * 2, MidpointRounding.AwayFromZero) / 2;
+            var yFloat = Math.Round(currentPosition.y * 2, MidpointRounding.AwayFromZero) / 2;
+            var x = Convert.ToInt32(xFloat * 2);
+            var y = Convert.ToInt32(yFloat * 2);
+            var slamX = (x - ((int)_scaledOffset.x) * 2);
+            var slamY = (y - ((int)_scaledOffset.y) * 2);
 
             return new Vector2Int(slamX, slamY);
         }
