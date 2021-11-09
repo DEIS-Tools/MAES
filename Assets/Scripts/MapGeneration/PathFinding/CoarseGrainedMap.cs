@@ -1,6 +1,7 @@
 using System;
 using Dora.ExplorationAlgorithm;
 using Dora.Robot;
+using Dora.Utilities;
 using JetBrains.Annotations;
 using UnityEngine;
 using static Dora.Robot.SlamMap;
@@ -21,12 +22,28 @@ namespace Dora.MapGeneration.PathFinding {
             _objects = new object[width, height];
         }
 
-        public object GetData(Vector2Int localCoordinate) {
+        // Returns the approximate position on this map (local tile scale coordinates)
+        public Vector2 GetApproximatePosition() {
+            return _slamMap.ApproximatePosition / 2f;
+        }
+
+        // Returns position of the given tile relative to the current position of the robot  
+        public RelativePosition GetRelativePosition(Vector2Int target) {
+            // Convert to local coordinate
+            var robotPosition = _slamMap.ApproximatePosition / 2f;  
+            var distance = Vector2.Distance(robotPosition, (Vector2) target);
+            var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(_slamMap.GetRobotAngleDeg()), target - robotPosition);
+            return new RelativePosition(distance, angle);
+        }
+
+        // Returns the data stored at the given tile, returning null if no data is present
+        public object GetTileData(Vector2Int localCoordinate) {
             AssertWithinBounds(localCoordinate);
             return _objects[localCoordinate.x, localCoordinate.y];
         }
         
-        public void SetData(Vector2Int localCoordinate, object data) {
+        // Sets the data at the given tile, overwriting any existing data object if present
+        public void SetTileData(Vector2Int localCoordinate, object data) {
             AssertWithinBounds(localCoordinate);
             _objects[localCoordinate.x, localCoordinate.y] = data;
         }

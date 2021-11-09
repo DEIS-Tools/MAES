@@ -90,7 +90,7 @@ namespace Dora.ExplorationAlgorithm {
             }
 
             // Returns the position of this tile relative to the robot
-            public RelativePosition<NeighbourTile> GetRelativePosition() {
+            public RelativeObject<NeighbourTile> GetRelativePosition() {
                 var tags = _bm.GetNearbyTags();
                 if (Tag != null) {
                     // Just get the relative position of the tag from the robot sensors
@@ -105,7 +105,7 @@ namespace Dora.ExplorationAlgorithm {
                     var neighbourDistance = IsDirectionDiagonal(DirectionFromCenter)
                         ? _bm._preferredDiagonalDistance
                         : _bm._preferredAxialDistance;
-                    var neighbourRelativeToCenter = new RelativePosition<BrickAndMortarTag?>(neighbourDistance, neighbourAngle, null);
+                    var neighbourRelativeToCenter = new RelativeObject<BrickAndMortarTag?>(neighbourDistance, neighbourAngle, null);
                     return _bm.GetNeighbourPosRelativeToRobot(centerRelativeToRobot, neighbourRelativeToCenter, robotGlobalAngle)
                         .Map(_ => this);
                 }
@@ -394,7 +394,7 @@ namespace Dora.ExplorationAlgorithm {
             return neighbours;
         }
 
-        private List<RelativePosition<BrickAndMortarTag>> GetNearbyTags() {
+        private List<RelativeObject<BrickAndMortarTag>> GetNearbyTags() {
             return _controller
                 .ReadNearbyTags()
                 // Cast ITag to BrickAndMortarTag
@@ -405,7 +405,7 @@ namespace Dora.ExplorationAlgorithm {
         // Returns the position of the neighbour relative to the robot
         // center is the position of the center tile relative to the robot
         // neighbour is the position of the neighbour relative to the center tile
-        public RelativePosition<T> GetNeighbourPosRelativeToRobot<T>(RelativePosition<T> center, RelativePosition<T> neighbour, float globalRobotAngle) {
+        public RelativeObject<T> GetNeighbourPosRelativeToRobot<T>(RelativeObject<T> center, RelativeObject<T> neighbour, float globalRobotAngle) {
             var robotAngleVector = new Vector2(Mathf.Cos(globalRobotAngle * Mathf.Deg2Rad), Mathf.Sin(globalRobotAngle * Mathf.Deg2Rad));
             var absoluteAngleToCenter = (globalRobotAngle + center.RelativeAngle) % 360;
             var robotToCenter = new Vector2(Mathf.Cos(absoluteAngleToCenter * Mathf.Deg2Rad), Mathf.Sin(absoluteAngleToCenter * Mathf.Deg2Rad)) * center.Distance;
@@ -415,7 +415,7 @@ namespace Dora.ExplorationAlgorithm {
             // Find angle of neighbour relative to the robot
             var angleRelativeToRobot = Vector2.SignedAngle(robotAngleVector, robotToNeighbour);
             var distanceFromRobot = robotToNeighbour.magnitude;
-            return new RelativePosition<T>(distanceFromRobot, angleRelativeToRobot, neighbour.Item);
+            return new RelativeObject<T>(distanceFromRobot, angleRelativeToRobot, neighbour.Item);
         } 
 
         // Deposit new tag
@@ -425,24 +425,24 @@ namespace Dora.ExplorationAlgorithm {
             return newTag;
         }
 
-        private void MoveToTag<T>(RelativePosition<T> targetRelativePosition) {
+        private void MoveToTag<T>(RelativeObject<T> targetRelativeObject) {
             // First rotate to correctly face the target
-            if (Mathf.Abs(targetRelativePosition.RelativeAngle) > 0.5f) {
-                _controller.Rotate(targetRelativePosition.RelativeAngle);
+            if (Mathf.Abs(targetRelativeObject.RelativeAngle) > 0.5f) {
+                _controller.Rotate(targetRelativeObject.RelativeAngle);
                 return;
             }
             
             // If already rotated start moving towards the target
-            _controller.Move(targetRelativePosition.Distance);
+            _controller.Move(targetRelativeObject.Distance);
         }
 
         // Finds the nearest tag that is either unexplored or explored 
-        private RelativePosition<BrickAndMortarTag> FindNearestNonSolidTag(BrickAndMortarTag currentTag) {
+        private RelativeObject<BrickAndMortarTag> FindNearestNonSolidTag(BrickAndMortarTag currentTag) {
             var tags = _controller
                 .ReadNearbyTags()
                 .Select(item => item.Map((tag) => (BrickAndMortarTag) tag));
 
-            RelativePosition<BrickAndMortarTag>? bestCandidate = null;
+            RelativeObject<BrickAndMortarTag>? bestCandidate = null;
             foreach (var currentCandidate in tags) {
                 if (bestCandidate == null || currentCandidate.Distance < bestCandidate.Distance) 
                     bestCandidate = currentCandidate;
@@ -481,7 +481,7 @@ namespace Dora.ExplorationAlgorithm {
         }
 
         // Looks for a tag that is within the given neighbour tile region(relative to the current position of the robot)
-        private BrickAndMortarTag? IdentifyNeighbour(List<RelativePosition<BrickAndMortarTag>> relativeTags, int cardinalDirection) {
+        private BrickAndMortarTag? IdentifyNeighbour(List<RelativeObject<BrickAndMortarTag>> relativeTags, int cardinalDirection) {
             bool isDiagonal = IsDirectionDiagonal(cardinalDirection);
             float maximumDistance = isDiagonal ? _maximumDiagonalDistance : _maximumAxialDistance;
             float minimumDistance = isDiagonal ? _minimumDiagonalDistance : _minimumAxialDistance;
