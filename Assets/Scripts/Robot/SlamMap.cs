@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Dora.MapGeneration;
 using Dora.Utilities;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEditor.UI;
 using UnityEngine;
@@ -17,6 +19,7 @@ namespace Dora.Robot {
         private SlamTileStatus[,] _tiles;
         private SlamTileStatus[,] _currentlyVisibleTiles;
         private SimulationMap<bool> _collisionMap;
+        private IPathFinder _pathFinder;
 
         private readonly float _scale;
         private readonly Vector2 _scaledOffset;
@@ -42,6 +45,7 @@ namespace Dora.Robot {
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
             _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
             this.random = new Random(randomSeed);
+            _pathFinder = new AStar();
 
             for (int x = 0; x < _widthInTiles; x++)
                 for (int y = 0; y < _heightInTiles; y++)
@@ -186,7 +190,7 @@ namespace Dora.Robot {
             return _tiles[tile.x, tile.y];
         }
 
-        public float getRobotAngleDeg() {
+        public float GetRobotAngleDeg() {
             return _robotAngle;
         }
 
@@ -203,10 +207,10 @@ namespace Dora.Robot {
             var slamCoordinate = coordinate * 2;
             
             if (IsWithinBounds(slamCoordinate)) {
-                var isTraversable = _tiles[coordinate.x, coordinate.y] == SlamTileStatus.Open;
-                isTraversable &= _tiles[coordinate.x + 1, coordinate.y] == SlamTileStatus.Open;
-                isTraversable &= _tiles[coordinate.x, coordinate.y + 1] == SlamTileStatus.Open;
-                isTraversable &= _tiles[coordinate.x + 1, coordinate.y + 1] == SlamTileStatus.Open;
+                var isTraversable = _tiles[slamCoordinate.x, slamCoordinate.y] == SlamTileStatus.Open;
+                isTraversable &= _tiles[slamCoordinate.x + 1, slamCoordinate.y] == SlamTileStatus.Open;
+                isTraversable &= _tiles[slamCoordinate.x, slamCoordinate.y + 1] == SlamTileStatus.Open;
+                isTraversable &= _tiles[slamCoordinate.x + 1, slamCoordinate.y + 1] == SlamTileStatus.Open;
                 return !isTraversable;
             }
             
@@ -216,6 +220,18 @@ namespace Dora.Robot {
 
         public float CellSize() {
             return _collisionMap.Scale;
+        }
+        
+        public List<Vector2Int>? GetPath(Vector2Int slamTileFrom, Vector2Int slamTileTo) {
+            var path = _pathFinder.GetPath(slamTileFrom / 2, slamTileTo / 2, this)
+                ?.Select(coord => coord * 2).ToList();
+
+            if (path == null)
+                return null;
+
+            path[path.Count - 1] = slamTileTo;
+
+            return path;
         }
     }
 }

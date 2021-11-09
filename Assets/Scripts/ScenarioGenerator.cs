@@ -60,7 +60,7 @@ namespace Dora {
                             randomSeed, 
                             1, 
                             0.6f,
-                            (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 14)),
+                            (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 2)),
                         robotConstraints: robotConstraints
                     ));
                 }
@@ -75,7 +75,7 @@ namespace Dora {
                             1, 
                             0.6f,
                             new Coord(0,0),
-                            (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 7)),
+                            (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 2)),
                         robotConstraints: robotConstraints
                     ));
                 }

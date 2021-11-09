@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Dora.MapGeneration;
 using UnityEngine;
 using static Dora.Robot.SlamMap;
 
@@ -14,6 +15,8 @@ namespace Dora.Robot {
 
         public SlamTileStatus GetStatusOfTile(Vector2Int tile);
 
-        public float getRobotAngleDeg();
+        public float GetRobotAngleDeg();
+        
+        public List<Vector2Int> GetPath(Vector2Int slamTileFrom, Vector2Int slamTileTo);
     }
 }
