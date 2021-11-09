@@ -1,8 +1,6 @@
 using System;
-using Dora.ExplorationAlgorithm;
 using Dora.Robot;
 using Dora.Utilities;
-using JetBrains.Annotations;
 using UnityEngine;
 using static Dora.Robot.SlamMap;
 
@@ -85,6 +83,16 @@ namespace Dora.MapGeneration.PathFinding {
         // Converts the given 
         public Vector2Int ToSlamMapCoordinate(Vector2Int localCoordinate) {
             return localCoordinate * 2;
+        }
+
+        public Vector2Int GetRelativeNeighbour(CardinalDirection relativeDirection) {
+            CardinalDirection currentCardinalDirection = 
+                CardinalDirection.DirectionFromDegrees(_slamMap.GetRobotAngleDeg());
+            CardinalDirection targetDirection =
+                CardinalDirection.GetDirection(relativeDirection.Index + currentCardinalDirection.Index);
+
+            var currentTile = GetApproximatePosition();
+            return new Vector2Int((int) currentTile.x, (int) currentTile.y) + targetDirection.DirectionVector;
         }
         
         
