@@ -63,5 +63,7 @@ namespace Dora.Robot {
         String GetDebugInfo();
 
         List<CommunicationManager.SensedObject<int>> SenseNearbyRobots();
+
+        SlamAlgorithmInterface GetSlamMap();
     }
 }

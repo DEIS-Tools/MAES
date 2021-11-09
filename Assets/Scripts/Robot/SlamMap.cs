@@ -9,12 +9,13 @@ using UnityEngine;
 using Random = System.Random;
 
 namespace Dora.Robot {
-    public class SlamMap {
+    public class SlamMap : SlamAlgorithmInterface{
         // Size of a tile in world space
         private readonly float _tileSize;
         private readonly int _widthInTiles, _heightInTiles;
 
         private SlamTileStatus[,] _tiles;
+        private SlamTileStatus[,] _currentlyVisibleTiles;
         private SimulationMap<bool> _collisionMap;
 
         private readonly float _scale;
@@ -24,6 +25,7 @@ namespace Dora.Robot {
         private float _lastInaccuracyY = 0f;
         // Represents the current approximate position of the given robot
         public Vector2 ApproximatePosition { get; private set; }
+        private float _robotAngle = 0;
         private int _randomSeed;
         private Random random;
 
@@ -37,6 +39,7 @@ namespace Dora.Robot {
             _scale = collisionMap.Scale;
             _scaledOffset = collisionMap.ScaledOffset;
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
+            _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
             this.random = new Random(randomSeed);
 
             for (int x = 0; x < _widthInTiles; x++)
@@ -62,13 +65,41 @@ namespace Dora.Robot {
                 _tiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
         }
 
+        public Vector2Int GetCurrentPositionTile() {
+            var currentPosition = this.GetApproxPosition();
+            var x = Convert.ToInt32(currentPosition.x);
+            var y = Convert.ToInt32(currentPosition.y);
+            var slamX = (x - (int)_scaledOffset.x) * 2;
+            var slamY = (y - (int)_scaledOffset.y) * 2;
+
+            return new Vector2Int(slamX, slamY);
+        }
+
+        public void ResetRobotVisibility() {
+            _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
+            for (int x = 0; x < _currentlyVisibleTiles.GetLength(0); x++) {
+                for (int y = 0; y < _currentlyVisibleTiles.GetLength(1); y++) {
+                    _currentlyVisibleTiles[x, y] = SlamTileStatus.Unseen;
+                }
+            }
+        }
+
+        public void SetCurrentlyVisibleByTriangle(int triangleIndex, bool isOpen) {
+            var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
+            if (_currentlyVisibleTiles[localCoordinate.x, localCoordinate.y] != SlamTileStatus.Solid)
+                _currentlyVisibleTiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+        }
+
+        public SlamTileStatus GetVisibleTileByTriangleIndex(int triangleIndex) {
+            var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
+            return _currentlyVisibleTiles[localCoordinate.x, localCoordinate.y];
+        }
+
         public SlamTileStatus GetTileByTriangleIndex(int triangleIndex) {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
             return _tiles[localCoordinate.x, localCoordinate.y];
         }
-
         
-
         public enum SlamTileStatus {
             Unseen,
             Open,
@@ -114,6 +145,48 @@ namespace Dora.Robot {
             foreach (var map in maps) {
                 map._tiles = globalMap.Clone() as SlamTileStatus[,];
             }
+        }
+
+        public Vector2 GetApproxPosition() {
+            return ApproximatePosition;
+        }
+
+       public Dictionary<Vector2Int, SlamTileStatus> GetExploredTiles() {
+            var res = new Dictionary<Vector2Int, SlamTileStatus>();
+
+            for (int x = 0; x < _widthInTiles; x++) {
+                for (int y = 0; y < _heightInTiles; y++) {
+                    if (_tiles[x, y] != SlamTileStatus.Unseen)
+                        res[new Vector2Int(x, y)] = _tiles[x, y];
+                }
+            }
+
+            return res;
+        }
+
+        public Dictionary<Vector2Int, SlamTileStatus> GetCurrentlyVisibleTiles() {
+            var res = new Dictionary<Vector2Int, SlamTileStatus>();
+            
+            for (int x = 0; x < _widthInTiles; x++) {
+                for (int y = 0; y < _heightInTiles; y++) {
+                    if (_currentlyVisibleTiles[x, y] != SlamTileStatus.Unseen)
+                        res[new Vector2Int(x, y)] = _currentlyVisibleTiles[x, y];
+                }
+            }
+
+            return res;
+        }
+
+        public SlamTileStatus GetStatusOfTile(Vector2Int tile) {
+            return _tiles[tile.x, tile.y];
+        }
+
+        public float getRobotAngleDeg() {
+            return _robotAngle;
+        }
+
+        public void SetApproxRobotAngle(float robotAngle) {
+            _robotAngle = robotAngle;
         }
     }
 }

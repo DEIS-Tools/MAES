@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using System.Security.Cryptography;
 using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Utilities;
 using UnityEngine;
 using static Dora.MapGeneration.EnvironmentTaggingMap;
+using Vector2 = UnityEngine.Vector2;
 
 namespace Dora {
     // Messages sent through this class will be subject to communication range and line of sight.
@@ -60,9 +63,15 @@ namespace Dora {
             public readonly T item;
 
             public SensedObject(float distance, float angle, T t) {
-                Distance = distance;
-                Angle = angle;
+                this.Distance = distance;
+                this.Angle = angle;
                 this.item = t;
+            }
+
+            public Vector2 GetRelativePosition(Vector2 myPosition, float globalAngle) {
+                var x = myPosition.x + (Distance * Mathf.Cos(Mathf.Deg2Rad * ((Angle + globalAngle) % 360)));
+                var y = myPosition.y + (Distance * Mathf.Sin(Mathf.Deg2Rad * ((Angle + globalAngle) % 360)));
+                return new Vector2(x, y);
             }
         }
 
@@ -187,7 +196,7 @@ namespace Dora {
 
             List<HashSet<int>> groups = new List<HashSet<int>>();
             foreach (var r1 in _robots) {
-                if(!groups.Exists(g => g.Contains(r1.id))); {
+                if(!groups.Exists(g => g.Contains(r1.id))) {
                     groups.Add(GetCommunicationGroup(r1.id));
                 }
             }
@@ -246,7 +255,6 @@ namespace Dora {
                     continue;
 
                 sensedObjects.Add(new SensedObject<int>(comInfo.Distance, comInfo.Angle, robot.id));
-                
             }
             
             return sensedObjects;
