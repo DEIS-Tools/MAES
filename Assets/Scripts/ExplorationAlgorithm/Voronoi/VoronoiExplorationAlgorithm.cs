@@ -216,7 +216,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         private void SetCurrentMovementTarget(Vector2Int target) {
             _currentMovementTarget = target;
             var robotTile = _robotController.GetSlamMap().GetCurrentPositionTile();
-            var path = _robotController.GetSlamMap().GetPath(robotTile, target);
+            var path = _robotController.GetSlamMap().GetOptimisticPath(robotTile, target);
             _currentPathTarget = path;
 
             if (path != null) {

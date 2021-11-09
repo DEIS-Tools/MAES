@@ -56,7 +56,12 @@ namespace Dora.MapGeneration {
             }
         }
 
-        public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap) {
+        public List<Vector2Int>? GetOptimisticPath(Vector2Int startCoordinate, Vector2Int targetCoordinate,
+            IPathFindingMap pathFindingMap) {
+            return GetPath(startCoordinate, targetCoordinate, pathFindingMap, true);
+        }
+
+        public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false) {
             var candidates = new SortedSet<AStarTile>(AStarTile.HeuristicComparer);
             var bestCandidateOnTile = new Dictionary<Vector2Int, AStarTile>();
             var startTileHeuristic = EuclideanHeuristic(startCoordinate, targetCoordinate);
@@ -77,7 +82,10 @@ namespace Dora.MapGeneration {
                 for (int x = currentTile.X - 1; x <= currentTile.X + 1; x++) {
                     for (int y = currentTile.Y - 1; y <= currentTile.Y + 1; y++) {
                         var neighbourCoord = new Vector2Int(x, y);
-                        if (!pathFindingMap.IsSolid(neighbourCoord) || neighbourCoord == targetCoordinate) {
+                        var isSolid = beOptimistic
+                            ? pathFindingMap.IsOptimisticSolid(neighbourCoord) // Unseen = open
+                            : pathFindingMap.IsSolid(neighbourCoord); // Unseen = wall
+                        if (!isSolid || neighbourCoord == targetCoordinate) {
                             var cost = currentTile.Cost + Vector2Int.Distance(currentCoordinate, neighbourCoord);
                             var heuristic = EuclideanHeuristic(neighbourCoord, targetCoordinate);
                             var neighCost = cost + heuristic;
@@ -94,8 +102,8 @@ namespace Dora.MapGeneration {
                     }
                 }
 
-                if (loopCount > 5000) {
-                    throw new Exception("Fuck u");
+                if (loopCount > 10000) {
+                    throw new Exception("A* could not find path within 10000 loop runs");
                 }
 
                 loopCount++;

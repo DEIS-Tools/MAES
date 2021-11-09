@@ -203,6 +203,25 @@ namespace Dora.Robot {
                    slamCoordinate.y > 0 && slamCoordinate.y < _heightInTiles;
         }
 
+        public bool IsOptimisticSolid(Vector2Int coordinate) {
+            var slamCoordinate = coordinate * 2;
+            
+            if (IsWithinBounds(slamCoordinate)) {
+                var isTraversable = _tiles[slamCoordinate.x, slamCoordinate.y] == SlamTileStatus.Open
+                                    || _tiles[slamCoordinate.x, slamCoordinate.y] == SlamTileStatus.Unseen;
+                isTraversable &= _tiles[slamCoordinate.x + 1, slamCoordinate.y] == SlamTileStatus.Open
+                                 || _tiles[slamCoordinate.x + 1, slamCoordinate.y] == SlamTileStatus.Unseen;
+                isTraversable &= _tiles[slamCoordinate.x, slamCoordinate.y + 1] == SlamTileStatus.Open
+                                || _tiles[slamCoordinate.x, slamCoordinate.y + 1] == SlamTileStatus.Unseen;
+                isTraversable &= _tiles[slamCoordinate.x + 1, slamCoordinate.y + 1] == SlamTileStatus.Open
+                                 || _tiles[slamCoordinate.x + 1, slamCoordinate.y + 1] == SlamTileStatus.Unseen;
+                return !isTraversable;
+            }
+            
+            // Tiles outside map bounds are considered solid
+            return true;
+        }
+
         public bool IsSolid(Vector2Int coordinate) {
             var slamCoordinate = coordinate * 2;
             
@@ -229,6 +248,23 @@ namespace Dora.Robot {
             if (path == null)
                 return null;
 
+            // Due to rounding errors when converting slam tiles to path tiles, the target may not be correct
+            // This replaces the final tile with the actual target.
+            path[path.Count - 1] = slamTileTo;
+
+            return path;
+        }
+
+        public List<Vector2Int> GetOptimisticPath(Vector2Int slamTileFrom, Vector2Int slamTileTo) {
+            var path = _pathFinder.GetOptimisticPath(slamTileFrom / 2, slamTileTo / 2, this)
+                ?.Select(coord => coord * 2).ToList();
+
+            
+            if (path == null)
+                return null;
+
+            // Due to rounding errors when converting slam tiles to path tiles, the target may not be correct
+            // This replaces the final tile with the actual target.
             path[path.Count - 1] = slamTileTo;
 
             return path;

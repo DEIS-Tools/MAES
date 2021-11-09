@@ -18,5 +18,7 @@ namespace Dora.Robot {
         public float GetRobotAngleDeg();
         
         public List<Vector2Int> GetPath(Vector2Int slamTileFrom, Vector2Int slamTileTo);
+        
+        public List<Vector2Int> GetOptimisticPath(Vector2Int slamTileFrom, Vector2Int slamTileTo);
     }
 }
