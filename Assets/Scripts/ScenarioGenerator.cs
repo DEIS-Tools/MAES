@@ -117,10 +117,14 @@ namespace Dora {
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
                     broadcastBlockedByWalls: true,
-                    shouldAutomaticallyUpdateSlam: true,
+                    senseNearbyRobotRange: 5f,
+                    senseNearbyRobotBlockedByWalls: true,
+                    automaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
-                    positionInaccuracy: 0.1f,
-                    environmentTagReadRange: 5.0f
+                    slamSynchronizeIntervalInTicks: 10,
+                    slamPositionInaccuracy: 0.5f,
+                    distributeSlam: false,
+                    environmentTagReadRange: 4.0f
                 );
                 
                 /*scenarios.Enqueue(new SimulationScenario(
