@@ -69,9 +69,12 @@ namespace Dora.Statistics {
                             newlyExploredTriangles.Add(index);
                             ExploredTriangles++;
                         }
-                        if (robot.Controller.Constraints.AutomaticallyUpdateSlam) 
+
+                        if (robot.Controller.Constraints.AutomaticallyUpdateSlam) {
                             slamMap.SetExploredByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
                             slamMap.SetCurrentlyVisibleByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
+                        } 
+                            
                         return cell.isExplorable;
                     });
                 }

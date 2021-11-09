@@ -9,11 +9,11 @@ using UnityEngine;
 using Random = System.Random;
 
 namespace Dora.Robot {
-    public class SlamMap : SlamAlgorithmInterface{
+    public class SlamMap : SlamAlgorithmInterface, IPathFindingMap{
         // Size of a tile in world space
         private readonly float _tileSize;
         private readonly int _widthInTiles, _heightInTiles;
-
+        
         private SlamTileStatus[,] _tiles;
         private SlamTileStatus[,] _currentlyVisibleTiles;
         private SimulationMap<bool> _collisionMap;
@@ -36,6 +36,7 @@ namespace Dora.Robot {
             _randomSeed = randomSeed;
             _widthInTiles = collisionMap.WidthInTiles * 2;
             _heightInTiles = collisionMap.HeightInTiles * 2;
+            
             _scale = collisionMap.Scale;
             _scaledOffset = collisionMap.ScaledOffset;
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
@@ -57,6 +58,10 @@ namespace Dora.Robot {
             // X offset is 1 if the triangle is in the right half of tile
             var xOffset = (localTriangleIndex % 4 > 1) ? 1 : 0;
             return new Vector2Int((collisionX * 2) + xOffset, (collisionY * 2) + yOffset);
+        }
+
+        public Vector2Int LocalCoordinateToPathFindingCoordinate(Vector2Int localCoordinate) {
+            return  localCoordinate / 2;
         }
 
         public void SetExploredByTriangle(int triangleIndex, bool isOpen) {
@@ -187,6 +192,30 @@ namespace Dora.Robot {
 
         public void SetApproxRobotAngle(float robotAngle) {
             _robotAngle = robotAngle;
+        }
+
+        private bool IsWithinBounds(Vector2Int slamCoordinate) {
+            return slamCoordinate.x > 0 && slamCoordinate.x < _widthInTiles &&
+                   slamCoordinate.y > 0 && slamCoordinate.y < _heightInTiles;
+        }
+
+        public bool IsSolid(Vector2Int coordinate) {
+            var slamCoordinate = coordinate * 2;
+            
+            if (IsWithinBounds(slamCoordinate)) {
+                var isTraversable = _tiles[coordinate.x, coordinate.y] == SlamTileStatus.Open;
+                isTraversable &= _tiles[coordinate.x + 1, coordinate.y] == SlamTileStatus.Open;
+                isTraversable &= _tiles[coordinate.x, coordinate.y + 1] == SlamTileStatus.Open;
+                isTraversable &= _tiles[coordinate.x + 1, coordinate.y + 1] == SlamTileStatus.Open;
+                return !isTraversable;
+            }
+            
+            // Tiles outside map bounds are considered solid
+            return true;
+        }
+
+        public float CellSize() {
+            return _collisionMap.Scale;
         }
     }
 }
