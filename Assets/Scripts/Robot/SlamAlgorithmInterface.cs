@@ -12,7 +12,7 @@ namespace Dora.Robot {
         
         public Dictionary<Vector2Int, SlamTileStatus> GetCurrentlyVisibleTiles();
 
-        public Vector2Int GetCurrentPositionTile();
+        public Vector2Int GetCurrentPositionSlamTile();
 
         public SlamTileStatus GetStatusOfTile(Vector2Int tile);
 
@@ -22,6 +22,10 @@ namespace Dora.Robot {
         
         public List<Vector2Int> GetOptimisticPath(Vector2Int slamTileFrom, Vector2Int slamTileTo);
 
+        public RelativePosition GetRelativeSlamPosition(Vector2Int slamTileTarget);
+
+        public RelativePosition GetRelativePosition(Vector2Int target);
+        
         public CoarseGrainedMap GetCoarseMap();
     }
 }

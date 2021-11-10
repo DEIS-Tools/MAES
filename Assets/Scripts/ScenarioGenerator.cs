@@ -9,7 +9,7 @@ namespace Dora {
         public static Queue<SimulationScenario> GenerateBallisticScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
 
-            for (int i = 0; i < 5; i++) {
+            for (int i = 3; i < 8; i++) {
                 int randomSeed = i + 4 + 1;
                 int minute = 60;
                 var mapConfig = new CaveMapConfig(
@@ -25,8 +25,8 @@ namespace Dora {
                     1f);
 
                 var officeConfig = new OfficeMapConfig(
-                    60,
-                    60,
+                    30,
+                    30,
                     randomSeed,
                     58,
                     4,
@@ -41,7 +41,7 @@ namespace Dora {
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
                     broadcastBlockedByWalls: true,
-                    senseNearbyRobotRange: 5f,
+                    senseNearbyRobotRange: 10f,
                     senseNearbyRobotBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
@@ -59,7 +59,7 @@ namespace Dora {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
-                            1, 
+                            2, 
                             0.6f,
                             (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 2)),
                         robotConstraints: robotConstraints
