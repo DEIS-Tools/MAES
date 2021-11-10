@@ -53,68 +53,73 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         public void UpdateLogic() {
-            if (_controller.GetStatus() != RobotStatus.Idle || _currentState == State.Terminated)
+            while (_controller.GetStatus() == RobotStatus.Idle && _currentState != State.Terminated) {
+                if (_currentState == State.Backtracking) 
+                    PerformBackTrack();
+            
+                if (_currentState == State.Spiraling)
+                    PerformSpiraling();
+            }
+        }
+
+        // --------------  Backtracking phase  -------------------
+        private void PerformBackTrack() {
+            _backtrackTarget ??= FindBestBackTrackingTarget();
+            // If no backtracking targets exist, then exploration must have been completed
+            if (_backtrackTarget == null) {
+                _currentState = State.Terminated;
                 return;
-
-            if (_currentState == State.Backtracking) {
-                _backtrackTarget ??= FindBestBackTrackingTarget();
-                // If no backtracking targets exist, then exploration must have been completed
-                if (_backtrackTarget == null) {
-                    _currentState = State.Terminated;
-                    return;
-                }
-                
-                _backtrackingPath ??= new Queue<Vector2Int>(_navigationMap.GetPath(_backtrackTarget!.Value));
-                
-                if (_nextBackTrackStep == null) {
-                    if (_backtrackingPath.Count == 0) {
-                        // Robot has reached target, ensure that we are oriented at some angle
-                        // that is aligned with the grid before moving on to the spiral phase
-                        var isAligned = EnsureCorrectOrientationForSpiraling();
-                        if (isAligned) {
-                            _currentState = State.Spiraling;
-                            _backtrackingPath = null;
-                            UpdateLogic();
-                            return;
-                        } else return;
-                    }
-                    
-                    // There are still steps left in the path. Progress to next part of path
-                    _nextBackTrackStep = _backtrackingPath!.Dequeue();
-                }
-                
-                // Check if the robot needs to move 
-                var relativeTarget = _navigationMap.GetTileCenterRelativePosition(_nextBackTrackStep!.Value);
-                if (relativeTarget.Distance > 0.2f) 
-                    MoveTo(relativeTarget);
-                else {
-                    // We have reached this target, progress to next one
-                    _nextBackTrackStep = null;
-                    UpdateLogic();
-                    return;
-
-                }
             }
             
-            if (_currentState == State.Spiraling) {
-                _nextSpiralTarget ??= DetermineNextSpiralTarget();
-
-                if (_nextSpiralTarget == null) {
-                    _currentState = State.Backtracking;
-                    return;
+            // Find path to target, if no path has been found previously
+            _backtrackingPath ??= new Queue<Vector2Int>(_navigationMap.GetPath(_backtrackTarget!.Value));
+            
+            // Check if the path has been completed (ie. no more steps remain)
+            if (_backtrackingPath.Count == 0) {
+                // Robot has reached target, ensure that we are oriented at some angle
+                // that is aligned with the grid before moving on to the spiral phase
+                var isAligned = EnsureCorrectOrientationForSpiraling();
+                if (isAligned) {
+                    // Ready to enter Spiraling phase. Clear back tracking information
+                    _currentState = State.Spiraling;
+                    _nextBackTrackStep = null;
+                    _backtrackingPath = null;
                 }
-                
-                var relativePosition = _navigationMap.GetTileCenterRelativePosition(_nextSpiralTarget!.Value);
-                if (relativePosition.Distance > 0.3f)
-                    MoveTo(relativePosition);
-                else {
-                    _navigationMap.SetTileData(_nextSpiralTarget!.Value, new TileData(true));
-                    // Remove this from possible back tracking candidates, if present
-                    _backTrackingPoints.Remove(_nextSpiralTarget!.Value);
-                    _nextSpiralTarget = null;
-                }
-                    
+                return;
             }
+            
+            _nextBackTrackStep ??= _backtrackingPath!.Dequeue();
+            
+            // Check if the robot needs to move to reach next step target 
+            var relativeTarget = _navigationMap.GetTileCenterRelativePosition(_nextBackTrackStep!.Value);
+            if (relativeTarget.Distance > 0.2f) 
+                MoveTo(relativeTarget);
+            else // We have reached this target, progress to next one
+                _nextBackTrackStep = null;
+        }
+
+        // --------------  Spiraling phase  -------------------
+        private void PerformSpiraling() {
+            _nextSpiralTarget ??= DetermineNextSpiralTarget();
+
+            if (_nextSpiralTarget == null) {
+                _currentState = State.Backtracking;
+                return;
+            }
+                
+            var relativePosition = _navigationMap.GetTileCenterRelativePosition(_nextSpiralTarget!.Value);
+            if (relativePosition.Distance > 0.3f) {
+                MoveTo(relativePosition);
+            } else {
+                MarkTileExplored(_nextSpiralTarget!.Value);
+                _nextSpiralTarget = null;
+            }
+        }
+
+        private void MarkTileExplored(Vector2Int exploredTile) {
+            _navigationMap.SetTileData(exploredTile, new TileData(true));
+            // Remove this from possible back tracking candidates, if present
+            _backTrackingPoints.Remove(exploredTile);
         }
 
         // Rotates the robot such that it directly faces a non-solid tile
@@ -162,7 +167,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 return true; // physically blocked
 
             var tileData = _navigationMap.GetTileData(tileCoord);
-            if (tileData != null) // If the tile marked as explored, it is virtually blocked
+            if (tileData != null) // If the tile is marked as explored, it is virtually blocked
                 return ((TileData) tileData).IsExplored;
 
             // Neither physically nor virtually blocked
@@ -229,7 +234,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         public string GetDebugInfo() {
-            return $"State: {Enum.GetName(typeof(State), _currentState)}";
+            return $"State: {Enum.GetName(typeof(State), _currentState)}" +
+                   $"\nCoarse Map Position: {_navigationMap.GetApproximatePosition()}";
         }
 
         public object SaveState() {
