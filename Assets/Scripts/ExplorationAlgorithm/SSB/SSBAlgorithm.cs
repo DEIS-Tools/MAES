@@ -75,7 +75,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             _backtrackingPath ??= new Queue<Vector2Int>(_navigationMap.GetPath(_backtrackTarget!.Value));
             
             // Check if the path has been completed (ie. no more steps remain)
-            if (_backtrackingPath.Count == 0) {
+            if (_nextBackTrackStep == null && _backtrackingPath.Count == 0) {
                 // Robot has reached target, ensure that we are oriented at some angle
                 // that is aligned with the grid before moving on to the spiral phase
                 var isAligned = EnsureCorrectOrientationForSpiraling();
@@ -84,6 +84,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     _currentState = State.Spiraling;
                     _nextBackTrackStep = null;
                     _backtrackingPath = null;
+                    _backtrackTarget = null;
                 }
                 return;
             }
@@ -94,8 +95,12 @@ namespace Dora.ExplorationAlgorithm.SSB {
             var relativeTarget = _navigationMap.GetTileCenterRelativePosition(_nextBackTrackStep!.Value);
             if (relativeTarget.Distance > 0.2f) 
                 MoveTo(relativeTarget);
-            else // We have reached this target, progress to next one
+            else {
+                // This tile has been reached, mark it as explored
+                MarkTileExplored(_nextBackTrackStep!.Value);
                 _nextBackTrackStep = null;
+            } 
+            
         }
 
         // --------------  Spiraling phase  -------------------
@@ -117,6 +122,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         private void MarkTileExplored(Vector2Int exploredTile) {
+            Debug.Log($"Explored tile: {exploredTile}");
             _navigationMap.SetTileData(exploredTile, new TileData(true));
             // Remove this from possible back tracking candidates, if present
             _backTrackingPoints.Remove(exploredTile);
@@ -148,7 +154,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             }
 
             if (targetDirection == null)
-                throw new NotImplementedException(); // TODO, Handle finish case?
+                return true; // Single tile for exploration
 
             // Find relative position of neighbour located in target direction
             var targetRelativePosition = _navigationMap
@@ -198,6 +204,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
             }
             
             _backTrackingPoints.Remove(minDistanceBp);
+            Debug.Log($"Best backtracking target = {minDistanceBp}");
+            Debug.Log($"Is target blocked: {IsTileBlocked(minDistanceBp)}");
             return minDistanceBp;
         }
 
@@ -211,11 +219,11 @@ namespace Dora.ExplorationAlgorithm.SSB {
             var frontTileBlocked = IsTileBlocked(front);
             var rlsBlocked = IsTileBlocked(rls);
             var olsBlocked = IsTileBlocked(ols);
-            
+
             // Add candidate tiles
             if (!rlsBlocked) _backTrackingPoints.Add(rls);
             if (!olsBlocked) _backTrackingPoints.Add(ols);
-            if (!frontTileBlocked) _backTrackingPoints.Add(ols);
+            if (!frontTileBlocked) _backTrackingPoints.Add(front);
             
             if (frontTileBlocked && rlsBlocked && olsBlocked)
                 return null; // No more open tiles left. Spiraling has finished
