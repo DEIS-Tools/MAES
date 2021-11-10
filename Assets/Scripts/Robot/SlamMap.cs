@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Dora.MapGeneration;
+using Dora.MapGeneration.PathFinding;
 using Dora.Utilities;
 using JetBrains.Annotations;
 using UnityEditor;
@@ -31,6 +32,9 @@ namespace Dora.Robot {
         private float _robotAngle = 0;
         private int _randomSeed;
         private Random random;
+        
+        // Low resolution map
+        public CoarseGrainedMap CoarseMap;
 
 
         public SlamMap(SimulationMap<bool> collisionMap, RobotConstraints robotConstraints, int randomSeed) {
@@ -39,13 +43,14 @@ namespace Dora.Robot {
             _randomSeed = randomSeed;
             _widthInTiles = collisionMap.WidthInTiles * 2;
             _heightInTiles = collisionMap.HeightInTiles * 2;
-            
             _scale = collisionMap.Scale;
             _scaledOffset = collisionMap.ScaledOffset;
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
             _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
             this.random = new Random(randomSeed);
             _pathFinder = new AStar();
+            
+            CoarseMap = new CoarseGrainedMap(this, collisionMap.WidthInTiles, collisionMap.HeightInTiles, _scaledOffset);
 
             for (int x = 0; x < _widthInTiles; x++)
                 for (int y = 0; y < _heightInTiles; y++)
@@ -266,6 +271,10 @@ namespace Dora.Robot {
             path[path.Count - 1] = slamTileTo;
 
             return path;
+        }
+
+        public CoarseGrainedMap GetCoarseMap() {
+            return CoarseMap;
         }
     }
 }

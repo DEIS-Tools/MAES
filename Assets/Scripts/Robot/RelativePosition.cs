@@ -7,5 +7,9 @@ namespace Dora.Robot {
             Distance = distance;
             RelativeAngle = relativeAngle;
         }
+
+        public override string ToString() {
+            return $"[Relative angle: {RelativeAngle} degrees. Distance: {Distance}]";
+        }
     }
 }

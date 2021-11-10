@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Dora.MapGeneration;
+using Dora.MapGeneration.PathFinding;
 using UnityEngine;
 using static Dora.Robot.SlamMap;
 
@@ -20,7 +21,7 @@ namespace Dora.Robot {
         public List<Vector2Int> GetPath(Vector2Int slamTileFrom, Vector2Int slamTileTo);
         
         public List<Vector2Int> GetOptimisticPath(Vector2Int slamTileFrom, Vector2Int slamTileTo);
-        
-        
+
+        public CoarseGrainedMap GetCoarseMap();
     }
 }
