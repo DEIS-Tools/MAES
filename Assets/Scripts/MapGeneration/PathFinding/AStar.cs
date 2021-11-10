@@ -167,17 +167,18 @@ namespace Dora.MapGeneration {
         }
 
         private float EuclideanHeuristic(Vector2Int from, Vector2Int to) {
-            var xDif = Math.Abs(from.x - to.x);
-            var yDif = Math.Abs(from.y - to.y);
+            // var xDif = Math.Abs(from.x - to.x);
+            // var yDif = Math.Abs(from.y - to.y);
+            //
+            // var minDif = Math.Min(xDif, yDif);
+            // var maxDif = Math.Max(xDif, yDif);
+            //
+            // float heuristic = maxDif - minDif;
+            // if (minDif > 0)
+            //     heuristic += Mathf.Sqrt(2f * Mathf.Pow(minDif, 2f));
 
-            var minDif = Math.Min(xDif, yDif);
-            var maxDif = Math.Max(xDif, yDif);
-
-            float heuristic = maxDif - minDif;
-            if (minDif > 0)
-                heuristic += Mathf.Sqrt(2f * Mathf.Pow(minDif, 2f));
-
-            return heuristic;
+            // return heuristic;
+            return Vector2Int.Distance(from,to);
         }
         
         

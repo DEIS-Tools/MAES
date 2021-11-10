@@ -198,7 +198,7 @@ namespace Dora {
                     automaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
                     slamSynchronizeIntervalInTicks: 10,
-                    slamPositionInaccuracy: 0.0f,
+                    slamPositionInaccuracy: 0.0f, // TODO!
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f
                 );

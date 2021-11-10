@@ -112,7 +112,7 @@ namespace Dora.MapGeneration.PathFinding {
 
         public List<Vector2Int> GetPath(Vector2Int target) {
             var approxPosition = GetApproximatePosition();
-            return _slamMap.GetPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target);
+            return _slamMap.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target);
         }
 
 
