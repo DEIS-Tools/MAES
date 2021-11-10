@@ -82,9 +82,19 @@ namespace Dora.MapGeneration {
                 for (int x = currentTile.X - 1; x <= currentTile.X + 1; x++) {
                     for (int y = currentTile.Y - 1; y <= currentTile.Y + 1; y++) {
                         var neighbourCoord = new Vector2Int(x, y);
+                        // Don't evaluate the current tile as a neighbor
+                        if(neighbourCoord.Equals(currentCoordinate)) continue;
+                        // We can only traverse diagonally, if the corner and side next to diagonal tile are not blocked
+                       if (IsDiagonal(currentCoordinate, neighbourCoord) 
+                            && !CanTraverseDiagonally(currentCoordinate, neighbourCoord, pathFindingMap, beOptimistic)) {
+                            // Debug.Log($"Could not traverse diagonally between {currentCoordinate} and {neighbourCoord}");
+                            continue;
+                        }
+                        
                         var isSolid = beOptimistic
                             ? pathFindingMap.IsOptimisticSolid(neighbourCoord) // Unseen = open
                             : pathFindingMap.IsSolid(neighbourCoord); // Unseen = wall
+                        // if(isSolid) Debug.Log($"Solid tile at: {neighbourCoord}");
                         if (!isSolid || neighbourCoord == targetCoordinate) {
                             var cost = currentTile.Cost + Vector2Int.Distance(currentCoordinate, neighbourCoord);
                             var heuristic = EuclideanHeuristic(neighbourCoord, targetCoordinate);
@@ -112,8 +122,62 @@ namespace Dora.MapGeneration {
             return null;
         }
 
+        private bool IsDiagonal(Vector2Int currentTile, Vector2Int neighbourTile) {
+            return currentTile.x != neighbourTile.x && currentTile.y != neighbourTile.y;
+        }
+
+        private bool CanTraverseDiagonally(Vector2Int currentTile, Vector2Int diagonalTile, IPathFindingMap pathFindingMap, bool beOptimistic) {
+            // Top right. Right side and top must be open
+            if (currentTile.x + 1 == diagonalTile.x && currentTile.y + 1 == diagonalTile.y) {
+                var rightSideTile = new Vector2Int(currentTile.x + 1, currentTile.y);
+                var topTile = new Vector2Int(currentTile.x, currentTile.y + 1);
+                var rightSideOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(rightSideTile) : !pathFindingMap.IsSolid(rightSideTile);
+                var topOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(topTile) : !pathFindingMap.IsSolid(topTile);
+                return topOpen && rightSideOpen;
+            }
+            // Bottom right. Right side and bottom must be open
+            else if (currentTile.x + 1 == diagonalTile.x && currentTile.y - 1 == diagonalTile.y) {
+                var rightSideTile = new Vector2Int(currentTile.x + 1, currentTile.y);
+                var bottomTile = new Vector2Int(currentTile.x, currentTile.y - 1);
+                var rightSideOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(rightSideTile) : !pathFindingMap.IsSolid(rightSideTile);
+                var bottomOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(bottomTile) : !pathFindingMap.IsSolid(bottomTile);
+                return bottomOpen && rightSideOpen;
+            }
+            // Bottom left. Left side and bottom must be open
+            else if (currentTile.x - 1 == diagonalTile.x && currentTile.y - 1 == diagonalTile.y) {
+                var leftSideTile = new Vector2Int(currentTile.x - 1, currentTile.y);
+                var bottomTile = new Vector2Int(currentTile.x, currentTile.y - 1);
+                var leftSideOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(leftSideTile) : !pathFindingMap.IsSolid(leftSideTile);
+                var bottomOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(bottomTile) : !pathFindingMap.IsSolid(bottomTile);
+                return bottomOpen && leftSideOpen;
+            }
+            // Top left. Left side and top must be open.
+            else if (currentTile.x - 1 == diagonalTile.x && currentTile.y + 1 == diagonalTile.y){
+                var leftSideTile = new Vector2Int(currentTile.x - 1, currentTile.y);
+                var topTile = new Vector2Int(currentTile.x, currentTile.y + 1);
+                var leftSideOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(leftSideTile) : !pathFindingMap.IsSolid(leftSideTile);
+                var topOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(topTile) : !pathFindingMap.IsSolid(topTile);
+                return topOpen && leftSideOpen;
+            }
+            else {
+                throw new Exception(
+                    "Tried to evaluate if possible to traverse diagonally, but the target was not diagonal to currentTile");
+            }
+            
+        }
+
         private float EuclideanHeuristic(Vector2Int from, Vector2Int to) {
-            return Vector2Int.Distance(from, to);
+            var xDif = Math.Abs(from.x - to.x);
+            var yDif = Math.Abs(from.y - to.y);
+
+            var minDif = Math.Min(xDif, yDif);
+            var maxDif = Math.Max(xDif, yDif);
+
+            float heuristic = maxDif - minDif;
+            if (minDif > 0)
+                heuristic += Mathf.Sqrt(2f * Mathf.Pow(minDif, 2f));
+
+            return heuristic;
         }
         
         
