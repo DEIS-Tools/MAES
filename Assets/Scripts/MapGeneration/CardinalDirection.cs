@@ -36,7 +36,7 @@ namespace Dora.MapGeneration {
         }
 
         public CardinalDirection OppositeDirection() => GetDirection((Index + 4) % 8);
-        public CardinalDirection DirectionToAngle() => GetDirection(((8 - Index) % 8) * 45); 
+        public float DirectionToAngle() => ((8 - Index) % 8) * 45; 
         public bool IsDirectionDiagonal() => Index % 2 != 0;
 
         // Converts the given absolute angle (relative to the x-axis) to the closest corresponding cardinal direction

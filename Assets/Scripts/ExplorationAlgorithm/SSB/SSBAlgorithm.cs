@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Dora.MapGeneration;
 using Dora.MapGeneration.PathFinding;
 using Dora.Robot;
+using Dora.Utilities;
 using UnityEngine;
 using static Dora.MapGeneration.CardinalDirection;
+using static Dora.MapGeneration.CardinalDirection.RelativeDirection;
 
 namespace Dora.ExplorationAlgorithm.SSB {
     public class SsbAlgorithm : IExplorationAlgorithm {
@@ -22,8 +25,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private RelativeDirection _referenceLateralSide;
         // The opposite side of the rls. This is the side pointing toward the center of the spiral
         private RelativeDirection _oppositeLateralSide;
-        
-        
+        // Target for next step in spiral movement
+        private Vector2Int? _nextSpiralTarget;
+
         private HashSet<Vector2Int> _backTrackingPoints = new HashSet<Vector2Int>();
         
         private enum State {
@@ -32,10 +36,18 @@ namespace Dora.ExplorationAlgorithm.SSB {
             Terminated
         }
 
+        private class TileData {
+            public bool IsExplored = false;
+
+            public TileData(bool isExplored) {
+                IsExplored = isExplored;
+            }
+        }
+
         public SsbAlgorithm(RobotConstraints constraints, int randomSeed) {
             _constraints = constraints;
             _randomSeed = randomSeed;
-            _backTrackingPoints.Add(new Vector2Int(21, 2));
+            _backTrackingPoints.Add(new Vector2Int(22, 2));
         }
 
         public void UpdateLogic() {
@@ -63,44 +75,130 @@ namespace Dora.ExplorationAlgorithm.SSB {
             }
             
             if (_currentState == State.Spiraling) {
-                var canContinueSpiral = PerformSpiralMovement();
-                if (!canContinueSpiral)
+                _nextSpiralTarget ??= DetermineNextSpiralTarget();
+
+                if (_nextSpiralTarget == null) {
                     _currentState = State.Backtracking;
+                    return;
+                }
+                
+                var relativePosition = _navigationMap.GetTileCenterRelativePosition(_nextSpiralTarget!.Value);
+                if (relativePosition.Distance > 0.3f)
+                    MoveTo(relativePosition);
+                else {
+                    _navigationMap.SetTileData(_nextSpiralTarget!.Value, new TileData(true));
+                    // Remove this from possible back tracking candidates, if present
+                    _backTrackingPoints.Remove(_nextSpiralTarget!.Value);
+                    _nextSpiralTarget = null;
+                }
+                    
             }
         }
 
         // Rotates the robot such that it directly faces a non-solid tile
         private bool EnsureCorrectOrientationForSpiraling() {
-            var rotation = _navigationMap.GetApproximateGlobalDegrees();
-            if (Mathf.Abs(rotation - 90f) <= 0.5f) 
+            CardinalDirection? targetDirection = null;
+            var directions = new List<CardinalDirection>() {East, South, West, North};
+            foreach (var direction in directions) {
+                if (IsTileBlocked(_navigationMap.GetGlobalNeighbour(direction)))
+                    continue;
+                
+                // If this tile is open and the left neighbour is blocked, start spiraling along the left wall 
+                if (IsTileBlocked(_navigationMap.GetGlobalNeighbour(direction.GetRelativeDirection(Left)))) {
+                    _referenceLateralSide = Left;
+                    _oppositeLateralSide = Right;
+                    targetDirection = direction;
+                    break;
+                }
+
+                // If this tile is open and the right neighbour is blocked, start spiraling along the right wall
+                if (IsTileBlocked(_navigationMap.GetGlobalNeighbour(direction.GetRelativeDirection(Right)))) {
+                    _referenceLateralSide = Right;
+                    _oppositeLateralSide = Left;
+                    targetDirection = direction;
+                    break;
+                }
+            }
+
+            if (targetDirection == null)
+                throw new NotImplementedException(); // TODO, Handle finish case?
+
+            // Find relative position of neighbour located in target direction
+            var targetRelativePosition = _navigationMap
+                .GetTileCenterRelativePosition(_navigationMap.GetGlobalNeighbour(targetDirection));
+            // Assert that we are pointed in the right direction
+            if (Mathf.Abs(targetRelativePosition.RelativeAngle) <= 1.0f) 
                 return true;
             
-            _controller.Rotate(90f - rotation);
+            // otherwise rotate to face the target tile
+            _controller.Rotate(targetRelativePosition.RelativeAngle);
+            return false;
+        }
+
+        private bool IsTileBlocked(Vector2Int tileCoord) {
+            if (_navigationMap.GetTileStatus(tileCoord) == SlamMap.SlamTileStatus.Solid)
+                return true; // physically blocked
+
+            var tileData = _navigationMap.GetTileData(tileCoord);
+            if (tileData != null) // If the tile marked as explored, it is virtually blocked
+                return ((TileData) tileData).IsExplored;
+
+            // Neither physically nor virtually blocked
             return false;
         }
 
         private void MoveTo(RelativePosition relativePosition) {
-            if (relativePosition.RelativeAngle > 0.5f)
+            if (Mathf.Abs(relativePosition.RelativeAngle) > 0.5f)
                 _controller.Rotate(relativePosition.RelativeAngle);
             else 
                 _controller.Move(relativePosition.Distance);
         }
 
         private Vector2Int? FindBestBackTrackingTarget() {
-            if (_backTrackingPoints.Count == 0) {
+            if (_backTrackingPoints.Count == 0) 
                 return null;
-            }
+            
+            var robotPosition = _navigationMap.GetApproximatePosition();
 
-            var bestCandidate = _backTrackingPoints.First();
-            _backTrackingPoints.Remove(bestCandidate);
-            return bestCandidate;
+            Vector2Int minDistanceBp = _backTrackingPoints.First();
+            var minDist = Vector2.Distance(robotPosition, minDistanceBp);
+            foreach (var bp in _backTrackingPoints.Skip(1)) {
+                var dist = Vector2.Distance(robotPosition, bp);
+                if (dist < minDist) {
+                    minDist = dist;
+                    minDistanceBp = bp;
+                }
+            }
+            
+            _backTrackingPoints.Remove(minDistanceBp);
+            return minDistanceBp;
         }
 
         // Will perform spiral movement according to the algorithm described in the paper
         // Returns true if successful, and false if no free open are available 
-        private bool PerformSpiralMovement() {
+        private Vector2Int? DetermineNextSpiralTarget() {
+            var front = _navigationMap.GetRelativeNeighbour(Front);
+            var rls = _navigationMap.GetRelativeNeighbour(_referenceLateralSide);
+            var ols = _navigationMap.GetRelativeNeighbour(_oppositeLateralSide);
             
-            return false;
+            var frontTileBlocked = IsTileBlocked(front);
+            var rlsBlocked = IsTileBlocked(rls);
+            var olsBlocked = IsTileBlocked(ols);
+            
+            // Add candidate tiles
+            if (!rlsBlocked) _backTrackingPoints.Add(rls);
+            if (!olsBlocked) _backTrackingPoints.Add(ols);
+            if (!frontTileBlocked) _backTrackingPoints.Add(ols);
+            
+            if (frontTileBlocked && rlsBlocked && olsBlocked)
+                return null; // No more open tiles left. Spiraling has finished
+
+            // The following is the spiral algorithm specified by the bsa paper
+            if (!rlsBlocked) 
+                return _navigationMap.GetRelativeNeighbour(_referenceLateralSide);
+            if (frontTileBlocked) 
+                return _navigationMap.GetRelativeNeighbour(_oppositeLateralSide);
+            return _navigationMap.GetRelativeNeighbour(Front);
         }
         
         public void SetController(Robot2DController controller) {

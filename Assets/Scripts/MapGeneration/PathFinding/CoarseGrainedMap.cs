@@ -42,7 +42,7 @@ namespace Dora.MapGeneration.PathFinding {
         }
 
         // Returns the data stored at the given tile, returning null if no data is present
-        public object GetTileData(Vector2Int localCoordinate) {
+        public object? GetTileData(Vector2Int localCoordinate) {
             AssertWithinBounds(localCoordinate);
             return _objects[localCoordinate.x, localCoordinate.y];
         }
@@ -92,6 +92,7 @@ namespace Dora.MapGeneration.PathFinding {
             return localCoordinate * 2;
         }
 
+        // Returns the neighbour in the given direction relative to the current direction of the robot
         public Vector2Int GetRelativeNeighbour(CardinalDirection.RelativeDirection relativeDirection) {
             CardinalDirection currentCardinalDirection = CardinalDirection.DirectionFromDegrees(_slamMap.GetRobotAngleDeg());
             CardinalDirection targetDirection = currentCardinalDirection.GetRelativeDirection(relativeDirection);
@@ -99,7 +100,13 @@ namespace Dora.MapGeneration.PathFinding {
             var currentPosition = GetApproximatePosition();
             var relativePosition = currentPosition + targetDirection.DirectionVector;
             return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
-
+        }
+        
+        // Returns the neighbour in the given cardinal direction (relative to global direction)
+        public Vector2Int GetGlobalNeighbour(CardinalDirection direction) {
+            var currentPosition = GetApproximatePosition();
+            var relativePosition = currentPosition + direction.DirectionVector;
+            return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
         }
         
         
