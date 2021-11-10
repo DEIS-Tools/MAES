@@ -393,8 +393,11 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         private List<Vector2Int> FindUnexploredTilesWithinRegion(VoronoiRegion region) {
             // TODO: The voronoi region may be empty, if the robot is 1/4 the size of a slam tile and is located between tiles, but surrounded by other robots
             if (region.IsEmpty()) return new List<Vector2Int>();
+            // TODO: Not using the edges tiles reduces the risk of not being able to find a path
+            // since the path finder uses bigger tiles than the slam map, we can risk looking for a tile without a known path
+            var edgeTiles = FindEdgeTiles(region.Tiles);
 
-            return region.Tiles.Where(e => !_exploredTiles.Contains(e)).ToList();
+            return region.Tiles.Where(e => !_exploredTiles.Contains(e)).Where(e => !edgeTiles.Contains(e)).ToList();
         }
 
         private void RecalculateVoronoiRegions() {
