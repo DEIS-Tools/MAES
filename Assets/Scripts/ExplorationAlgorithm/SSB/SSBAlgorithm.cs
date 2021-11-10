@@ -19,7 +19,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
         private State _currentState = State.Backtracking;
         private Vector2Int? _backtrackTarget;
-        
+        private Queue<Vector2Int>? _backtrackingPath;
+        private Vector2Int? _nextBackTrackStep;
+
         // Spiraling information
         // The side that the outer wall of the spiral is on, relative to the spiraling robot
         private RelativeDirection _referenceLateralSide;
@@ -56,21 +58,41 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
             if (_currentState == State.Backtracking) {
                 _backtrackTarget ??= FindBestBackTrackingTarget();
-                
                 // If no backtracking targets exist, then exploration must have been completed
                 if (_backtrackTarget == null) {
                     _currentState = State.Terminated;
                     return;
                 }
-
-                var relativeTarget = _navigationMap.GetTileCenterRelativePosition(_backtrackTarget!.Value);
+                
+                _backtrackingPath ??= new Queue<Vector2Int>(_navigationMap.GetPath(_backtrackTarget!.Value));
+                
+                if (_nextBackTrackStep == null) {
+                    if (_backtrackingPath.Count == 0) {
+                        // Robot has reached target, ensure that we are oriented at some angle
+                        // that is aligned with the grid before moving on to the spiral phase
+                        var isAligned = EnsureCorrectOrientationForSpiraling();
+                        if (isAligned) {
+                            _currentState = State.Spiraling;
+                            _backtrackingPath = null;
+                            UpdateLogic();
+                            return;
+                        } else return;
+                    }
+                    
+                    // There are still steps left in the path. Progress to next part of path
+                    _nextBackTrackStep = _backtrackingPath!.Dequeue();
+                }
+                
+                // Check if the robot needs to move 
+                var relativeTarget = _navigationMap.GetTileCenterRelativePosition(_nextBackTrackStep!.Value);
                 if (relativeTarget.Distance > 0.2f) 
                     MoveTo(relativeTarget);
-                else { 
-                    // Robot has reached target, ensure that we are oriented at some angle
-                    // that is aligned with the grid before moving on to the spiral phase
-                    var isAligned = EnsureCorrectOrientationForSpiraling();
-                    if (isAligned) _currentState = State.Spiraling;
+                else {
+                    // We have reached this target, progress to next one
+                    _nextBackTrackStep = null;
+                    UpdateLogic();
+                    return;
+
                 }
             }
             

@@ -245,16 +245,15 @@ namespace Dora.Robot {
             return _collisionMap.Scale;
         }
         
-        public List<Vector2Int>? GetPath(Vector2Int slamTileFrom, Vector2Int slamTileTo) {
-            var path = _pathFinder.GetPath(slamTileFrom / 2, slamTileTo / 2, this)
-                ?.Select(coord => coord * 2).ToList();
+        public List<Vector2Int>? GetPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo) {
+            var path = _pathFinder.GetPath(coarseTileFrom, coarseTileTo, this);
 
             if (path == null)
                 return null;
 
             // Due to rounding errors when converting slam tiles to path tiles, the target may not be correct
             // This replaces the final tile with the actual target.
-            path[path.Count - 1] = slamTileTo;
+            path[path.Count - 1] = coarseTileTo;
 
             return path;
         }

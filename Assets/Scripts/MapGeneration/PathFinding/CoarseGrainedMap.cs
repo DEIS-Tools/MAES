@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Dora.Robot;
 using Dora.Utilities;
 using UnityEngine;
@@ -108,8 +109,13 @@ namespace Dora.MapGeneration.PathFinding {
             var relativePosition = currentPosition + direction.DirectionVector;
             return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
         }
-        
-        
+
+        public List<Vector2Int> GetPath(Vector2Int target) {
+            var approxPosition = GetApproximatePosition();
+            return _slamMap.GetPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target);
+        }
+
+
     }
     
 }
