@@ -157,9 +157,8 @@ namespace Dora.Robot {
                 }
             }
 
-            foreach (var map in maps) {
+            foreach (var map in maps) 
                 map._tiles = globalMap.Clone() as SlamTileStatus[,];
-            }
         }
 
         public Vector2 GetApproxPosition() {
@@ -266,7 +265,6 @@ namespace Dora.Robot {
         public List<Vector2Int> GetOptimisticPath(Vector2Int slamTileFrom, Vector2Int slamTileTo) {
             var path = _pathFinder.GetOptimisticPath(slamTileFrom / 2, slamTileTo / 2, this)
                 ?.Select(coord => coord * 2).ToList();
-
             
             if (path == null)
                 return null;

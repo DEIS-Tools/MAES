@@ -17,5 +17,9 @@ namespace Dora.Utilities {
             var angleRad = angleDegrees * Mathf.Deg2Rad;
             return new Vector2(Mathf.Cos(angleRad), Mathf.Sin(angleRad)) * magnitude;
         }
+
+        public static Vector2 DirectionAsVector(float angleDegrees) {
+            return new Vector2(Mathf.Cos(angleDegrees * Mathf.Deg2Rad), Mathf.Sin(angleDegrees * Mathf.Deg2Rad));
+        }
     }
 }

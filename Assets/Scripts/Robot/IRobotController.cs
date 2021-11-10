@@ -42,7 +42,7 @@ namespace Dora.Robot {
         void DepositTag(ITag tag);
         
         // Returns a list of all environment tags that are within sensor range 
-        List<RelativePosition<ITag>> ReadNearbyTags();
+        List<RelativeObject<ITag>> ReadNearbyTags();
         
         public readonly struct DetectedWall {
             public readonly float distance;

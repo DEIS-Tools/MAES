@@ -291,17 +291,16 @@ namespace Dora {
         }
 
         // Returns a list of all environment tags that are within sensor range
-        public List<RelativePosition<ITag>> ReadNearbyTags() {
+        public List<RelativeObject<ITag>> ReadNearbyTags() {
             var tags = CommunicationManager.ReadNearbyTags(_robot);
             return tags.Select(placedTag => ToRelativePosition(placedTag.WorldPosition, placedTag.tag)).ToList();
         }
 
-        private RelativePosition<T> ToRelativePosition<T>(Vector2 tagPosition, T item) {
+        private RelativeObject<T> ToRelativePosition<T>(Vector2 tagPosition, T item) {
             var robotPosition = (Vector2) _robot.transform.position;
             var distance = Vector2.Distance(robotPosition, tagPosition);
-            // If walls cannot be ignored, perform a raycast to check line of sight between the given points
             var angle = Vector2.SignedAngle(GetRobotDirectionVector(), tagPosition - robotPosition);
-            return new RelativePosition<T>(distance, angle, item);
+            return new RelativeObject<T>(distance, angle, item);
         }
 
         public List<SensedObject<int>> SenseNearbyRobots() {
