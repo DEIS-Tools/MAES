@@ -18,6 +18,11 @@ namespace Dora.MapGeneration {
             North = new CardinalDirection(6),
             NorthEast = new CardinalDirection(7);
 
+        public enum RelativeDirection {
+            // Each relative direction is assign to the corresponding compass offset
+            Front = 0, Left = -2, Right = 2, Rear = 4
+        }
+        
         private static CardinalDirection[] _directions = new[]
             {East, SouthEast, South, SouthWest, West, NorthWest, North, NorthEast};
         
@@ -44,6 +49,7 @@ namespace Dora.MapGeneration {
         }
 
         public static CardinalDirection GetDirection(int index) {
+            while (index < 0) index += 8;
             return _directions[index % 8];
         }
 
@@ -59,7 +65,10 @@ namespace Dora.MapGeneration {
             
             return new Vector2Int(xDir, yDir);
         }
-        
+
+        public CardinalDirection GetRelativeDirection(RelativeDirection dir) {
+            return GetDirection(this.Index + (int) dir);
+        }
         
         
     }

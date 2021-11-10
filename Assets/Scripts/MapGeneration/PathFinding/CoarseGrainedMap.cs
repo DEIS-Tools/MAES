@@ -12,23 +12,30 @@ namespace Dora.MapGeneration.PathFinding {
         private SlamMap _slamMap;
         private object[,] _objects;
         private int _width, _height;
+        private Vector2 _offset;
 
-        public CoarseGrainedMap(SlamMap slamMap, int width, int height) {
+        public CoarseGrainedMap(SlamMap slamMap, int width, int height, Vector2 offset) {
             _slamMap = slamMap;
             _width = width;
             _height = height;
+            _offset = offset;
             _objects = new object[width, height];
         }
 
         // Returns the approximate position on this map (local tile scale coordinates)
         public Vector2 GetApproximatePosition() {
-            return _slamMap.ApproximatePosition / 2f;
+            return _slamMap.ApproximatePosition - _offset;
+        }
+
+        public float GetApproximateGlobalDegrees() {
+            return _slamMap.GetRobotAngleDeg();
         }
 
         // Returns position of the given tile relative to the current position of the robot  
-        public RelativePosition GetRelativePosition(Vector2Int target) {
+        public RelativePosition GetTileCenterRelativePosition(Vector2Int tileCoord) {
             // Convert to local coordinate
-            var robotPosition = _slamMap.ApproximatePosition / 2f;  
+            var robotPosition = GetApproximatePosition();
+            var target = new Vector2(tileCoord.x + 0.5f, tileCoord.y + 0.5f);
             var distance = Vector2.Distance(robotPosition, (Vector2) target);
             var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(_slamMap.GetRobotAngleDeg()), target - robotPosition);
             return new RelativePosition(distance, angle);
@@ -85,14 +92,14 @@ namespace Dora.MapGeneration.PathFinding {
             return localCoordinate * 2;
         }
 
-        public Vector2Int GetRelativeNeighbour(CardinalDirection relativeDirection) {
-            CardinalDirection currentCardinalDirection = 
-                CardinalDirection.DirectionFromDegrees(_slamMap.GetRobotAngleDeg());
-            CardinalDirection targetDirection =
-                CardinalDirection.GetDirection(relativeDirection.Index + currentCardinalDirection.Index);
+        public Vector2Int GetRelativeNeighbour(CardinalDirection.RelativeDirection relativeDirection) {
+            CardinalDirection currentCardinalDirection = CardinalDirection.DirectionFromDegrees(_slamMap.GetRobotAngleDeg());
+            CardinalDirection targetDirection = currentCardinalDirection.GetRelativeDirection(relativeDirection);
 
-            var currentTile = GetApproximatePosition();
-            return new Vector2Int((int) currentTile.x, (int) currentTile.y) + targetDirection.DirectionVector;
+            var currentPosition = GetApproximatePosition();
+            var relativePosition = currentPosition + targetDirection.DirectionVector;
+            return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
+
         }
         
         
