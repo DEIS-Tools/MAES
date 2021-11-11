@@ -138,7 +138,7 @@ namespace Dora {
                     1,
                     0.6f,
                     new Coord(25,10),
-                    (seed) => new TnfExplorationAlgorithm()),
+                    (seed) => new TnfExplorationAlgorithm(4, 9)),
                 robotConstraints: robotConstraints
             ));
 
