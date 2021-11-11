@@ -78,8 +78,12 @@ namespace Dora {
             _newCollisionSinceLastUpdate = false;
         }
 
-        public bool HasCollided() {
+        public bool HasCollidedSinceLastLogicTick() {
             return _newCollisionSinceLastUpdate;
+        }
+
+        public bool IsCurrentlyColliding() {
+            return _isCurrentlyColliding;
         }
 
         public void NotifyCollided() {
@@ -274,7 +278,7 @@ namespace Dora {
             info.Append($"Slam position: {approxPosition.x.ToString("#.00")}, {approxPosition.y.ToString("#.00")}\n");
             info.Append($"Slam tile: {SlamMap.GetCurrentPositionSlamTile()}\n");
             info.Append($"Coarse tile: {SlamMap.GetCoarseMap().FromSlamMapCoordinate(SlamMap.GetCurrentPositionSlamTile())}\n");
-            info.Append($"Has collided: {HasCollided()}");
+            info.Append($"Is colliding: {IsCurrentlyColliding()}");
             return info.ToString();
         }
 

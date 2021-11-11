@@ -274,8 +274,8 @@ namespace Dora.Robot {
             return _collisionMap.Scale;
         }
         
-        public List<Vector2Int>? GetPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo) {
-            var path = _pathFinder.GetPath(coarseTileFrom, coarseTileTo, this);
+        public List<Vector2Int>? GetPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo, bool acceptPartialPaths = false) {
+            var path = _pathFinder.GetPath(coarseTileFrom, coarseTileTo, this, acceptPartialPaths);
 
             if (path == null)
                 return null;
@@ -287,8 +287,8 @@ namespace Dora.Robot {
             return path;
         }
 
-        public List<Vector2Int> GetOptimisticPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo) {
-            var path = _pathFinder.GetOptimisticPath(coarseTileFrom, coarseTileTo, this);
+        public List<Vector2Int> GetOptimisticPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo, bool acceptPartialPaths = false) {
+            var path = _pathFinder.GetOptimisticPath(coarseTileFrom, coarseTileTo, this, acceptPartialPaths);
 
             if (path == null)
                 return null;

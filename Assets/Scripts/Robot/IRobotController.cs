@@ -12,7 +12,9 @@ namespace Dora.Robot {
         RobotStatus GetStatus();
 
         // Returns true if the robot has encountered a new collision since the previous logic update
-        bool HasCollided();
+        bool HasCollidedSinceLastLogicTick();
+        
+        bool IsCurrentlyColliding();
 
         // Instructs the robot to move forward until it has travelled **approximately** the given distance.
         void Move(float distanceInMeters, bool reverse = false);
