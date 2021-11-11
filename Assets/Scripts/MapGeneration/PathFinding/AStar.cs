@@ -40,11 +40,11 @@ namespace Dora.MapGeneration {
         }
 
         public List<Vector2Int>? GetOptimisticPath(Vector2Int startCoordinate, Vector2Int targetCoordinate,
-            IPathFindingMap pathFindingMap) {
-            return GetPath(startCoordinate, targetCoordinate, pathFindingMap, true);
+            IPathFindingMap pathFindingMap, bool acceptPartialPaths = false) {
+            return GetPath(startCoordinate, targetCoordinate, pathFindingMap, true, acceptPartialPaths);
         }
 
-        public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false) {
+        public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false, bool acceptPartialPaths = false) {
             var candidates = new List<AStarTile>();
             var bestCandidateOnTile = new Dictionary<Vector2Int, AStarTile>();
             var startTileHeuristic = OctileHeuristic(startCoordinate, targetCoordinate);
@@ -92,6 +92,22 @@ namespace Dora.MapGeneration {
                 }
 
                 loopCount++;
+            }
+            
+            if (acceptPartialPaths) {
+                // Find lowest heuristic tile, as it is closest to the target
+                Vector2Int? lowestHeuristicKey = null;
+                float lowestHeuristic = float.MaxValue;
+                foreach (var kv in bestCandidateOnTile) {
+                    if (kv.Value.Heuristic < lowestHeuristic) {
+                        lowestHeuristic = kv.Value.Heuristic;
+                        lowestHeuristicKey = kv.Key;
+                    }
+                }
+
+                var closestTile = bestCandidateOnTile[lowestHeuristicKey.Value];
+                return GetPath(startCoordinate, new Vector2Int(closestTile.X, closestTile.Y),
+                    pathFindingMap, beOptimistic, false);
             }
 
             return null;
