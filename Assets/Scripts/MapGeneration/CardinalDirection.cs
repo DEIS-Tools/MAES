@@ -23,7 +23,7 @@ namespace Dora.MapGeneration {
             Front = 0, Left = -2, Right = 2, Rear = 4
         }
         
-        private static CardinalDirection[] _directions = new[]
+        private static readonly CardinalDirection[] Directions = 
             {East, SouthEast, South, SouthWest, West, NorthWest, North, NorthEast};
         
         public readonly int Index;
@@ -36,8 +36,8 @@ namespace Dora.MapGeneration {
         }
 
         public CardinalDirection OppositeDirection() => GetDirection((Index + 4) % 8);
-        public CardinalDirection DirectionToAngle() => GetDirection(((8 - Index) % 8) * 45); 
-        public bool IsDirectionDiagonal() => Index % 2 != 0;
+        public float DirectionToAngle() => ((8 - Index) % 8) * 45; 
+        public bool IsDiagonal() => Index % 2 != 0;
 
         // Converts the given absolute angle (relative to the x-axis) to the closest corresponding cardinal direction
         public static CardinalDirection DirectionFromDegrees(float degrees) {
@@ -45,12 +45,20 @@ namespace Dora.MapGeneration {
                 throw new ArgumentException($"Degrees must be above zero, was: {degrees}");
 
             var offset = (int) (((degrees + 22.5f) % 360) / 45f);
-            return _directions[(8 - offset) % 8];
+            return Directions[(8 - offset) % 8];
         }
 
         public static CardinalDirection GetDirection(int index) {
             while (index < 0) index += 8;
-            return _directions[index % 8];
+            return Directions[index % 8];
+        }
+
+        public CardinalDirection Next() {
+            return GetDirection(Index + 1);
+        }
+
+        public CardinalDirection Previous() {
+            return GetDirection(Index - 1);
         }
 
         private Vector2Int CalculateDirectionVector() {
@@ -69,7 +77,9 @@ namespace Dora.MapGeneration {
         public CardinalDirection GetRelativeDirection(RelativeDirection dir) {
             return GetDirection(this.Index + (int) dir);
         }
-        
-        
+
+        public static CardinalDirection[] AllDirections() => Directions;
+
+
     }
 }

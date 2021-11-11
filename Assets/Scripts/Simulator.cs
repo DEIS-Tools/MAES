@@ -34,7 +34,7 @@ namespace Dora {
             Physics.autoSimulation = false;
             Physics2D.simulationMode = SimulationMode2D.Script;
 
-            _scenarios = ScenarioGenerator.GenerateBallisticScenarios();
+            _scenarios = ScenarioGenerator.GenerateSsbScenarios();
             CreateSimulation(_scenarios.Dequeue());
         }
 

@@ -20,7 +20,7 @@ namespace Dora.Robot {
         
         public List<Vector2Int> GetPath(Vector2Int slamTileFrom, Vector2Int slamTileTo);
         
-        public List<Vector2Int> GetOptimisticPath(Vector2Int slamTileFrom, Vector2Int slamTileTo);
+        public List<Vector2Int> GetOptimisticPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo);
 
         public RelativePosition GetRelativeSlamPosition(Vector2Int slamTileTarget);
 

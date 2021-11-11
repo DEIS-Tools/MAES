@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -8,7 +9,7 @@ using UnityEngine;
 namespace Dora.MapGeneration {
     public class AStar : IPathFinder {
         
-        private class AStarTile : IComparable<AStarTile> {
+        private class AStarTile {
             public readonly int X, Y;
             public AStarTile? Parent;
             public readonly float Heuristic;
@@ -23,18 +24,7 @@ namespace Dora.MapGeneration {
                 this.Cost = cost;
                 this.TotalCost = cost + heuristic;
             }
-
-            private sealed class HeuristicRelationalComparer : IComparer<AStarTile> {
-                public int Compare(AStarTile x, AStarTile y) {
-                    if (ReferenceEquals(x, y)) return 0;
-                    var xTotalCost = x.Cost + x.Heuristic;
-                    var yTotalCost = y.Cost + y.Heuristic;
-                    return xTotalCost.CompareTo(yTotalCost);
-                }
-            }
-
-            public static IComparer<AStarTile> HeuristicComparer { get; } = new HeuristicRelationalComparer();
-
+            
             public List<Vector2Int> Path() {
                 var path = new List<Vector2Int>();
 
@@ -47,13 +37,6 @@ namespace Dora.MapGeneration {
                 path.Reverse();
                 return path;
             }
-
-            public int CompareTo(AStarTile? other) {
-                if (ReferenceEquals(this, other)) return 0;
-                var thisTotalCost = this.Cost + this.Heuristic;
-                var otherTotalCost = other.Cost + other.Heuristic;
-                return thisTotalCost.CompareTo(otherTotalCost);
-            }
         }
 
         public List<Vector2Int>? GetOptimisticPath(Vector2Int startCoordinate, Vector2Int targetCoordinate,
@@ -62,53 +45,45 @@ namespace Dora.MapGeneration {
         }
 
         public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false) {
-            var candidates = new SortedSet<AStarTile>(AStarTile.HeuristicComparer);
+            var candidates = new List<AStarTile>();
             var bestCandidateOnTile = new Dictionary<Vector2Int, AStarTile>();
-            var startTileHeuristic = EuclideanHeuristic(startCoordinate, targetCoordinate);
+            var startTileHeuristic = OctileHeuristic(startCoordinate, targetCoordinate);
             var startingTile = new AStarTile(startCoordinate.x, startCoordinate.y, null, startTileHeuristic, 0);
             candidates.Add(startingTile);
             bestCandidateOnTile[startCoordinate] = startingTile;
 
             int loopCount = 0; 
             while (candidates.Count > 0) {
-                var currentTile = candidates.Min();
-                candidates.Remove(currentTile);
+                var currentTile = DequeueBestCandidate(candidates);
                 
                 var currentCoordinate = new Vector2Int(currentTile.X, currentTile.Y);
                 if (currentCoordinate == targetCoordinate)
                     return currentTile.Path();
-                
-                // Add all eight neighbours to the candidates list
-                for (int x = currentTile.X - 1; x <= currentTile.X + 1; x++) {
-                    for (int y = currentTile.Y - 1; y <= currentTile.Y + 1; y++) {
-                        var neighbourCoord = new Vector2Int(x, y);
-                        // Don't evaluate the current tile as a neighbor
-                        if(neighbourCoord.Equals(currentCoordinate)) continue;
-                        // We can only traverse diagonally, if the corner and side next to diagonal tile are not blocked
-                       if (IsDiagonal(currentCoordinate, neighbourCoord) 
-                            && !CanTraverseDiagonally(currentCoordinate, neighbourCoord, pathFindingMap, beOptimistic)) {
-                            // Debug.Log($"Could not traverse diagonally between {currentCoordinate} and {neighbourCoord}");
-                            continue;
-                        }
-                        
-                        var isSolid = beOptimistic
-                            ? pathFindingMap.IsOptimisticSolid(neighbourCoord) // Unseen = open
-                            : pathFindingMap.IsSolid(neighbourCoord); // Unseen = wall
-                        // if(isSolid) Debug.Log($"Solid tile at: {neighbourCoord}");
-                        if (!isSolid || neighbourCoord == targetCoordinate) {
-                            var cost = currentTile.Cost + Vector2Int.Distance(currentCoordinate, neighbourCoord);
-                            var heuristic = EuclideanHeuristic(neighbourCoord, targetCoordinate);
-                            var neighCost = cost + heuristic;
-                            if (!bestCandidateOnTile.ContainsKey(neighbourCoord) || bestCandidateOnTile[neighbourCoord].TotalCost > neighCost) {
-                                var newTile = new AStarTile(neighbourCoord.x, neighbourCoord.y, currentTile, heuristic,
-                                    cost);
-                                if(bestCandidateOnTile.ContainsKey(neighbourCoord))
-                                    candidates.Remove(bestCandidateOnTile[neighbourCoord]);
-                                bestCandidateOnTile[neighbourCoord] = newTile;
-                                candidates.Add(newTile);
-                            }
 
-                        }
+                foreach (var dir in CardinalDirection.AllDirections()) {
+                    Vector2Int candidateCoord = currentCoordinate + dir.DirectionVector;
+                    // Only consider non-solid tiles
+                    if (IsSolid(candidateCoord, pathFindingMap, beOptimistic) && candidateCoord != targetCoordinate) continue;
+
+                    if (dir.IsDiagonal()) {
+                        // To travel diagonally, the two neighbouring tiles must also be free
+                        if (IsSolid(currentCoordinate + dir.Previous().DirectionVector, pathFindingMap, beOptimistic)
+                        || IsSolid(currentCoordinate + dir.Next().DirectionVector, pathFindingMap, beOptimistic))
+                            continue;
+                    }
+                    
+                    var cost = currentTile.Cost + Vector2Int.Distance(currentCoordinate, candidateCoord);
+                    var heuristic = OctileHeuristic(candidateCoord, targetCoordinate);
+                    var candidateCost = cost + heuristic;
+                    // Check if this path is 'cheaper' than any previous path to this candidate tile 
+                    if (!bestCandidateOnTile.ContainsKey(candidateCoord) || bestCandidateOnTile[candidateCoord].TotalCost > candidateCost) {
+                        var newTile = new AStarTile(candidateCoord.x, candidateCoord.y, currentTile, heuristic, cost);
+                        // Remove previous best entry if present
+                        if(bestCandidateOnTile.ContainsKey(candidateCoord))
+                            candidates.Remove(bestCandidateOnTile[candidateCoord]);
+                        // Save this as the new best candidate for this tile
+                        bestCandidateOnTile[candidateCoord] = newTile;
+                        candidates.Add(newTile);
                     }
                 }
 
@@ -122,61 +97,36 @@ namespace Dora.MapGeneration {
             return null;
         }
 
-        private bool IsDiagonal(Vector2Int currentTile, Vector2Int neighbourTile) {
-            return currentTile.x != neighbourTile.x && currentTile.y != neighbourTile.y;
+        private AStarTile DequeueBestCandidate(List<AStarTile> candidates) {
+            AStarTile bestCandidate = candidates.First();
+            foreach (var current in candidates.Skip(1)) {
+                if (Mathf.Abs(current.TotalCost - bestCandidate.TotalCost) < 0.01f) {
+                    // Total cost is the same, compare by heuristic instead
+                    if (current.Heuristic < bestCandidate.Heuristic)
+                        bestCandidate = current;
+                } else if (current.TotalCost < bestCandidate.TotalCost) {
+                    bestCandidate = current;
+                }
+            }
+
+            candidates.Remove(bestCandidate);
+            return bestCandidate;
         }
 
-        private bool CanTraverseDiagonally(Vector2Int currentTile, Vector2Int diagonalTile, IPathFindingMap pathFindingMap, bool beOptimistic) {
-            // Top right. Right side and top must be open
-            if (currentTile.x + 1 == diagonalTile.x && currentTile.y + 1 == diagonalTile.y) {
-                var rightSideTile = new Vector2Int(currentTile.x + 1, currentTile.y);
-                var topTile = new Vector2Int(currentTile.x, currentTile.y + 1);
-                var rightSideOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(rightSideTile) : !pathFindingMap.IsSolid(rightSideTile);
-                var topOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(topTile) : !pathFindingMap.IsSolid(topTile);
-                return topOpen && rightSideOpen;
-            }
-            // Bottom right. Right side and bottom must be open
-            else if (currentTile.x + 1 == diagonalTile.x && currentTile.y - 1 == diagonalTile.y) {
-                var rightSideTile = new Vector2Int(currentTile.x + 1, currentTile.y);
-                var bottomTile = new Vector2Int(currentTile.x, currentTile.y - 1);
-                var rightSideOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(rightSideTile) : !pathFindingMap.IsSolid(rightSideTile);
-                var bottomOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(bottomTile) : !pathFindingMap.IsSolid(bottomTile);
-                return bottomOpen && rightSideOpen;
-            }
-            // Bottom left. Left side and bottom must be open
-            else if (currentTile.x - 1 == diagonalTile.x && currentTile.y - 1 == diagonalTile.y) {
-                var leftSideTile = new Vector2Int(currentTile.x - 1, currentTile.y);
-                var bottomTile = new Vector2Int(currentTile.x, currentTile.y - 1);
-                var leftSideOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(leftSideTile) : !pathFindingMap.IsSolid(leftSideTile);
-                var bottomOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(bottomTile) : !pathFindingMap.IsSolid(bottomTile);
-                return bottomOpen && leftSideOpen;
-            }
-            // Top left. Left side and top must be open.
-            else if (currentTile.x - 1 == diagonalTile.x && currentTile.y + 1 == diagonalTile.y){
-                var leftSideTile = new Vector2Int(currentTile.x - 1, currentTile.y);
-                var topTile = new Vector2Int(currentTile.x, currentTile.y + 1);
-                var leftSideOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(leftSideTile) : !pathFindingMap.IsSolid(leftSideTile);
-                var topOpen = beOptimistic ? !pathFindingMap.IsOptimisticSolid(topTile) : !pathFindingMap.IsSolid(topTile);
-                return topOpen && leftSideOpen;
-            }
-            else {
-                throw new Exception(
-                    "Tried to evaluate if possible to traverse diagonally, but the target was not diagonal to currentTile");
-            }
-            
+        private bool IsSolid(Vector2Int coord, IPathFindingMap map, bool optimistic) {
+            return optimistic
+                ? map.IsOptimisticSolid(coord) 
+                : map.IsSolid(coord); 
         }
 
-        private float EuclideanHeuristic(Vector2Int from, Vector2Int to) {
+        private float OctileHeuristic(Vector2Int from, Vector2Int to) {
             var xDif = Math.Abs(from.x - to.x);
             var yDif = Math.Abs(from.y - to.y);
-
+            
             var minDif = Math.Min(xDif, yDif);
             var maxDif = Math.Max(xDif, yDif);
-
-            float heuristic = maxDif - minDif;
-            if (minDif > 0)
-                heuristic += Mathf.Sqrt(2f * Mathf.Pow(minDif, 2f));
-
+            
+            float heuristic = maxDif - minDif + minDif * Mathf.Sqrt(2f);;
             return heuristic;
         }
         
