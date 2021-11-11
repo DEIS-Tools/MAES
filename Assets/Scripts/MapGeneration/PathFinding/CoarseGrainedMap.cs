@@ -8,12 +8,13 @@ using static Dora.Robot.SlamMap;
 namespace Dora.MapGeneration.PathFinding {
     
     // This represents a low-resolution map where the robot can comfortably fit inside a single cell
-    public class CoarseGrainedMap {
+    public class CoarseGrainedMap : IPathFindingMap {
         
         private SlamMap _slamMap;
         private object[,] _objects;
         private int _width, _height;
         private Vector2 _offset;
+        private AStar _aStar;
 
         public CoarseGrainedMap(SlamMap slamMap, int width, int height, Vector2 offset) {
             _slamMap = slamMap;
@@ -21,6 +22,7 @@ namespace Dora.MapGeneration.PathFinding {
             _height = height;
             _offset = offset;
             _objects = new object[width, height];
+            _aStar = new AStar();
         }
 
         // Returns the approximate position on this map (local tile scale coordinates)
@@ -60,27 +62,47 @@ namespace Dora.MapGeneration.PathFinding {
                 throw new ArgumentException($"Given coordinate is out of bounds {coordinate} ({_width}, {_height})");
         }
 
+        delegate SlamTileStatus StatusAggregator(SlamTileStatus s1, SlamTileStatus s2); 
+        
         // Returns the status of the given tile (Solid, Open or Unseen)
-        public SlamTileStatus GetTileStatus(Vector2Int localCoordinate) {
+        public SlamTileStatus GetTileStatus(Vector2Int localCoordinate, bool optismistic = false) {
             var slamCoord = ToSlamMapCoordinate(localCoordinate);
 
             var status = _slamMap.GetStatusOfTile(slamCoord);
-            status = AggregateStatus(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right));
-            status = AggregateStatus(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up));
-            status = AggregateStatus(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right + Vector2Int.up));
+            if (optismistic) {
+                status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right));
+                status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up));
+                status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right + Vector2Int.up));    
+            } else {
+                status = AggregateStatusPessimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right));
+                status = AggregateStatusPessimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up));
+                status = AggregateStatusPessimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right + Vector2Int.up));
+            }
+            
             return status;
+        }
+        
+        // Combines two SlamTileStatus in a 'optimistic' fashion.
+        // If any status is solid both are consider solid. Otherwise, if any status is open both are considered open
+        // Unseen is returned only if all statuses are unseen 
+        private SlamTileStatus AggregateStatusOptimistic(SlamTileStatus status1, SlamTileStatus status2) {
+            if (status1 == SlamTileStatus.Solid || status2 == SlamTileStatus.Solid)
+                return SlamTileStatus.Solid;
+            if (status1 == SlamTileStatus.Open || status2 == SlamTileStatus.Open)
+                return SlamTileStatus.Open;
+            return SlamTileStatus.Unseen;
         }
 
         // Combines two SlamTileStatus in a 'pessimistic' fashion.
         // If any status is solid both are consider solid. If any status is unseen both are considered unseen 
-        private SlamTileStatus AggregateStatus(SlamTileStatus status1, SlamTileStatus status2) {
+        private SlamTileStatus AggregateStatusPessimistic(SlamTileStatus status1, SlamTileStatus status2) {
             if (status1 == SlamTileStatus.Solid || status2 == SlamTileStatus.Solid)
                 return SlamTileStatus.Solid;
             if (status1 == SlamTileStatus.Unseen || status2 == SlamTileStatus.Unseen)
                 return SlamTileStatus.Unseen;
             return SlamTileStatus.Open;
         }
-
+        
         
         // Converts the given Slam map coordinate to a local coordinate
         // The Slam map has twice as many tiles in each direction
@@ -112,10 +134,23 @@ namespace Dora.MapGeneration.PathFinding {
 
         public List<Vector2Int> GetPath(Vector2Int target) {
             var approxPosition = GetApproximatePosition();
-            return _slamMap.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target);
+            return _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
         }
 
 
+        public bool IsSolid(Vector2Int coordinate) {
+            var tileStatus = GetTileStatus(coordinate, optismistic: false); 
+            return tileStatus != SlamTileStatus.Open;
+        }
+
+        public bool IsOptimisticSolid(Vector2Int coordinate) {
+            var tileStatus = GetTileStatus(coordinate, optismistic: true); 
+            return tileStatus != SlamTileStatus.Open;
+        }
+
+        public float CellSize() {
+            return 1.0f; 
+        }
     }
     
 }
