@@ -18,9 +18,12 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private int _randomSeed;
 
         private State _currentState = State.Backtracking;
+        
+        // Backtracking variables
         private Vector2Int? _backtrackTarget;
         private Queue<Vector2Int>? _backtrackingPath;
         private Vector2Int? _nextBackTrackStep;
+        private HashSet<Vector2Int> _backTrackingPoints = new HashSet<Vector2Int>();
 
         // Spiraling information
         // The side that the outer wall of the spiral is on, relative to the spiraling robot
@@ -30,8 +33,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
         // Target for next step in spiral movement
         private Vector2Int? _nextSpiralTarget;
 
-        private HashSet<Vector2Int> _backTrackingPoints = new HashSet<Vector2Int>();
-        
         private enum State {
             Spiraling,
             Backtracking,
@@ -49,7 +50,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
         public SsbAlgorithm(RobotConstraints constraints, int randomSeed) {
             _constraints = constraints;
             _randomSeed = randomSeed;
-            _backTrackingPoints.Add(new Vector2Int(22, 2));
         }
 
         public void UpdateLogic() {
@@ -114,7 +114,15 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 
             var relativePosition = _navigationMap.GetTileCenterRelativePosition(_nextSpiralTarget!.Value);
             if (relativePosition.Distance > 0.3f) {
-                MoveTo(relativePosition);
+                if (Mathf.Abs(relativePosition.RelativeAngle) > 0.5f) {
+                    _controller.Rotate(relativePosition.RelativeAngle);
+                } else {
+                    // Once facing the tile correctly, add suitable neighbours
+                    // as back tracking points for use in next phase
+                    DetectBacktrackingPoints();
+                    // Finally move towards the target
+                    _controller.Move(relativePosition.Distance);
+                }
             } else {
                 MarkTileExplored(_nextSpiralTarget!.Value);
                 _nextSpiralTarget = null;
@@ -122,7 +130,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         private void MarkTileExplored(Vector2Int exploredTile) {
-            Debug.Log($"Explored tile: {exploredTile}");
             _navigationMap.SetTileData(exploredTile, new TileData(true));
             // Remove this from possible back tracking candidates, if present
             _backTrackingPoints.Remove(exploredTile);
@@ -153,8 +160,13 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 }
             }
 
-            if (targetDirection == null)
-                return true; // Single tile for exploration
+            
+            if (targetDirection == null) {
+                // No surrounding tile is solid, start spiral progress from this point with the following default setup:
+                targetDirection = North;
+                _referenceLateralSide = Right;
+                _oppositeLateralSide = Left;
+            }
 
             // Find relative position of neighbour located in target direction
             var targetRelativePosition = _navigationMap
@@ -183,13 +195,24 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private void MoveTo(RelativePosition relativePosition) {
             if (Mathf.Abs(relativePosition.RelativeAngle) > 0.5f)
                 _controller.Rotate(relativePosition.RelativeAngle);
-            else 
+            else {
                 _controller.Move(relativePosition.Distance);
+            }
+                
         }
 
         private Vector2Int? FindBestBackTrackingTarget() {
-            if (_backTrackingPoints.Count == 0) 
-                return null;
+            if (_backTrackingPoints.Count == 0) {
+                // Attempt to locate nearby backtrack points
+                var currentTile = _navigationMap.GetCurrentTile();
+                if (!IsTileBlocked(currentTile))
+                    return currentTile;
+                else
+                    return null;
+            }
+                
+            
+            Debug.Log($"Total backtracking points: {_backTrackingPoints.Count}");
             
             var robotPosition = _navigationMap.GetApproximatePosition();
 
@@ -220,11 +243,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
             var rlsBlocked = IsTileBlocked(rls);
             var olsBlocked = IsTileBlocked(ols);
 
-            // Add candidate tiles
-            if (!rlsBlocked) _backTrackingPoints.Add(rls);
-            if (!olsBlocked) _backTrackingPoints.Add(ols);
-            if (!frontTileBlocked) _backTrackingPoints.Add(front);
-            
             if (frontTileBlocked && rlsBlocked && olsBlocked)
                 return null; // No more open tiles left. Spiraling has finished
 
@@ -235,7 +253,26 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 return _navigationMap.GetRelativeNeighbour(_oppositeLateralSide);
             return _navigationMap.GetRelativeNeighbour(Front);
         }
-        
+
+        // Adds backtracking points as specified by the algorithm presented in the SSB paper
+        // In the SSB variation of the BP identification, a tile is only considered to be a BP if
+        // it has solid tile to its immediate right or left
+        private void DetectBacktrackingPoints() {
+            if (!IsBlocked(Right)) {
+                if (IsBlocked(Front) || IsBlocked(FrontRight) || IsBlocked(RearRight))
+                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Right));
+            }
+
+            if (!IsBlocked(Left)) {
+                if (IsBlocked(Front) || IsBlocked(FrontLeft) || IsBlocked(RearLeft))
+                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Left));
+            }
+        }
+
+        private bool IsBlocked(RelativeDirection direction) {
+            return IsTileBlocked(_navigationMap.GetRelativeNeighbour(direction));
+        }
+
         public void SetController(Robot2DController controller) {
             this._controller = controller;
             _navigationMap = _controller.GetSlamMap().GetCoarseMap();
@@ -243,7 +280,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
         public string GetDebugInfo() {
             return $"State: {Enum.GetName(typeof(State), _currentState)}" +
-                   $"\nCoarse Map Position: {_navigationMap.GetApproximatePosition()}";
+                   $"\nCoarse Map Position: {_navigationMap.GetApproximatePosition()}" +
+                   $"\nTotal BPs: {_backTrackingPoints.Count}";
         }
 
         public object SaveState() {

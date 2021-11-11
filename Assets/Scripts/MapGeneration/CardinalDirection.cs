@@ -20,7 +20,12 @@ namespace Dora.MapGeneration {
 
         public enum RelativeDirection {
             // Each relative direction is assign to the corresponding compass offset
-            Front = 0, Left = -2, Right = 2, Rear = 4
+            Front = 0, 
+            FrontRight = 1, FrontLeft = -1, 
+            Left = -2, 
+            Right = 2,
+            RearRight = 3, RearLeft = -3,
+            Rear = 4
         }
         
         private static readonly CardinalDirection[] Directions = 

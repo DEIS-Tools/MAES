@@ -151,6 +151,11 @@ namespace Dora.MapGeneration.PathFinding {
         public float CellSize() {
             return 1.0f; 
         }
+
+        public Vector2Int GetCurrentTile() {
+            var robotPosition = GetApproximatePosition();
+            return new Vector2Int((int) robotPosition.x, (int) robotPosition.y);
+        }
     }
     
 }
