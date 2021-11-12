@@ -30,7 +30,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         
         private VoronoiSearchPhase _currentSearchPhase = VoronoiSearchPhase.EXPLORE_MODE;
         private readonly RobotConstraints _constraints;
-        private readonly int _markExploredRangeInSlamTiles;
+        private readonly float _markExploredRangeInSlamTiles;
         private readonly int EXPAND_VORONOI_RECALC_INTERVAL = 30;
         private readonly int SEARCH_MODE_RECALC_INTERVAL = 30;
         private readonly int EXPLORE_MODE_RECALC_INTERVAL = 50;
@@ -82,7 +82,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             }
         }
 
-        public VoronoiExplorationAlgorithm(int randomSeed, RobotConstraints constraints, int markExploredRangeInSlamTiles) {
+        public VoronoiExplorationAlgorithm(int randomSeed, RobotConstraints constraints, float markExploredRangeInSlamTiles) {
             _random = new Random(randomSeed);
             _constraints = constraints;
             _markExploredRangeInSlamTiles = markExploredRangeInSlamTiles;
