@@ -1,6 +1,8 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Transactions;
 using Dora.MapGeneration;
 using Dora.MapGeneration.PathFinding;
 using Dora.Robot;
@@ -18,9 +20,12 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private int _randomSeed;
 
         private State _currentState = State.Backtracking;
+        
+        // Back tracking phase
         private Vector2Int? _backtrackTarget;
         private Queue<Vector2Int>? _backtrackingPath;
         private Vector2Int? _nextBackTrackStep;
+        private HashSet<Vector2Int> _backTrackingPoints = new HashSet<Vector2Int>();
 
         // Spiraling information
         // The side that the outer wall of the spiral is on, relative to the spiraling robot
@@ -30,8 +35,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
         // Target for next step in spiral movement
         private Vector2Int? _nextSpiralTarget;
 
-        private HashSet<Vector2Int> _backTrackingPoints = new HashSet<Vector2Int>();
-        
         private enum State {
             Spiraling,
             Backtracking,
@@ -99,8 +102,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 // This tile has been reached, mark it as explored
                 MarkTileExplored(_nextBackTrackStep!.Value);
                 _nextBackTrackStep = null;
-            } 
-            
+            }
         }
 
         // --------------  Spiraling phase  -------------------
@@ -253,5 +255,32 @@ namespace Dora.ExplorationAlgorithm.SSB {
         public void RestoreState(object stateInfo) {
             throw new System.NotImplementedException();
         }
+
+/*
+        // Represents a request to broadcast all available backtracking points found by this robot
+        private class RequestMessage: ISsbBroadcastMessage {
+            public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
+                if (algorithm._backTrackingPoints.Count == 0)
+                    return null;
+
+                var unexploredBackTrackingPoints = algorithm._backTrackingPoints.Where(bp => algorithm._navigationMap.IsSolid(bp) != );
+                return new BackTrackingPointsMessage(new List<Vector2Int>(algorithm._backTrackingPoints.Where()));
+            }
+        }
+
+        //
+        private class BackTrackingPointsMessage: ISsbBroadcastMessage {
+
+            public readonly List<Vector2Int> BackTrackingPoints;
+
+            public BackTrackingPointsMessage(List<Vector2Int> backTrackingPoints) {
+                BackTrackingPoints = backTrackingPoints;
+            }
+
+            public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
+                throw new NotImplementedException();
+            }
+        }*/
+        
     }
 }
