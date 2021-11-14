@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Dora.MapGeneration;
@@ -193,7 +194,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
             else {
                 _controller.Move(relativePosition.Distance);
             }
-                
         }
 
         private Vector2Int? FindBestBackTrackingTarget() {
@@ -264,6 +264,12 @@ namespace Dora.ExplorationAlgorithm.SSB {
             }
         }
 
+        // Simulates what spiraling might look like assuming all unknown tiles are non-solid
+        private (Vector2Int, int)? SimulateSpiraling() {
+
+            return null;
+        }
+
         private bool IsBlocked(RelativeDirection direction) {
             return IsTileBlocked(_navigationMap.GetRelativeNeighbour(direction));
         }
@@ -286,32 +292,200 @@ namespace Dora.ExplorationAlgorithm.SSB {
         public void RestoreState(object stateInfo) {
             throw new System.NotImplementedException();
         }
-
-/*
+        
         // Represents a request to broadcast all available backtracking points found by this robot
         private class RequestMessage: ISsbBroadcastMessage {
+
+            public readonly int RequestingRobot;
+
+            public RequestMessage(int requestingRobot) {
+                RequestingRobot = requestingRobot;
+            }
+
             public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
                 if (algorithm._backTrackingPoints.Count == 0)
-                    return null;
+                    return null; // No BPs to share
 
-                var unexploredBackTrackingPoints = algorithm._backTrackingPoints.Where(bp => algorithm._navigationMap.IsSolid(bp) != );
-                return new BackTrackingPointsMessage(new List<Vector2Int>(algorithm._backTrackingPoints.Where()));
+                // Respond to the request by sending all bps found by this robot
+                // (excluding ones that have been explored since discovery) 
+                algorithm._backTrackingPoints.RemoveWhere(bp => algorithm._navigationMap.IsTileExplored(bp));
+                return new BackTrackingPointsMessage(RequestingRobot,new HashSet<Vector2Int>(algorithm._backTrackingPoints));
+            }
+
+            public ISsbBroadcastMessage? Combine(ISsbBroadcastMessage other, SsbAlgorithm _) {
+                // In case of multiple simultaneous request messages use
+                // one the one issued by the robot with the highest id 
+                if (other is RequestMessage otherRequestMsg)
+                    return otherRequestMsg.RequestingRobot > this.RequestingRobot ? otherRequestMsg : this;
+
+                return null;
             }
         }
 
-        //
+        // Represents a message containing all known unexplored bps for an agent
         private class BackTrackingPointsMessage: ISsbBroadcastMessage {
 
-            public readonly List<Vector2Int> BackTrackingPoints;
+            // The id of the robot that sent the original request for BPs
+            public readonly int RequestingRobot;
+            
+            public readonly HashSet<Vector2Int> BackTrackingPoints;
 
-            public BackTrackingPointsMessage(List<Vector2Int> backTrackingPoints) {
+            public BackTrackingPointsMessage(int requestingRobot, HashSet<Vector2Int> backTrackingPoints) {
                 BackTrackingPoints = backTrackingPoints;
+                RequestingRobot = requestingRobot;
+            }
+
+            // Generates a bid for each bp currently in its list
+            public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
+                // Add potentially unknown bps from other robots
+                algorithm._backTrackingPoints.UnionWith(BackTrackingPoints);
+
+                List<Bid> bids = new List<Bid>();
+                
+                if (bids.Count == 0)
+                    return null;
+                return new BiddingMessage(RequestingRobot, bids);
+            }
+            
+            public ISsbBroadcastMessage? Combine(ISsbBroadcastMessage other, SsbAlgorithm _) {
+                if (other is BackTrackingPointsMessage bpMessage) {
+                    BackTrackingPoints.UnionWith(bpMessage.BackTrackingPoints);
+                    return this;
+                }
+
+                return null;
+            }
+        }
+
+        private class Bid {
+            
+            public readonly Vector2Int BP;
+            // Lower cost is better
+            public readonly float cost;
+            public readonly int RobotId;
+
+            public Bid(Vector2Int bp, float cost, int robotId) {
+                BP = bp;
+                this.cost = cost;
+                RobotId = robotId;
+            }
+        }
+
+        // Represents a series of bids (cost estimation) for each known bp 
+        private class BiddingMessage: ISsbBroadcastMessage {
+
+            public readonly int RequestingRobot;
+            private readonly Dictionary<Vector2Int, List<Bid>> AllBids = new Dictionary<Vector2Int, List<Bid>>();
+
+            public BiddingMessage(int requestingRobot, List<Bid> robotBids) {
+                RequestingRobot = requestingRobot;
+                foreach (var robotBid in robotBids) 
+                    AllBids.Add(robotBid.BP, new List<Bid>(){robotBid});
             }
 
             public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
-                throw new NotImplementedException();
+                // This message is ignored if this robot was not the one to start the auction
+                if (RequestingRobot != algorithm._controller.GetRobotID())
+                    return null;
+
+                // TODO: Include own bids
+
+                // Sort each entry by cost (ascending) 
+                foreach (var entry in AllBids) {
+                    entry.Value.Sort((bid1, bid2) => bid1.cost.CompareTo(bid2.cost));
+                }
+                
+                // Each robot can only win ONE bid so best bids are stored in a dictionary
+                var bestBids = new Dictionary<int, Bid>();
+                
+                // Map dictionary values to queues
+                var bidQueues = AllBids.ToDictionary(kvp => kvp.Key, kvp => new Queue<Bid>(kvp.Value));
+
+                var fixedPointReached = false;
+                while (!fixedPointReached) {
+                    fixedPointReached = true;
+
+                    foreach (var entry in bidQueues) {
+                        if (entry.Value.Count == 0)
+                            continue; // No more bids left for this tile
+                        
+                        var newBid = entry.Value.Peek();
+                        if (bestBids.ContainsKey(newBid.RobotId)) {
+                            // Skip if this is already registered as the current best bid for this robot
+                            if (bestBids[newBid.RobotId] == entry.Value.Peek())
+                                continue;
+                            
+                            fixedPointReached = false;
+                            if (newBid.cost < bestBids[newBid.RobotId].cost) {
+                                // Dequeue previous best value to allow bids from other robot on that tile 
+                                bidQueues[bestBids[newBid.RobotId].BP].Dequeue();
+                                // Register this as the new best bid for this robot
+                                bestBids[newBid.RobotId] = newBid;
+                            } else {
+                                // Dequeue this new bid, as there exists a better candidate for this robot
+                                entry.Value.Dequeue();
+                            }
+                        } else {
+                            bestBids[newBid.RobotId] = newBid;
+                            fixedPointReached = false;
+                        }
+                    }
+                }
+                
+                // Create message containing results
+                var resultsMessage = new AuctionResultsMessage(bestBids);
+                // Process results for this robot, as it will not receive the message next tick
+                resultsMessage.Process(algorithm);
+                // Finally broadcast result to all other robots
+                return resultsMessage;
             }
-        }*/
+
+            public ISsbBroadcastMessage? Combine(ISsbBroadcastMessage other, SsbAlgorithm algorithm) {
+                if (other is BiddingMessage bidMessage) {
+                    // This message can be ignored if this robot was not the one to start the auction
+                    if (RequestingRobot != algorithm._controller.GetRobotID())
+                        return this;
+                    
+                    foreach (var entry in bidMessage.AllBids) {
+                        if(!AllBids.ContainsKey(entry.Key))
+                            AllBids.Add(entry.Key, new List<Bid>());
+                        AllBids[entry.Key].AddRange(entry.Value);
+                    }
+
+                    return this;
+                }
+                return null;
+            }
+        }
+
+
+        // Represents a broadcasted message containing the winning bids
+        private class AuctionResultsMessage : ISsbBroadcastMessage {
+
+            public Dictionary<int, Bid> Results;
+
+            public AuctionResultsMessage(Dictionary<int, Bid> results) {
+                Results = results;
+            }
+
+            public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
+                var robot = algorithm._controller.GetRobotID();
+                if (Results.ContainsKey(robot))
+                    algorithm._backtrackTarget = Results[robot].BP;
+                else
+                    algorithm._backtrackTarget = null;
+
+                // No further messages needed
+                return null;
+            }
+            
+            public ISsbBroadcastMessage Combine(ISsbBroadcastMessage other, SsbAlgorithm _) {
+                // There should never be more than one auction result message at a time
+                if (other is AuctionResultsMessage)
+                    throw new Exception("Illegal state. Multiple auction results received simultaneously");
+                return null;
+            }
+        }
         
     }
 }
