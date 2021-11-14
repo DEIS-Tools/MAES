@@ -249,6 +249,18 @@ namespace Dora.ExplorationAlgorithm.SSB {
             return _navigationMap.GetRelativeNeighbour(Front);
         }
 
+        private RelativeDirection? GetSpiralTargetDirection(bool frontBlocked, bool rlsBlocked, bool olsBlocked) {
+            if (frontBlocked && rlsBlocked && olsBlocked)
+                return null; // No more open tiles left. Spiraling has finished
+
+            // The following is the spiral algorithm specified by the bsa paper
+            if (!rlsBlocked)
+                return _referenceLateralSide;
+            if (frontBlocked) 
+                return _oppositeLateralSide;
+            return RelativeDirection.Front;
+        }
+
         // Adds backtracking points as specified by the algorithm presented in the SSB paper
         // In the SSB variation of the BP identification, a tile is only considered to be a BP if
         // it has solid tile to its immediate right or left
@@ -265,8 +277,53 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         // Simulates what spiraling might look like assuming all unknown tiles are non-solid
-        private (Vector2Int, int)? SimulateSpiraling() {
+        // Returns the amount of tiles left to traverse
+        private int? SimulateSpiraling() {
+            if (_currentState != State.Spiraling)
+                throw new Exception("Illegal state. Can only call SimulateSpiraling when in spiraling mode");
 
+            int cost = 0;
+            // Maximum simulated cost before concluding that spiral simulation cannot be finished
+            int maxCost = 200;
+
+            HashSet<Vector2Int> simulatedExplored = new HashSet<Vector2Int>();
+
+            var simulatedSpiralTile = _nextSpiralTarget;
+            // Default to current tile
+            simulatedSpiralTile ??= _navigationMap.GetCurrentTile();
+            int stepsSinceRotating = 0;
+            int maxStepsBeforeRotating = 20;
+            
+            var simulatedDirection = DirectionFromDegrees(_navigationMap.GetApproximateGlobalDegrees());
+            while(cost < maxCost) {
+                simulatedExplored.Add(simulatedSpiralTile.Value);
+                var simulatedFront = simulatedSpiralTile.Value + simulatedDirection.DirectionVector;
+                var simulatedRls = simulatedSpiralTile.Value + simulatedDirection.GetRelativeDirection(_referenceLateralSide).DirectionVector;
+                var simulatedOls = simulatedSpiralTile.Value + simulatedDirection.GetRelativeDirection(_oppositeLateralSide).DirectionVector;
+
+                var frontBlocked = !_navigationMap.IsPotentiallyExplorable(simulatedFront) || simulatedExplored.Contains(simulatedFront); 
+                var rlsBlocked = !_navigationMap.IsPotentiallyExplorable(simulatedRls)  || simulatedExplored.Contains(simulatedRls); 
+                var olsBlocked = !_navigationMap.IsPotentiallyExplorable(simulatedOls)  || simulatedExplored.Contains(simulatedOls);
+
+                var nextDirection = GetSpiralTargetDirection(frontBlocked, rlsBlocked, olsBlocked);
+                if (nextDirection == null) // Spiralling successfully terminated
+                    return cost;
+
+                if (nextDirection == Front) {
+                    stepsSinceRotating++;
+                    // If going too far in a straight line, we have probably exited the map
+                    // or the spiral is too big to simulate
+                    if (stepsSinceRotating > maxStepsBeforeRotating)
+                        return null;
+                }
+
+                // Step the simulation forward to the next tile in the spiral
+                simulatedDirection = simulatedDirection.GetRelativeDirection(nextDirection.Value);
+                simulatedSpiralTile += simulatedDirection.DirectionVector;
+
+                cost++;
+            }
+            
             return null;
         }
 

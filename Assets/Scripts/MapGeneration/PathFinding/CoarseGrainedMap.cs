@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Dora.ExplorationAlgorithm;
 using Dora.Robot;
 using Dora.Utilities;
 using UnityEngine;
@@ -124,7 +126,7 @@ namespace Dora.MapGeneration.PathFinding {
             var relativePosition = currentPosition + targetDirection.DirectionVector;
             return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
         }
-        
+
         // Returns the neighbour in the given cardinal direction (relative to global direction)
         public Vector2Int GetGlobalNeighbour(CardinalDirection direction) {
             var currentPosition = GetApproximatePosition();
@@ -136,7 +138,6 @@ namespace Dora.MapGeneration.PathFinding {
             var approxPosition = GetApproximatePosition();
             return _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
         }
-
 
         public bool IsSolid(Vector2Int coordinate) {
             var tileStatus = GetTileStatus(coordinate, optismistic: false); 
@@ -170,6 +171,26 @@ namespace Dora.MapGeneration.PathFinding {
 
             foreach (var map in maps) 
                 map._tilesExploredStatus = globalMap.Clone() as bool[,];
+        }
+
+        // Returns false only if the tile is known to be solid
+        public bool IsPotentiallyExplorable(Vector2Int coordinate) {
+            var withinBounds= coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
+            // To avoid giving away information which the robot cannot know, tiles outside the map bounds are
+            // considered explorable
+            if (!withinBounds) return true;
+
+            return (_tilesExploredStatus[coordinate.x, coordinate.y] || GetSlamTileStatuses(coordinate).All(status => status != SlamTileStatus.Solid));
+        }
+
+        private List<SlamTileStatus> GetSlamTileStatuses(Vector2Int coordinate) {
+            var slamCoord = coordinate * 2;
+            return new List<SlamTileStatus>() {
+                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right),
+                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up + Vector2Int.right),
+                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up),
+                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right),
+            };
         }
     }
     
