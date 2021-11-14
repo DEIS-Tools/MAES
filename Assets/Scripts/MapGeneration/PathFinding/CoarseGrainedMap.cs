@@ -11,7 +11,7 @@ namespace Dora.MapGeneration.PathFinding {
     public class CoarseGrainedMap : IPathFindingMap {
         
         private SlamMap _slamMap;
-        private object[,] _objects;
+        private bool[,] _tilesExploredStatus;
         private int _width, _height;
         private Vector2 _offset;
         private AStar _aStar;
@@ -21,7 +21,7 @@ namespace Dora.MapGeneration.PathFinding {
             _width = width;
             _height = height;
             _offset = offset;
-            _objects = new object[width, height];
+            _tilesExploredStatus = new bool[width, height];
             _aStar = new AStar();
         }
 
@@ -45,15 +45,15 @@ namespace Dora.MapGeneration.PathFinding {
         }
 
         // Returns the data stored at the given tile, returning null if no data is present
-        public object? GetTileData(Vector2Int localCoordinate) {
+        public bool IsTileExplored(Vector2Int localCoordinate) {
             AssertWithinBounds(localCoordinate);
-            return _objects[localCoordinate.x, localCoordinate.y];
+            return _tilesExploredStatus[localCoordinate.x, localCoordinate.y];
         }
         
         // Sets the data at the given tile, overwriting any existing data object if present
-        public void SetTileData(Vector2Int localCoordinate, object data) {
+        public void SetTileExplored(Vector2Int localCoordinate, bool data) {
             AssertWithinBounds(localCoordinate);
-            _objects[localCoordinate.x, localCoordinate.y] = data;
+            _tilesExploredStatus[localCoordinate.x, localCoordinate.y] = data;
         }
 
         private void AssertWithinBounds(Vector2Int coordinate) {
@@ -150,6 +150,26 @@ namespace Dora.MapGeneration.PathFinding {
 
         public float CellSize() {
             return 1.0f; 
+        }
+
+        public Vector2Int GetCurrentTile() {
+            var robotPosition = GetApproximatePosition();
+            return new Vector2Int((int) robotPosition.x, (int) robotPosition.y);
+        }
+
+        public static void Synchronize(List<CoarseGrainedMap> maps) {
+            var globalMap = new bool[maps[0]._width, maps[0]._width];
+            
+            foreach (var map in maps) {
+                for (int x = 0; x < map._width; x++) {
+                    for (int y = 0; y < map._height; y++) {
+                        globalMap[x, y] |= map._tilesExploredStatus[x, y];
+                    }
+                }
+            }
+
+            foreach (var map in maps) 
+                map._tilesExploredStatus = globalMap.Clone() as bool[,];
         }
     }
     
