@@ -151,6 +151,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 } else if (_tickOfLastRequestSentByThisRobot == _currentTick - 1) {
                     // Broadcast this robots bps now to match timing of other robots that has just received the request  
                     _backTrackingPoints.RemoveWhere(bp => _navigationMap.IsTileExplored(bp));
+                    Debug.Log($"Auctioneer robot {_controller.GetRobotID()} broadcasting {_backTrackingPoints.Count} bps");
                     _controller.Broadcast(new BackTrackingPointsMessage(_controller.GetRobotID(),new HashSet<Vector2Int>(_backTrackingPoints)));
                     _currentState = State.Waiting;
                 }else {
@@ -318,7 +319,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 }
             }
             
-            _backTrackingPoints.Remove(minDistanceBp);
+            Debug.Log($"Robot {_controller.GetRobotID()} chose tile from local list: {minDistanceBp}");
+            _backTrackingPoints.Remove(minDistanceBp); // TODO: Should this remove the min distance bp? Maybe not, as we may not reach the target. Instead remove all bps that
+            // TODO: Additionally consider only bps where a direct path exists
             return minDistanceBp;
         }
 
@@ -700,7 +703,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
                 var robot = algorithm._controller.GetRobotID();
                 if (Results.ContainsKey(robot)) {
-                    Debug.Log($"Auction resulted in reservation of bp {Results[robot]} for robot {robot}");
+                    Debug.Log($"Auction resulted in reservation of bp {Results[robot].BP} for robot {robot}");
                     algorithm._backtrackTarget = Results[robot].BP;
                 }
                 else {
@@ -719,6 +722,5 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 return null;
             }
         }
-        
     }
 }
