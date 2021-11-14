@@ -191,8 +191,8 @@ namespace Dora {
                     1f);
 
                 var robotConstraints = new RobotConstraints(
-                    broadcastRange: 15.0f,
-                    broadcastBlockedByWalls: true,
+                    broadcastRange: float.MaxValue,
+                    broadcastBlockedByWalls: false,
                     senseNearbyRobotRange: 5f,
                     senseNearbyRobotBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
@@ -210,7 +210,7 @@ namespace Dora {
                     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                         map, 
                         randomSeed, 
-                        1, 
+                        2, 
                         0.6f,
                         (seed) => new SsbAlgorithm(robotConstraints, seed)),
                     robotConstraints: robotConstraints
