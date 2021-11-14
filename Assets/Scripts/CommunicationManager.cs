@@ -156,7 +156,7 @@ namespace Dora {
                     .Select(r => r.Controller.SlamMap)
                     .ToList();
                 
-                SlamMap.Combine(slamMaps);
+                SlamMap.Synchronize(slamMaps);
             }
         }
 

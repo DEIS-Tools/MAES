@@ -199,7 +199,7 @@ namespace Dora {
                     slamUpdateIntervalInTicks: 10,
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.0f, // TODO!
-                    distributeSlam: false,
+                    distributeSlam: true,
                     environmentTagReadRange: 4.0f
                 );
 
@@ -210,7 +210,7 @@ namespace Dora {
                     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                         map, 
                         randomSeed, 
-                        1, 
+                        2, 
                         0.6f,
                         (seed) => new SsbAlgorithm(robotConstraints, seed)),
                     robotConstraints: robotConstraints
