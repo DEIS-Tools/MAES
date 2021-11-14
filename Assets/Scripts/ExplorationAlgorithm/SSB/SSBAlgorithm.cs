@@ -130,7 +130,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         private void MarkTileExplored(Vector2Int exploredTile) {
-            _navigationMap.SetTileData(exploredTile, new TileData(true));
+            _navigationMap.SetTileExplored(exploredTile, true);
             // Remove this from possible back tracking candidates, if present
             _backTrackingPoints.Remove(exploredTile);
         }
@@ -160,7 +160,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 }
             }
 
-            
             if (targetDirection == null) {
                 // No surrounding tile is solid, start spiral progress from this point with the following default setup:
                 targetDirection = North;
@@ -184,12 +183,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
             if (_navigationMap.GetTileStatus(tileCoord) == SlamMap.SlamTileStatus.Solid)
                 return true; // physically blocked
 
-            var tileData = _navigationMap.GetTileData(tileCoord);
-            if (tileData != null) // If the tile is marked as explored, it is virtually blocked
-                return ((TileData) tileData).IsExplored;
-
-            // Neither physically nor virtually blocked
-            return false;
+            // Return virtual blocked status
+            return _navigationMap.IsTileExplored(tileCoord);
         }
 
         private void MoveTo(RelativePosition relativePosition) {
