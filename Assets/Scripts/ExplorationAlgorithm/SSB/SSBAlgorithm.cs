@@ -138,16 +138,22 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     _currentState = State.Waiting;
                 }
                 
-                if (_tickOfLastRequestSentByThisRobot == _currentTick - 2) {
-                    Debug.Log("No bids were won by this robot in the auction. Overriding result with target from " +
-                              "local list of bps. This may result in conflicts with other robots");
+                if (_tickOfLastRequestSentByThisRobot == _currentTick - 3) {
+                    Debug.Log($"No bids were won by robot {_controller.GetRobotID()} in the auction. " +
+                              $"Overriding result with best candidate from local list of bps. " +
+                              $"This may result in conflicts with other robots");
                     // Case of no response from other robots after starting request/auction
                     // or if no bps were won by this robot
                     _backtrackTarget = FindBestBackTrackingTarget();
-                    // If no local backtracking points could be found either wait till next tick
+                    // If no local backtracking points could be found either, then wait till next tick
                     if (_backtrackTarget == null)
                         _currentState = State.Waiting;
-                } else {
+                } else if (_tickOfLastRequestSentByThisRobot == _currentTick - 1) {
+                    // Broadcast this robots bps now to match timing of other robots that has just received the request  
+                    _backTrackingPoints.RemoveWhere(bp => _navigationMap.IsTileExplored(bp));
+                    _controller.Broadcast(new BackTrackingPointsMessage(_controller.GetRobotID(),new HashSet<Vector2Int>(_backTrackingPoints)));
+                    _currentState = State.Waiting;
+                }else {
                     _currentState = State.Waiting;
                 }
 
@@ -233,7 +239,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         // Rotates the robot such that it directly faces a non-solid tile
         private bool EnsureCorrectOrientationForSpiraling() {
             CardinalDirection? targetDirection = null;
-            var directions = new List<CardinalDirection>() {East, South, West, North};
+            var directions = new List<CardinalDirection> {East, South, West, North};
             foreach (var direction in directions) {
                 if (IsTileBlocked(_navigationMap.GetGlobalNeighbour(direction)))
                     continue;
@@ -500,7 +506,19 @@ namespace Dora.ExplorationAlgorithm.SSB {
             public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
                 // Add potentially unknown bps from other robots
                 algorithm._backTrackingPoints.UnionWith(BackTrackingPoints);
+                algorithm._backTrackingPoints.RemoveWhere(bp => algorithm._navigationMap.IsTileExplored(bp));
 
+                // Check for possible conflict
+                if (algorithm._tickOfLastRequestSentByThisRobot == algorithm._currentTick - 2) {
+                    // This case occurs when this robot has sent a bp request at the same time that another robot has
+                    // sent one. Determine which one to discard based on the robots' ids
+                    if (this.RequestingRobot < algorithm._controller.GetRobotID()) {
+                        // Discard this request received by the other robot, as it has a lower id than this robot 
+                        return null;
+                    }
+                    // If not discarded then continue and create a response for this request
+                }
+                
                 // If this robot the one that requested the BPs then do not respond to this message
                 if (RequestingRobot == algorithm._controller.GetRobotID())
                     return null;
@@ -508,10 +526,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 var bids = algorithm.GenerateBids(algorithm._backTrackingPoints);
                 
                 Debug.Log($"Robot {algorithm._controller.GetRobotID()} generated {bids.Count} bids");
-                
-                if (bids.Count == 0)
-                    return null;
-
                 return new BiddingMessage(RequestingRobot, bids);
             }
             
@@ -533,9 +547,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
             if (_currentState == State.Spiraling)
                 spiralFinishCost = SimulateSpiraling();
 
-            // Spiraling could not be fully simulated
+            // Spiraling could not be fully simulated - No bids
             if(spiralFinishCost == null)
-                return null;
+                return bids;
 
             // Generate a bid based on the length of the calculated path to reach the bp (if present)
             foreach (var bp in backTrackingPoints) {
@@ -586,6 +600,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     AllBids.Add(robotBid.BP, new List<Bid>(){robotBid});
             }
 
+            // Process bids by calculating winner through auction
             public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
                 // This message is ignored if this robot was not the one to start the auction
                 if (RequestingRobot != algorithm._controller.GetRobotID())
@@ -643,7 +658,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     }
                 }
                 
-                Debug.Log($"Auction results: {bestBids}");
+                Debug.Log($"Auction results: {bestBids.Aggregate("", (e1, e2) => $"[Robot {e2.Key} won {e2.Value.BP}]")}");
                 
                 // Create message containing results
                 var resultsMessage = new AuctionResultsMessage(bestBids);
