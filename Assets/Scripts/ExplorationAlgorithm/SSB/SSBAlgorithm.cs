@@ -126,6 +126,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 }
             } else {
                 MarkTileExplored(_nextSpiralTarget!.Value);
+                Debug.Log($"Steps remaining: {SimulateSpiraling()}");
                 _nextSpiralTarget = null;
             }
         }
@@ -278,13 +279,12 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
         // Simulates what spiraling might look like assuming all unknown tiles are non-solid
         // Returns the amount of tiles left to traverse
-        private int? SimulateSpiraling() {
+        private int? SimulateSpiraling(int maxCost = 100) {
             if (_currentState != State.Spiraling)
                 throw new Exception("Illegal state. Can only call SimulateSpiraling when in spiraling mode");
 
-            int cost = 0;
-            // Maximum simulated cost before concluding that spiral simulation cannot be finished
-            int maxCost = 200;
+            // Number of tiles left to traverse
+            int cost = 1;
 
             HashSet<Vector2Int> simulatedExplored = new HashSet<Vector2Int>();
 
@@ -316,11 +316,13 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     if (stepsSinceRotating > maxStepsBeforeRotating)
                         return null;
                 }
+                else {
+                    stepsSinceRotating = 0;
+                }
 
                 // Step the simulation forward to the next tile in the spiral
                 simulatedDirection = simulatedDirection.GetRelativeDirection(nextDirection.Value);
                 simulatedSpiralTile += simulatedDirection.DirectionVector;
-
                 cost++;
             }
             

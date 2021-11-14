@@ -180,16 +180,16 @@ namespace Dora.MapGeneration.PathFinding {
             // considered explorable
             if (!withinBounds) return true;
 
-            return (_tilesExploredStatus[coordinate.x, coordinate.y] || GetSlamTileStatuses(coordinate).All(status => status != SlamTileStatus.Solid));
+            return (!_tilesExploredStatus[coordinate.x, coordinate.y]) && GetSlamTileStatuses(coordinate).All(status => status != SlamTileStatus.Solid);
         }
 
         private List<SlamTileStatus> GetSlamTileStatuses(Vector2Int coordinate) {
             var slamCoord = coordinate * 2;
             return new List<SlamTileStatus>() {
+                _slamMap.GetStatusOfTile(slamCoord),
                 _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right),
-                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up + Vector2Int.right),
                 _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up),
-                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right),
+                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up + Vector2Int.right),
             };
         }
     }
