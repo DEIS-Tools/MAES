@@ -103,11 +103,11 @@ namespace Dora {
                 1f);
 
             var officeConfig = new OfficeMapConfig(
-                60,
-                60,
+                40,
+                40,
                 randomSeed,
                 58,
-                4,
+                4,    
                 5,
                 2,
                 1,
@@ -128,6 +128,20 @@ namespace Dora {
                 environmentTagReadRange: 4.0f
             );
 
+            scenarios.Enqueue(new SimulationScenario(
+                seed: randomSeed, 
+                hasFinishedSim: simulation => simulation.SimulateTimeSeconds > 5,
+                mapSpawner: generator => generator.GenerateOfficeMap(officeConfig, 2.0f),
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                    map,
+                    randomSeed,
+                    1,
+                    0.6f,
+                    new Coord(25,10),
+                    (seed) => new TnfExplorationAlgorithm(4, 9)),
+                robotConstraints: robotConstraints
+            ));
+            
             scenarios.Enqueue(new SimulationScenario(
                 seed: randomSeed, 
                 hasFinishedSim: simulation => simulation.SimulateTimeSeconds >= 20 * minute,

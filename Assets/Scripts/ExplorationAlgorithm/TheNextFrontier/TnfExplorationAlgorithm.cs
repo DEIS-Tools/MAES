@@ -24,7 +24,6 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             public static float Gauss(float x) {
                 return Mathf.Exp(Alpha * x * x + Beta * x + Gamma);
             }
-
         }
 
         private IRobotController _robotController;
@@ -32,6 +31,8 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         private int Beta { get; }
 
         private List<Frontier> _frontiers;
+
+        private Vector2Int _robotPos = new Vector2Int(0, 0);
 
 
         private readonly struct Frontier {
@@ -76,12 +77,26 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             return res;
         }
 
-        private float DistanceFactor(Frontier frontier) {
+        private float DistanceFactor(Frontier frontier, Vector2Int fromPosition) {
             //TODO: The actual implementation
-            // Figure out what the normalization means...
-            var pos = new Vector2Int(0, 0);
-            var dist = Vector2Int.Distance(pos, frontier.cells[0].Item1);
+            var dist = Vector2Int.Distance(fromPosition, frontier.cells[0].Item1);
             return dist;
+        }
+
+        private float CoordinationFactor(Frontier frontier) {
+            var neighbours = _robotController.SenseNearbyRobots();
+            var sum = 0f;
+            foreach (var neighbour in neighbours) {
+                var pos = _robotPos + Vector2Int.RoundToInt(Geometry.VectorFromDegreesAndMagnitude(neighbour.Angle, neighbour.Distance));
+                //TODO: Also, normalize.
+                sum += DistanceFactor(frontier, pos);
+            }
+            return sum;
+        }
+
+        private float UtilityFunction(Frontier frontier) {
+            //TODO: Get robot position for use in DistanceFactor
+            return InformationFactor(frontier) + DistanceFactor(frontier, _robotPos) - CoordinationFactor(frontier);
         }
 
         public void UpdateLogic() {
