@@ -22,15 +22,18 @@ namespace Dora
         
         public readonly MapFactory MapSpawner;
         public readonly RobotFactory RobotSpawner;
-        public readonly RobotConstraints RobotConstraints; 
+        public readonly RobotConstraints RobotConstraints;
+        public readonly string StatisticsFileName;
 
-        public SimulationScenario(int seed, SimulationEndCriteriaDelegate hasFinishedSim, MapFactory mapSpawner, RobotFactory robotSpawner, RobotConstraints robotConstraints)
+        public SimulationScenario(int seed, SimulationEndCriteriaDelegate hasFinishedSim, MapFactory mapSpawner, RobotFactory robotSpawner, RobotConstraints robotConstraints, string statisticsFileName)
         {
             Seed = seed;
             HasFinishedSim = hasFinishedSim;
             MapSpawner = mapSpawner;
             RobotSpawner = robotSpawner;
             RobotConstraints = robotConstraints;
+            StatisticsFileName = statisticsFileName;
         }
+        
     }
 }

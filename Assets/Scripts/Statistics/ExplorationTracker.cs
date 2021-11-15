@@ -26,14 +26,28 @@ namespace Dora.Statistics {
 
         [CanBeNull] private MonaRobot _selectedRobot;
 
+        private int _currentTick = 0;
+
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
         public float CoverageProportion => _tilesCovered / (float)_coverableTiles;
         
         private readonly bool[,] _coverageMap;
         private readonly int _coverableTiles;
         private int _tilesCovered = 0;
-        
         private bool _isFirstTick = true;
+
+        public List<SnapShot<float>> _coverSnapshots = new List<SnapShot<float>>();
+        public List<SnapShot<float>> _exploreSnapshots = new List<SnapShot<float>>();
+
+        public struct SnapShot<TValue> {
+            public readonly int Tick;
+            public readonly TValue Value;
+
+            public SnapShot(int tick, TValue value) {
+                Tick = tick;
+                this.Value = value;
+            }
+        }
 
         public ExplorationTracker(SimulationMap<bool> collisionMap, ExplorationVisualizer explorationVisualizer) {
             var explorableTriangles = 0;
@@ -65,6 +79,11 @@ namespace Dora.Statistics {
             }
 
             _coverableTiles = openTiles;
+        }
+
+        public void CreateSnapShot() {
+            _coverSnapshots.Add(new SnapShot<float>(_currentTick, CoverageProportion * 100));
+            _exploreSnapshots.Add(new SnapShot<float>(_currentTick, ExploredProportion * 100));
         }
 
         private void UpdateCoverageStatus(MonaRobot robot) {
@@ -127,6 +146,8 @@ namespace Dora.Statistics {
                 _explorationVisualizer.SetExplored(newlyExploredTriangles);
             else
                 _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, false);
+
+            _currentTick++;
         }
 
         public void SetVisualizedRobot([CanBeNull] MonaRobot robot) {
