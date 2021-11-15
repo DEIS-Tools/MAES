@@ -298,8 +298,10 @@ namespace Dora.ExplorationAlgorithm.SSB {
             if (_navigationMap.GetTileStatus(tileCoord) == SlamMap.SlamTileStatus.Solid)
                 return true; // physically blocked
 
-            // Return virtual blocked status
-            return _navigationMap.IsTileExplored(tileCoord);
+            var reservingRobot = _reservationSystem.GetReservingRobot(tileCoord);
+            
+            // Return virtual blocked status (ie. either explored or reserved)
+            return _navigationMap.IsTileExplored(tileCoord) || (reservingRobot != null && reservingRobot != RobotID());
         }
 
         private void MoveTo(RelativePosition relativePosition) {
@@ -436,9 +438,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 var simulatedRls = simulatedSpiralTile.Value + simulatedDirection.GetRelativeDirection(_referenceLateralSide).DirectionVector;
                 var simulatedOls = simulatedSpiralTile.Value + simulatedDirection.GetRelativeDirection(_oppositeLateralSide).DirectionVector;
 
-                var frontBlocked = !_navigationMap.IsPotentiallyExplorable(simulatedFront) || simulatedExplored.Contains(simulatedFront); 
-                var rlsBlocked = !_navigationMap.IsPotentiallyExplorable(simulatedRls)  || simulatedExplored.Contains(simulatedRls); 
-                var olsBlocked = !_navigationMap.IsPotentiallyExplorable(simulatedOls)  || simulatedExplored.Contains(simulatedOls);
+                var frontBlocked = !IsPotentiallyExplorable(simulatedFront) || simulatedExplored.Contains(simulatedFront); 
+                var rlsBlocked = !IsPotentiallyExplorable(simulatedRls)  || simulatedExplored.Contains(simulatedRls); 
+                var olsBlocked = !IsPotentiallyExplorable(simulatedOls)  || simulatedExplored.Contains(simulatedOls);
 
                 var nextDirection = GetSpiralTargetDirection(frontBlocked, rlsBlocked, olsBlocked);
                 if (nextDirection == null) // Spiralling successfully terminated
@@ -462,6 +464,11 @@ namespace Dora.ExplorationAlgorithm.SSB {
             }
             
             return null;
+        }
+
+        // Returns true unless the tile is known to be solid or if the tile is reserved by another robot
+        private bool IsPotentiallyExplorable(Vector2Int tile) {
+            return !_navigationMap.IsPotentiallyExplorable(tile) || _reservationSystem.IsTileReservedByOtherRobot(tile);
         }
 
         private bool IsBlocked(RelativeDirection direction) {

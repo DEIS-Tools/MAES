@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dora.Robot;
 using UnityEngine;
 
 namespace Dora.ExplorationAlgorithm.SSB {
@@ -22,28 +21,44 @@ namespace Dora.ExplorationAlgorithm.SSB {
         
         public class TileReservationSystem {
 
-            private SsbAlgorithm _algorithm;
-            private Dictionary<Vector2Int, Reservation> _reservations;
+            private readonly SsbAlgorithm _algorithm;
+            private readonly Dictionary<Vector2Int, Reservation> _reservations = new Dictionary<Vector2Int, Reservation>();
 
             public TileReservationSystem(SsbAlgorithm algorithm) {
                 _algorithm = algorithm;
             }
 
-            public void Reserve(Vector2Int tile) {
+            // Creates a reservation locally and returns it. Returns null if the reservation already exists
+            private Reservation? ReserveLocally(Vector2Int tile) {
                 // Only perform reservation if this tile is not already reserved
                 if (_reservations.ContainsKey(tile)) {
                     if (_reservations[tile].ReservingRobot != _algorithm._controller.GetRobotID())
                         throw new Exception("Attempted to reserve a tile that is already reserved by another robot");
+                    return null;
                 } else {
                     _reservations[tile] = new Reservation(_algorithm.RobotID(), tile, _algorithm._currentTick);
+                    return _reservations[tile];
                 }
             }
             
+            // Saves and broadcasts reservations for the given set of tiles
             public void Reserve(List<Vector2Int> tiles) {
-                foreach (var tile in tiles) 
-                    Reserve(tile);
-            }
+                HashSet<Reservation> newReservations = new HashSet<Reservation>();
+                foreach (var tile in tiles) {
+                    var newRes = ReserveLocally(tile);
+                    if (newRes != null) newReservations.Add(newRes.Value);
+                }
 
+                if (newReservations.Count == 0)
+                    return; // No new reservations added, so no need to 
+                
+                // Broadcast reservations to all nearby robots
+                _algorithm._controller.Broadcast(new ReservationMessage(new HashSet<Reservation>(
+                    tiles.Select(t => new Reservation(_algorithm.RobotID(), t, _algorithm._currentTick)))
+                ));
+            }
+            
+            // Returns true if the robot has a confirmed reservation for the given tile
             public bool IsTileReservedByThisRobot(Vector2Int tile) {
                 return _reservations.ContainsKey(tile) 
                        && _reservations[tile].ReservingRobot == _algorithm.RobotID()
@@ -51,28 +66,32 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 // The last step avoids counting reservations that were made this tick,
                 // to avoid conflicts in cases where to robots reserve the same tile at the same time
             }
+            
+            // Returns true if another robot has a confirmed reservation for the given tile
+            public bool IsTileReservedByOtherRobot(Vector2Int tile) {
+                return _reservations.ContainsKey(tile)
+                       && _reservations[tile].ReservingRobot != _algorithm.RobotID();
+            }
 
             // Returns the id of the robot that is reserving the given tile
             // Returns null if no robot has reserved the tile
             public int? GetReservingRobot(Vector2Int tile) {
-                if (_reservations.ContainsKey(tile)) {
-                    var reservation = _reservations[tile];
-                    // Ignore reservations made this tick by this robot (as there may be a conflict next tick)
-                    if (_algorithm.RobotID() == reservation.ReservingRobot && _algorithm._currentTick == reservation.StartingTick)
-                        return null;
-                    return _reservations[tile].ReservingRobot;
-                }
-                    
-                return null;
+                if (!_reservations.ContainsKey(tile)) return null;
+                
+                var reservation = _reservations[tile];
+                // Ignore reservations made this tick by this robot (as there could potentially be a conflict next tick)
+                if (_algorithm.RobotID() == reservation.ReservingRobot && _algorithm._currentTick == reservation.StartingTick)
+                    return null;
+                
+                return _reservations[tile].ReservingRobot;
             }
             
             
-
             public void RegisterReservationFromOtherRobot(Reservation newRes) {
                 // Only register reservation if no previous reservation exists
                 // or if the new reservation has a higher robot id
                 var tile = newRes.ReservedTile;
-                if (!_reservations.ContainsKey(tile) || _reservations[tile].ReservingRobot > newRes.ReservingRobot)
+                if (!_reservations.ContainsKey(tile) || _reservations[tile].ReservingRobot < newRes.ReservingRobot)
                     _reservations[tile] = newRes;
             }
             
@@ -111,6 +130,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 foreach (var reservation in _reservations) 
                     algorithm._reservationSystem.RegisterReservationFromOtherRobot(reservation);
                 
+                Debug.Log($"Robot {algorithm.RobotID()} " +
+                          $"registered {_reservations.Count} reservations from other robots");
                 return null;
             }
 
@@ -134,7 +155,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
             public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
                 algorithm._reservationSystem.ClearReservations(_reservationsToClear);
-                
+                Debug.Log($"Robot {algorithm.RobotID()} " +
+                          $"received and processed request to clear {_reservationsToClear} reservations");
                 return null;
             }
 
