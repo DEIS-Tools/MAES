@@ -43,6 +43,11 @@ namespace Dora {
             var t = transform; // Temp storage of build-in is (apparently) more efficient than repeated access.
             newPosition = t.position;
             newRotation = t.rotation;
+            CameraInitialization();
+        }
+
+        private void CameraInitialization() {
+
             _cams = new List<CamAssembly>();
             foreach (var c in GetComponentsInChildren<Camera>()) {
                 var ct = c.transform;
@@ -98,8 +103,14 @@ namespace Dora {
 
         private void ApplyMovement() {
             var t = transform;
+            
+            
             t.position = Vector3.Lerp(t.position, newPosition, Time.deltaTime * movementTime);
             t.rotation = Quaternion.Lerp(t.rotation, newRotation, Time.deltaTime * movementTime);
+            
+            if (_cams == null) { // On a code hot-reload in unity, _cams is set to null.
+                CameraInitialization();
+            }
             foreach (var c in _cams) {
                 var ct = c.camera.transform;
                 ct.localPosition =
