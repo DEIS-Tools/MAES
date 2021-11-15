@@ -13,7 +13,7 @@ using static Dora.MapGeneration.CardinalDirection;
 using static Dora.MapGeneration.CardinalDirection.RelativeDirection;
 
 namespace Dora.ExplorationAlgorithm.SSB {
-    public class SsbAlgorithm : IExplorationAlgorithm {
+    public partial class SsbAlgorithm : IExplorationAlgorithm {
 
         private IRobotController _controller;
         private RobotConstraints _constraints;
