@@ -3,12 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Robot.Task;
 using JetBrains.Annotations;
 using UnityEngine;
 using static Dora.CommunicationManager;
+using static Dora.MapGeneration.EnvironmentTaggingMap;
 
 namespace Dora {
     public class Robot2DController : IRobotController {
@@ -30,6 +30,18 @@ namespace Dora {
 
         public CommunicationManager CommunicationManager { get; set; }
         public SlamMap SlamMap { get; set; }
+
+        // Returns the counterclockwise angle in degrees between the forward orientation of the robot and the x-axis
+        public float GetForwardAngleRelativeToXAxis() {
+            var angle = Vector2.SignedAngle(Vector2.right, _transform.up);
+            if (angle < 0) angle = 360 + angle;
+            return angle;
+        }
+
+        private Vector2 GetRobotDirectionVector() {
+            var angle = GetForwardAngleRelativeToXAxis();
+            return new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+        }
 
         // Whether the rigidbody is currently colliding with something
         private bool _isCurrentlyColliding = false;
@@ -66,8 +78,12 @@ namespace Dora {
             _newCollisionSinceLastUpdate = false;
         }
 
-        public bool HasCollided() {
+        public bool HasCollidedSinceLastLogicTick() {
             return _newCollisionSinceLastUpdate;
+        }
+
+        public bool IsCurrentlyColliding() {
+            return _isCurrentlyColliding;
         }
 
         public void NotifyCollided() {
@@ -230,6 +246,28 @@ namespace Dora {
             return CommunicationManager.ReadMessages(_robot);
         }
 
+        public IRobotController.DetectedWall? DetectWall(float globalAngle) {
+            if (globalAngle < 0 || globalAngle > 360)
+                throw new ArgumentException("Global angle argument must be between 0 and 360." +
+                                            $"Given angle was {globalAngle}");
+            
+            var result = CommunicationManager.DetectWall(_robot, globalAngle);
+            if (result != null) {
+                var intersection = result!.Value.Item1;
+                var distance = Vector2.Distance(intersection, _robot.transform.position);
+                var intersectingWallAngle = result!.Value.Item2;
+                
+                // Calculate angle of wall relative to current forward angle of the robot
+                var relativeWallAngle = Math.Abs(intersectingWallAngle - GetForwardAngleRelativeToXAxis());
+                
+                // Convert to relative wall angle to range 0-90
+                relativeWallAngle %= 180;
+                if (relativeWallAngle > 90) relativeWallAngle = 180 - relativeWallAngle;
+                return new IRobotController.DetectedWall(distance, relativeWallAngle);
+            }
+            return null;
+        }
+
         public string GetDebugInfo() {
             var info = new StringBuilder();
             var approxPosition = SlamMap.ApproximatePosition;
@@ -237,7 +275,10 @@ namespace Dora {
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
             info.AppendLine($"Current task: {_currentTask?.GetType()}");
-            info.Append($"Slam position: {approxPosition.x.ToString("#.00")}, {approxPosition.y.ToString("#.00")}");
+            info.Append($"Slam position: {approxPosition.x.ToString("#.00")}, {approxPosition.y.ToString("#.00")}\n");
+            info.Append($"Slam tile: {SlamMap.GetCurrentPositionSlamTile()}\n");
+            info.Append($"Coarse tile: {SlamMap.GetCoarseMap().FromSlamMapCoordinate(SlamMap.GetCurrentPositionSlamTile())}\n");
+            info.Append($"Is colliding: {IsCurrentlyColliding()}");
             return info.ToString();
         }
 
@@ -246,14 +287,26 @@ namespace Dora {
             _currentTask = new FiniteMovementTask(_transform, distanceInMeters, reverse);
         }
 
+        public float GetGlobalAngle() {
+            return GetForwardAngleRelativeToXAxis();
+        }
+
         // Deposits an environment tag at the current position of the robot
-        public void DepositTag(object data) {
-            CommunicationManager.DepositTag(_robot, data);
+        public void DepositTag(ITag tag) {
+            CommunicationManager.DepositTag(_robot, tag);
         }
 
         // Returns a list of all environment tags that are within sensor range
-        public List<EnvironmentTaggingMap.EnvironmentTag> ReadNearbyTags() {
-            return CommunicationManager.ReadNearbyTags(_robot);
+        public List<RelativeObject<ITag>> ReadNearbyTags() {
+            var tags = CommunicationManager.ReadNearbyTags(_robot);
+            return tags.Select(placedTag => ToRelativePosition(placedTag.WorldPosition, placedTag.tag)).ToList();
+        }
+
+        private RelativeObject<T> ToRelativePosition<T>(Vector2 tagPosition, T item) {
+            var robotPosition = (Vector2) _robot.transform.position;
+            var distance = Vector2.Distance(robotPosition, tagPosition);
+            var angle = Vector2.SignedAngle(GetRobotDirectionVector(), tagPosition - robotPosition);
+            return new RelativeObject<T>(distance, angle, item);
         }
 
         public List<SensedObject<int>> SenseNearbyRobots() {
@@ -265,6 +318,10 @@ namespace Dora {
                                                             Mathf.Sin(e.Angle * Mathf.Deg2Rad))),
                     e.item))
                 .ToList();
+        }
+
+        public SlamAlgorithmInterface GetSlamMap() {
+            return this.SlamMap;
         }
     }
 }

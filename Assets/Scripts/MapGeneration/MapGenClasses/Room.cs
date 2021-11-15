@@ -8,6 +8,7 @@ namespace Dora.MapGeneration {
     public class Room : IComparable<Room> {
         public List<Coord> tiles;
 
+        public bool[,] tilesAsArray; // If true, it is contained in room
         // The tiles next to the walls surrounding the room
         public List<Coord> edgeTiles;
         public List<Room> connectedRooms;
@@ -23,9 +24,11 @@ namespace Dora.MapGeneration {
             tiles = roomTiles;
             roomSize = tiles.Count;
             connectedRooms = new List<Room>();
+            tilesAsArray = new bool[map.GetLength(0), map.GetLength(1)];
 
             edgeTiles = new List<Coord>();
             foreach (Coord tile in tiles) {
+                tilesAsArray[tile.x, tile.y] = true;
                 for (int x = tile.x - 1; x <= tile.x + 1; x++) {
                     for (int y = tile.y - 1; y <= tile.y + 1; y++) {
                         if (x == tile.x || y == tile.y) {
@@ -52,21 +55,48 @@ namespace Dora.MapGeneration {
         }
 
         public List<Coord> GetWallSurroundingRoom(int wallThickness = 1) {
-            var surroundingWalls = new List<Coord>();
+            var surroundingWalls = new HashSet<Coord>();
 
             int smallestXValue, biggestXValue;
             int smallestYValue, biggestYValue;
-
-            // x values in ascending order
-            tiles.Sort((c1, c2) => c1.x - c2.x);
-            smallestXValue = tiles[0].x;
-            biggestXValue = tiles[tiles.Count - 1].x;
-            // Sorted by y values in ascending order
-            tiles.Sort((c1, c2) => c1.y - c2.y);
-            smallestYValue = tiles[0].y;
-            biggestYValue = tiles[tiles.Count - 1].y;
+            
+            /*smallestXValue = tiles.Aggregate((agg, next) => next.x < agg.x ? next : agg).x;
+            biggestXValue = tiles.Aggregate((agg, next) => next.x > agg.x ? next : agg).x;
+            smallestYValue = tiles.Aggregate((agg, next) => next.y < agg.y ? next : agg).y;
+            biggestYValue = tiles.Aggregate((agg, next) => next.y > agg.y ? next : agg).y;*/
+            smallestXValue = tiles.Min(e => e.x);
+            biggestXValue = tiles.Max(e => e.x);
+            smallestYValue = tiles.Min(e => e.y);
+            biggestYValue = tiles.Max(e => e.y);
 
             for (int x = smallestXValue - wallThickness; x <= biggestXValue + wallThickness; x++) {
+                for (int y = smallestYValue - wallThickness; y <= biggestYValue + wallThickness; y++) {
+                    // Check if neighbours are within tiles && this is not in tiles
+                    var c = new Coord(x, y);
+                    bool isSurroundingWall = false;
+                    // If any neighbor is within our tiles, we are part of the surrounding wall
+                    for (int xn = x - wallThickness; xn <= x + wallThickness; xn++) {
+                        for (int yn = y - wallThickness; yn <= y + wallThickness; yn++) {
+                            // Is within bounds of map
+                            if ((0 <= xn && xn < tilesAsArray.GetLength(0)) && (0 <= yn && yn < tilesAsArray.GetLength(1))) {
+                                if (tilesAsArray[xn, yn] == true) // if contained in tiles
+                                    isSurroundingWall = true;
+                            }
+                        }
+                    }
+                    if(isSurroundingWall)
+                        surroundingWalls.Add(c);
+
+                    // If it is between the edge tiles, i.e. in the middle, continue!
+                    /*if ((smallestXValue <= x && x <= biggestXValue) && (smallestYValue <= y && y <= biggestYValue))
+                        continue;
+                    
+                    c = new Coord(x, y);
+                    surroundingWalls.Add(c);*/
+                }
+            }
+
+            /*for (int x = smallestXValue - wallThickness; x <= biggestXValue + wallThickness; x++) {
                 for (int y = smallestYValue - wallThickness; y <= biggestYValue + wallThickness; y++) {
                     // If adjacent with a tile, but not in tiles
                     var c = new Coord(x, y);
@@ -77,9 +107,9 @@ namespace Dora.MapGeneration {
                         }
                     }
                 }
-            }
+            }*/
 
-            return surroundingWalls;
+            return surroundingWalls.ToList();
         }
 
         public List<Coord> GetSharedWallTiles(Room other, int wallThickness = 1) {

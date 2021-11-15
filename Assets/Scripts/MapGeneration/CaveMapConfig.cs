@@ -38,7 +38,7 @@ namespace Dora.MapGeneration {
             int connectionPassagesWidth, int randomFillPercent, int wallThresholdSize, int roomThresholdSize,
             int borderSize, float scaling, int neighbourWallsNeededToStayWall = 4) {
             // Only fill percent between and including 0 to 100 are allowed
-            if (0 >= randomFillPercent || randomFillPercent >= 100) {
+            if (0 > randomFillPercent || randomFillPercent >= 100) {
                 throw new ArgumentOutOfRangeException("randomFillPercent must be between 0 and 100");
             }
 

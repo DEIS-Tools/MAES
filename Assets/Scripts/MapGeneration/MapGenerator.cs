@@ -90,7 +90,7 @@ public class MapGenerator : MonoBehaviour {
     public SimulationMap<bool> GenerateOfficeMap(OfficeMapConfig config, float wallHeight, bool is2D = true) {
         // Clear and destroy objects from previous map
         clearMap();
-
+        
         Random random = new Random(config.randomSeed);
 
         int[,] emptyMap = GenerateEmptyMap(config.bitMapWidth, config.bitMapHeight);
@@ -160,12 +160,10 @@ public class MapGenerator : MonoBehaviour {
                     int biggestYValue, smallestYValue;
 
                     // The maxima of x and y are needed to isolate the coordinates for each line of wall
-                    sharedWallTiles.Sort((c1, c2) => c1.x - c2.x);
-                    smallestXValue = sharedWallTiles[0].x;
-                    biggestXValue = sharedWallTiles[sharedWallTiles.Count - 1].x;
-                    sharedWallTiles.Sort((c1, c2) => c1.y - c2.y);
-                    smallestYValue = sharedWallTiles[0].y;
-                    biggestYValue = sharedWallTiles[sharedWallTiles.Count - 1].y;
+                    smallestXValue = sharedWallTiles.Aggregate((agg, next) => next.x < agg.x ? next : agg).x;
+                    biggestXValue = sharedWallTiles.Aggregate((agg, next) => next.x > agg.x ? next : agg).x;
+                    smallestYValue = sharedWallTiles.Aggregate((agg, next) => next.y < agg.y ? next : agg).y;
+                    biggestYValue = sharedWallTiles.Aggregate((agg, next) => next.y > agg.y ? next : agg).y;
 
                     List<Coord> line;
                     int maxDoors = random.Next(1, 4);
