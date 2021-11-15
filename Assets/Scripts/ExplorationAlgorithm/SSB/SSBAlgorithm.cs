@@ -20,6 +20,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private CoarseGrainedMap _navigationMap;
         private int _randomSeed;
 
+        private TileReservationSystem _reservationSystem;
+
         private State _currentState = State.Backtracking;
         
         // Backtracking variables
@@ -69,6 +71,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         public SsbAlgorithm(RobotConstraints constraints, int randomSeed) {
             _constraints = constraints;
             _randomSeed = randomSeed;
+            _reservationSystem= new TileReservationSystem(this);
         }
 
         public void UpdateLogic() {
@@ -469,6 +472,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
             this._controller = controller;
             _navigationMap = _controller.GetSlamMap().GetCoarseMap();
         }
+        
+        private int RobotID() => _controller.GetRobotID();
 
         public string GetDebugInfo() {
             return $"State: {Enum.GetName(typeof(State), _currentState)}" +

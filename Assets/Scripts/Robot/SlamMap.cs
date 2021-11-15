@@ -1,13 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Dora.MapGeneration;
 using Dora.MapGeneration.PathFinding;
 using Dora.Utilities;
-using JetBrains.Annotations;
-using UnityEditor;
-using UnityEditor.UI;
 using UnityEngine;
 using Random = System.Random;
 
@@ -27,6 +23,7 @@ namespace Dora.Robot {
         private readonly RobotConstraints _robotConstraints;
         private float _lastInaccuracyX = 0f;
         private float _lastInaccuracyY = 0f;
+        
         // Represents the current approximate position of the given robot
         public Vector2 ApproximatePosition { get; private set; }
         private float _robotAngle = 0;
