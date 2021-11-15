@@ -58,7 +58,7 @@ namespace Dora.Robot.Task {
             }
 
             // Determine rotation direction
-            if (_degreesToRotate < 0) forceMultiplier *= -1;
+            if (_degreesToRotate > 0) forceMultiplier *= -1;
 
             return new MovementDirective(forceMultiplier, -forceMultiplier);
         }

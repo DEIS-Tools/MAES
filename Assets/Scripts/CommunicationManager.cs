@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Security.Cryptography;
 using Dora.MapGeneration;
 using Dora.Robot;
+using Dora.Utilities;
 using UnityEngine;
 using static Dora.MapGeneration.EnvironmentTaggingMap;
+using Vector2 = UnityEngine.Vector2;
 
 namespace Dora {
     // Messages sent through this class will be subject to communication range and line of sight.
@@ -60,9 +63,15 @@ namespace Dora {
             public readonly T item;
 
             public SensedObject(float distance, float angle, T t) {
-                Distance = distance;
-                Angle = angle;
+                this.Distance = distance;
+                this.Angle = angle;
                 this.item = t;
+            }
+
+            public Vector2 GetRelativePosition(Vector2 myPosition, float globalAngle) {
+                var x = myPosition.x + (Distance * Mathf.Cos(Mathf.Deg2Rad * ((Angle + globalAngle) % 360)));
+                var y = myPosition.y + (Distance * Mathf.Sin(Mathf.Deg2Rad * ((Angle + globalAngle) % 360)));
+                return new Vector2(x, y);
             }
         }
 
@@ -187,7 +196,7 @@ namespace Dora {
 
             List<HashSet<int>> groups = new List<HashSet<int>>();
             foreach (var r1 in _robots) {
-                if(!groups.Exists(g => g.Contains(r1.id))); {
+                if(!groups.Exists(g => g.Contains(r1.id))) {
                     groups.Add(GetCommunicationGroup(r1.id));
                 }
             }
@@ -218,23 +227,16 @@ namespace Dora {
             return resultSet;
         }
 
-        public void DepositTag(MonaRobot robot, object data) {
-            if (GlobalSettings.ShowEnvironmentTags)
-                _visualizer.AddEnvironmentTag(robot.transform.position);
+        public void DepositTag(MonaRobot robot, ITag tag) {
+            var placedTag = _environmentTaggingMap.AddTag(robot.transform.position, tag);
             
-            _environmentTaggingMap.AddTag(robot.transform.position, data);
+            if (GlobalSettings.ShowEnvironmentTags)
+                _visualizer.AddEnvironmentTag(placedTag);
         }
 
-        public List<EnvironmentTag> ReadNearbyTags(MonaRobot robot) {
+        public List<PlacedTag> ReadNearbyTags(MonaRobot robot) {
             var tags = _environmentTaggingMap.GetTagsNear(robot.transform.position,
                 _robotConstraints.EnvironmentTagReadRange);
-
-            // Debugging visualize tags that are readable by robots
-            if (GlobalSettings.ShowEnvironmentTags){
-                foreach (var tag in tags) {
-                    _visualizer.AddReadableTag(tag.WorldPosition);
-                }
-            }
 
             return tags;
         }
@@ -253,7 +255,6 @@ namespace Dora {
                     continue;
 
                 sensedObjects.Add(new SensedObject<int>(comInfo.Distance, comInfo.Angle, robot.id));
-                
             }
             
             return sensedObjects;
@@ -261,6 +262,46 @@ namespace Dora {
 
         public void SetRobotReferences(List<MonaRobot> robots) {
             this._robots = robots;
+        }
+
+        
+        // Attempts to detect a wall in the given direction. If present, it will return the intersection point and the
+        // global angle (relative to x-axis) in degrees of the intersecting line
+        public (Vector2, float)? DetectWall(MonaRobot robot, float globalAngle) {
+            var range = _robotConstraints.EnvironmentTagReadRange;
+            // Perform 3 parallel traces from the robot to determine if
+            // a wall will be encountered if the robot moves straight ahead
+
+            var robotPosition = robot.transform.position;
+            
+            // Perform trace from the center of the robot
+            var result1 = _rayTracingMap.FindIntersection(robot.transform.position, globalAngle, range, (_, isSolid) => !isSolid);
+            var distance1 = result1 == null ? float.MaxValue : Vector2.Distance(robotPosition, result1.Value.Item1);
+            var robotSize = 0.6f; // TODO! Get actual size of robot
+            
+            // Perform trace from the left side perimeter of the robot
+            var offsetLeft = Geometry.VectorFromDegreesAndMagnitude((globalAngle + 90) % 360, robotSize / 2f);
+            var result2 = _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetLeft, globalAngle, range, (_, isSolid) => !isSolid);
+            var distance2 = result2 == null ? float.MaxValue : Vector2.Distance(robotPosition, result2.Value.Item1);
+
+            // Finally perform trace from the right side perimeter of the robot
+            var offsetRight = Geometry.VectorFromDegreesAndMagnitude((globalAngle + 270) % 360, robotSize / 2f);
+            var result3 = _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetRight, globalAngle, range, (_, isSolid) => !isSolid);
+            var distance3 = result3 == null ? float.MaxValue : Vector2.Distance(robotPosition, result3.Value.Item1);
+
+            // Return the detected wall that is closest to the robot
+            var closestWall = result1;
+            var closestWallDistance = distance1;
+            
+            if (distance2 < closestWallDistance) {
+                closestWall = result2;
+                closestWallDistance = distance2;
+            }
+
+            if (distance3 < closestWallDistance) 
+                closestWall = result3;
+            
+            return closestWall;
         }
 
     }

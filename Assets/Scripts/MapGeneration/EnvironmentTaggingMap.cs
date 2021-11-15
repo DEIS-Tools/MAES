@@ -10,7 +10,7 @@ namespace Dora.MapGeneration {
     public class EnvironmentTaggingMap {
         
         // Each tile in the map is a list of tags that are positioned within the bounds of that tile
-        private List<EnvironmentTag>[,] _tagLists;
+        private List<PlacedTag>[,] _tagLists;
 
         private int _widthInTiles, _heightInTiles;
         private float _tileSize;
@@ -21,21 +21,23 @@ namespace Dora.MapGeneration {
             this._heightInTiles = collisionMap.HeightInTiles;
             this._tileSize = collisionMap.Scale;
             this._scaledOffset = collisionMap.ScaledOffset;
-            _tagLists = new List<EnvironmentTag>[_widthInTiles, _heightInTiles];
+            _tagLists = new List<PlacedTag>[_widthInTiles, _heightInTiles];
             for (int x = 0; x < _widthInTiles; x++) {
                 for (int y = 0; y < _heightInTiles; y++) {
-                    _tagLists[x, y] = new List<EnvironmentTag>();
+                    _tagLists[x, y] = new List<PlacedTag>();
                 }
             }
         }
         
-        public void AddTag(Vector2 worldPosition, object data) {
+        public PlacedTag AddTag(Vector2 worldPosition, ITag tag) {
             var gridCoordinate = ToLocalMapCoordinate(worldPosition);
-            _tagLists[gridCoordinate.x, gridCoordinate.y].Add(new EnvironmentTag(worldPosition, data));
+            var placedTag = new PlacedTag(worldPosition, tag);
+            _tagLists[gridCoordinate.x, gridCoordinate.y].Add(placedTag);
+            return placedTag;
         }
         
-        public List<EnvironmentTag> GetTagsNear(Vector2 centerWorldPosition, float radius) {
-            List<EnvironmentTag> nearbyTags = new List<EnvironmentTag>();
+        public List<PlacedTag> GetTagsNear(Vector2 centerWorldPosition, float radius) {
+            List<PlacedTag> nearbyTags = new List<PlacedTag>();
             
             var gridPosition = ToLocalMapCoordinate(centerWorldPosition);
             var maxTileRadius = (int) Math.Ceiling(radius / _tileSize);
@@ -78,13 +80,17 @@ namespace Dora.MapGeneration {
                    && localCoordinates.y < _heightInTiles;
         }
 
-        public class EnvironmentTag {
-            public readonly Vector2 WorldPosition;
-            public readonly object Data;
+        public interface ITag {
+            public void DrawGizmos(Vector3 position);
+        }
 
-            public EnvironmentTag(Vector2 worldPosition, object data) {
+        public class PlacedTag {
+            public readonly Vector2 WorldPosition;
+            public readonly ITag tag;
+
+            public PlacedTag(Vector2 worldPosition, ITag tag) {
                 WorldPosition = worldPosition;
-                Data = data;
+                this.tag = tag;
             }
         }
         

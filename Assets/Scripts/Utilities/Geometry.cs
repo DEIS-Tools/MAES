@@ -11,5 +11,15 @@ namespace Dora.Utilities {
 
             return Mathf.Sqrt(Mathf.Pow(xDelta, 2f) + Mathf.Pow(yDelta, 2f));
         }
+
+
+        public static Vector2 VectorFromDegreesAndMagnitude(float angleDegrees, float magnitude) {
+            var angleRad = angleDegrees * Mathf.Deg2Rad;
+            return new Vector2(Mathf.Cos(angleRad), Mathf.Sin(angleRad)) * magnitude;
+        }
+
+        public static Vector2 DirectionAsVector(float angleDegrees) {
+            return new Vector2(Mathf.Cos(angleDegrees * Mathf.Deg2Rad), Mathf.Sin(angleDegrees * Mathf.Deg2Rad));
+        }
     }
 }

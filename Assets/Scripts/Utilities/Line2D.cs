@@ -38,6 +38,13 @@ namespace Dora.Utilities {
             }
         }
 
+        // Returns true if the y value of the line grows as x increases
+        public bool IsGrowing() {
+            if (_isVertical || _isHorizontal)
+                throw new Exception("Cannot call IsGrowing on Horizontal or Vertical lines");
+            return _a > 0f;
+        }
+
         // Checks for intersection with an infinite line described by a_1 x + b_2 
         public Vector2? GetIntersection(float a_2, float b_2) {
             if (this._isVertical) // Special case

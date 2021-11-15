@@ -9,7 +9,7 @@ namespace Dora.MapGeneration {
         private readonly RayTracingTriangle[] _traceableTriangles;
 
         // The order in which edges are stored for each RayTracingTriangle
-        private const int Inclined = 0, Horizontal = 1, Vertical = 2;
+        private const int Diagonal = 0, Horizontal = 1, Vertical = 2;
 
         public RayTracingMap(SimulationMap<TCell> map) {
             _map = map;
@@ -39,7 +39,7 @@ namespace Dora.MapGeneration {
             var y = bottomLeft.y;
             // Triangle 0
             var neighbours = new int[3];
-            neighbours[Inclined] = index + 1;
+            neighbours[Diagonal] = index + 1;
             neighbours[Horizontal] = index - trianglesPerRow + 4;
             neighbours[Vertical] = index - 5;
             _traceableTriangles[index] = new RayTracingTriangle(
@@ -52,7 +52,7 @@ namespace Dora.MapGeneration {
             // Triangle 1
             index++;
             var neighbours1 = new int[3];
-            neighbours1[Inclined] = index - 1;
+            neighbours1[Diagonal] = index - 1;
             neighbours1[Horizontal] = index + 4;
             neighbours1[Vertical] = index + 1;
             _traceableTriangles[index] = new RayTracingTriangle(
@@ -65,7 +65,7 @@ namespace Dora.MapGeneration {
             // Triangle 2
             index++;
             var neighbours2 = new int[3];
-            neighbours2[Inclined] = index + 1;
+            neighbours2[Diagonal] = index + 1;
             neighbours2[Horizontal] = index + 4;
             neighbours2[Vertical] = index - 1;
             _traceableTriangles[index] = new RayTracingTriangle(
@@ -78,7 +78,7 @@ namespace Dora.MapGeneration {
             // Triangle 3
             index++;
             var neighbours3 = new int[3];
-            neighbours3[Inclined] = index - 1;
+            neighbours3[Diagonal] = index - 1;
             neighbours3[Horizontal] = index - trianglesPerRow + 4;
             neighbours3[Vertical] = index + 5;
             _traceableTriangles[index] = new RayTracingTriangle(
@@ -91,7 +91,7 @@ namespace Dora.MapGeneration {
             // Triangle 4
             index++;
             var neighbours4 = new int[3];
-            neighbours4[Inclined] = index + 1;
+            neighbours4[Diagonal] = index + 1;
             neighbours4[Horizontal] = index + trianglesPerRow - 4;
             neighbours4[Vertical] = index - 5;
             _traceableTriangles[index] = new RayTracingTriangle(
@@ -104,7 +104,7 @@ namespace Dora.MapGeneration {
             // Triangle 5
             index++;
             var neighbours5 = new int[3];
-            neighbours5[Inclined] = index - 1;
+            neighbours5[Diagonal] = index - 1;
             neighbours5[Horizontal] = index - 4;
             neighbours5[Vertical] = index + 1;
             _traceableTriangles[index] = new RayTracingTriangle(
@@ -117,7 +117,7 @@ namespace Dora.MapGeneration {
             // Triangle 6
             index++;
             var neighbours6 = new int[3];
-            neighbours6[Inclined] = index + 1;
+            neighbours6[Diagonal] = index + 1;
             neighbours6[Horizontal] = index - 4;
             neighbours6[Vertical] = index - 1;
             _traceableTriangles[index] = new RayTracingTriangle(
@@ -130,7 +130,7 @@ namespace Dora.MapGeneration {
             // Triangle 7
             index++;
             var neighbours7 = new int[3];
-            neighbours7[Inclined] = index - 1;
+            neighbours7[Diagonal] = index - 1;
             neighbours7[Horizontal] = index + trianglesPerRow - 4;
             neighbours7[Vertical] = index + 5;
             _traceableTriangles[index] = new RayTracingTriangle(
@@ -159,6 +159,9 @@ namespace Dora.MapGeneration {
         // if it returns false the trace will terminate. The trace automatically terminates when it exits map bounds.
         public void Raytrace(Vector2 startingPoint, float angleDegrees, float distance,
             CellFunction shouldContinueFromCell) {
+            if (angleDegrees < 0f || angleDegrees > 360f)
+                throw new ArgumentException($"Given angle must be between 0-360 degrees. Angle was: {angleDegrees}");
+            
             int startingIndex = _map.GetTriangleIndex(startingPoint);
 
             // Convert given angle and starting point to a linear equation: ax + b
@@ -204,6 +207,74 @@ namespace Dora.MapGeneration {
                         break;
                 }
             }
+        }
+        
+        
+        // Secondary RayTracing function for finding intersection with first cell that causes the given CellFunction to
+        // return false. This function returns the intersection point in world space, and the angle in degrees of the
+        // intersecting line (relative to the x-axis) 
+        public (Vector2, float)? FindIntersection(Vector2 startingPoint, float angleDegrees, float distance, CellFunction shouldContinue) {
+            if (angleDegrees < 0f || angleDegrees > 360f)
+                throw new ArgumentException($"Given angle must be range 0-360 degrees. Angle was: {angleDegrees}");
+            
+            int startingIndex = _map.GetTriangleIndex(startingPoint);
+
+            // Convert given angle and starting point to a linear equation: ax + b
+            var a = Mathf.Tan(Mathf.PI / 180 * angleDegrees);
+            
+            // TODO: Temp fix for 90 and 270 degree angles. Should be replaced with special case logic.
+            if (Math.Abs(angleDegrees - 90f) < 0.01f)
+                a = 99.9f;
+            else if (Math.Abs(angleDegrees - 270f) < 0.01f)
+                a = -99.9f;
+            
+            var b = startingPoint.y - a * startingPoint.x;
+
+            var triangle = _traceableTriangles[startingIndex];
+            var enteringEdge = triangle.FindInitialEnteringEdge(angleDegrees, a, b);
+            int traceCount = 1;
+            TriangleTrace trace = new TriangleTrace(enteringEdge, startingIndex);
+
+            // If a trace travels diagonally in the bottom half of a tile, it will cross at least 4 tiles
+            float maxTraceLengthPerTriangle = Mathf.Sqrt(_map.Scale * _map.Scale + 1) / 4f;
+            int minimumTracesBeforeDistanceCheck = (int) (distance / maxTraceLengthPerTriangle);
+            while (true) {
+                if (traceCount > 150) { // Safety measure for avoiding infinite loops 
+                    Debug.Log($"Equation: {a}x + {b}");
+                    throw new Exception($"INFINITE LOOP: {startingPoint.x}, {startingPoint.y}");
+                }
+
+                // Invoke the given function on the cell, and return the current intersection if it returns true
+                if (!shouldContinue(trace.nextTriangleIndex, triangle.Cell)) {
+                    // Find intersection point
+                    var intersection = triangle.Lines[trace.enteringEdge].GetIntersection(a, b)!.Value;
+                    // Find the angle of the intersecting line
+                    var intersectingLineAngle = triangle.GetLineAngle(trace.enteringEdge);
+                    return (intersection, intersectingLineAngle);
+                }
+
+                // Perform the ray tracing step for the current triangle
+                triangle.RayTrace(ref trace, angleDegrees, a, b);
+                traceCount++;
+
+                // Break if the next triangle is outside the map bounds
+                if (trace.nextTriangleIndex < 0 || trace.nextTriangleIndex >= _traceableTriangles.Length)
+                    break;
+
+                triangle = _traceableTriangles[trace.nextTriangleIndex];
+
+                // Optimization - Only start performance distance checks once we have performed a certain amount of traces
+                if (traceCount >= minimumTracesBeforeDistanceCheck) {
+                    // All vertices of the triangle must be within range for the triangle to be considered visible
+                    bool withinRange = Vector2.Distance(startingPoint, triangle.Lines[0].Start) <= distance;
+                    withinRange &= Vector2.Distance(startingPoint, triangle.Lines[0].End) <= distance;
+                    withinRange &= Vector2.Distance(startingPoint, triangle.Lines[1].End) <= distance;
+                    if (!withinRange)
+                        break;
+                }
+            }
+
+            return null;
         }
 
         private class RayTracingTriangle {
@@ -258,7 +329,7 @@ namespace Dora.MapGeneration {
                                 intersectionEdge = edge;
                             }
                             else if (Mathf.Abs(currentIntersection!.Value.y - intersection!.Value.y) < 0.0001f) {
-                                // If the y-axis is the same choose by x-axis instead
+                                // If the y-axis is the same then choose by x-axis instead
                                 if (angle < 90 && currentIntersection!.Value.x > intersection!.Value.x) {
                                     // For 0-90 degrees prefer intersection with highest x value
                                     intersection = currentIntersection;
@@ -314,20 +385,32 @@ namespace Dora.MapGeneration {
                     if (intersection != null) intersectionsAndEdge.Add((intersection!.Value, edge));
                 }
 
+                
                 var intersectionOneX = intersectionsAndEdge[0].Item1.x;
                 var intersectionTwoX = intersectionsAndEdge[1].Item1.x;
                 if (direction <= 90 || direction >= 270) {
                     // Entering point must be the left most intersection
-                    return intersectionOneX < intersectionTwoX
-                        ? intersectionsAndEdge[0].Item2
-                        : intersectionsAndEdge[1].Item2;
+                    return Functional
+                        .TakeBest(intersectionsAndEdge, (intersection1, intersection2) 
+                            => intersection1.Item1.x < intersection2.Item1.x)
+                        .Item2;
                 }
                 else {
                     // Entering point must be the right most intersection
-                    return intersectionOneX > intersectionTwoX
-                        ? intersectionsAndEdge[0].Item2
-                        : intersectionsAndEdge[1].Item2;
+                    return Functional
+                        .TakeBest(intersectionsAndEdge, (intersection1, intersection2) 
+                            => intersection1.Item1.x > intersection2.Item1.x)
+                        .Item2;
                 }
+            }
+
+            public float GetLineAngle(int lineIndex) {
+                return lineIndex switch {
+                    Diagonal when Lines[lineIndex].IsGrowing() => 45,
+                    Diagonal => -45,
+                    Horizontal => 0,
+                    _ => 90
+                };
             }
         }
     }
