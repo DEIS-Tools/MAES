@@ -123,14 +123,14 @@ namespace Dora.MapGeneration.PathFinding {
             CardinalDirection targetDirection = currentCardinalDirection.GetRelativeDirection(relativeDirection);
 
             var currentPosition = GetApproximatePosition();
-            var relativePosition = currentPosition + targetDirection.DirectionVector;
+            var relativePosition = currentPosition + targetDirection.Vector;
             return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
         }
 
         // Returns the neighbour in the given cardinal direction (relative to global direction)
         public Vector2Int GetGlobalNeighbour(CardinalDirection direction) {
             var currentPosition = GetApproximatePosition();
-            var relativePosition = currentPosition + direction.DirectionVector;
+            var relativePosition = currentPosition + direction.Vector;
             return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
         }
 

@@ -32,12 +32,12 @@ namespace Dora.MapGeneration {
             {East, SouthEast, South, SouthWest, West, NorthWest, North, NorthEast};
         
         public readonly int Index;
-        public readonly Vector2Int DirectionVector;
+        public readonly Vector2Int Vector;
         
         // Can only be constructed locally. Must be accessed through public static instances
         private CardinalDirection(int index) {
             Index = index;
-            DirectionVector = CalculateDirectionVector();
+            Vector = CalculateDirectionVector();
         }
 
         public CardinalDirection OppositeDirection() => GetDirection((Index + 4) % 8);

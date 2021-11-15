@@ -61,14 +61,14 @@ namespace Dora.MapGeneration {
                     return currentTile.Path();
 
                 foreach (var dir in CardinalDirection.AllDirections()) {
-                    Vector2Int candidateCoord = currentCoordinate + dir.DirectionVector;
+                    Vector2Int candidateCoord = currentCoordinate + dir.Vector;
                     // Only consider non-solid tiles
                     if (IsSolid(candidateCoord, pathFindingMap, beOptimistic) && candidateCoord != targetCoordinate) continue;
 
                     if (dir.IsDiagonal()) {
                         // To travel diagonally, the two neighbouring tiles must also be free
-                        if (IsSolid(currentCoordinate + dir.Previous().DirectionVector, pathFindingMap, beOptimistic)
-                        || IsSolid(currentCoordinate + dir.Next().DirectionVector, pathFindingMap, beOptimistic))
+                        if (IsSolid(currentCoordinate + dir.Previous().Vector, pathFindingMap, beOptimistic)
+                        || IsSolid(currentCoordinate + dir.Next().Vector, pathFindingMap, beOptimistic))
                             continue;
                     }
                     

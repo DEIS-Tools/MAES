@@ -116,6 +116,13 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 foreach (var reservation in reservationsToClear) 
                     _reservations.Remove(reservation.ReservedTile);
             }
+
+            public List<Vector2Int> GetTilesReservedByThisRobot() {
+                return _reservations
+                    .Where(res => res.Value.ReservingRobot == _algorithm.RobotID())
+                    .Select(entry => entry.Key)
+                    .ToList();
+            }
         }
 
         public class ReservationMessage : ISsbBroadcastMessage {

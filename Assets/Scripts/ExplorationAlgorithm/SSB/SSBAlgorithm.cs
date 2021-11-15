@@ -23,6 +23,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private TileReservationSystem _reservationSystem;
 
         private State _currentState = State.Backtracking;
+        // The waiting variable is used to wait a tick without performing any movement action
+        private bool _isWaiting = false;
         
         // Backtracking variables
         private Vector2Int? _backtrackTarget;
@@ -56,7 +58,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private enum State {
             Spiraling,
             Backtracking,
-            Waiting,
             Terminated
         }
 
@@ -76,12 +77,11 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
         public void UpdateLogic() {
             _currentTick++;
-            // If waiting mode was engaged last tick, then switch back to backtracking mode and attempt to find a bp
-            if (_currentState == State.Waiting)  
-                _currentState = State.Backtracking;
+            // If waiting mode was engaged last tick, then switch back to normal mode
+            _isWaiting = false;
             
             ProcessIncomingCommunication();
-            while (_controller.GetStatus() == RobotStatus.Idle && _currentState != State.Terminated && _currentState != State.Waiting) {
+            while (_controller.GetStatus() == RobotStatus.Idle && _currentState != State.Terminated && !_isWaiting) {
                 if (_currentState == State.Backtracking) 
                     PerformBackTrack();
             
@@ -139,7 +139,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 // (if enough time has passed since last request)
                 if (_currentTick - _lastBPRequestTick >= MinimumTicksBetweenBpRequests) {
                     BroadcastBPRequest();
-                    _currentState = State.Waiting;
+                    _isWaiting = true;
                 }
                 
                 if (_tickOfLastRequestSentByThisRobot == _currentTick - 3) {
@@ -151,14 +151,14 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     _backtrackTarget = FindBestBackTrackingTarget();
                     // If no local backtracking points could be found either, then wait till next tick
                     if (_backtrackTarget == null)
-                        _currentState = State.Waiting;
+                        _isWaiting = true;
                 } else if (_tickOfLastRequestSentByThisRobot == _currentTick - 1) {
                     // Broadcast this robots bps now to match timing of other robots that has just received the request  
                     Debug.Log($"Auctioneer robot {_controller.GetRobotID()} broadcasting {_backTrackingPoints.Count} bps");
                     _controller.Broadcast(new BackTrackingPointsMessage(_controller.GetRobotID(),new HashSet<Vector2Int>(_backTrackingPoints)));
-                    _currentState = State.Waiting;
+                    _isWaiting = true;
                 }else {
-                    _currentState = State.Waiting;
+                    _isWaiting = true;
                 }
 
                 return;
@@ -172,7 +172,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             
             // If no backtracking targets exist, then exploration must have been completed
             if (_backtrackTarget == null) { // TODO : New termination criteria?
-                _currentState = State.Waiting;
+                _isWaiting = true;
                 return;
             }
             
@@ -223,25 +223,95 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 _bpsFoundThisSpiralPhase.RemoveWhere(bp => _navigationMap.IsTileExplored(bp));
                 _backTrackingPoints.UnionWith(_bpsFoundThisSpiralPhase);
                 _bpsFoundThisSpiralPhase.Clear();
+                // Also clear reservations made during the last phase of this spiral
+                _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
+                
                 _currentState = State.Backtracking;
                 return;
             }
-                
+            
+            // If the spiral target has been reserved by another robot, then forget this target and find a new one
+            if (_reservationSystem.IsTileReservedByOtherRobot(_nextSpiralTarget!.Value)) {
+                _nextSpiralTarget = null;
+                return;
+            }
+
             var relativePosition = _navigationMap.GetTileCenterRelativePosition(_nextSpiralTarget!.Value);
             if (relativePosition.Distance > 0.3f) {
-                if (Mathf.Abs(relativePosition.RelativeAngle) > 0.5f) {
-                    _controller.Rotate(relativePosition.RelativeAngle);
-                } else {
-                    // Once facing the tile correctly, add suitable neighbours
-                    // as back tracking points for use in next phase
-                    DetectBacktrackingPoints();
-                    // Finally move towards the target
-                    _controller.Move(relativePosition.Distance);
-                }
+                MoveToSpiralTarget(relativePosition);
             } else {
                 MarkTileExplored(_nextSpiralTarget!.Value);
                 _nextSpiralTarget = null;
             }
+        }
+
+        private void MoveToSpiralTarget(RelativePosition relativePosition) {
+            if (Mathf.Abs(relativePosition.RelativeAngle) > 0.5f) {
+                // When rotating, also clear all reservations except for the current tile.
+                // This is done to avoid blocking other robots with trailing reservations from this spiral
+                _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
+                _controller.Rotate(relativePosition.RelativeAngle);
+            } else {
+                // Once facing the tile correctly, add suitable neighbours
+                // as back tracking points for use in next phase
+                DetectBacktrackingPoints();
+                
+                // Then assert that the robot has reserved the tile before moving there
+                var nextTileReserved = EnsureFutureSpiralPathReserved();
+                if (!nextTileReserved) {
+                    // Cannot move into target tile as it is not yet reserved by this robot,
+                    // wait until next tick and then check again
+                    _isWaiting = true;
+                    return;
+                }
+                
+                // Finally move towards the target
+                _controller.Move(relativePosition.Distance);
+            }
+        }
+
+        private bool EnsureFutureSpiralPathReserved() {
+            // Returns true if the next immediate step is reserved by this robot and false if not
+            // Also attempts to predict path and reserve in advance
+            var predictedTiles = EstimateSpiralPathBeforeTurning(5);
+            if (predictedTiles.Count == 0)
+                throw new Exception("Cannot reserve future spiral path because tiles straight ahead are blocked");
+
+            // Count how many tiles are already reserved
+            var reservedTiles = 0;
+            foreach (var futureTile in predictedTiles) {
+                if (!_reservationSystem.IsTileReservedByThisRobot(futureTile))
+                    break;
+                reservedTiles++;
+            }
+            
+            // At minimum the next two tiles should be reserved in advance (unless only one tile remains)
+            var minimumReservations = Math.Min(2, predictedTiles.Count);
+            if (reservedTiles >= minimumReservations)
+                return true;
+            
+            // Otherwise attempt to reserve the next part of the path now
+            var maximumReservations = 5;
+            _reservationSystem.Reserve(new List<Vector2Int>(predictedTiles.Take(maximumReservations)));
+
+            // Return true if the next immediate tile in the path is reserved
+            return _reservationSystem.IsTileReservedByThisRobot(predictedTiles[0]);
+        }
+
+        private List<Vector2Int> EstimateSpiralPathBeforeTurning(int maxSteps) {
+            var currentTile = _nextSpiralTarget!.Value;
+            var path = new List<Vector2Int>() {currentTile};
+            var direction = DirectionFromDegrees(_navigationMap.GetApproximateGlobalDegrees());
+            var rlsDir = direction.GetRelativeDirection(_referenceLateralSide);
+            
+            // The spiral continues in a straight line as long as
+            // the front tile is not blocked and the rls tile is blocked 
+            while (path.Count < maxSteps && !IsTileBlocked(currentTile + direction.Vector) && IsTileBlocked(currentTile + rlsDir.Vector)) {
+                currentTile += direction.Vector;
+                path.Add(currentTile);
+            }
+
+            return path;
         }
 
         private void MarkTileExplored(Vector2Int exploredTile) {
@@ -298,10 +368,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
             if (_navigationMap.GetTileStatus(tileCoord) == SlamMap.SlamTileStatus.Solid)
                 return true; // physically blocked
 
-            var reservingRobot = _reservationSystem.GetReservingRobot(tileCoord);
-            
-            // Return virtual blocked status (ie. either explored or reserved)
-            return _navigationMap.IsTileExplored(tileCoord) || (reservingRobot != null && reservingRobot != RobotID());
+            // Return virtual blocked status (true if either explored or reserved by another robot)
+            return _navigationMap.IsTileExplored(tileCoord) || _reservationSystem.IsTileReservedByOtherRobot(tileCoord);
         }
 
         private void MoveTo(RelativePosition relativePosition) {
@@ -357,7 +425,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
             // Try to find one
             foreach (var direction in AllDirections()) {
-                var candidateTile = currentTile + direction.DirectionVector;
+                var candidateTile = currentTile + direction.Vector;
                 if (!existingBPs.Contains(candidateTile) && !IsTileBlocked(candidateTile))
                     return candidateTile;
             }
@@ -366,7 +434,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         // Will perform spiral movement according to the algorithm described in the paper
-        // Returns true if successful, and false if no free open are available 
+        // Returns true if successful, and false if no open tiles are available 
         private Vector2Int? DetermineNextSpiralTarget() {
             var front = _navigationMap.GetRelativeNeighbour(Front);
             var rls = _navigationMap.GetRelativeNeighbour(_referenceLateralSide);
@@ -434,9 +502,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
             var simulatedDirection = DirectionFromDegrees(_navigationMap.GetApproximateGlobalDegrees());
             while(cost < maxCost) {
                 simulatedExplored.Add(simulatedSpiralTile.Value);
-                var simulatedFront = simulatedSpiralTile.Value + simulatedDirection.DirectionVector;
-                var simulatedRls = simulatedSpiralTile.Value + simulatedDirection.GetRelativeDirection(_referenceLateralSide).DirectionVector;
-                var simulatedOls = simulatedSpiralTile.Value + simulatedDirection.GetRelativeDirection(_oppositeLateralSide).DirectionVector;
+                var simulatedFront = simulatedSpiralTile.Value + simulatedDirection.Vector;
+                var simulatedRls = simulatedSpiralTile.Value + simulatedDirection.GetRelativeDirection(_referenceLateralSide).Vector;
+                var simulatedOls = simulatedSpiralTile.Value + simulatedDirection.GetRelativeDirection(_oppositeLateralSide).Vector;
 
                 var frontBlocked = !IsPotentiallyExplorable(simulatedFront) || simulatedExplored.Contains(simulatedFront); 
                 var rlsBlocked = !IsPotentiallyExplorable(simulatedRls)  || simulatedExplored.Contains(simulatedRls); 
@@ -459,7 +527,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
                 // Step the simulation forward to the next tile in the spiral
                 simulatedDirection = simulatedDirection.GetRelativeDirection(nextDirection.Value);
-                simulatedSpiralTile += simulatedDirection.DirectionVector;
+                simulatedSpiralTile += simulatedDirection.Vector;
                 cost++;
             }
             
@@ -485,7 +553,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
         public string GetDebugInfo() {
             return $"State: {Enum.GetName(typeof(State), _currentState)}" +
                    $"\nCoarse Map Position: {_navigationMap.GetApproximatePosition()}" +
-                   $"\nTotal BPs: {_backTrackingPoints.Count}";
+                   $"\nTotal BPs: {_backTrackingPoints.Count}" +
+                   $"\nReserved tiles: [{String.Join(", ", _reservationSystem.GetTilesReservedByThisRobot())}]";
         }
 
         public object SaveState() {
