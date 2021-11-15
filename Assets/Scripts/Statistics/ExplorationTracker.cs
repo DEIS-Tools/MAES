@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using Dora.MapGeneration;
 using Dora.Robot;
@@ -26,6 +28,10 @@ namespace Dora.Statistics {
 
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
 
+        private readonly bool[,] _coverageMap;
+        private readonly int _totalTiles;
+        private bool _isFirstTick = true;
+
         public ExplorationTracker(SimulationMap<bool> collisionMap, ExplorationVisualizer explorationVisualizer) {
             var explorableTriangles = 0;
             _collisionMap = collisionMap;
@@ -38,8 +44,34 @@ namespace Dora.Statistics {
             });
             _totalExplorableTriangles = explorableTriangles;
 
+            
+
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.Scale, collisionMap.ScaledOffset);
             _rayTracingMap = new RayTracingMap<ExplorationCell>(_explorationMap);
+
+            // Coverage
+            _coverageMap = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
+            var openTiles = 0;
+            for (int x = 0; x < collisionMap.WidthInTiles; x++) {
+                for (int y = 0; y < collisionMap.WidthInTiles; y++) {
+                    var tile = collisionMap.GetTileByLocalCoordinate(x, y);
+                    if (tile.IsTrueForAll(isSolid => !isSolid)) {
+                        openTiles++;
+                    }
+                }
+            }
+
+            _totalTiles = openTiles;
+        }
+
+        private void UpdateCoverageStatus(MonaRobot robot) {
+            var robotPos = GetCoverageMapPosition(robot.transform.position);
+            _coverageMap[robotPos.x, robotPos.y] = true;
+        }
+
+        private Vector2Int GetCoverageMapPosition(Vector2 robotPosition) {
+            robotPosition = robotPosition - _collisionMap.ScaledOffset;
+            return new Vector2Int((int)robotPosition.x, (int)robotPosition.y);
         }
 
         public void LogicUpdate(List<MonaRobot> robots) {
@@ -48,7 +80,11 @@ namespace Dora.Statistics {
 
             foreach (var robot in robots) {
                 SlamMap slamMap = null;
-                
+
+                // In the first tick, the robot does not have a position in the slam map.
+                if (!_isFirstTick) UpdateCoverageStatus(robot);
+                else _isFirstTick = false;
+
                 if (robot.Controller.Constraints.AutomaticallyUpdateSlam) {
                     slamMap = robot.Controller.SlamMap;
                     slamMap.ResetRobotVisibility();
@@ -83,16 +119,15 @@ namespace Dora.Statistics {
             if (_selectedRobot == null)
                 _explorationVisualizer.SetExplored(newlyExploredTriangles);
             else
-                _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, true);
+                _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, false);
         }
 
         public void SetVisualizedRobot([CanBeNull] MonaRobot robot) {
             _selectedRobot = robot;
 
-            if (robot != null) {
-                _explorationVisualizer.SetExplored(robot.Controller.SlamMap, true);
+            if (robot != null) { 
                 // Update map to show slam map for given robot
-                // _explorationVisualizer.SetExplored(robot.Controller.SlamMap);
+                _explorationVisualizer.SetExplored(robot.Controller.SlamMap, false);
             }
             else {
                 // Update map to show exploration progress for all robots
