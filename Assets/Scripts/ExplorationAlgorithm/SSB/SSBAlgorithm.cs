@@ -20,16 +20,16 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private CoarseGrainedMap _navigationMap;
         private int _randomSeed;
 
-        private State _currentState = State.Backtracking;
-
-      
-        
+        private State _currentState = State.Spiraling;
         
         // Backtracking variables
         private Vector2Int? _backtrackTarget;
         private Queue<Vector2Int>? _backtrackingPath;
         private Vector2Int? _nextBackTrackStep;
         private HashSet<Vector2Int> _backTrackingPoints = new HashSet<Vector2Int>();
+        // This stores all of the bps found during the current spiralling phase
+        // (to avoid sharing bps from inside the spiral)
+        private HashSet<Vector2Int> _bpsFoundThisSpiralPhase = new HashSet<Vector2Int>();
 
         // Spiraling information
         // The side that the outer wall of the spiral is on, relative to the spiraling robot
@@ -130,6 +130,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
         // --------------  Backtracking phase  -------------------
         private void PerformBackTrack() {
+
             if (_backtrackTarget == null) {
                 // Send a request to receives bps from others and start an auction
                 // (if enough time has passed since last request)
@@ -150,7 +151,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
                         _currentState = State.Waiting;
                 } else if (_tickOfLastRequestSentByThisRobot == _currentTick - 1) {
                     // Broadcast this robots bps now to match timing of other robots that has just received the request  
-                    _backTrackingPoints.RemoveWhere(bp => _navigationMap.IsTileExplored(bp));
                     Debug.Log($"Auctioneer robot {_controller.GetRobotID()} broadcasting {_backTrackingPoints.Count} bps");
                     _controller.Broadcast(new BackTrackingPointsMessage(_controller.GetRobotID(),new HashSet<Vector2Int>(_backTrackingPoints)));
                     _currentState = State.Waiting;
@@ -158,6 +158,12 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     _currentState = State.Waiting;
                 }
 
+                return;
+            }
+            
+            // Backtracking target is not null, but may have been explored since it was chosen
+            if (_navigationMap.IsTileExplored(_backtrackTarget.Value)) {
+                _backtrackTarget = null;
                 return;
             }
             
@@ -210,6 +216,10 @@ namespace Dora.ExplorationAlgorithm.SSB {
             _nextSpiralTarget ??= DetermineNextSpiralTarget();
 
             if (_nextSpiralTarget == null) {
+                // Spiralling complete. Add all unexplored bps discovered during this phase to the global bps list
+                _bpsFoundThisSpiralPhase.RemoveWhere(bp => _navigationMap.IsTileExplored(bp));
+                _backTrackingPoints.UnionWith(_bpsFoundThisSpiralPhase);
+                _bpsFoundThisSpiralPhase.Clear();
                 _currentState = State.Backtracking;
                 return;
             }
@@ -298,6 +308,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         private Vector2Int? FindBestBackTrackingTarget() {
+            _backTrackingPoints.RemoveWhere(bp => _navigationMap.IsTileExplored(bp));
             if (_backTrackingPoints.Count == 0) {
                 // Attempt to locate nearby backtrack points
                 var currentTile = _navigationMap.GetCurrentTile();
@@ -365,12 +376,12 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private void DetectBacktrackingPoints() {
             if (!IsBlocked(Right)) {
                 if (IsBlocked(Front) || IsBlocked(FrontRight) || IsBlocked(RearRight))
-                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Right));
+                    _bpsFoundThisSpiralPhase.Add(_navigationMap.GetRelativeNeighbour(Right));
             }
 
             if (!IsBlocked(Left)) {
                 if (IsBlocked(Front) || IsBlocked(FrontLeft) || IsBlocked(RearLeft))
-                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Left));
+                    _bpsFoundThisSpiralPhase.Add(_navigationMap.GetRelativeNeighbour(Left));
             }
         }
 
