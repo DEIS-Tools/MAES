@@ -20,7 +20,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private CoarseGrainedMap _navigationMap;
         private int _randomSeed;
 
-        private State _currentState = State.Spiraling;
+        private State _currentState = State.Backtracking;
         
         // Backtracking variables
         private Vector2Int? _backtrackTarget;
@@ -308,32 +308,56 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         private Vector2Int? FindBestBackTrackingTarget() {
-            _backTrackingPoints.RemoveWhere(bp => _navigationMap.IsTileExplored(bp));
-            if (_backTrackingPoints.Count == 0) {
-                // Attempt to locate nearby backtrack points
-                var currentTile = _navigationMap.GetCurrentTile();
-                if (!IsTileBlocked(currentTile))
-                    return currentTile;
-                else
-                    return null;
-            }
+            // Remove all bps that have been explored since discovery
+            _backTrackingPoints.RemoveWhere(IsTileBlocked);
 
+            // Find path to each bp, and exclude bps where the path does not exist
             var robotPosition = _navigationMap.GetApproximatePosition();
-
-            Vector2Int minDistanceBp = _backTrackingPoints.First();
-            var minDist = Vector2.Distance(robotPosition, minDistanceBp);
-            foreach (var bp in _backTrackingPoints.Skip(1)) {
-                var dist = Vector2.Distance(robotPosition, bp);
+            var bpPaths = _backTrackingPoints
+                .Select(bp => (bp, _navigationMap.GetPath(bp)))
+                .Where(path => path.Item2 != null)
+                .ToList();
+            
+            if (bpPaths.Count == 0) {
+                // If no bps are within reach, then try to locate one nearby
+                var nearbyBp = FindNearbyBP(_backTrackingPoints);
+                if (nearbyBp != null) {
+                    // If location was successful, then try to find target again
+                    _backTrackingPoints.Add(nearbyBp.Value);
+                    return FindBestBackTrackingTarget();
+                } else {
+                    return null;
+                }
+            }
+            
+            Vector2Int minDistanceBp = bpPaths[0].bp;
+            var minDist = GetRobotPathLength(bpPaths[0].Item2!);
+            foreach (var item in bpPaths.Skip(1)) {
+                var dist = GetRobotPathLength(bpPaths[0].Item2!);
                 if (dist < minDist) {
                     minDist = dist;
-                    minDistanceBp = bp;
+                    minDistanceBp = item.bp;
                 }
             }
             
             Debug.Log($"Robot {_controller.GetRobotID()} chose tile from local list: {minDistanceBp}");
-            _backTrackingPoints.Remove(minDistanceBp); // TODO: Should this remove the min distance bp? Maybe not, as we may not reach the target. Instead remove all bps that
-            // TODO: Additionally consider only bps where a direct path exists
             return minDistanceBp;
+        }
+
+        // Looks through nearby tiles to find a bp
+        private Vector2Int? FindNearbyBP(HashSet<Vector2Int> existingBPs) {
+            var currentTile = _navigationMap.GetCurrentTile();
+            if (!IsTileBlocked(currentTile) && !existingBPs.Contains(currentTile))
+                return currentTile;
+
+            // Try to find one
+            foreach (var direction in AllDirections()) {
+                var candidateTile = currentTile + direction.DirectionVector;
+                if (!existingBPs.Contains(candidateTile) && !IsTileBlocked(candidateTile))
+                    return candidateTile;
+            }
+
+            return null;
         }
 
         // Will perform spiral movement according to the algorithm described in the paper
