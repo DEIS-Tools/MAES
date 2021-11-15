@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Dora.Robot;
 using Dora.Utilities;
 using UnityEngine;
@@ -108,6 +109,15 @@ namespace Dora.MapGeneration.PathFinding {
         // The Slam map has twice as many tiles in each direction
         public Vector2Int FromSlamMapCoordinate(Vector2Int slamCoord) {
             return slamCoord / 2;
+        }
+
+        public List<Vector2Int> FromSlamMapCoordinates(List<Vector2Int> slamCoords) {
+            var CoarseCoords = new HashSet<Vector2Int>();
+            foreach(var slamCoord in slamCoords) {
+                CoarseCoords.Add(FromSlamMapCoordinate(slamCoord));
+            }
+            
+            return CoarseCoords.ToList();
         }
 
         // Converts the given 

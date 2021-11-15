@@ -27,9 +27,12 @@ namespace Dora.Statistics {
         [CanBeNull] private MonaRobot _selectedRobot;
 
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
-
+        public float CoverageProportion => _tilesCovered / (float)_coverableTiles;
+        
         private readonly bool[,] _coverageMap;
-        private readonly int _totalTiles;
+        private readonly int _coverableTiles;
+        private int _tilesCovered = 0;
+        
         private bool _isFirstTick = true;
 
         public ExplorationTracker(SimulationMap<bool> collisionMap, ExplorationVisualizer explorationVisualizer) {
@@ -61,11 +64,15 @@ namespace Dora.Statistics {
                 }
             }
 
-            _totalTiles = openTiles;
+            _coverableTiles = openTiles;
         }
 
         private void UpdateCoverageStatus(MonaRobot robot) {
             var robotPos = GetCoverageMapPosition(robot.transform.position);
+            // If already covered
+            if (_coverageMap[robotPos.x, robotPos.y]) return;
+
+            _tilesCovered++;
             _coverageMap[robotPos.x, robotPos.y] = true;
         }
 
