@@ -168,8 +168,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 foreach (var reservation in _reservations) 
                     algorithm._reservationSystem.RegisterReservationFromOtherRobot(reservation);
                 
-                Debug.Log($"Robot {algorithm.RobotID()} " +
-                          $"registered {_reservations.Count} reservations from other robots");
+                // Debug.Log($"Robot {algorithm.RobotID()} " +
+                //           $"registered {_reservations.Count} reservations from other robots");
                 return null;
             }
 
@@ -193,8 +193,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
             public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
                 algorithm._reservationSystem.ClearReservations(_reservationsToClear);
-                Debug.Log($"Robot {algorithm.RobotID()} " +
-                          $"received and processed request to clear {_reservationsToClear} reservations");
+                // Debug.Log($"Robot {algorithm.RobotID()} " +
+                //           $"received and processed request to clear {_reservationsToClear} reservations");
                 return null;
             }
 

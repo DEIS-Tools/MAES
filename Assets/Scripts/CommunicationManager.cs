@@ -213,7 +213,7 @@ namespace Dora {
                 var currentKey = keys.Dequeue();
 
                 var inRange = _adjacencyMatrix
-                    .Where((kv) => kv.Key.Item1 == currentKey && kv.Value.Distance < _robotConstraints.BroadcastRange && kv.Value.WallsCellsPassedThrough == 0)
+                    .Where((kv) => kv.Key.Item1 == currentKey && kv.Value.Distance < _robotConstraints.BroadcastRange && (!_robotConstraints.BroadcastBlockedByWalls || kv.Value.WallsCellsPassedThrough == 0))
                     .Select((e) => e.Key.Item2);
 
                 foreach (var rInRange in inRange) {

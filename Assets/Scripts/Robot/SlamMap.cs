@@ -149,7 +149,7 @@ namespace Dora.Robot {
             for (int x = 0; x < globalMap.GetLength(0); x++) 
                 for (int y = 0; y < globalMap.GetLength(1); y++) 
                     globalMap[x, y] = SlamTileStatus.Unseen;
-
+            
             foreach (var map in maps) {
                 for (int x = 0; x < map._widthInTiles; x++) {
                     for (int y = 0; y < map._heightInTiles; y++) {
@@ -162,6 +162,7 @@ namespace Dora.Robot {
             foreach (var map in maps) 
                 map._tiles = globalMap.Clone() as SlamTileStatus[,];
             
+            // Synchronize coarse map explored statuses
             CoarseGrainedMap.Synchronize(maps.Select(map => map.GetCoarseMap()).ToList());
         }
 
