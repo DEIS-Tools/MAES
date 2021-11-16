@@ -100,6 +100,10 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     .Where(r => r.Value.ReservingRobot == _algorithm.RobotID() && !r.Key.Equals(exception))
                     .Select(e => e.Value));
 
+                // Only broadcast if there are any removable tiles
+                if (removableReservations.Count == 0)
+                    return;
+                
                 // Remove from local reservations list
                 foreach (var reservation in removableReservations) 
                     _reservations.Remove(reservation.ReservedTile);

@@ -139,6 +139,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
         // --------------  Backtracking phase  -------------------
         private void PerformBackTrack() {
             if (_backtrackTarget == null) {
+                // Clear reservations to avoid blocking other robots
+                _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
+                
                 // Send a request to receives bps from others and start an auction
                 // (if enough time has passed since last request)
                 if (_currentTick - _lastBPRequestTick >= MinimumTicksBetweenBpRequests) {
@@ -168,7 +171,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 return;
             }
             
-            // Backtracking target is not null, but may have been explored since it was chosen
+            // Check if backtracking has been explored another robot since it was chosen
             if (_navigationMap.IsTileExplored(_backtrackTarget.Value)) {
                 _backtrackTarget = null;
                 return;
@@ -194,10 +197,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 var isAligned = EnsureCorrectOrientationForSpiraling();
                 if (isAligned) {
                     // Ready to enter Spiraling phase. Clear back tracking information
-                    _currentState = State.Spiraling;
-                    _nextBackTrackStep = null;
-                    _backtrackingPath = null;
-                    _backtrackTarget = null;
+                    StartSpiraling();
                 }
                 return;
             }
@@ -229,11 +229,18 @@ namespace Dora.ExplorationAlgorithm.SSB {
             if (relativeTarget.Distance > 0.2f) 
                 MoveTo(relativeTarget);
             else {
-                // This tile has been reached, mark it (and all tiles covered during this part of the path) as explored
-                foreach (var crossedTile in _nextBackTrackStep.CrossedTiles) 
-                    MarkTileExplored(crossedTile);
+                // This part of the back track path has been completed
                 _nextBackTrackStep = null;
             }
+        }
+
+        private void StartSpiraling() {
+            _currentState = State.Spiraling;
+            _nextBackTrackStep = null;
+            _backtrackingPath = null;
+            _backtrackTarget = null;
+            MarkTileExplored(_navigationMap.GetCurrentTile());
+            DetectBacktrackingPoints();
         }
 
         private void BroadcastBPRequest() {
@@ -583,6 +590,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             return $"State: {Enum.GetName(typeof(State), _currentState)}" +
                    $"\nCoarse Map Position: {_navigationMap.GetApproximatePosition()}" +
                    $"\nBPs: [{String.Join(", ", _backTrackingPoints.Select(bp => bp.ToString()))}]" +
+                   $"\nTemp BPs: [{String.Join(", ", _bpsFoundThisSpiralPhase.Select(bp => bp.ToString()))}]" +
                    $"\nReserved tiles: [{String.Join(", ", _reservationSystem.GetTilesReservedByThisRobot())}]" +
                    $"\nBacktracking target: {_backtrackTarget}";
         }
