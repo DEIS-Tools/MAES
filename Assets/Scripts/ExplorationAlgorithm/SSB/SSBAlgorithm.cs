@@ -207,6 +207,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 // First ensure that this all tiles in this step is reserved
                 _nextBackTrackStep ??= _backtrackingPath!.Dequeue();    
                 _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
+                // Wait until next tick to ensure that reservations are cleared before making new ones
+                _isWaiting = true;
+                return;
             }
 
             // Assert that we have reserved all the tiles for the next path step
@@ -220,7 +223,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     _reservationSystem.Reserve(_nextBackTrackStep!.CrossedTiles);
                     _isWaiting = true;
                 }
-                
                 return;
             }
             
