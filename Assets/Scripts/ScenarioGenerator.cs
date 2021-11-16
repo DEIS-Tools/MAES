@@ -10,7 +10,7 @@ namespace Dora {
         public static Queue<SimulationScenario> GenerateVoronoiScenarios() {
            Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
 
-            for (int i = 0; i < 1; i++) {
+            for (int i = 0; i < 3; i++) {
                 int randomSeed = i + 4 + 1;
                 int minute = 60;
                 var mapConfig = new CaveMapConfig(
@@ -26,8 +26,8 @@ namespace Dora {
                     1f);
 
                 var officeConfig = new OfficeMapConfig(
-                    60,
-                    60,
+                    100,
+                    100,
                     randomSeed,
                     20,
                     4,
@@ -52,17 +52,17 @@ namespace Dora {
                     environmentTagReadRange: 4.0f
                 );
 
-                if (i % 2 != 0) {
+                if (i % 2 == 0) {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
-                        hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
+                        hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
                         mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
-                            3, 
+                            5, 
                             0.6f,
-                            (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 2)),
+                            (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1)),
                         robotConstraints: robotConstraints,
                         "Voronoi-office-hallway-" + randomSeed
                     ));
