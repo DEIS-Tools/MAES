@@ -32,6 +32,7 @@ namespace Dora.Statistics {
         public float CoverageProportion => _tilesCovered / (float)_coverableTiles;
         
         private readonly bool[,] _coverageMap;
+        private readonly bool[,] _canBeCovered;
         private readonly int _coverableTiles;
         private int _tilesCovered = 0;
         private bool _isFirstTick = true;
@@ -68,12 +69,14 @@ namespace Dora.Statistics {
 
             // Coverage
             _coverageMap = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
+            _canBeCovered = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
             var openTiles = 0;
             for (int x = 0; x < collisionMap.WidthInTiles; x++) {
                 for (int y = 0; y < collisionMap.WidthInTiles; y++) {
                     var tile = collisionMap.GetTileByLocalCoordinate(x, y);
                     if (tile.IsTrueForAll(isSolid => !isSolid)) {
                         openTiles++;
+                        _canBeCovered[x, y] = true;
                     }
                 }
             }
@@ -90,9 +93,10 @@ namespace Dora.Statistics {
             var robotPos = GetCoverageMapPosition(robot.transform.position);
             // If already covered
             if (_coverageMap[robotPos.x, robotPos.y]) return;
-
-            _tilesCovered++;
-            _coverageMap[robotPos.x, robotPos.y] = true;
+            
+            if(_canBeCovered[robotPos.x, robotPos.y])
+                _tilesCovered++;
+                _coverageMap[robotPos.x, robotPos.y] = true;
         }
 
         private Vector2Int GetCoverageMapPosition(Vector2 robotPosition) {
