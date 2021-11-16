@@ -160,7 +160,8 @@ namespace Dora {
                             0.6f,
                             new Coord(0,0),
                             (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 2)),
-                        robotConstraints: robotConstraints
+                        robotConstraints: robotConstraints,
+                        "RBW-hallway-" + randomSeed
                     ));
                 }
             }
@@ -235,7 +236,8 @@ namespace Dora {
                         1, 
                         0.6f,
                         (seed) => new BrickAndMortar(robotConstraints, seed)),
-                    robotConstraints: robotConstraints
+                    robotConstraints: robotConstraints,
+                    "BM-office-hallway-" + randomSeed
                 ));
             }
 
@@ -309,7 +311,8 @@ namespace Dora {
                         5, 
                         0.6f,
                         (seed) => new SsbAlgorithm(robotConstraints, seed)),
-                    robotConstraints: robotConstraints
+                    robotConstraints: robotConstraints,
+                    "SSB-cave-biggestroom-" + randomSeed
                 ));
             }
 

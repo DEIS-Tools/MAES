@@ -44,12 +44,7 @@ namespace Dora.MapGeneration {
             }
         }
 
-        public List<Vector2Int>? GetOptimisticPath(Vector2Int startCoordinate, Vector2Int targetCoordinate,
-            IPathFindingMap pathFindingMap) {
-            return GetPath(startCoordinate, targetCoordinate, pathFindingMap, true);
-        }
-
-        public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false, bool acceptPartialPaths = false) {
+        public List<Vector2Int>? GetOptimisticPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool acceptPartialPaths = false) {
             return GetPath(startCoordinate, targetCoordinate, pathFindingMap, true, acceptPartialPaths);
         }
 

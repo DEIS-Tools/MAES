@@ -166,6 +166,8 @@ namespace Dora.Robot {
             foreach (var map in maps) 
                 map._tiles = globalMap.Clone() as SlamTileStatus[,];
             
+            // Synchronize coarse maps
+            CoarseGrainedMap.Synchronize(maps.Select(m => m.CoarseMap).ToList());
         }
         
         public Vector2 GetApproxPosition() {

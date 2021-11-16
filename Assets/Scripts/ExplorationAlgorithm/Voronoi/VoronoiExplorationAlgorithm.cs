@@ -208,7 +208,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             if (!IsDoneWithCurrentPath()) {
                 if (_currentTargetPath != null && _currentPartialMovementTarget != null) {
                     // Have we reached the next partial goal?
-                    var robotCoarseTile = _robotController.GetSlamMap().GetCoarseMap().GetPositionCoarseTile();
+                    var robotCoarseTile = _robotController.GetSlamMap().GetCoarseMap().GetCurrentTile();
                     if (robotCoarseTile.Equals(_currentPartialMovementTarget.Value)) {
                         // Mark the current partial movement target as visited
                         _currentTargetPath = _currentTargetPath.Select(e => {
@@ -301,7 +301,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
 
         private void SetCurrentMovementTarget(Vector2Int sortedTargetList) {
             // Find a the course coordinate and generate path
-            var robotCoarseTile = _robotController.GetSlamMap().GetCoarseMap().GetPositionCoarseTile();
+            var robotCoarseTile = _robotController.GetSlamMap().GetCoarseMap().GetCurrentTile();
             var path = _robotController.GetSlamMap().GetCoarseMap().GetPath(sortedTargetList, true);
 
             if (path == null) {
@@ -515,7 +515,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             _localVoronoiRegions = new List<VoronoiRegion>();
             
             var nearbyRobots = _robotController.SenseNearbyRobots();
-            var myPosition = _robotController.GetSlamMap().GetCoarseMap().GetPositionCoarseTile();
+            var myPosition = _robotController.GetSlamMap().GetCoarseMap().GetCurrentTile();
 
             // If no near robots, all visible tiles are assigned to my own region
             if (nearbyRobots.Count == 0) {
