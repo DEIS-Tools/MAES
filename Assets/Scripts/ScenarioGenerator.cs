@@ -165,7 +165,7 @@ namespace Dora {
             for (int i = 0; i < 5; i++) {
                 int randomSeed = i + 4 + 1;
                 int minute = 60;
-                var mapConfig = new CaveMapConfig(
+                var caveConfig = new CaveMapConfig(
                     60,
                     60,
                     randomSeed,
@@ -203,11 +203,24 @@ namespace Dora {
                     environmentTagReadRange: 4.0f
                 );
 
+                // scenarios.Enqueue(new SimulationScenario(
+                //     seed: randomSeed,
+                //     hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
+                //     mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                //     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                //         map, 
+                //         randomSeed, 
+                //         5, 
+                //         0.6f,
+                //         (seed) => new SsbAlgorithm(robotConstraints, seed)),
+                //     robotConstraints: robotConstraints
+                // ));
+                
                 scenarios.Enqueue(new SimulationScenario(
                     seed: randomSeed,
                     hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
-                    mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                    mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
+                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsInBiggestRoom(
                         map, 
                         randomSeed, 
                         5, 
