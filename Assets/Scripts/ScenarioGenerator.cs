@@ -64,7 +64,7 @@ namespace Dora {
                             0.6f,
                             (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 2)),
                         robotConstraints: robotConstraints,
-                        "Voronoi-office-hallway"
+                        "Voronoi-office-hallway-" + randomSeed
                     ));
                 }
                 else {
@@ -80,7 +80,7 @@ namespace Dora {
                             new Coord(20,20),
                             (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1)),
                         robotConstraints: robotConstraints,
-                        "Voronoi-cave-together"
+                        "Voronoi-cave-together-" + randomSeed
                     ));
                 }
             }
@@ -145,7 +145,7 @@ namespace Dora {
                             0.6f,
                             (seed) => new RandomExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints,
-                        "RBW-office"
+                        "RBW-office-" + randomSeed
                     ));
                 }
                 else {
@@ -161,7 +161,7 @@ namespace Dora {
                             new Coord(0,0),
                             (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 2)),
                         robotConstraints: robotConstraints,
-                        "RBW-cave"
+                        "RBW-cave-" + randomSeed
                     ));
                 }
             }
@@ -237,7 +237,7 @@ namespace Dora {
                         0.6f,
                         (seed) => new BrickAndMortar(robotConstraints, seed)),
                     robotConstraints: robotConstraints,
-                    "BNM-office"
+                    "BNM-office-" + randomSeed
                 ));
             }
 
@@ -299,7 +299,7 @@ namespace Dora {
                         0.6f,
                         (seed) => new SsbAlgorithm(robotConstraints, seed)),
                     robotConstraints: robotConstraints,
-                    "SSB-office"
+                    "SSB-office-" + randomSeed
                 ));
             }
 
