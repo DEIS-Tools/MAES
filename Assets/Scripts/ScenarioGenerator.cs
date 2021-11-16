@@ -8,9 +8,14 @@ namespace Dora {
     public class ScenarioGenerator {
 
         public static Queue<SimulationScenario> GenerateVoronoiScenarios() {
-           Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-
-            for (int i = 0; i < 1; i++) {
+            Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
+            
+            
+            
+            
+            
+            
+           for (int i = 0; i < 1; i++) {
                 int randomSeed = i + 4 + 1;
                 int minute = 60;
                 var mapConfig = new CaveMapConfig(
