@@ -148,8 +148,12 @@ namespace Dora.MapGeneration.PathFinding {
             return path;
         }
 
-        public List<PathStep> ToReservablePath(List<Vector2Int> path) {
-            return _aStar.PathToSteps(path, 0.4f);
+        public List<PathStep>? GetPathSteps(Vector2Int target, HashSet<Vector2Int> excludedTiles) {
+            var approxPosition = GetApproximatePosition();
+            _excludedTiles = excludedTiles;
+            var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
+            _excludedTiles = new HashSet<Vector2Int>();
+            return path == null ? null : _aStar.PathToSteps(path, 0.4f);
         }
 
         public bool IsSolid(Vector2Int coordinate) {

@@ -28,8 +28,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
         
         // Backtracking variables
         private Vector2Int? _backtrackTarget;
-        private Queue<Vector2Int>? _backtrackingPath;
-        private Vector2Int? _nextBackTrackStep;
+        private Queue<PathStep>? _backtrackingPath;
+        private PathStep? _nextBackTrackStep;
         private HashSet<Vector2Int> _backTrackingPoints = new HashSet<Vector2Int>();
         // This stores all of the bps found during the current spiralling phase
         // (to avoid sharing bps from inside the spiral)
@@ -79,7 +79,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
             _currentTick++;
             // If waiting mode was engaged last tick, then switch back to normal mode
             _isWaiting = false;
-            
+            int tickCount = 0;
+
             ProcessIncomingCommunication();
             while (_controller.GetStatus() == RobotStatus.Idle && _currentState != State.Terminated && !_isWaiting) {
                 if (_currentState == State.Backtracking) 
@@ -87,6 +88,10 @@ namespace Dora.ExplorationAlgorithm.SSB {
             
                 if (_currentState == State.Spiraling)
                     PerformSpiraling();
+
+                tickCount++;
+                if (tickCount > 50)
+                    throw new Exception($"Robot {RobotID()} has entered an infinite update loop");
             }
         }
 
@@ -168,15 +173,19 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 _backtrackTarget = null;
                 return;
             }
-            
-            // If no backtracking targets exist, then exploration must have been completed
-            if (_backtrackTarget == null) { // TODO : New termination criteria?
-                _isWaiting = true;
-                return;
+
+            // Find path to target, if no path has been found previously
+            if (_backtrackingPath == null) {
+                var reservedTiles = _reservationSystem.GetTilesReservedByOtherRobots(); 
+                var path = _navigationMap.GetPathSteps(_backtrackTarget!.Value, reservedTiles);
+                if (path == null) {
+                    // TODO What to do? Wait and try again later? Start auction after waiting x ticks without success?
+                    _isWaiting = true;
+                    return;
+                }
+                _backtrackingPath ??= new Queue<PathStep>(path!);    
             }
             
-            // Find path to target, if no path has been found previously
-            _backtrackingPath ??= new Queue<Vector2Int>(_navigationMap.GetPath(_backtrackTarget!.Value));
             
             // Check if the path has been completed (ie. no more steps remain)
             if (_nextBackTrackStep == null && _backtrackingPath.Count == 0) {
@@ -193,15 +202,36 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 return;
             }
             
-            _nextBackTrackStep ??= _backtrackingPath!.Dequeue();
+            if (_nextBackTrackStep == null) {
+                // Begin next step in the path
+                // First ensure that this all tiles in this step is reserved
+                _nextBackTrackStep ??= _backtrackingPath!.Dequeue();    
+                _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
+            }
+
+            // Assert that we have reserved all the tiles for the next path step
+            if (!_reservationSystem.AllTilesReservedByThisRobot(_nextBackTrackStep!.CrossedTiles)) {
+                // If there are conflicting reservations then this path is now invalid
+                if (_reservationSystem.AnyTilesReservedByOtherRobot(_nextBackTrackStep!.CrossedTiles)) {
+                    _backtrackingPath = null;
+                    _nextBackTrackStep = null;
+                } else {
+                    // otherwise try to reserve the tiles of this path step and wait for confirmation
+                    _reservationSystem.Reserve(_nextBackTrackStep!.CrossedTiles);
+                    _isWaiting = true;
+                }
+                
+                return;
+            }
             
             // Check if the robot needs to move to reach next step target 
-            var relativeTarget = _navigationMap.GetTileCenterRelativePosition(_nextBackTrackStep!.Value);
+            var relativeTarget = _navigationMap.GetTileCenterRelativePosition(_nextBackTrackStep!.End);
             if (relativeTarget.Distance > 0.2f) 
                 MoveTo(relativeTarget);
             else {
-                // This tile has been reached, mark it as explored
-                MarkTileExplored(_nextBackTrackStep!.Value);
+                // This tile has been reached, mark it (and all tiles covered during this part of the path) as explored
+                foreach (var crossedTile in _nextBackTrackStep.CrossedTiles) 
+                    MarkTileExplored(crossedTile);
                 _nextBackTrackStep = null;
             }
         }
@@ -239,6 +269,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             if (relativePosition.Distance > 0.3f) {
                 MoveToSpiralTarget(relativePosition);
             } else {
+                // Mark the current tile as explored and continue to next target
                 MarkTileExplored(_nextSpiralTarget!.Value);
                 _nextSpiralTarget = null;
             }
@@ -251,10 +282,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
                 _controller.Rotate(relativePosition.RelativeAngle);
             } else {
-                // Once facing the tile correctly, add suitable neighbours
-                // as back tracking points for use in next phase
-                DetectBacktrackingPoints();
-                
                 // Then assert that the robot has reserved the tile before moving there
                 var nextTileReserved = EnsureFutureSpiralPathReserved();
                 if (!nextTileReserved) {
@@ -263,6 +290,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     _isWaiting = true;
                     return;
                 }
+                
+                DetectBacktrackingPoints();
                 
                 // Finally move towards the target
                 _controller.Move(relativePosition.Distance);
@@ -291,7 +320,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             
             // Otherwise attempt to reserve the next part of the path now
             var maximumReservations = 5;
-            _reservationSystem.Reserve(new List<Vector2Int>(predictedTiles.Take(maximumReservations)));
+            _reservationSystem.Reserve(new HashSet<Vector2Int>(predictedTiles.Take(maximumReservations)));
 
             // Return true if the next immediate tile in the path is reserved
             return _reservationSystem.IsTileReservedByThisRobot(predictedTiles[0]);
@@ -317,6 +346,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             _navigationMap.SetTileExplored(exploredTile, true);
             // Remove this from possible back tracking candidates, if present
             _backTrackingPoints.Remove(exploredTile);
+            _bpsFoundThisSpiralPhase.Remove(exploredTile);
         }
 
         // Rotates the robot such that it directly faces a non-solid tile
@@ -552,8 +582,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
         public string GetDebugInfo() {
             return $"State: {Enum.GetName(typeof(State), _currentState)}" +
                    $"\nCoarse Map Position: {_navigationMap.GetApproximatePosition()}" +
-                   $"\nTotal BPs: {_backTrackingPoints.Count}" +
-                   $"\nReserved tiles: [{String.Join(", ", _reservationSystem.GetTilesReservedByThisRobot())}]";
+                   $"\nBPs: [{String.Join(", ", _backTrackingPoints.Select(bp => bp.ToString()))}]" +
+                   $"\nReserved tiles: [{String.Join(", ", _reservationSystem.GetTilesReservedByThisRobot())}]" +
+                   $"\nBacktracking target: {_backtrackTarget}";
         }
 
         public object SaveState() {

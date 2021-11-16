@@ -135,12 +135,16 @@ namespace Dora.MapGeneration {
         
         // Converts the given A* path to PathSteps (containing a line and a list of all tiles intersected in this path)
         public List<PathStep> PathToSteps(List<Vector2Int> path, float robotRadius) {
+            if (path.Count == 1) 
+                return new List<PathStep> { new PathStep(path[0], path[0], new HashSet<Vector2Int>(){path[0]})};
             var steps = new List<PathStep>();
 
             Vector2Int stepStart = path[0];
             Vector2Int currentTile = path[1];
             HashSet<Vector2Int> crossedTiles = new HashSet<Vector2Int>();
             CardinalDirection currentDirection = CardinalDirection.FromVector(currentTile - stepStart);
+            AddIntersectingTiles(currentTile, currentDirection, crossedTiles);
+            
             foreach (var nextTile in path.Skip(2)) {
                 var newDirection = CardinalDirection.FromVector(nextTile - currentTile);
                 if (newDirection != currentDirection) {
@@ -153,7 +157,7 @@ namespace Dora.MapGeneration {
                 AddIntersectingTiles(currentTile, currentDirection, crossedTiles);
                 currentTile = nextTile;
             }
-
+            
             steps.Add(new PathStep(stepStart, currentTile, crossedTiles));
             return steps;
         }

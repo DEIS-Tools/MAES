@@ -42,7 +42,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             }
             
             // Saves and broadcasts reservations for the given set of tiles
-            public void Reserve(List<Vector2Int> tiles) {
+            public void Reserve(HashSet<Vector2Int> tiles) {
                 HashSet<Reservation> newReservations = new HashSet<Reservation>();
                 foreach (var tile in tiles) {
                     var newRes = ReserveLocally(tile);
@@ -130,6 +130,25 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 return new HashSet<Vector2Int>(_reservations
                     .Where(entry => entry.Value.ReservingRobot != thisRobot)
                     .Select(entry => entry.Key));
+            }
+
+            public bool AnyTilesReservedByOtherRobot(HashSet<Vector2Int> tiles) {
+                var thisRobot = _algorithm.RobotID();
+                foreach (var tile in tiles) {
+                    if (_reservations.ContainsKey(tile) && _reservations[tile].ReservingRobot != thisRobot)
+                        return true;
+                }
+
+                return false;
+            }
+
+            public bool AllTilesReservedByThisRobot(HashSet<Vector2Int> tiles) {
+                var thisRobot = _algorithm.RobotID();
+                foreach (var tile in tiles) {
+                    if (!_reservations.ContainsKey(tile) || _reservations[tile].ReservingRobot != thisRobot)
+                        return false;
+                }
+                return true;
             }
         }
 
