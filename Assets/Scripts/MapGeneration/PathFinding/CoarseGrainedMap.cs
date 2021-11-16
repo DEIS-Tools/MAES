@@ -14,7 +14,7 @@ namespace Dora.MapGeneration.PathFinding {
         
         private SlamMap _slamMap;
         private bool[,] _tilesExploredStatus;
-        private HashSet<Vector2Int> _excludedTiles;
+        private HashSet<Vector2Int> _excludedTiles = new HashSet<Vector2Int>();
         private int _width, _height;
         private Vector2 _offset;
         private AStar _aStar;
@@ -149,7 +149,7 @@ namespace Dora.MapGeneration.PathFinding {
         }
 
         public List<PathStep> ToReservablePath(List<Vector2Int> path) {
-            return _aStar.GetIntersectingTiles(path, 0.4f);
+            return _aStar.PathToSteps(path, 0.4f);
         }
 
         public bool IsSolid(Vector2Int coordinate) {

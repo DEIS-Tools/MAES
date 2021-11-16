@@ -133,7 +133,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
         // --------------  Backtracking phase  -------------------
         private void PerformBackTrack() {
-
             if (_backtrackTarget == null) {
                 // Send a request to receives bps from others and start an auction
                 // (if enough time has passed since last request)
@@ -160,7 +159,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 }else {
                     _isWaiting = true;
                 }
-
+                
                 return;
             }
             
@@ -576,6 +575,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
             }
 
             public ISsbBroadcastMessage? Process(SsbAlgorithm algorithm) {
+                algorithm._lastBPRequestTick = algorithm._currentTick;
+                
                 // Check for possible conflict
                 if (algorithm._tickOfLastRequestSentByThisRobot == algorithm._currentTick - 1) {
                     // This case occurs when this robot has sent a bp request at the same time that another robot has
@@ -670,9 +671,10 @@ namespace Dora.ExplorationAlgorithm.SSB {
             if(spiralFinishCost == null)
                 return bids;
 
+            var reservedTiles = _reservationSystem.GetTilesReservedByOtherRobots();
             // Generate a bid based on the length of the calculated path to reach the bp (if present)
             foreach (var bp in backTrackingPoints) {
-                var potentialPath = _navigationMap.GetPath(bp);
+                var potentialPath = _navigationMap.GetPath(bp, excludedTiles: reservedTiles);
                 if (potentialPath != null) {
                     var pathLength = GetRobotPathLength(potentialPath);
                     bids.Add(new Bid(bp, spiralFinishCost.Value + pathLength, _controller.GetRobotID()));

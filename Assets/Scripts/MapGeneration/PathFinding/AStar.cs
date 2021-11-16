@@ -7,6 +7,7 @@ using System.Linq;
 using Dora.MapGeneration.PathFinding;
 using JetBrains.Annotations;
 using UnityEngine;
+using static Dora.MapGeneration.CardinalDirection.RelativeDirection;
 
 namespace Dora.MapGeneration {
     public class AStar : IPathFinder {
@@ -121,33 +122,35 @@ namespace Dora.MapGeneration {
                 : map.IsSolid(coord); 
         }
 
-        private float OctileHeuristic(Vector2Int from, Vector2Int to) {
+        private static float OctileHeuristic(Vector2Int from, Vector2Int to) {
             var xDif = Math.Abs(from.x - to.x);
             var yDif = Math.Abs(from.y - to.y);
             
             var minDif = Math.Min(xDif, yDif);
             var maxDif = Math.Max(xDif, yDif);
             
-            float heuristic = maxDif - minDif + minDif * Mathf.Sqrt(2f);;
+            float heuristic = maxDif - minDif + minDif * Mathf.Sqrt(2f);
             return heuristic;
         }
         
-        
-        public List<PathStep> GetIntersectingTiles(List<Vector2Int> path, float robotRadius) {
+        // Converts the given A* path to PathSteps (containing a line and a list of all tiles intersected in this path)
+        public List<PathStep> PathToSteps(List<Vector2Int> path, float robotRadius) {
             var steps = new List<PathStep>();
 
             Vector2Int stepStart = path[0];
             Vector2Int currentTile = path[1];
-            List<Vector2Int> crossedTiles = new List<Vector2Int>();
+            HashSet<Vector2Int> crossedTiles = new HashSet<Vector2Int>();
             CardinalDirection currentDirection = CardinalDirection.FromVector(currentTile - stepStart);
             foreach (var nextTile in path.Skip(2)) {
                 var newDirection = CardinalDirection.FromVector(nextTile - currentTile);
                 if (newDirection != currentDirection) {
                     // New path step reached
                     steps.Add(new PathStep(stepStart, currentTile, crossedTiles));
-                    crossedTiles = new List<Vector2Int>();
+                    crossedTiles = new HashSet<Vector2Int>();
                     stepStart = currentTile;
+                    currentDirection = newDirection;
                 } 
+                AddIntersectingTiles(currentTile, currentDirection, crossedTiles);
                 currentTile = nextTile;
             }
 
@@ -156,7 +159,13 @@ namespace Dora.MapGeneration {
         }
 
         public void AddIntersectingTiles(Vector2Int from, CardinalDirection direction, HashSet<Vector2Int> tiles) {
-             // TODO!!
+            tiles.Add(from);
+            tiles.Add(from + direction.Vector);
+            if (direction.IsDiagonal()) {
+                // Two of the neighbouring tiles are also intersected when traversing tiles diagonally 
+                tiles.Add(from + direction.GetRelativeDirection(Left).Vector);
+                tiles.Add(from + direction.GetRelativeDirection(Right).Vector);
+            }
         }
 
 

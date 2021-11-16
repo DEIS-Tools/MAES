@@ -6,9 +6,9 @@ namespace Dora.MapGeneration.PathFinding {
     public class PathStep {
         public readonly Vector2Int Start;
         public readonly Vector2Int End;
-        public readonly List<Vector2Int> CrossedTiles;
+        public readonly HashSet<Vector2Int> CrossedTiles;
 
-        public PathStep(Vector2Int start, Vector2Int end, List<Vector2Int> crossedTiles) {
+        public PathStep(Vector2Int start, Vector2Int end, HashSet<Vector2Int> crossedTiles) {
             Start = start;
             End = end;
             CrossedTiles = crossedTiles;

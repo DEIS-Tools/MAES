@@ -118,10 +118,18 @@ namespace Dora.ExplorationAlgorithm.SSB {
             }
 
             public List<Vector2Int> GetTilesReservedByThisRobot() {
+                var thisRobot = _algorithm.RobotID();
                 return _reservations
-                    .Where(res => res.Value.ReservingRobot == _algorithm.RobotID())
+                    .Where(res => res.Value.ReservingRobot == thisRobot)
                     .Select(entry => entry.Key)
                     .ToList();
+            }
+
+            public HashSet<Vector2Int> GetTilesReservedByOtherRobots() {
+                var thisRobot = _algorithm.RobotID();
+                return new HashSet<Vector2Int>(_reservations
+                    .Where(entry => entry.Value.ReservingRobot != thisRobot)
+                    .Select(entry => entry.Key));
             }
         }
 

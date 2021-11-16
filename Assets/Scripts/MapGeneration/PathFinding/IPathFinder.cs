@@ -10,7 +10,7 @@ namespace Dora.MapGeneration {
         
         public List<Vector2Int>? GetOptimisticPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap);
 
-        public List<PathStep> GetIntersectingTiles(List<Vector2Int> path, float robotRadius);
+        public List<PathStep> PathToSteps(List<Vector2Int> path, float robotRadius);
 
     }
 }
