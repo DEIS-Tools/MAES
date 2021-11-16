@@ -25,20 +25,21 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         private List<VoronoiRegion> _localVoronoiRegions = new List<VoronoiRegion>();
         private VoronoiRegion _currentRegion = new VoronoiRegion();
         private int _voronoiRegionMaxDistance; // Measured in coarse tiles
-        private readonly Dictionary<Vector2Int, bool> isExploredMap = new Dictionary<Vector2Int, bool>();
+        private readonly Dictionary<Vector2Int, bool> _isExploredMap = new Dictionary<Vector2Int, bool>();
         private int _currentTick = 0;
         
         private VoronoiSearchPhase _currentSearchPhase = VoronoiSearchPhase.EXPLORE_MODE;
         private readonly RobotConstraints _constraints;
         private readonly float _markExploredRangeInSlamTiles;
-        private readonly int EXPAND_VORONOI_RECALC_INTERVAL = 30;
-        private readonly int SEARCH_MODE_RECALC_INTERVAL = 30;
+        private readonly int EXPAND_VORONOI_RECALC_INTERVAL = 40;
+        private readonly int SEARCH_MODE_RECALC_INTERVAL = 40;
         private readonly int EXPLORE_MODE_RECALC_INTERVAL = 50;
-        private List<(Vector2Int, int)> _coarseOcclusionPointsVisitedThisSearchMode = new List<(Vector2Int, int)>();
+        private readonly float SELECT_FURTHEST_VORONOI_BOUNDARY_CHANCE = 0.3f;
+        private readonly List<(Vector2Int, int)> _coarseOcclusionPointsVisitedThisSearchMode = new List<(Vector2Int, int)>();
         private List<(Vector2Int, bool)> _currentTargetPath = null; // bool represents, if it has been visited or not.
         private Vector2Int? _currentPartialMovementTarget = null;
-        private readonly float DISTANCE_BETWEEN_SAME_OCC_POINT = 3f; // If two occlusion points are closer than this, they are the same
-        private readonly float VORONOI_BOUNDARY_EQUAL_DISTANCE_DELTA = 3f;
+        private readonly float DISTANCE_BETWEEN_SAME_OCC_POINT = 2f; // If two occlusion points are closer than this, they are the same
+        private readonly float VORONOI_BOUNDARY_EQUAL_DISTANCE_DELTA = 2f;
         private VoronoiHeuristic _heuristic;
         private UnexploredTilesComparer _unexploredTilesComparer;
 
@@ -197,8 +198,8 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             foreach (var visibleTile in currentlyVisibleCoarseTiles) {
                 var distance = Geometry.DistanceBetween(currentPosition, visibleTile);
                 if (distance <= _markExploredRangeInSlamTiles) {
-                    if (!isExploredMap.ContainsKey(visibleTile)) {
-                        isExploredMap[visibleTile] = true;
+                    if (!_isExploredMap.ContainsKey(visibleTile)) {
+                        _isExploredMap[visibleTile] = true;
                     }
                 }
             }
@@ -254,7 +255,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             var coarseOcclusionPointsNotVisitedThisSearchMode = new List<Vector2Int>();
             foreach (var op in coarseOcclusionPoints) {
                 foreach (var visitedOccPo in _coarseOcclusionPointsVisitedThisSearchMode) {
-                    if (Geometry.DistanceBetween(op, visitedOccPo.Item1) < DISTANCE_BETWEEN_SAME_OCC_POINT) {
+                    if (Geometry.DistanceBetween(op, visitedOccPo.Item1) > DISTANCE_BETWEEN_SAME_OCC_POINT) {
                         coarseOcclusionPointsNotVisitedThisSearchMode.Add(op);
                     }
                 }
@@ -328,18 +329,44 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
                 coarseEdgeTiles = openCoarseEdgeTiles;
             
             var robotPosition = coarseMap.GetApproximatePosition();
-            // Sort by distance to robot
-            coarseEdgeTiles.Sort((c1, c2) => {
-                var c1Distance = Geometry.DistanceBetween(robotPosition, c1);
-                var c2Distance = Geometry.DistanceBetween(robotPosition, c2);
-                return c1Distance.CompareTo(c2Distance);
-            });
+            
+
+            var chance = _random.NextDouble();
+            if (chance < SELECT_FURTHEST_VORONOI_BOUNDARY_CHANCE) {
+                // Sort by furthest from robot
+                coarseEdgeTiles.Sort((c1, c2) => {
+                    var c1Distance = Geometry.DistanceBetween(robotPosition, c1);
+                    var c2Distance = Geometry.DistanceBetween(robotPosition, c2);
+                    return c2Distance.CompareTo(c1Distance);
+                });
+            }
+            else {
+                // Sort by closest to robot
+                coarseEdgeTiles.Sort((c1, c2) => {
+                    var c1Distance = Geometry.DistanceBetween(robotPosition, c1);
+                    var c2Distance = Geometry.DistanceBetween(robotPosition, c2);
+                    return c1Distance.CompareTo(c2Distance);
+                });
+            }
 
             // Find all tiles with a distance within delta and assume they are equally far away
-            var closestDistance = Geometry.DistanceBetween(robotPosition, coarseEdgeTiles[0]);
+            var closestOrFurthestDistance = Geometry.DistanceBetween(robotPosition, coarseEdgeTiles[0]);
             var candidates = coarseEdgeTiles.Where(e =>
-                Mathf.Abs(Geometry.DistanceBetween(e, robotPosition) - closestDistance) < VORONOI_BOUNDARY_EQUAL_DISTANCE_DELTA).ToList();
+                Mathf.Abs(Geometry.DistanceBetween(e, robotPosition) - closestOrFurthestDistance) < VORONOI_BOUNDARY_EQUAL_DISTANCE_DELTA).ToList();
             
+            // Filter away anything close to the occlusion points visited this search mode
+            var filteredCandidates = candidates.Where(e => {
+                foreach (var occPo in _coarseOcclusionPointsVisitedThisSearchMode) {
+                    if (Geometry.DistanceBetween(e, occPo.Item1) > DISTANCE_BETWEEN_SAME_OCC_POINT)
+                        return false;
+                }
+
+                return true;
+            }).ToList();
+
+            if (filteredCandidates.Count > 0)
+                candidates = filteredCandidates;
+                
             // Take random candidate
             var candidateIndex = _random.Next(candidates.Count);
 
@@ -472,7 +499,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             var coarseMap = _robotController.GetSlamMap().GetCoarseMap();
             
             // since the path finder uses bigger tiles than the slam map, we can risk looking for a tile without a known path
-            var unExploredInRegion = region.Tiles.Where(e => !isExploredMap.ContainsKey(e) || isExploredMap[e] == false).ToList();
+            var unExploredInRegion = region.Tiles.Where(e => !_isExploredMap.ContainsKey(e) || _isExploredMap[e] == false).ToList();
 
             unExploredInRegion =
                 unExploredInRegion
@@ -571,7 +598,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             info.Append($"Search phase: {_currentSearchPhase}\n");
             info.Append($"Current Region size: {_regionSizeCoarseTiles}\n");
             info.Append($"Unexplored tiles in region: {_unexploredTilesInRegion}\n");
-            info.Append($"Explored tiles: {isExploredMap.Count}\n");
+            info.Append($"Explored tiles: {_isExploredMap.Count}\n");
 
             if (_currentTargetPath == null) 
                 info.Append($"No path to target found\n");
