@@ -146,7 +146,10 @@ namespace Dora.MapGeneration.PathFinding {
             var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this); 
             _excludedTiles = new HashSet<Vector2Int>();
             return path;
+        }
 
+        public List<PathStep> ToReservablePath(List<Vector2Int> path) {
+            return _aStar.GetIntersectingTiles(path, 0.4f);
         }
 
         public bool IsSolid(Vector2Int coordinate) {

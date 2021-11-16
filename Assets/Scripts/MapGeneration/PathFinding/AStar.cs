@@ -2,7 +2,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using Dora.MapGeneration.PathFinding;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -131,8 +133,30 @@ namespace Dora.MapGeneration {
         }
         
         
-        public List<Vector2Int> GetIntersectingTiles(List<Vector2Int> path, float robotRadius) {
-            throw new System.NotImplementedException();
+        public List<PathStep> GetIntersectingTiles(List<Vector2Int> path, float robotRadius) {
+            var steps = new List<PathStep>();
+
+            Vector2Int stepStart = path[0];
+            Vector2Int currentTile = path[1];
+            List<Vector2Int> crossedTiles = new List<Vector2Int>();
+            CardinalDirection currentDirection = CardinalDirection.FromVector(currentTile - stepStart);
+            foreach (var nextTile in path.Skip(2)) {
+                var newDirection = CardinalDirection.FromVector(nextTile - currentTile);
+                if (newDirection != currentDirection) {
+                    // New path step reached
+                    steps.Add(new PathStep(stepStart, currentTile, crossedTiles));
+                    crossedTiles = new List<Vector2Int>();
+                    stepStart = currentTile;
+                } 
+                currentTile = nextTile;
+            }
+
+            steps.Add(new PathStep(stepStart, currentTile, crossedTiles));
+            return steps;
+        }
+
+        public void AddIntersectingTiles(Vector2Int from, CardinalDirection direction, HashSet<Vector2Int> tiles) {
+             // TODO!!
         }
 
 

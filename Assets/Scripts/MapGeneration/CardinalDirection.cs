@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace Dora.MapGeneration {
@@ -86,5 +87,8 @@ namespace Dora.MapGeneration {
         public static CardinalDirection[] AllDirections() => Directions;
 
 
+        public static CardinalDirection FromVector(Vector2Int vector) {
+            return AllDirections().First(dir => dir.Vector == vector);
+        }
     }
 }
