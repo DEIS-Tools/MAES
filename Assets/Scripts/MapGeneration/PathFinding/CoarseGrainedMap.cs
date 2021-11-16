@@ -14,6 +14,7 @@ namespace Dora.MapGeneration.PathFinding {
         
         private SlamMap _slamMap;
         private bool[,] _tilesExploredStatus;
+        private HashSet<Vector2Int> _excludedTiles;
         private int _width, _height;
         private Vector2 _offset;
         private AStar _aStar;
@@ -138,13 +139,26 @@ namespace Dora.MapGeneration.PathFinding {
             var approxPosition = GetApproximatePosition();
             return _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
         }
+        
+        public List<Vector2Int>? GetPath(Vector2Int target, HashSet<Vector2Int> excludedTiles) {
+            var approxPosition = GetApproximatePosition();
+            _excludedTiles = excludedTiles;
+            var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this); 
+            _excludedTiles = new HashSet<Vector2Int>();
+            return path;
+
+        }
 
         public bool IsSolid(Vector2Int coordinate) {
+            if (_excludedTiles.Contains(coordinate))
+                return true;
             var tileStatus = GetTileStatus(coordinate, optismistic: false); 
             return tileStatus != SlamTileStatus.Open;
         }
 
         public bool IsOptimisticSolid(Vector2Int coordinate) {
+            if (_excludedTiles.Contains(coordinate))
+                return true;
             var tileStatus = GetTileStatus(coordinate, optismistic: true); 
             return tileStatus != SlamTileStatus.Open;
         }
