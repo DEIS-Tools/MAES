@@ -6,6 +6,88 @@ using Dora.MapGeneration;
 
 namespace Dora {
     public class ScenarioGenerator {
+
+        public static Queue<SimulationScenario> GenerateVoronoiScenarios() {
+           Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
+
+            for (int i = 0; i < 3; i++) {
+                int randomSeed = i + 4 + 1;
+                int minute = 60;
+                var mapConfig = new CaveMapConfig(
+                    50,
+                    50,
+                    randomSeed,
+                    4,
+                    4,
+                    45,
+                    10,
+                    1,
+                    1,
+                    1f);
+
+                var officeConfig = new OfficeMapConfig(
+                    100,
+                    100,
+                    randomSeed,
+                    20,
+                    4,
+                    4,
+                    2,
+                    1,
+                    85,
+                    1,
+                    1f);
+
+                
+                var robotConstraints = new RobotConstraints(
+                    broadcastRange: 15.0f,
+                    broadcastBlockedByWalls: true,
+                    senseNearbyRobotRange: 10f,
+                    senseNearbyRobotBlockedByWalls: true,
+                    automaticallyUpdateSlam: true,
+                    slamUpdateIntervalInTicks: 10,
+                    slamSynchronizeIntervalInTicks: 10,
+                    slamPositionInaccuracy: 0.2f,
+                    distributeSlam: false,
+                    environmentTagReadRange: 4.0f
+                );
+
+                if (i % 2 == 0) {
+                    scenarios.Enqueue(new SimulationScenario(
+                        seed: randomSeed,
+                        hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                            map, 
+                            randomSeed, 
+                            5, 
+                            0.6f,
+                            (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1)),
+                        robotConstraints: robotConstraints,
+                        "Voronoi-office-hallway-" + randomSeed
+                    ));
+                }
+                else {
+                    scenarios.Enqueue(new SimulationScenario(
+                        seed: randomSeed,
+                        hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 10 * minute,
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 2.0f),
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                            map, 
+                            randomSeed, 
+                            1, 
+                            0.6f,
+                            new Coord(20,20),
+                            (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1)),
+                        robotConstraints: robotConstraints,
+                        "Voronoi-cave-together-" + randomSeed
+                    ));
+                }
+            }
+
+            return scenarios; 
+        }
+        
         public static Queue<SimulationScenario> GenerateBallisticScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
 
@@ -25,8 +107,8 @@ namespace Dora {
                     1f);
 
                 var officeConfig = new OfficeMapConfig(
-                    60,
-                    60,
+                    30,
+                    30,
                     randomSeed,
                     58,
                     4,
@@ -41,17 +123,17 @@ namespace Dora {
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
                     broadcastBlockedByWalls: true,
-                    senseNearbyRobotRange: 5f,
+                    senseNearbyRobotRange: 10f,
                     senseNearbyRobotBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
                     slamSynchronizeIntervalInTicks: 10,
-                    slamPositionInaccuracy: 0.5f,
+                    slamPositionInaccuracy: 0.2f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f
                 );
 
-                if (true) {
+                if (i % 2 == 0) {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
@@ -59,10 +141,11 @@ namespace Dora {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
-                            1, 
+                            2, 
                             0.6f,
                             (seed) => new RandomExplorationAlgorithm(seed)),
-                        robotConstraints: robotConstraints
+                        robotConstraints: robotConstraints,
+                        "RBW-office-" + randomSeed
                     ));
                 }
                 else {

@@ -21,7 +21,8 @@ namespace Dora {
             SetExplorationProgress(currentSimulation.ExplorationTracker.ExploredProportion);
             ExplorationRateText.text = "Exploration rate (cells/minute): " +
                                        (currentSimulation.ExplorationTracker.ExploredTriangles /
-                                        currentSimulation.SimulateTimeSeconds).ToString("#.0");
+                                        currentSimulation.SimulateTimeSeconds).ToString("#.0") + "\n" +
+                                        "Coverage: " + (currentSimulation.ExplorationTracker.CoverageProportion * 100).ToString("#.00") + "%";
         }
 
         public void UpdateAlgorithmDebugInfo(string info) {

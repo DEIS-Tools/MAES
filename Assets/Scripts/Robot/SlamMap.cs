@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Dora.MapGeneration;
 using Dora.MapGeneration.PathFinding;
 using Dora.Utilities;
+using JetBrains.Annotations;
+using UnityEditor;
+using UnityEditor.UI;
 using UnityEngine;
 using Random = System.Random;
 
@@ -76,7 +80,7 @@ namespace Dora.Robot {
                 _tiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
         }
 
-        public Vector2Int GetCurrentPositionTile() {
+        public Vector2Int GetCurrentPositionSlamTile() {
             var currentPosition = this.GetApproxPosition();
             // Since the resolution of the slam map is double, we round to nearest half
             // This is done by multiplying by 2 and then rounding to nearest number.
@@ -162,10 +166,8 @@ namespace Dora.Robot {
             foreach (var map in maps) 
                 map._tiles = globalMap.Clone() as SlamTileStatus[,];
             
-            // Synchronize coarse map explored statuses
-            CoarseGrainedMap.Synchronize(maps.Select(map => map.GetCoarseMap()).ToList());
         }
-
+        
         public Vector2 GetApproxPosition() {
             return ApproximatePosition;
         }
@@ -253,13 +255,29 @@ namespace Dora.Robot {
             // Tiles outside map bounds are considered solid
             return true;
         }
+        
+        // Returns position of the given tile relative to the current position of the robot  
+        public RelativePosition GetRelativeSlamPosition(Vector2Int slamTileTarget) {
+            // Convert to local coordinate
+            var robotPosition = GetCurrentPositionSlamTile();  
+            var distance = Vector2.Distance(robotPosition, (Vector2) slamTileTarget);
+            var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetRobotAngleDeg()), slamTileTarget - robotPosition);
+            return new RelativePosition(distance, angle);
+        }
+
+        public RelativePosition GetRelativePosition(Vector2Int target) {
+            var robotPosition = GetApproxPosition();
+            var distance = Vector2.Distance(robotPosition, (Vector2) target);
+            var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetRobotAngleDeg()), target - robotPosition);
+            return new RelativePosition(distance, angle);
+        }
 
         public float CellSize() {
             return _collisionMap.Scale;
         }
         
-        public List<Vector2Int>? GetPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo) {
-            var path = _pathFinder.GetPath(coarseTileFrom, coarseTileTo, this);
+        public List<Vector2Int>? GetPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo, bool acceptPartialPaths = false) {
+            var path = _pathFinder.GetPath(coarseTileFrom, coarseTileTo, this, acceptPartialPaths);
 
             if (path == null)
                 return null;
@@ -271,8 +289,8 @@ namespace Dora.Robot {
             return path;
         }
 
-        public List<Vector2Int> GetOptimisticPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo) {
-            var path = _pathFinder.GetOptimisticPath(coarseTileFrom, coarseTileTo, this);
+        public List<Vector2Int> GetOptimisticPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo, bool acceptPartialPaths = false) {
+            var path = _pathFinder.GetOptimisticPath(coarseTileFrom, coarseTileTo, this, acceptPartialPaths);
 
             if (path == null)
                 return null;

@@ -43,6 +43,15 @@ namespace Dora.MapGeneration {
             }
         }
 
+        public bool IsTrueForAll(Func<TCell, bool> predicate) {
+
+            foreach (var cell in _triangleCells) {
+                if (!predicate(cell)) return false;
+            }
+
+            return true;
+        }
+
         public TCell GetTriangleCellByCoordinateDecimals(float xDecimals, float yDecimals) {
             return _triangleCells[CoordinateDecimalsToTriangleIndex(xDecimals, yDecimals)];
         }

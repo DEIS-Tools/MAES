@@ -9,6 +9,7 @@ using System.Numerics;
 using System.Threading;
 using Dora.MapGeneration;
 using UnityEditor.UI;
+using static Dora.MapGeneration.BitMapTypes;
 using Quaternion = UnityEngine.Quaternion;
 using Random = System.Random;
 using Vector3 = UnityEngine.Vector3;
@@ -90,7 +91,7 @@ public class MapGenerator : MonoBehaviour {
     public SimulationMap<bool> GenerateOfficeMap(OfficeMapConfig config, float wallHeight, bool is2D = true) {
         // Clear and destroy objects from previous map
         clearMap();
-
+        
         Random random = new Random(config.randomSeed);
 
         int[,] emptyMap = GenerateEmptyMap(config.bitMapWidth, config.bitMapHeight);
@@ -160,12 +161,10 @@ public class MapGenerator : MonoBehaviour {
                     int biggestYValue, smallestYValue;
 
                     // The maxima of x and y are needed to isolate the coordinates for each line of wall
-                    sharedWallTiles.Sort((c1, c2) => c1.x - c2.x);
-                    smallestXValue = sharedWallTiles[0].x;
-                    biggestXValue = sharedWallTiles[sharedWallTiles.Count - 1].x;
-                    sharedWallTiles.Sort((c1, c2) => c1.y - c2.y);
-                    smallestYValue = sharedWallTiles[0].y;
-                    biggestYValue = sharedWallTiles[sharedWallTiles.Count - 1].y;
+                    smallestXValue = sharedWallTiles.Aggregate((agg, next) => next.x < agg.x ? next : agg).x;
+                    biggestXValue = sharedWallTiles.Aggregate((agg, next) => next.x > agg.x ? next : agg).x;
+                    smallestYValue = sharedWallTiles.Aggregate((agg, next) => next.y < agg.y ? next : agg).y;
+                    biggestYValue = sharedWallTiles.Aggregate((agg, next) => next.y > agg.y ? next : agg).y;
 
                     List<Coord> line;
                     int maxDoors = random.Next(1, 4);
@@ -184,7 +183,7 @@ public class MapGenerator : MonoBehaviour {
                                 (line.Count - 1) - (int) config.doorWidth - doorPadding);
                             var doorStartingPoint = line[doorStartingIndex];
                             for (int i = 0; i < config.doorWidth; i++) {
-                                connectedMap[doorStartingPoint.x + i, doorStartingPoint.y] = BitMapTypes.ROOM_TYPE;
+                                connectedMap[doorStartingPoint.x + i, doorStartingPoint.y] = ROOM_TYPE;
                             }
 
                             Room.ConnectRooms(cRoom, nRoom);
@@ -202,7 +201,7 @@ public class MapGenerator : MonoBehaviour {
                                 (line.Count - 1) - (int) config.doorWidth - doorPadding);
                             var doorStartingPoint = line[doorStartingIndex];
                             for (int i = 0; i < config.doorWidth; i++) {
-                                connectedMap[doorStartingPoint.x + i, doorStartingPoint.y] = BitMapTypes.ROOM_TYPE;
+                                connectedMap[doorStartingPoint.x + i, doorStartingPoint.y] = ROOM_TYPE;
                             }
 
                             Room.ConnectRooms(cRoom, nRoom);
@@ -220,7 +219,7 @@ public class MapGenerator : MonoBehaviour {
                                 (line.Count - 1) - (int) config.doorWidth - doorPadding);
                             var doorStartingPoint = line[doorStartingIndex];
                             for (int i = 0; i < config.doorWidth; i++) {
-                                connectedMap[doorStartingPoint.x, doorStartingPoint.y + i] = BitMapTypes.ROOM_TYPE;
+                                connectedMap[doorStartingPoint.x, doorStartingPoint.y + i] = ROOM_TYPE;
                             }
 
                             Room.ConnectRooms(cRoom, nRoom);
@@ -238,7 +237,7 @@ public class MapGenerator : MonoBehaviour {
                                 (line.Count - 1) - (int) config.doorWidth - doorPadding);
                             var doorStartingPoint = line[doorStartingIndex];
                             for (int i = 0; i < config.doorWidth; i++) {
-                                connectedMap[doorStartingPoint.x, doorStartingPoint.y + i] = BitMapTypes.ROOM_TYPE;
+                                connectedMap[doorStartingPoint.x, doorStartingPoint.y + i] = ROOM_TYPE;
                             }
 
                             Room.ConnectRooms(cRoom, nRoom);
@@ -256,7 +255,7 @@ public class MapGenerator : MonoBehaviour {
     }
 
     private List<Room> GetSortedOfficeRooms(int[,] map) {
-        List<List<Coord>> roomRegions = GetRegions(map, BitMapTypes.ROOM_TYPE, BitMapTypes.HALL_TYPE);
+        List<List<Coord>> roomRegions = GetRegions(map, ROOM_TYPE, HALL_TYPE);
 
         List<Room> offices = new List<Room>();
         foreach (var region in roomRegions) {
@@ -271,9 +270,9 @@ public class MapGenerator : MonoBehaviour {
             var o2x = o2.tiles[0].x;
             var o2y = o2.tiles[0].y;
             if (map[o1x, o1y] != map[o2x, o2y])
-                if (map[o1x, o1y] == BitMapTypes.HALL_TYPE && map[o2x, o2y] != BitMapTypes.HALL_TYPE)
+                if (map[o1x, o1y] == HALL_TYPE && map[o2x, o2y] != HALL_TYPE)
                     return -1;
-                else if (map[o1x, o1y] != BitMapTypes.HALL_TYPE && map[o2x, o2y] == BitMapTypes.HALL_TYPE)
+                else if (map[o1x, o1y] != HALL_TYPE && map[o2x, o2y] == HALL_TYPE)
                     return 1;
 
             return o2.roomSize - o1.roomSize;
@@ -294,7 +293,7 @@ public class MapGenerator : MonoBehaviour {
         for (int x = 0; x < mapWidth; x++) {
             for (int y = 0; y < mapHeight; y++) {
                 if (x == mapWidth - 1 || x == 0 || y == 0 || y == mapHeight - 1) {
-                    map[x, y] = BitMapTypes.WALL_TYPE;
+                    map[x, y] = WALL_TYPE;
                 }
             }
         }
@@ -305,7 +304,7 @@ public class MapGenerator : MonoBehaviour {
     private int[,] GenerateOfficesBetweenHalls(int[,] oldMap, OfficeMapConfig config, Random random) {
         var mapWithOffices = oldMap.Clone() as int[,];
 
-        List<List<Coord>> officeRegions = GetRegions(mapWithOffices, BitMapTypes.ROOM_TYPE);
+        List<List<Coord>> officeRegions = GetRegions(mapWithOffices, ROOM_TYPE);
 
         foreach (List<Coord> officeRegion in officeRegions) {
             SplitOfficeRegion(mapWithOffices, officeRegion, config, false, true, random);
@@ -361,13 +360,13 @@ public class MapGenerator : MonoBehaviour {
         if (splitOnXAxis) {
             foreach (var c in officeRegion) {
                 if (c.x == wallStartCoord)
-                    map[c.x, c.y] = BitMapTypes.WALL_TYPE;
+                    map[c.x, c.y] = WALL_TYPE;
             }
         }
         else {
             foreach (var c in officeRegion) {
                 if (c.y == wallStartCoord)
-                    map[c.x, c.y] = BitMapTypes.WALL_TYPE;
+                    map[c.x, c.y] = WALL_TYPE;
             }
         }
 
@@ -394,7 +393,7 @@ public class MapGenerator : MonoBehaviour {
     private int[,] AddWallAroundOfficeRegions(int[,] oldMap, OfficeMapConfig config) {
         var mapWithOfficeWalls = oldMap.Clone() as int[,];
 
-        List<List<Coord>> officeRegions = GetRegions(mapWithOfficeWalls, BitMapTypes.ROOM_TYPE);
+        List<List<Coord>> officeRegions = GetRegions(mapWithOfficeWalls, ROOM_TYPE);
 
         foreach (var region in officeRegions) {
             // Get smallest and largest x and y
@@ -408,7 +407,7 @@ public class MapGenerator : MonoBehaviour {
 
             foreach (var coord in region) {
                 if (coord.x == smallestX || coord.x == biggestX || coord.y == smallestY || coord.y == biggestY) {
-                    mapWithOfficeWalls[coord.x, coord.y] = BitMapTypes.WALL_TYPE;
+                    mapWithOfficeWalls[coord.x, coord.y] = WALL_TYPE;
                 }
             }
         }
@@ -423,7 +422,7 @@ public class MapGenerator : MonoBehaviour {
         bool usingXAxis = true;
         while (GetHallPercentage(mapWithHalls) < config.maxHallInPercent) {
             // We always split the currently biggest room
-            List<List<Coord>> roomRegions = GetRegions(mapWithHalls, BitMapTypes.ROOM_TYPE);
+            List<List<Coord>> roomRegions = GetRegions(mapWithHalls, ROOM_TYPE);
             List<Coord> biggestRoom = roomRegions.OrderByDescending(l => l.Count).ToList()[0];
 
             // We either use the x axis or y axis as starting point
@@ -456,7 +455,7 @@ public class MapGenerator : MonoBehaviour {
                 // Fill with hall tiles
                 foreach (var c in biggestRoom) {
                     if (hallStartCoord <= c.x && c.x < hallStartCoord + config.hallWidth) {
-                        mapWithHalls[c.x, c.y] = BitMapTypes.HALL_TYPE;
+                        mapWithHalls[c.x, c.y] = HALL_TYPE;
                     }
                 }
 
@@ -466,7 +465,7 @@ public class MapGenerator : MonoBehaviour {
                 // Fill with hall tiles
                 foreach (var c in biggestRoom) {
                     if (hallStartCoord <= c.y && c.y < hallStartCoord + config.hallWidth) {
-                        mapWithHalls[c.x, c.y] = BitMapTypes.HALL_TYPE;
+                        mapWithHalls[c.x, c.y] = HALL_TYPE;
                     }
                 }
 
@@ -482,7 +481,7 @@ public class MapGenerator : MonoBehaviour {
 
         for (int x = 0; x < emptyMap.GetLength(0); x++) {
             for (int y = 0; y < emptyMap.GetLength(1); y++) {
-                emptyMap[x, y] = BitMapTypes.ROOM_TYPE;
+                emptyMap[x, y] = ROOM_TYPE;
             }
         }
 
@@ -497,7 +496,7 @@ public class MapGenerator : MonoBehaviour {
         int amountOfHall = 0;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                amountOfHall += map[x, y] == BitMapTypes.HALL_TYPE ? 1 : 0;
+                amountOfHall += map[x, y] == HALL_TYPE ? 1 : 0;
             }
         }
 
@@ -532,10 +531,12 @@ public class MapGenerator : MonoBehaviour {
             smoothedMap = SmoothMap(smoothedMap, caveConfig);
         }
 
+        var smoothedMapWithoutNarrowCorridors = WallOffNarrowCorridors(smoothedMap);
+
         // Clean up regions smaller than threshold for both walls and rooms.
         var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(caveConfig.wallThresholdSize,
             caveConfig.roomThresholdSize,
-            smoothedMap);
+            smoothedMapWithoutNarrowCorridors);
         // Connect all rooms to main (the biggest) room
         var connectedMap = ConnectAllRoomsToMainRoom(survivingRooms, cleanedMap, caveConfig);
 
@@ -560,6 +561,92 @@ public class MapGenerator : MonoBehaviour {
         return collisionMap;
     }
 
+    /**
+     * In order to make sure, that all algorithms can traverse all tiles the following must hold:
+     * - Every tile has 1 horizontal neighbour to each side, or 2 in either direction
+     * - Every tile has 1 vertical neighbour to each side, or 2 in either direction
+     * - Every tile has at least one diagonal neighbor on the line from bottom left to top right and top left to bottom right.
+     * This is due to some algorithms (e.g. B&M) assuming that any partially covered tile is completely covered
+     * This assumption leads to some narrow corridors traversable.
+     * If we block the corridors with walls in this function, the algorithm will consider them two separate rooms later on
+     * which will cause the algorithm to create a corridor of width n between them. This ensures traversability of all tiles. 
+     */
+    int[,] WallOffNarrowCorridors(int[,] map) {
+        var newMap = map.Clone() as int[,];
+        Queue<(int, int)> tilesToCheck = new Queue<(int, int)>();
+        
+        // Populate queue with all tiles
+        for (int x = 0; x < newMap.GetLength(0); x++) {
+            for (int y = 0; y < newMap.GetLength(1); y++) {
+                if(newMap[x,y] == ROOM_TYPE)
+                    tilesToCheck.Enqueue((x, y));
+            }
+        }
+
+        while (tilesToCheck.Count > 0) {
+            var tile = tilesToCheck.Dequeue();
+            var x = tile.Item1;
+            var y = tile.Item2;
+            if (newMap[x, y] == WALL_TYPE) 
+                continue;
+
+            bool makeSolid = false;
+            // Check 3 tiles horizontally
+            bool horisontalClear = false;
+            if ((IsInMapRange(x - 1, y, newMap) && newMap[x - 1, y] == ROOM_TYPE) && 
+                (IsInMapRange(x + 1, y, newMap) && newMap[x + 1, y] == ROOM_TYPE))
+                horisontalClear = true;
+            if ((IsInMapRange(x + 1, y, newMap) && newMap[x + 1, y] == ROOM_TYPE) &&
+                (IsInMapRange(x + 2, y, newMap) && newMap[x + 2, y] == ROOM_TYPE))
+                horisontalClear = true;
+            if ((IsInMapRange(x - 1, y, newMap) && newMap[x - 1, y] == ROOM_TYPE) &&
+                (IsInMapRange(x - 2, y, newMap) && newMap[x - 2, y] == ROOM_TYPE))
+                horisontalClear = true;
+
+            // Check 3 tiles vertically
+            bool verticalClear = false;
+            if ((IsInMapRange(x, y - 1, newMap) && newMap[x, y - 1] == ROOM_TYPE) && 
+                (IsInMapRange(x, y + 1, newMap) && newMap[x, y + 1] == ROOM_TYPE))
+                verticalClear = true;
+            if ((IsInMapRange(x, y + 1, newMap) && newMap[x, y + 1] == ROOM_TYPE) &&
+                (IsInMapRange(x, y + 2, newMap) && newMap[x, y + 2] == ROOM_TYPE))
+                verticalClear = true;
+            if ((IsInMapRange(x, y - 1, newMap) && newMap[x, y - 1] == ROOM_TYPE) &&
+                (IsInMapRange(x, y - 2, newMap) && newMap[x, y - 2] == ROOM_TYPE))
+                verticalClear = true;
+
+            // Check 2 tiles from bottom left to top right clear
+            bool bottomLeftToTopRightClear = false;
+            if ((IsInMapRange(x - 1, y - 1, newMap) && newMap[x - 1, y - 1] == ROOM_TYPE))
+                bottomLeftToTopRightClear = true;
+            if ((IsInMapRange(x + 1, y + 1, newMap) && newMap[x + 1, y + 1] == ROOM_TYPE))
+                bottomLeftToTopRightClear = true;
+
+            // Check 2 tiles from top left to bottom right clear
+            bool topLeftToBottomRightClear = false;
+            if ((IsInMapRange(x - 1, y + 1, newMap) && newMap[x - 1, y + 1] == ROOM_TYPE))
+                topLeftToBottomRightClear = true;
+            if ((IsInMapRange(x + 1, y - 1, newMap) && newMap[x + 1, y - 1] == ROOM_TYPE))
+                topLeftToBottomRightClear = true;
+
+            if (!(horisontalClear && verticalClear && bottomLeftToTopRightClear && topLeftToBottomRightClear)) {
+                newMap[x, y] = WALL_TYPE;
+                // enqueue neighbours to be checked again
+                tilesToCheck.Enqueue((x - 1, y + 1)); // Top left
+                tilesToCheck.Enqueue((x, y + 1)); // Top
+                tilesToCheck.Enqueue((x + 1, y + 1)); // Top right
+                tilesToCheck.Enqueue((x - 1, y)); // Left
+                tilesToCheck.Enqueue((x + 1, y)); // Right
+                tilesToCheck.Enqueue((x - 1, y - 1)); // Bottom left
+                tilesToCheck.Enqueue((x, y - 1)); // bottom
+                tilesToCheck.Enqueue((x + 1, y - 1)); // Bottom right
+            }
+                
+        }
+        
+        return newMap;
+    }
+
     int[,] CreateBorderedMap(int[,] map, int width, int height, int borderSize) {
         int[,] borderedMap = new int[width + (borderSize * 2), height + (borderSize * 2)];
 
@@ -569,7 +656,7 @@ public class MapGenerator : MonoBehaviour {
                     borderedMap[x, y] = map[x - borderSize, y - borderSize];
                 }
                 else {
-                    borderedMap[x, y] = BitMapTypes.WALL_TYPE;
+                    borderedMap[x, y] = WALL_TYPE;
                 }
             }
         }
@@ -580,23 +667,23 @@ public class MapGenerator : MonoBehaviour {
     (List<Room> surviningRooms, int[,] map) RemoveRoomsAndWallsBelowThreshold(int wallThreshold, int roomThreshold,
         int[,] map) {
         var cleanedMap = map.Clone() as int[,];
-        List<List<Coord>> wallRegions = GetRegions(cleanedMap, BitMapTypes.WALL_TYPE);
+        List<List<Coord>> wallRegions = GetRegions(cleanedMap, WALL_TYPE);
 
         foreach (List<Coord> wallRegion in wallRegions) {
             if (wallRegion.Count < wallThreshold) {
                 foreach (Coord tile in wallRegion) {
-                    cleanedMap[tile.x, tile.y] = BitMapTypes.ROOM_TYPE;
+                    cleanedMap[tile.x, tile.y] = ROOM_TYPE;
                 }
             }
         }
 
-        List<List<Coord>> roomRegions = GetRegions(cleanedMap, BitMapTypes.ROOM_TYPE);
+        List<List<Coord>> roomRegions = GetRegions(cleanedMap, ROOM_TYPE);
         List<Room> survivingRooms = new List<Room>();
 
         foreach (List<Coord> roomRegion in roomRegions) {
             if (roomRegion.Count < roomThreshold) {
                 foreach (Coord tile in roomRegion) {
-                    cleanedMap[tile.x, tile.y] = BitMapTypes.WALL_TYPE;
+                    cleanedMap[tile.x, tile.y] = WALL_TYPE;
                 }
             }
             else {
@@ -690,7 +777,7 @@ public class MapGenerator : MonoBehaviour {
                     int drawX = c.x + x;
                     int drawY = c.y + y;
                     if (IsInMapRange(drawX, drawY, map)) {
-                        map[drawX, drawY] = BitMapTypes.ROOM_TYPE;
+                        map[drawX, drawY] = ROOM_TYPE;
                     }
                 }
             }
@@ -799,7 +886,7 @@ public class MapGenerator : MonoBehaviour {
                 for (int y = tile.y - 1; y <= tile.y + 1; y++) {
                     if (IsInMapRange(x, y, map) && (y == tile.y || x == tile.x)) {
                         if (mapFlags[x, y] == notCounted && map[x, y] == tileType) {
-                            mapFlags[x, y] = BitMapTypes.WALL_TYPE;
+                            mapFlags[x, y] = counted;
                             queue.Enqueue(new Coord(x, y));
                         }
                     }
@@ -822,12 +909,12 @@ public class MapGenerator : MonoBehaviour {
         for (int x = 0; x < config.bitMapWidth; x++) {
             for (int y = 0; y < config.bitMapHeight; y++) {
                 if (x == 0 || x == config.bitMapWidth - 1 || y == 0 || y == config.bitMapHeight - 1) {
-                    randomFillMap[x, y] = BitMapTypes.WALL_TYPE;
+                    randomFillMap[x, y] = WALL_TYPE;
                 }
                 else {
                     randomFillMap[x, y] = (pseudoRandom.Next(0, 100) < config.randomFillPercent)
-                        ? BitMapTypes.WALL_TYPE
-                        : BitMapTypes.ROOM_TYPE;
+                        ? WALL_TYPE
+                        : ROOM_TYPE;
                 }
             }
         }
@@ -842,9 +929,9 @@ public class MapGenerator : MonoBehaviour {
                 int neighbourWallTiles = GetSurroundingWallCount(x, y, map);
 
                 if (neighbourWallTiles > config.neighbourWallsNeededToStayWall)
-                    smoothedMap[x, y] = BitMapTypes.WALL_TYPE;
+                    smoothedMap[x, y] = WALL_TYPE;
                 else if (neighbourWallTiles < config.neighbourWallsNeededToStayWall)
-                    smoothedMap[x, y] = BitMapTypes.ROOM_TYPE;
+                    smoothedMap[x, y] = ROOM_TYPE;
             }
         }
 
@@ -878,13 +965,13 @@ public class MapGenerator : MonoBehaviour {
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
                     switch (map[x, y]) {
-                        case BitMapTypes.WALL_TYPE:
+                        case WALL_TYPE:
                             Gizmos.color = Color.black;
                             break;
-                        case BitMapTypes.ROOM_TYPE:
+                        case ROOM_TYPE:
                             Gizmos.color = Color.white;
                             break;
-                        case BitMapTypes.HALL_TYPE:
+                        case HALL_TYPE:
                             Gizmos.color = Color.gray;
                             break;
                         default:

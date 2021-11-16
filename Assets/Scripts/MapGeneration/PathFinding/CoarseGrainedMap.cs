@@ -113,6 +113,15 @@ namespace Dora.MapGeneration.PathFinding {
             return slamCoord / 2;
         }
 
+        public List<Vector2Int> FromSlamMapCoordinates(List<Vector2Int> slamCoords) {
+            var CoarseCoords = new HashSet<Vector2Int>();
+            foreach(var slamCoord in slamCoords) {
+                CoarseCoords.Add(FromSlamMapCoordinate(slamCoord));
+            }
+            
+            return CoarseCoords.ToList();
+        }
+
         // Converts the given 
         public Vector2Int ToSlamMapCoordinate(Vector2Int localCoordinate) {
             return localCoordinate * 2;
@@ -135,7 +144,7 @@ namespace Dora.MapGeneration.PathFinding {
             return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
         }
 
-        public List<Vector2Int>? GetPath(Vector2Int target) {
+        public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false) {
             var approxPosition = GetApproximatePosition();
             return _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
         }
