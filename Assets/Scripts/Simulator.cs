@@ -102,7 +102,7 @@ namespace Dora {
         // Calls update on all children of SimulationContainer that are of type SimulationUnit
         private bool UpdateSimulation() {
             if (_currentScenario != null && _currentScenario.HasFinishedSim(_currentSimulation)) {
-                if (_currentScenario.HasFinishedSim(_currentSimulation))
+                if (GlobalSettings.ShouldWriteCSVResults && _currentScenario.HasFinishedSim(_currentSimulation))
                     CreateStatisticsFile();
                 RemoveCurrentSimulation();
             }
@@ -124,7 +124,9 @@ namespace Dora {
                 _currentSimulation.LogicUpdate();
                 _logicTicksCurrentSim++;
                 _physicsTicksSinceUpdate = 0;
-                if(_logicTicksCurrentSim != 0 && _logicTicksCurrentSim % GlobalSettings.TicksPerStatsSnapShot == 0) 
+                if(GlobalSettings.ShouldWriteCSVResults 
+                   && _logicTicksCurrentSim != 0 
+                   && _logicTicksCurrentSim % GlobalSettings.TicksPerStatsSnapShot == 0) 
                     _currentSimulation.ExplorationTracker.CreateSnapShot();
                 UpdateStatisticsUI();
                 
