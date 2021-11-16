@@ -12,11 +12,14 @@ namespace Dora.Statistics {
         private string path;
         
 
-        public StatisticsCSVWriter(string fileName, List<SnapShot<float>> coverSnapShots, List<SnapShot<float>> exploreSnapshots, string path = null) {
+        public StatisticsCSVWriter(string fileNameWithoutExtension, List<SnapShot<float>> coverSnapShots, List<SnapShot<float>> exploreSnapshots, string pathWithoutFileName = null) {
             _coverSnapShots = coverSnapShots;
             _exploreSnapshots = exploreSnapshots;
-            if(path != null)
-                path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + Path.DirectorySeparatorChar + fileName + ".csv";
+            if(pathWithoutFileName != null)
+                path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + Path.DirectorySeparatorChar + fileNameWithoutExtension + ".csv";
+            else {
+                path = pathWithoutFileName + Path.DirectorySeparatorChar + fileNameWithoutExtension + ".csv";
+            }
         }
 
         public void CreateCSVFile(string separator) {
