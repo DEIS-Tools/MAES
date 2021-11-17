@@ -80,9 +80,19 @@ namespace Dora.ExplorationAlgorithm.SSB {
             // If waiting mode was engaged last tick, then switch back to normal mode
             _isWaiting = false;
             int tickCount = 0;
+            
+            if (_controller.HasCollidedSinceLastLogicTick()) {
+                // In case of collision, perform full reset
+                _currentState = State.Backtracking;
+                _backtrackingPath = null;
+                _nextBackTrackStep = null;
+                _controller.StopCurrentTask();
+                _controller.Move(0.5f, true);
+            }
 
             ProcessIncomingCommunication();
             while (_controller.GetStatus() == RobotStatus.Idle && _currentState != State.Terminated && !_isWaiting) {
+
                 if (_currentState == State.Backtracking) 
                     PerformBackTrack();
             
@@ -209,8 +219,16 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
                 // Wait until next tick to ensure that reservations are cleared before making new ones
                 _isWaiting = true;
+                
+                // Check if any of the tiles in the next part of the path have become blocked
+                // (This can happen when all sub tiles tiles are revealed)
+                if (_nextBackTrackStep!.CrossedTiles.Any(t => _navigationMap.GetTileStatus(t, true) == SlamMap.SlamTileStatus.Solid)) {
+                    _nextBackTrackStep = null;
+                    _backtrackingPath = null;
+                }
+                
                 return;
-            }
+            } 
 
             // Assert that we have reserved all the tiles for the next path step
             if (!_reservationSystem.AllTilesReservedByThisRobot(_nextBackTrackStep!.CrossedTiles)) {

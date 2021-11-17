@@ -160,7 +160,7 @@ namespace Dora.MapGeneration {
             Vector2Int currentTile = path[1];
             HashSet<Vector2Int> crossedTiles = new HashSet<Vector2Int>();
             CardinalDirection currentDirection = CardinalDirection.FromVector(currentTile - stepStart);
-            AddIntersectingTiles(currentTile, currentDirection, crossedTiles);
+            AddIntersectingTiles(stepStart, currentDirection, crossedTiles);
             
             foreach (var nextTile in path.Skip(2)) {
                 var newDirection = CardinalDirection.FromVector(nextTile - currentTile);
@@ -184,8 +184,8 @@ namespace Dora.MapGeneration {
             tiles.Add(from + direction.Vector);
             if (direction.IsDiagonal()) {
                 // Two of the neighbouring tiles are also intersected when traversing tiles diagonally 
-                tiles.Add(from + direction.GetRelativeDirection(Left).Vector);
-                tiles.Add(from + direction.GetRelativeDirection(Right).Vector);
+                tiles.Add(from + direction.Next().Vector);
+                tiles.Add(from + direction.Previous().Vector);
             }
         }
 
