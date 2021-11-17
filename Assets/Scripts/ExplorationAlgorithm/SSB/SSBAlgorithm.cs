@@ -511,12 +511,12 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private void DetectBacktrackingPoints() {
             if (!IsBlocked(Right)) {
                 if (IsBlocked(Front) || IsBlocked(FrontRight) || IsBlocked(RearRight))
-                    _bpsFoundThisSpiralPhase.Add(_navigationMap.GetRelativeNeighbour(Right));
+                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Right)); // TODO? temp points?
             }
 
             if (!IsBlocked(Left)) {
                 if (IsBlocked(Front) || IsBlocked(FrontLeft) || IsBlocked(RearLeft))
-                    _bpsFoundThisSpiralPhase.Add(_navigationMap.GetRelativeNeighbour(Left));
+                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Left)); // TODO temp points?
             }
         }
 
