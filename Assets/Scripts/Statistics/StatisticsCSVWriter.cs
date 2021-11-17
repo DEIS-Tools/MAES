@@ -7,18 +7,22 @@ using static Dora.Statistics.ExplorationTracker;
 
 namespace Dora.Statistics {
     public class StatisticsCSVWriter {
+        private readonly Simulation _simulation;
         private readonly List<SnapShot<float>> _coverSnapShots;
         private readonly List<SnapShot<float>> _exploreSnapshots;
         private string path;
         
 
-        public StatisticsCSVWriter(string fileNameWithoutExtension, List<SnapShot<float>> coverSnapShots, List<SnapShot<float>> exploreSnapshots, string pathWithoutFileName = null) {
-            _coverSnapShots = coverSnapShots;
-            _exploreSnapshots = exploreSnapshots;
-            if(pathWithoutFileName != null)
-                path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + Path.DirectorySeparatorChar + fileNameWithoutExtension + ".csv";
+        public StatisticsCSVWriter(Simulation simulation, string fileNameWithoutExtension,string pathWithoutFileName = null) {
+            _coverSnapShots = simulation.ExplorationTracker._coverSnapshots;
+            _exploreSnapshots = simulation.ExplorationTracker._exploreSnapshots;
+            _simulation = simulation;
+            var resultForFileName =
+                $"e{(int)_exploreSnapshots[_exploreSnapshots.Count - 1].Value}-c{(int)_coverSnapShots[_coverSnapShots.Count - 1].Value}";
+            if(pathWithoutFileName == null)
+                path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + Path.DirectorySeparatorChar + fileNameWithoutExtension + "-" + resultForFileName + ".csv";
             else {
-                path = pathWithoutFileName + Path.DirectorySeparatorChar + fileNameWithoutExtension + ".csv";
+                path = pathWithoutFileName + Path.DirectorySeparatorChar + fileNameWithoutExtension + "-" + resultForFileName + ".csv";
             }
         }
 

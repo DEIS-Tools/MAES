@@ -30,7 +30,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         
         private VoronoiSearchPhase _currentSearchPhase = VoronoiSearchPhase.EXPLORE_MODE;
         private readonly RobotConstraints _constraints;
-        private readonly float _markExploredRangeInSlamTiles;
+        private readonly float _markExploredRangeInCoarseTiles;
         private readonly int EXPAND_VORONOI_RECALC_INTERVAL = 40;
         private readonly int SEARCH_MODE_RECALC_INTERVAL = 40;
         private readonly int EXPLORE_MODE_RECALC_INTERVAL = 50;
@@ -83,10 +83,10 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             }
         }
 
-        public VoronoiExplorationAlgorithm(int randomSeed, RobotConstraints constraints, float markExploredRangeInSlamTiles) {
+        public VoronoiExplorationAlgorithm(int randomSeed, RobotConstraints constraints, float markExploredRangeInCoarseTiles) {
             _random = new Random(randomSeed);
             _constraints = constraints;
-            _markExploredRangeInSlamTiles = markExploredRangeInSlamTiles;
+            _markExploredRangeInCoarseTiles = markExploredRangeInCoarseTiles;
             _voronoiRegionMaxDistance = (int)constraints.SenseNearbyRobotRange;
         }
         
@@ -197,7 +197,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
 
             foreach (var visibleTile in currentlyVisibleCoarseTiles) {
                 var distance = Geometry.DistanceBetween(currentPosition, visibleTile);
-                if (distance <= _markExploredRangeInSlamTiles) {
+                if (distance <= _markExploredRangeInCoarseTiles) {
                     if (!_isExploredMap.ContainsKey(visibleTile)) {
                         _isExploredMap[visibleTile] = true;
                     }

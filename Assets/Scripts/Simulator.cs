@@ -36,9 +36,9 @@ namespace Dora {
             Physics.autoSimulation = false;
             Physics2D.simulationMode = SimulationMode2D.Script;
 
-            _scenarios = ScenarioGenerator.GenerateSsbScenarios();
-            //_scenarios = ScenarioGenerator.GenerateBallisticScenarios();
+            _scenarios = ScenarioGenerator.GenerateArticleScenarios(1);
             CreateSimulation(_scenarios.Dequeue());
+            
         }
 
         public SimulationPlayState AttemptSetPlayState(SimulationPlayState targetState) {
@@ -95,7 +95,7 @@ namespace Dora {
         }
 
         private void CreateStatisticsFile() {
-            var csvWriter = new StatisticsCSVWriter(_currentScenario.StatisticsFileName, _currentSimulation.ExplorationTracker._coverSnapshots, _currentSimulation.ExplorationTracker._exploreSnapshots);
+            var csvWriter = new StatisticsCSVWriter(_currentSimulation, _currentScenario.StatisticsFileName);
             csvWriter.CreateCSVFile(",");
         }
 
