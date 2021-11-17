@@ -20,7 +20,7 @@ namespace Dora.Statistics {
             var resultForFileName =
                 $"e{(int)_exploreSnapshots[_exploreSnapshots.Count - 1].Value}-c{(int)_coverSnapShots[_coverSnapShots.Count - 1].Value}";
             if(pathWithoutFileName == null)
-                path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + Path.DirectorySeparatorChar + "testresults" + Path.DirectorySeparatorChar + fileNameWithoutExtension + "-" + resultForFileName + ".csv";
+                path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + Path.DirectorySeparatorChar + fileNameWithoutExtension + "-" + resultForFileName + ".csv";
             else {
                 path = pathWithoutFileName + Path.DirectorySeparatorChar + fileNameWithoutExtension + "-" + resultForFileName + ".csv";
             }
