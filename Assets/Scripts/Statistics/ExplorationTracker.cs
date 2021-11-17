@@ -31,7 +31,7 @@ namespace Dora.Statistics {
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
         public float CoverageProportion => _tilesCovered / (float)_coverableTiles;
         
-        private readonly bool[,] _coverageMap;
+        private readonly bool[,] _isCovered;
         private readonly bool[,] _canBeCovered;
         private readonly int _coverableTiles;
         private int _tilesCovered = 0;
@@ -68,7 +68,7 @@ namespace Dora.Statistics {
             _rayTracingMap = new RayTracingMap<ExplorationCell>(_explorationMap);
 
             // Coverage
-            _coverageMap = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
+            _isCovered = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
             _canBeCovered = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
             var openTiles = 0;
             for (int x = 0; x < collisionMap.WidthInTiles; x++) {
@@ -92,11 +92,13 @@ namespace Dora.Statistics {
         private void UpdateCoverageStatus(MonaRobot robot) {
             var robotPos = GetCoverageMapPosition(robot.transform.position);
             // If already covered
-            if (_coverageMap[robotPos.x, robotPos.y]) return;
-            
-            if(_canBeCovered[robotPos.x, robotPos.y])
+            if (_isCovered[robotPos.x, robotPos.y]) return;
+
+            if (_canBeCovered[robotPos.x, robotPos.y]) {
                 _tilesCovered++;
-                _coverageMap[robotPos.x, robotPos.y] = true;
+                _isCovered[robotPos.x, robotPos.y] = true;
+            }
+                
         }
 
         private Vector2Int GetCoverageMapPosition(Vector2 robotPosition) {
