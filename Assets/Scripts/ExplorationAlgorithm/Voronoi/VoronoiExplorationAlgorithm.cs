@@ -209,7 +209,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             if (!IsDoneWithCurrentPath()) {
                 if (_currentTargetPath != null && _currentPartialMovementTarget != null) {
                     // Have we reached the next partial goal?
-                    var robotCoarseTile = _robotController.GetSlamMap().GetCoarseMap().GetPositionCoarseTile();
+                    var robotCoarseTile = _robotController.GetSlamMap().GetCoarseMap().GetCurrentTile();
                     if (robotCoarseTile.Equals(_currentPartialMovementTarget.Value)) {
                         // Mark the current partial movement target as visited
                         _currentTargetPath = _currentTargetPath.Select(e => {

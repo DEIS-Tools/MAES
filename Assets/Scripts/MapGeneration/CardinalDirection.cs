@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace Dora.MapGeneration {
@@ -20,19 +21,24 @@ namespace Dora.MapGeneration {
 
         public enum RelativeDirection {
             // Each relative direction is assign to the corresponding compass offset
-            Front = 0, Left = -2, Right = 2, Rear = 4
+            Front = 0, 
+            FrontRight = 1, FrontLeft = -1, 
+            Left = -2, 
+            Right = 2,
+            RearRight = 3, RearLeft = -3,
+            Rear = 4
         }
         
         private static readonly CardinalDirection[] Directions = 
             {East, SouthEast, South, SouthWest, West, NorthWest, North, NorthEast};
         
         public readonly int Index;
-        public readonly Vector2Int DirectionVector;
+        public readonly Vector2Int Vector;
         
         // Can only be constructed locally. Must be accessed through public static instances
         private CardinalDirection(int index) {
             Index = index;
-            DirectionVector = CalculateDirectionVector();
+            Vector = CalculateDirectionVector();
         }
 
         public CardinalDirection OppositeDirection() => GetDirection((Index + 4) % 8);
@@ -81,5 +87,8 @@ namespace Dora.MapGeneration {
         public static CardinalDirection[] AllDirections() => Directions;
 
 
+        public static CardinalDirection FromVector(Vector2Int vector) {
+            return AllDirections().First(dir => dir.Vector == vector);
+        }
     }
 }

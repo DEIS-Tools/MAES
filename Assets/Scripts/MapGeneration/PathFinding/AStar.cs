@@ -2,7 +2,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using Dora.MapGeneration.PathFinding;
+using JetBrains.Annotations;
+using UnityEngine;
+using static Dora.MapGeneration.CardinalDirection.RelativeDirection;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -39,8 +44,7 @@ namespace Dora.MapGeneration {
             }
         }
 
-        public List<Vector2Int>? GetOptimisticPath(Vector2Int startCoordinate, Vector2Int targetCoordinate,
-            IPathFindingMap pathFindingMap, bool acceptPartialPaths = false) {
+        public List<Vector2Int>? GetOptimisticPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool acceptPartialPaths = false) {
             return GetPath(startCoordinate, targetCoordinate, pathFindingMap, true, acceptPartialPaths);
         }
 
@@ -61,14 +65,14 @@ namespace Dora.MapGeneration {
                     return currentTile.Path();
 
                 foreach (var dir in CardinalDirection.AllDirections()) {
-                    Vector2Int candidateCoord = currentCoordinate + dir.DirectionVector;
+                    Vector2Int candidateCoord = currentCoordinate + dir.Vector;
                     // Only consider non-solid tiles
                     if (IsSolid(candidateCoord, pathFindingMap, beOptimistic) && candidateCoord != targetCoordinate) continue;
 
                     if (dir.IsDiagonal()) {
                         // To travel diagonally, the two neighbouring tiles must also be free
-                        if (IsSolid(currentCoordinate + dir.Previous().DirectionVector, pathFindingMap, beOptimistic)
-                        || IsSolid(currentCoordinate + dir.Next().DirectionVector, pathFindingMap, beOptimistic))
+                        if (IsSolid(currentCoordinate + dir.Previous().Vector, pathFindingMap, beOptimistic)
+                        || IsSolid(currentCoordinate + dir.Next().Vector, pathFindingMap, beOptimistic))
                             continue;
                     }
                     
@@ -87,7 +91,7 @@ namespace Dora.MapGeneration {
                     }
                 }
 
-                if (loopCount > 10000) {
+                if (loopCount > 100000) {
                     throw new Exception("A* could not find path within 10000 loop runs");
                 }
 
@@ -135,22 +139,56 @@ namespace Dora.MapGeneration {
                 : map.IsSolid(coord); 
         }
 
-        private float OctileHeuristic(Vector2Int from, Vector2Int to) {
+        private static float OctileHeuristic(Vector2Int from, Vector2Int to) {
             var xDif = Math.Abs(from.x - to.x);
             var yDif = Math.Abs(from.y - to.y);
             
             var minDif = Math.Min(xDif, yDif);
             var maxDif = Math.Max(xDif, yDif);
             
-            float heuristic = maxDif - minDif + minDif * Mathf.Sqrt(2f);;
+            float heuristic = maxDif - minDif + minDif * Mathf.Sqrt(2f);
             return heuristic;
         }
         
-        
-        public List<Vector2Int> GetIntersectingTiles(List<Vector2Int> path, float robotRadius) {
-            throw new System.NotImplementedException();
+        // Converts the given A* path to PathSteps (containing a line and a list of all tiles intersected in this path)
+        public List<PathStep> PathToSteps(List<Vector2Int> path, float robotRadius) {
+            if (path.Count == 1) 
+                return new List<PathStep> { new PathStep(path[0], path[0], new HashSet<Vector2Int>(){path[0]})};
+            var steps = new List<PathStep>();
+
+            Vector2Int stepStart = path[0];
+            Vector2Int currentTile = path[1];
+            HashSet<Vector2Int> crossedTiles = new HashSet<Vector2Int>();
+            CardinalDirection currentDirection = CardinalDirection.FromVector(currentTile - stepStart);
+            AddIntersectingTiles(stepStart, currentDirection, crossedTiles);
+            
+            foreach (var nextTile in path.Skip(2)) {
+                var newDirection = CardinalDirection.FromVector(nextTile - currentTile);
+                if (newDirection != currentDirection) {
+                    // New path step reached
+                    steps.Add(new PathStep(stepStart, currentTile, crossedTiles));
+                    crossedTiles = new HashSet<Vector2Int>();
+                    stepStart = currentTile;
+                    currentDirection = newDirection;
+                } 
+                AddIntersectingTiles(currentTile, currentDirection, crossedTiles);
+                currentTile = nextTile;
+            }
+            
+            steps.Add(new PathStep(stepStart, currentTile, crossedTiles));
+            return steps;
         }
 
-        
+        public void AddIntersectingTiles(Vector2Int from, CardinalDirection direction, HashSet<Vector2Int> tiles) {
+            tiles.Add(from);
+            tiles.Add(from + direction.Vector);
+            if (direction.IsDiagonal()) {
+                // Two of the neighbouring tiles are also intersected when traversing tiles diagonally 
+                tiles.Add(from + direction.Next().Vector);
+                tiles.Add(from + direction.Previous().Vector);
+            }
+        }
+
+
     }
 }
