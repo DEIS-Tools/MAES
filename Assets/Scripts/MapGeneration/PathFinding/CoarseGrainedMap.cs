@@ -13,7 +13,7 @@ namespace Dora.MapGeneration.PathFinding {
     public class CoarseGrainedMap : IPathFindingMap {
         
         private SlamMap _slamMap;
-        private bool[,] _tilesExploredStatus;
+        private bool[,] _tilesCoveredStatus;
         private HashSet<Vector2Int> _excludedTiles = new HashSet<Vector2Int>();
         private int _width, _height;
         private Vector2 _offset;
@@ -24,7 +24,7 @@ namespace Dora.MapGeneration.PathFinding {
             _width = width;
             _height = height;
             _offset = offset;
-            _tilesExploredStatus = new bool[width, height];
+            _tilesCoveredStatus = new bool[width, height];
             _aStar = new AStar();
         }
 
@@ -50,13 +50,13 @@ namespace Dora.MapGeneration.PathFinding {
         // Returns the data stored at the given tile, returning null if no data is present
         public bool IsTileExplored(Vector2Int localCoordinate) {
             AssertWithinBounds(localCoordinate);
-            return _tilesExploredStatus[localCoordinate.x, localCoordinate.y];
+            return _tilesCoveredStatus[localCoordinate.x, localCoordinate.y];
         }
         
         // Sets the data at the given tile, overwriting any existing data object if present
         public void SetTileExplored(Vector2Int localCoordinate, bool data) {
             AssertWithinBounds(localCoordinate);
-            _tilesExploredStatus[localCoordinate.x, localCoordinate.y] = data;
+            _tilesCoveredStatus[localCoordinate.x, localCoordinate.y] = data;
         }
 
         private void AssertWithinBounds(Vector2Int coordinate) {
@@ -200,13 +200,13 @@ namespace Dora.MapGeneration.PathFinding {
             foreach (var map in maps) {
                 for (int x = 0; x < map._width; x++) {
                     for (int y = 0; y < map._height; y++) {
-                        globalMap[x, y] |= map._tilesExploredStatus[x, y];
+                        globalMap[x, y] |= map._tilesCoveredStatus[x, y];
                     }
                 }
             }
 
             foreach (var map in maps) 
-                map._tilesExploredStatus = globalMap.Clone() as bool[,];
+                map._tilesCoveredStatus = globalMap.Clone() as bool[,];
         }
 
         // Returns false only if the tile is known to be solid
@@ -216,7 +216,7 @@ namespace Dora.MapGeneration.PathFinding {
             // considered explorable
             if (!withinBounds) return true;
 
-            return (!_tilesExploredStatus[coordinate.x, coordinate.y]) && GetSlamTileStatuses(coordinate).All(status => status != SlamTileStatus.Solid);
+            return (!_tilesCoveredStatus[coordinate.x, coordinate.y]) && GetSlamTileStatuses(coordinate).All(status => status != SlamTileStatus.Solid);
         }
 
         private List<SlamTileStatus> GetSlamTileStatuses(Vector2Int coordinate) {
