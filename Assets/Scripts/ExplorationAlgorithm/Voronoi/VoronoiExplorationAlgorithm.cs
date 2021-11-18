@@ -154,29 +154,29 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
 
         private UnexploredTilesComparer GetSortingFunction(VoronoiHeuristic heuristic) {
             switch (heuristic) {
-                case VoronoiHeuristic.NORTH_EAST:
-                    return (c1, c2) => {
-                        if (c2.y.CompareTo(c1.y) == 0)
-                            return -c2.x.CompareTo(c1.x); // Higher x = east
-                        return -c2.y.CompareTo(c1.y); // Higher y = north
-                    };
-                case VoronoiHeuristic.EAST_SOUTH:
-                    return (c1, c2) => {
-                        if (c2.x.CompareTo(c1.x) == 0)
-                            return c2.y.CompareTo(c1.y); // lower y = south
-                        return -c2.x.CompareTo(c1.x); // higher x = east
-                    };
                 case VoronoiHeuristic.SOUTH_WEST:
                     return (c1, c2) => {
                         if (c2.y.CompareTo(c1.y) == 0)
-                            return c2.x.CompareTo(c1.x); // lower x = west
-                        return c2.y.CompareTo(c1.y); // lower y = south
+                            return -c2.x.CompareTo(c1.x);
+                        return -c2.y.CompareTo(c1.y);
                     };
                 case VoronoiHeuristic.WEST_NORTH:
                     return (c1, c2) => {
                         if (c2.x.CompareTo(c1.x) == 0)
-                            return -c2.y.CompareTo(c1.y); // higher y = north
-                        return c2.x.CompareTo(c1.x); // higher x = east
+                            return c2.y.CompareTo(c1.y);
+                        return -c2.x.CompareTo(c1.x);
+                    };
+                case VoronoiHeuristic.NORTH_EAST:
+                    return (c1, c2) => {
+                        if (c2.y.CompareTo(c1.y) == 0)
+                            return c2.x.CompareTo(c1.x);
+                        return c2.y.CompareTo(c1.y);
+                    };
+                case VoronoiHeuristic.EAST_SOUTH:
+                    return (c1, c2) => {
+                        if (c2.x.CompareTo(c1.x) == 0)
+                            return -c2.y.CompareTo(c1.y);
+                        return c2.x.CompareTo(c1.x);
                     };
                 default:
                     throw new Exception("Could not find sorting function for voronoi heuristic.");
@@ -237,13 +237,15 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
                 return true;
             }
 
-            switch (_currentSearchPhase) {
-                case VoronoiSearchPhase.SEARCH_MODE:
-                    return _currentTick % SEARCH_MODE_RECALC_INTERVAL == 0;
-                case VoronoiSearchPhase.EXPLORE_MODE:
-                    return _currentTick % EXPLORE_MODE_RECALC_INTERVAL == 0;
-                case VoronoiSearchPhase.EXPAND_VORONOI:
-                    return _currentTick % EXPAND_VORONOI_RECALC_INTERVAL == 0;
+            if (_robotController.SenseNearbyRobots().Count > 0) {
+                switch (_currentSearchPhase) {
+                    case VoronoiSearchPhase.SEARCH_MODE:
+                        return _currentTick % SEARCH_MODE_RECALC_INTERVAL == 0;
+                    case VoronoiSearchPhase.EXPLORE_MODE:
+                        return _currentTick % EXPLORE_MODE_RECALC_INTERVAL == 0;
+                    case VoronoiSearchPhase.EXPAND_VORONOI:
+                        return _currentTick % EXPAND_VORONOI_RECALC_INTERVAL == 0;
+                }
             }
 
             return false;
@@ -302,16 +304,17 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             return _currentTargetPath.TrueForAll(e => e.Item2 == true);
         }
 
-        private void SetCurrentMovementTarget(Vector2Int sortedTargetList) {
+        private void SetCurrentMovementTarget(Vector2Int target) {
             // Find a the course coordinate and generate path
             var robotCoarseTile = _robotController.GetSlamMap().GetCoarseMap().GetCurrentTile();
-            var path = _robotController.GetSlamMap().GetVisibleTilesCoarseMap().GetPath(robotCoarseTile,sortedTargetList, true);
+            var path = _robotController.GetSlamMap().GetVisibleTilesCoarseMap().GetPathSteps(robotCoarseTile, target, true);
+            // var path = _robotController.GetSlamMap().GetVisibleTilesCoarseMap().GetPath(robotCoarseTile,target, true);
 
             if (path == null) {
-                Debug.Log($"Could not find path between {robotCoarseTile} and {sortedTargetList}");
+                Debug.Log($"Could not find path between {robotCoarseTile} and {target}");
             }
             else {
-                _currentTargetPath = path.Select(e => (e, false)).ToList(); // All points on path are not visited, i.e. false
+                _currentTargetPath = path.Select(e => (e.End, false)).ToList(); // All points on path are not visited, i.e. false
                 if (_currentTargetPath[0].Item1.Equals(robotCoarseTile) &&
                     !_robotController.HasCollidedSinceLastLogicTick()) {
                     _currentTargetPath[0] = (_currentTargetPath[0].Item1, true);

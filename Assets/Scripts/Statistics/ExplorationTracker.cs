@@ -164,7 +164,7 @@ namespace Dora.Statistics {
             if (_selectedRobot == null)
                 _explorationVisualizer.SetExplored(newlyExploredTriangles);
             else
-                _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, false);
+                _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, true);
 
             _currentTick++;
         }
@@ -174,7 +174,7 @@ namespace Dora.Statistics {
 
             if (robot != null) { 
                 // Update map to show slam map for given robot
-                _explorationVisualizer.SetExplored(robot.Controller.SlamMap, false);
+                _explorationVisualizer.SetExplored(robot.Controller.SlamMap, true);
             }
             else {
                 // Update map to show exploration progress for all robots
