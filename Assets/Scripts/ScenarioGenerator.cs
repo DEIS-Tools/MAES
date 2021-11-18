@@ -465,7 +465,7 @@ namespace Dora {
                     1,
                     0.6f,
                     new Coord(25,10),
-                    (seed) => new TnfExplorationAlgorithm(4, 9)),
+                    (seed) => new TnfExplorationAlgorithm(2, 4)),
                 robotConstraints: robotConstraints,
                 "TNF-office-test-" + randomSeed
             ));

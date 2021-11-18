@@ -4,6 +4,7 @@ using System.Linq;
 using Dora.ExplorationAlgorithm;
 using Dora.Robot;
 using Dora.Utilities;
+using JetBrains.Annotations;
 using UnityEngine;
 using static Dora.Robot.SlamMap;
 
@@ -169,6 +170,11 @@ namespace Dora.MapGeneration.PathFinding {
             var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
             _excludedTiles = new HashSet<Vector2Int>();
             return path == null ? null : _aStar.PathToSteps(path, 0.4f);
+        }
+        
+        [CanBeNull]
+        public List<PathStep> GetPathSteps(Vector2Int target) {
+            return GetPathSteps(target, new HashSet<Vector2Int>());
         }
 
         public bool IsSolid(Vector2Int coordinate) {

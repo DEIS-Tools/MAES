@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Dora.MapGeneration.PathFinding;
 using Dora.Robot;
 using Dora.Utilities;
 using JetBrains.Annotations;
@@ -42,10 +43,10 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         private List<Frontier> _frontiers;
 
         private Vector2Int _robotPos = new Vector2Int(0, 0);
-        private LinkedList<Vector2Int> _path;
-        private Vector2Int _nextTileInPath;
+        private LinkedList<PathStep> _path;
+        private PathStep _nextTileInPath;
         private const float AngleDelta = 1f;
-        private const float MinimumMoveDistance = 0.5f;
+        private const float MinimumMoveDistance = 0.8f;
 
 
         private class Frontier {
@@ -153,12 +154,11 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
                     break;
             }
 
-            //TODO: include Alpha and Beta in Dist(f)
         }
 
         private void CollisionMitigation() {
             _robotTnfStatus = TnfStatus.AwaitCollisionMitigation;
-            _robotController.Move(.2f, true);
+            _robotController.Move(.3f, true);
         }
 
         private void AwaitCommunication() {
@@ -193,13 +193,30 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         }
 
         private void MoveToFrontier(Frontier bestFrontier, Vector2Int currentPosition) {
-            var closestCell = bestFrontier.cells.OrderBy(c => Vector2Int.Distance(c.Item1, currentPosition)).First();
-            var closestCellAsCoarseTile = _map.GetCoarseMap().FromSlamMapCoordinate(closestCell.Item1);
-            var path = _map.GetCoarseMap().GetPath(closestCellAsCoarseTile);
+            // var closestCell = bestFrontier.cells.OrderBy(c => Vector2Int.Distance(c.Item1, currentPosition)).First();
+            // var closestCellAsCoarseTile = _map.GetCoarseMap().FromSlamMapCoordinate(closestCell.Item1);
+            // var path = _map.GetCoarseMap().GetPath(closestCellAsCoarseTile);
+            // if (path == null) {
+            //     return;
+            // }
+            // _path = new LinkedList<Vector2Int>(path);
+            var targetCell = bestFrontier.cells.OrderBy(c => Vector2Int.Distance(c.Item1, currentPosition)).First().Item1;
+            var targetCellAsCoarseTile = _map.GetCoarseMap().FromSlamMapCoordinate(targetCell);
+            var path = _map.GetCoarseMap().GetPathSteps(targetCellAsCoarseTile);
             if (path == null) {
-                return;
+                targetCell = bestFrontier.cells.OrderBy(c => Vector2Int.Distance(c.Item1, currentPosition)).Last().Item1;
+                targetCellAsCoarseTile = _map.GetCoarseMap().FromSlamMapCoordinate(targetCell);
+                path = _map.GetCoarseMap().GetPathSteps(targetCellAsCoarseTile);
+                if (path == null) {
+                    targetCell = bestFrontier.cells.OrderBy(c => Vector2Int.Distance(c.Item1, currentPosition)).ToList()[bestFrontier.cells.Count / 2].Item1;
+                    targetCellAsCoarseTile = _map.GetCoarseMap().FromSlamMapCoordinate(targetCell);
+                    path = _map.GetCoarseMap().GetPathSteps(targetCellAsCoarseTile);
+                    if (path == null) {
+                        return;
+                    }
+                }
             }
-            _path = new LinkedList<Vector2Int>(path);
+            _path = new LinkedList<PathStep>(path);
             if (!_path.Any()) {
                 _robotTnfStatus = TnfStatus.AwaitNextFrontier;
                 return;
@@ -211,7 +228,7 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             StartMoving();
         }
 
-        private void DoMovement(LinkedList<Vector2Int> path) {
+        private void DoMovement(LinkedList<PathStep> path) {
             if (_robotController.IsCurrentlyColliding()) {
                 _robotTnfStatus = TnfStatus.AwaitNextFrontier;
                 _robotController.StopCurrentTask();
@@ -240,8 +257,10 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             if (_robotController.GetStatus() != RobotStatus.Idle) {
                 return;
             }
-            var relativePosition = _map.GetCoarseMap().GetTileCenterRelativePosition(_nextTileInPath);
-            if (Mathf.Abs(relativePosition.RelativeAngle) <= AngleDelta || relativePosition.Distance > MinimumMoveDistance) {
+            var relativePosition = _map.GetCoarseMap().GetTileCenterRelativePosition(_nextTileInPath.End);
+            if (relativePosition.Distance < MinimumMoveDistance)
+                return;
+            if (Mathf.Abs(relativePosition.RelativeAngle) <= AngleDelta) {
                 _robotController.Move(relativePosition.Distance);
             }
             else {
@@ -253,7 +272,7 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         private List<Frontier> GetFrontiers() {
             var res = new List<Frontier>();
             var edges = new LinkedList<(Vector2Int, float)>();
-            var map = this._map.GetExploredTiles().Where(t => t.Value != SlamMap.SlamTileStatus.Solid);
+            var map = this._map.GetExploredTiles();
 
             // Find edges
             var mapAsList = map.ToList();
@@ -262,10 +281,13 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
                 for (var x = cell.Key.x - 1; x <= cell.Key.x + 1; x++) {
                     for (var y = cell.Key.y - 1; y <= cell.Key.y + 1; y++) {
                         var neighbour = new Vector2Int(x, y);
-                        if (!mapAsList.Exists(t => t.Key == neighbour)) isEdge = true;
+                        //if (!mapAsList.Exists(t => t.Key == neighbour)) isEdge = true;
+                        if (!map.ContainsKey(neighbour)) {
+                            isEdge = true;
+                        }
                     }
                 }
-                if (isEdge) {
+                if (isEdge && cell.Value != SlamMap.SlamTileStatus.Solid) {
                     edges.AddFirst(cell.ToTnfCell());
                 }
             }
@@ -314,7 +336,7 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         }
 
         public string GetDebugInfo() {
-            return "";
+            return _robotTnfStatus.ToString();
         }
 
 
