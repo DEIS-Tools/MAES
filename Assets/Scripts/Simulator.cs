@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using Dora.MapGeneration;
@@ -27,6 +28,7 @@ namespace Dora {
         private GameObject _simulationGameObject;
 
         public SimulationPlayState PlayState { get; }
+        private int _logicTicksCurrentSim = 0;
 
         // Runs once when starting the program
         private void Start() {
@@ -34,6 +36,8 @@ namespace Dora {
             Physics.autoSimulation = false;
             Physics2D.simulationMode = SimulationMode2D.Script;
 
+            //_scenarios = ScenarioGenerator.GenerateArticleScenarios(20);
+            //_scenarios = ScenarioGenerator.GenerateSsbScenarios();
             _scenarios = ScenarioGenerator.GenerateTnfScenarios();
             CreateSimulation(_scenarios.Dequeue());
         }
@@ -91,10 +95,18 @@ namespace Dora {
             }
         }
 
+        private void CreateStatisticsFile() {
+            var csvWriter = new StatisticsCSVWriter(_currentSimulation, _currentScenario.StatisticsFileName);
+            csvWriter.CreateCSVFile(",");
+        }
+
         // Calls update on all children of SimulationContainer that are of type SimulationUnit
         private bool UpdateSimulation() {
-            if (_currentScenario != null && _currentScenario.HasFinishedSim(_currentSimulation))
+            if (_currentScenario != null && _currentScenario.HasFinishedSim(_currentSimulation)) {
+                if (GlobalSettings.ShouldWriteCSVResults && _currentScenario.HasFinishedSim(_currentSimulation))
+                    CreateStatisticsFile();
                 RemoveCurrentSimulation();
+            }
 
             if (_currentScenario == null) {
                 if (_scenarios.Count == 0) {
@@ -111,8 +123,15 @@ namespace Dora {
             var shouldContinueSim = true;
             if (_physicsTicksSinceUpdate >= GlobalSettings.PhysicsTicksPerLogicUpdate) {
                 _currentSimulation.LogicUpdate();
+                _logicTicksCurrentSim++;
                 _physicsTicksSinceUpdate = 0;
+                if(GlobalSettings.ShouldWriteCSVResults 
+                   && _logicTicksCurrentSim != 0 
+                   && _logicTicksCurrentSim % GlobalSettings.TicksPerStatsSnapShot == 0) 
+                    _currentSimulation.ExplorationTracker.CreateSnapShot();
                 UpdateStatisticsUI();
+                
+                
                 // If the simulator is in step mode, then automatically pause after logic step has been performed
                 if (_playState == SimulationPlayState.Step)
                     shouldContinueSim = false;
@@ -123,7 +142,7 @@ namespace Dora {
             SimulationStatusText.text = "Phys. ticks: " + _currentSimulation.SimulatedPhysicsTicks +
                                         "\nLogic ticks: " + _currentSimulation.SimulatedLogicTicks +
                                         "\nSimulated: " + output;
-
+            
             return shouldContinueSim;
         }
 
@@ -133,6 +152,7 @@ namespace Dora {
             _currentSimulation = _simulationGameObject.GetComponent<Simulation>();
             _currentSimulation.SetScenario(scenario);
             _currentSimulation.SimInfoUIController = simulationInfoUIController;
+            _logicTicksCurrentSim = 0;
         }
 
 
@@ -147,6 +167,7 @@ namespace Dora {
             _currentScenario = null;
             _currentSimulation = null;
             _simulationGameObject = null;
+            _logicTicksCurrentSim = 0;
         }
 
         public Simulation GetCurrentSimulation() {

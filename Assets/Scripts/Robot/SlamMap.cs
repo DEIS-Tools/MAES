@@ -27,6 +27,7 @@ namespace Dora.Robot {
         private readonly RobotConstraints _robotConstraints;
         private float _lastInaccuracyX = 0f;
         private float _lastInaccuracyY = 0f;
+        
         // Represents the current approximate position of the given robot
         public Vector2 ApproximatePosition { get; private set; }
         private float _robotAngle = 0;
@@ -147,12 +148,12 @@ namespace Dora.Robot {
         }
         
         // Synchronizes the given slam maps to create a new one
-        public static void Combine(List<SlamMap> maps) {
+        public static void Synchronize(List<SlamMap> maps) {
             var globalMap = new SlamTileStatus[maps[0]._widthInTiles, maps[0]._heightInTiles];
             for (int x = 0; x < globalMap.GetLength(0); x++) 
                 for (int y = 0; y < globalMap.GetLength(1); y++) 
                     globalMap[x, y] = SlamTileStatus.Unseen;
-
+            
             foreach (var map in maps) {
                 for (int x = 0; x < map._widthInTiles; x++) {
                     for (int y = 0; y < map._heightInTiles; y++) {
@@ -164,7 +165,11 @@ namespace Dora.Robot {
 
             foreach (var map in maps) 
                 map._tiles = globalMap.Clone() as SlamTileStatus[,];
+            
+            // Synchronize coarse maps
+            CoarseGrainedMap.Synchronize(maps.Select(m => m.CoarseMap).ToList());
         }
+        
 
         /// <summary>
         /// Synchronizes one map with a collection of <see cref="SlamTileStatus"/> arrays.

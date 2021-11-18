@@ -49,7 +49,7 @@ namespace Dora {
         private void CameraInitialization() {
 
             _cams = new List<CamAssembly>();
-            foreach (var c in GetComponentsInChildren<Camera>(includeInactive:true)) {
+            foreach (var c in GetComponentsInChildren<Camera>(includeInactive: true)) {
                 var ct = c.transform;
                 _cams.Add(new CamAssembly {camera = c, newZoom = ct.localPosition, zoomAmount = -1 * ct.up});
                 c.gameObject.SetActive(false);

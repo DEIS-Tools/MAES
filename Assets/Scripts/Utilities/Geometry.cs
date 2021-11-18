@@ -21,5 +21,9 @@ namespace Dora.Utilities {
         public static Vector2 DirectionAsVector(float angleDegrees) {
             return new Vector2(Mathf.Cos(angleDegrees * Mathf.Deg2Rad), Mathf.Sin(angleDegrees * Mathf.Deg2Rad));
         }
+
+        public static int ManhattanDistance(Vector2Int v1, Vector2Int v2) {
+            return Math.Abs(v1.x - v2.x) + Math.Abs(v1.y - v2.y);
+        }
     }
 }

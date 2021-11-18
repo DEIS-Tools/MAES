@@ -23,7 +23,8 @@ namespace Dora
             SetExplorationProgress(currentSimulation.ExplorationTracker.ExploredProportion);
             ExplorationRateText.text = "Exploration rate (cells/minute): " +
                                        (currentSimulation.ExplorationTracker.ExploredTriangles /
-                                        currentSimulation.SimulateTimeSeconds).ToString("#.0");
+                                        currentSimulation.SimulateTimeSeconds).ToString("#.0")
+                                       ;
         }
     }
 }
