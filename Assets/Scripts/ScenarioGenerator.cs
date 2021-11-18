@@ -13,7 +13,7 @@ namespace Dora {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 15;
             var sizes = new List<(int, int)>() {(200,200)};
-            var maxRunTime = 40 * minute;// 1 * minute;
+            var maxRunTime = 60 * minute;// 1 * minute;
             SimulationEndCriteriaDelegate hasFinishedFunc = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker
                                                                                  .CoverageProportion > 0.99f); 
@@ -25,13 +25,13 @@ namespace Dora {
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
-                slamPositionInaccuracy: 0.2f, // TODO
+                slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 4.0f
             );
             
             
-            for (int i = 1; i < runs; i++) { // TODO
+            for (int i = 0; i < runs; i++) { // TODO
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
                 {

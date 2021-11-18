@@ -120,7 +120,11 @@ namespace Dora {
 
             if (distance > _robotConstraints.MaxRayCastRange)
                 return new CommunicationInfo(distance, angle, -1);
-            
+
+            var angleMod = angle % 90f;
+            if (angleMod <= 45.05f && angleMod >= 45f) angle += 0.005f;
+            else if (angleMod >= 44.95f && angleMod <= 45f) angle -= 0.005f;
+                
             var wallsTravelledThrough = 0;
             _rayTracingMap.Raytrace(pos1, angle, distance,
                 (_, cellIsSolid) => {

@@ -18,6 +18,6 @@ namespace Dora {
         public static readonly bool ShowEnvironmentTags = true;
 
         public static readonly bool ShouldWriteCSVResults = true;
-        public static readonly int TicksPerStatsSnapShot = 20;
+        public static readonly int TicksPerStatsSnapShot = 10;
     }
 }

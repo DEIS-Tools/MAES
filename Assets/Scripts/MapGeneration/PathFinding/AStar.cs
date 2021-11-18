@@ -91,7 +91,7 @@ namespace Dora.MapGeneration {
                     }
                 }
 
-                if (loopCount > 10000) {
+                if (loopCount > 100000) {
                     throw new Exception("A* could not find path within 10000 loop runs");
                 }
 
