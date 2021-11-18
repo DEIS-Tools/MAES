@@ -160,9 +160,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 }
                 
                 if (_tickOfLastRequestSentByThisRobot == _currentTick - 3) {
-                    Debug.Log($"[{_currentTick}]No bids were won by robot {_controller.GetRobotID()} in the auction. " +
-                              $"Overriding result with best candidate from local list of bps. " +
-                              $"This may result in conflicts with other robots");
+                    //Debug.Log($"[{_currentTick}]No bids were won by robot {_controller.GetRobotID()} in the auction. " +
+                              // $"Overriding result with best candidate from local list of bps. " +
+                              // $"This may result in conflicts with other robots");
                     // Case of no response from other robots after starting request/auction
                     // or if no bps were won by this robot
                     _backtrackTarget = FindBestBackTrackingTarget();
@@ -171,7 +171,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                         _isWaiting = true;
                 } else if (_tickOfLastRequestSentByThisRobot == _currentTick - 1) {
                     // Broadcast this robots bps now to match timing of other robots that has just received the request  
-                    Debug.Log($"[{_currentTick}] Auctioneer robot {_controller.GetRobotID()} broadcasting {_backTrackingPoints.Count} bps");
+                    // Debug.Log($"[{_currentTick}] Auctioneer robot {_controller.GetRobotID()} broadcasting {_backTrackingPoints.Count} bps");
                     _controller.Broadcast(new BackTrackingPointsMessage(_controller.GetRobotID(),new HashSet<Vector2Int>(_backTrackingPoints)));
                     _isWaiting = true;
                 }else {
@@ -264,7 +264,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         private void BroadcastBPRequest() {
-            Debug.Log($"Backtracking request for backtracking points [Robot: {_controller.GetRobotID()}]");
+            // Debug.Log($"Backtracking request for backtracking points [Robot: {_controller.GetRobotID()}]");
             _lastBPRequestTick = _currentTick;
             var request = new RequestMessage(_controller.GetRobotID(), this);
             _controller.Broadcast(request);
@@ -469,7 +469,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 }
             }
             
-            Debug.Log($"Robot {_controller.GetRobotID()} chose tile from local list: {minDistanceBp}");
+            //Debug.Log($"Robot {_controller.GetRobotID()} chose tile from local list: {minDistanceBp}");
             return minDistanceBp;
         }
 
@@ -649,7 +649,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 
                 // Remove backtracking points that have been explored since they were added to the list 
                 algorithm._backTrackingPoints.RemoveWhere(bp => algorithm._navigationMap.IsTileExplored(bp));
-                Debug.Log($"Robot {algorithm._controller.GetRobotID()} received bp request. Broadcasting {algorithm._backTrackingPoints.Count} bps");
+                // Debug.Log($"Robot {algorithm._controller.GetRobotID()} received bp request. Broadcasting {algorithm._backTrackingPoints.Count} bps");
                 
                 if (algorithm._backTrackingPoints.Count == 0) 
                     return null; // No BPs to share
@@ -704,7 +704,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
                 var bids = algorithm.GenerateBids(algorithm._backTrackingPoints);
                 
-                Debug.Log($"[{algorithm._currentTick}] Robot {algorithm._controller.GetRobotID()} generated {bids.Count} bids");
+                // Debug.Log($"[{algorithm._currentTick}] Robot {algorithm._controller.GetRobotID()} generated {bids.Count} bids");
                 return new BiddingMessage(RequestingRobot, bids);
             }
             
@@ -744,7 +744,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 if (potentialPath != null) {
                     var pathLength = GetRobotPathLength(potentialPath);
                     bids.Add(new Bid(bp, spiralFinishCost.Value + pathLength, _controller.GetRobotID()));
-                    Debug.Log($"Robot: {_controller.GetRobotID()} added bid of cost {spiralFinishCost.Value + pathLength} for tile {bp}");
+                    // Debug.Log($"Robot: {_controller.GetRobotID()} added bid of cost {spiralFinishCost.Value + pathLength} for tile {bp}");
                 }
             }
             
@@ -793,7 +793,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 if (RequestingRobot != algorithm._controller.GetRobotID())
                     return null;
                 
-                Debug.Log($"[{algorithm._currentTick}] Auction processed by robot: {algorithm._controller.GetRobotID()}");
+                //Debug.Log($"[{algorithm._currentTick}] Auction processed by robot: {algorithm._controller.GetRobotID()}");
 
                 // Add bids from this robot to the auction
                 foreach (var ownBid in algorithm.GenerateBids(algorithm._backTrackingPoints)) {
@@ -845,7 +845,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     }
                 }
                 
-                Debug.Log($"[{algorithm._currentTick}] Auction results: {bestBids.Aggregate("", (e1, e2) => e1 + $"[Robot {e2.Key} won {e2.Value.BP}]")}");
+                //Debug.Log($"[{algorithm._currentTick}] Auction results: {bestBids.Aggregate("", (e1, e2) => e1 + $"[Robot {e2.Key} won {e2.Value.BP}]")}");
                 
                 // Create message containing results
                 var resultsMessage = new AuctionResultsMessage(bestBids);
