@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Dora.Robot;
 using Dora.Utilities;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Dora.ExplorationAlgorithm.TheNextFrontier {
@@ -26,30 +25,38 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             }
         }
 
+        private enum TnfStatus {
+            Communicating,
+            AwaitMoving,
+            AwaitRotating,
+            AwaitNextFrontier,
+            AwaitCollisionMitigation
+        }
+
         private IRobotController _robotController;
+        private TnfStatus _robotTnfStatus;
+        private SlamAlgorithmInterface _map;
         private int Alpha { get; }
         private int Beta { get; }
 
         private List<Frontier> _frontiers;
 
         private Vector2Int _robotPos = new Vector2Int(0, 0);
+        private LinkedList<Vector2Int> _path;
+        private Vector2Int _nextTileInPath;
+        private const float AngleDelta = 1f;
+        private const float MinimumMoveDistance = 0.5f;
 
 
-        private readonly struct Frontier {
+        private class Frontier {
             public readonly List<(Vector2Int, float)> cells;
 
             public Frontier(List<(Vector2Int, float)> cells) {
                 this.cells = cells;
+                UtilityValue = -1;
             }
-        }
-        
 
-        private void UpdateFrontiers() {
-            _frontiers = new List<Frontier>();
-
-            var f = new List<(Vector2Int, float)> {(new Vector2Int(1, 1), 0.5f)};
-            _frontiers.Add(new Frontier(f));
-            var s = _frontiers[0].cells[0].Item1;
+            public float UtilityValue { get; set; }
         }
 
         private float InformationPotential((Vector2Int, float) cell, List<(Vector2Int, float)> neighbours) {
@@ -57,102 +64,258 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         }
 
         private float InformationFactor(Frontier frontier) {
-            return frontier.cells.Sum(c => InformationPotential(c, GetNeighbours(c, frontier)));
+            return frontier.cells.Sum(c => InformationPotential(c, GetNeighbouringCells(c)));
         }
 
-        private List<(Vector2Int, float)> GetNeighbours((Vector2Int, float) cell, Frontier frontier) {
+        private List<(Vector2Int, float)> GetNeighbouringCells((Vector2Int, float) cell) {
             var res = new List<(Vector2Int, float)>();
 
             for (var x = cell.Item1.x - 1; x < cell.Item1.x + 1; x++) {
-                for (var y = cell.Item1.y - 1; y < cell.Item1.y +1; y++) {
+                for (var y = cell.Item1.y - 1; y < cell.Item1.y + 1; y++) {
                     if (x == cell.Item1.x && y == cell.Item1.y) {
                         continue;
                     }
-                    //TODO: Make sure cell is findable...
-                    var c = frontier.cells.Find(c => c.Item1.x == x && c.Item1.y == y);
-                    res.Add(c);
+                    var position = new Vector2Int(x, y);
+                    var v = _map.GetStatusOfTile(position).ToTnfCellValue();
+                    res.Add((position, v));
                 }
             }
-            
+
             return res;
         }
 
-        private float DistanceFactor(Frontier frontier, Vector2Int fromPosition) {
-            //TODO: The actual implementation
-            var dist = Vector2Int.Distance(fromPosition, frontier.cells[0].Item1);
-            return dist;
+        private float WavefrontNormalized(Frontier frontier, Vector2Int fromPosition, float normalizerConstant) {
+            var wave = Wavefront(frontier, fromPosition).ToList();
+            //var norm = Mathf.Sqrt(wave.Select(d => d * d).Sum());
+            var distFactor = Mathf.Sqrt(wave.Select(d => d / normalizerConstant).Sum());
+            return distFactor;
+        }
+
+        private float DistanceFactor(Frontier f, Vector2Int from, float normalizerConstant) {
+            var val = WavefrontNormalized(f, from, normalizerConstant);
+            return Mathf.Pow(val, Alpha) * Mathf.Pow(1 - val, Beta);
+        }
+
+        private IEnumerable<float> Wavefront(Frontier frontier, Vector2Int fromPosition) {
+            return frontier.cells.Select(cell => Vector2Int.Distance(fromPosition, cell.Item1));
         }
 
         private float CoordinationFactor(Frontier frontier) {
             var neighbours = _robotController.SenseNearbyRobots();
+            if (_robotTnfStatus != TnfStatus.Communicating) {
+                if (neighbours.Count <= 0) {
+                    return 0;
+                }
+                _robotTnfStatus = TnfStatus.Communicating;
+                _robotController.Broadcast((_map, _robotController.GetRobotID()));
+            }
+
             var sum = 0f;
             foreach (var neighbour in neighbours) {
                 var pos = _robotPos + Vector2Int.RoundToInt(Geometry.VectorFromDegreesAndMagnitude(neighbour.Angle, neighbour.Distance));
-                //TODO: Also, normalize.
-                sum += DistanceFactor(frontier, pos);
+                var normalizerConstant = _frontiers.Max(f => f.cells.Select(c => Vector2Int.Distance(pos, c.Item1)).Max());
+                sum += WavefrontNormalized(frontier, pos, normalizerConstant);
             }
             return sum;
         }
 
-        private float UtilityFunction(Frontier frontier) {
-            //TODO: Get robot position for use in DistanceFactor
-            return InformationFactor(frontier) + DistanceFactor(frontier, _robotPos) - CoordinationFactor(frontier);
+        private float UtilityFunction(Frontier frontier, float normalizerConstant) {
+            return InformationFactor(frontier) + DistanceFactor(frontier, _robotPos, normalizerConstant) - CoordinationFactor(frontier);
         }
 
         public void UpdateLogic() {
-            if (_robotController.GetStatus() == RobotStatus.Idle) {
-                _robotController.Move(5);
+
+            _robotPos = Vector2Int.RoundToInt(_robotController.GetSlamMap().GetApproxPosition());
+            if (_robotController.HasCollidedSinceLastLogicTick()) {
+                _robotController.StopCurrentTask();
+                CollisionMitigation();
+                return;
             }
 
-            var fellows = _robotController.SenseNearbyRobots();
-            if (fellows.Count > 0) {
-                //TODO: Calculate coordination factor
+            switch (_robotTnfStatus) {
+                case TnfStatus.AwaitNextFrontier:
+                    var nextFrontier = CalculateNextFrontier(_robotPos);
+                    if (nextFrontier == null || _robotTnfStatus == TnfStatus.Communicating) {
+                        break;
+                    }
+                    MoveToFrontier(nextFrontier, _robotPos);
+                    break;
+                case TnfStatus.AwaitMoving:
+                case TnfStatus.AwaitRotating:
+                    DoMovement(_path);
+                    break;
+                case TnfStatus.Communicating:
+                    AwaitCommunication();
+                    break;
+                case TnfStatus.AwaitCollisionMitigation:
+                    if (_robotController.GetStatus() == RobotStatus.Idle)
+                        _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+                    break;
             }
 
+            //TODO: include Alpha and Beta in Dist(f)
+        }
+
+        private void CollisionMitigation() {
+            _robotTnfStatus = TnfStatus.AwaitCollisionMitigation;
+            _robotController.Move(.2f, true);
+        }
+
+        private void AwaitCommunication() {
+            var received = _robotController.ReceiveBroadcast();
+            if (received.Any()) {
+                var newMaps = new List<SlamMap>();
+                foreach (var package in received) {
+                    var pack = ((SlamAlgorithmInterface, int)) package;
+                    newMaps.Add(pack.Item1 as SlamMap);
+                }
+                SlamMap.Combine(_map as SlamMap, newMaps);
+                _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+            }
+
+        }
+
+        [CanBeNull]
+        private Frontier CalculateNextFrontier(Vector2Int currentPosition) {
             // Get frontiers
+            _frontiers = GetFrontiers();
 
             // For each frontier:
+            if (_frontiers.Count <= 0) {
+                return null;
+            }
+            var normalizerConstant = _frontiers.Max(f => f.cells.Select(c => Vector2Int.Distance(currentPosition, c.Item1)).Max());
+            foreach (var frontier in _frontiers) {
+                frontier.UtilityValue = UtilityFunction(frontier, normalizerConstant);
+            }
+            return _frontiers.OrderByDescending(f => f.UtilityValue).First();
 
-            // Utility(frontier) = Information(frontier) + Distance(frontier) - Coordination(frontier)
+        }
 
-            // Information(frontier)
-            // - For each cell in frontier.cells:
-            // - - Sum += InformationPotential(cell)
-            // 
-            // InformationPotential(cell)
-            // - sum = GaussianFValue(cell)
-            // - For each c in cell.neighbours
-            // - - sum += GaussianFValue(c)
+        private void MoveToFrontier(Frontier bestFrontier, Vector2Int currentPosition) {
+            var closestCell = bestFrontier.cells.OrderBy(c => Vector2Int.Distance(c.Item1, currentPosition)).First();
+            var closestCellAsCoarseTile = _map.GetCoarseMap().FromSlamMapCoordinate(closestCell.Item1);
+            var path = _map.GetCoarseMap().GetPath(closestCellAsCoarseTile);
+            if (path == null) {
+                return;
+            }
+            _path = new LinkedList<Vector2Int>(path);
+            if (!_path.Any()) {
+                _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+                return;
+            }
+            _robotTnfStatus = TnfStatus.AwaitMoving;
+            var nextStep = _path.First;
+            _path.Remove(nextStep);
+            _nextTileInPath = nextStep.Value;
+            StartMoving();
+        }
 
-            // Distance(frontier)
-            // - Pow(Wavefront(frontier), _alpha - 1) * (1 - Pow(Wavefront(frontier), _beta -1))
-            //
-            // Wavefront(frontier)
-            // - For each cell in frontier.cells
-            // - - EuclidDistance(this.position, cell)
-            // - - Normalize (See notes)
+        private void DoMovement(LinkedList<Vector2Int> path) {
+            if (_robotController.IsCurrentlyColliding()) {
+                _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+                _robotController.StopCurrentTask();
+                return;
+            }
 
-            // Coordination(frontier)
-            // - For each robot in visibleRobots
-            // - - For cell in frontier.cells
-            // - - - EuclidDistance(robot.position, cell)
-            // - - - Normalize?
+            if (_robotController.GetStatus() == RobotStatus.Idle) {
+                if (path != null && path.Any()) {
+                    if (_robotTnfStatus != TnfStatus.AwaitRotating) {
+                        var nextStep = path.First;
+                        _nextTileInPath = nextStep.Value;
+                        path.Remove(nextStep);
+                    }
+                    _robotTnfStatus = TnfStatus.AwaitMoving;
+                }
+                else {
+                    _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+                    return;
+                }
+
+                StartMoving();
+            }
+        }
+
+        private void StartMoving() {
+            if (_robotController.GetStatus() != RobotStatus.Idle) {
+                return;
+            }
+            var relativePosition = _map.GetCoarseMap().GetTileCenterRelativePosition(_nextTileInPath);
+            if (Mathf.Abs(relativePosition.RelativeAngle) <= AngleDelta || relativePosition.Distance > MinimumMoveDistance) {
+                _robotController.Move(relativePosition.Distance);
+            }
+            else {
+                _robotController.Rotate(relativePosition.RelativeAngle);
+                _robotTnfStatus = TnfStatus.AwaitRotating;
+            }
+        }
+
+        private List<Frontier> GetFrontiers() {
+            var res = new List<Frontier>();
+            var edges = new LinkedList<(Vector2Int, float)>();
+            var map = this._map.GetExploredTiles().Where(t => t.Value != SlamMap.SlamTileStatus.Solid);
+
+            // Find edges
+            var mapAsList = map.ToList();
+            foreach (var cell in mapAsList) {
+                var isEdge = false;
+                for (var x = cell.Key.x - 1; x <= cell.Key.x + 1; x++) {
+                    for (var y = cell.Key.y - 1; y <= cell.Key.y + 1; y++) {
+                        var neighbour = new Vector2Int(x, y);
+                        if (!mapAsList.Exists(t => t.Key == neighbour)) isEdge = true;
+                    }
+                }
+                if (isEdge) {
+                    edges.AddFirst(cell.ToTnfCell());
+                }
+            }
+
+            // build frontiers by connected cells
+            var fCellCount = 0u;
+            var eCellCount = edges.Count;
+            while (eCellCount > fCellCount) {
+                var q = new Queue<(Vector2Int, float)>();
+                q.Enqueue(edges.First());
+
+                var frontier = new List<(Vector2Int, float)>();
+                while (q.Count > 0) {
+                    var next = q.Dequeue();
+                    edges.Remove(next);
+                    frontier.Add(next);
+                    fCellCount++;
+                    for (int x = next.Item1.x - 1; x < next.Item1.x + 1; x++) {
+                        for (int y = next.Item1.y - 1; y < next.Item1.y + 1; y++) {
+                            var position = new Vector2Int(x, y);
+                            if (edges.Any(e => e.Item1 == position)) {
+                                var newCell = edges.First(c => c.Item1 == position);
+                                q.Enqueue(newCell);
+                                edges.Remove(newCell);
+                            }
+                        }
+                    }
+                }
+
+
+                res.Add(new Frontier(frontier));
+            }
+
+            return res;
         }
 
         public TnfExplorationAlgorithm(int alpha, int beta) {
             Alpha = alpha;
             Beta = beta;
+            _robotTnfStatus = TnfStatus.AwaitNextFrontier;
         }
 
         public void SetController(Robot2DController controller) {
             _robotController = controller;
+            _map = _robotController.GetSlamMap();
         }
 
         public string GetDebugInfo() {
-            throw new System.NotImplementedException();
+            return "";
         }
-
-
 
 
         // FUTURE WORK

@@ -224,7 +224,7 @@ namespace Dora {
         public static Queue<SimulationScenario> GenerateTnfScenarios() {
             var scenarios = new Queue<SimulationScenario>();
 
-            int randomSeed = 4 + 1;
+            int randomSeed = 4 + 2;
             int minute = 60;
 
             var mapConfig = new CaveMapConfig(
@@ -240,8 +240,8 @@ namespace Dora {
                 1f);
 
             var officeConfig = new OfficeMapConfig(
-                40,
-                40,
+                60,
+                60,
                 randomSeed,
                 58,
                 4,    
@@ -264,20 +264,6 @@ namespace Dora {
                 distributeSlam: false,
                 environmentTagReadRange: 4.0f
             );
-
-            scenarios.Enqueue(new SimulationScenario(
-                seed: randomSeed, 
-                hasFinishedSim: simulation => simulation.SimulateTimeSeconds > 5,
-                mapSpawner: generator => generator.GenerateOfficeMap(officeConfig, 2.0f),
-                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                    map,
-                    randomSeed,
-                    1,
-                    0.6f,
-                    new Coord(25,10),
-                    (seed) => new TnfExplorationAlgorithm(4, 9)),
-                robotConstraints: robotConstraints
-            ));
             
             scenarios.Enqueue(new SimulationScenario(
                 seed: randomSeed, 
