@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Dora.ExplorationAlgorithm;
 using Dora.Robot;
 using Dora.Utilities;
 using UnityEngine;
@@ -12,7 +13,8 @@ namespace Dora.MapGeneration.PathFinding {
     public class CoarseGrainedMap : IPathFindingMap {
         
         private SlamMap _slamMap;
-        private object[,] _objects;
+        private bool[,] _tilesCoveredStatus;
+        private HashSet<Vector2Int> _excludedTiles = new HashSet<Vector2Int>();
         private int _width, _height;
         private Vector2 _offset;
         private AStar _aStar;
@@ -22,7 +24,7 @@ namespace Dora.MapGeneration.PathFinding {
             _width = width;
             _height = height;
             _offset = offset;
-            _objects = new object[width, height];
+            _tilesCoveredStatus = new bool[width, height];
             _aStar = new AStar();
         }
 
@@ -46,15 +48,15 @@ namespace Dora.MapGeneration.PathFinding {
         }
 
         // Returns the data stored at the given tile, returning null if no data is present
-        public object? GetTileData(Vector2Int localCoordinate) {
+        public bool IsTileExplored(Vector2Int localCoordinate) {
             AssertWithinBounds(localCoordinate);
-            return _objects[localCoordinate.x, localCoordinate.y];
+            return _tilesCoveredStatus[localCoordinate.x, localCoordinate.y];
         }
         
         // Sets the data at the given tile, overwriting any existing data object if present
-        public void SetTileData(Vector2Int localCoordinate, object data) {
+        public void SetTileExplored(Vector2Int localCoordinate, bool data) {
             AssertWithinBounds(localCoordinate);
-            _objects[localCoordinate.x, localCoordinate.y] = data;
+            _tilesCoveredStatus[localCoordinate.x, localCoordinate.y] = data;
         }
 
         private void AssertWithinBounds(Vector2Int coordinate) {
@@ -131,41 +133,100 @@ namespace Dora.MapGeneration.PathFinding {
             CardinalDirection targetDirection = currentCardinalDirection.GetRelativeDirection(relativeDirection);
 
             var currentPosition = GetApproximatePosition();
-            var relativePosition = currentPosition + targetDirection.DirectionVector;
+            var relativePosition = currentPosition + targetDirection.Vector;
             return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
         }
-        
+
         // Returns the neighbour in the given cardinal direction (relative to global direction)
         public Vector2Int GetGlobalNeighbour(CardinalDirection direction) {
             var currentPosition = GetApproximatePosition();
-            var relativePosition = currentPosition + direction.DirectionVector;
+            var relativePosition = currentPosition + direction.Vector;
             return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
         }
 
-        public List<Vector2Int> GetPath(Vector2Int target, bool acceptPartialPaths = false) {
+        public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false) {
             var approxPosition = GetApproximatePosition();
-            return _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this, acceptPartialPaths);
+            return _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
+        }
+        
+        public List<Vector2Int>? GetPath(Vector2Int target, HashSet<Vector2Int> excludedTiles, float maxPathCost = float.MaxValue) {
+            if (excludedTiles.Contains(target))
+                return null;
+            
+            var approxPosition = GetApproximatePosition();
+            _excludedTiles = excludedTiles;
+            var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this, false); 
+            _excludedTiles = new HashSet<Vector2Int>();
+            return path;
         }
 
-        public Vector2Int GetPositionCoarseTile() {
+        public List<PathStep>? GetPathSteps(Vector2Int target, HashSet<Vector2Int> excludedTiles) {
+            if (excludedTiles.Contains(target))
+                return null;
+            
             var approxPosition = GetApproximatePosition();
-            // Int casting truncates floats, i.e. 3,8 = 3;
-            return new Vector2Int((int)approxPosition.x, (int)approxPosition.y);
+            _excludedTiles = excludedTiles;
+            var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
+            _excludedTiles = new HashSet<Vector2Int>();
+            return path == null ? null : _aStar.PathToSteps(path, 0.4f);
         }
-
 
         public bool IsSolid(Vector2Int coordinate) {
+            if (_excludedTiles.Contains(coordinate))
+                return true;
             var tileStatus = GetTileStatus(coordinate, optismistic: false); 
             return tileStatus != SlamTileStatus.Open;
         }
 
         public bool IsOptimisticSolid(Vector2Int coordinate) {
+            if (_excludedTiles.Contains(coordinate))
+                return true;
             var tileStatus = GetTileStatus(coordinate, optismistic: true); 
             return tileStatus != SlamTileStatus.Open;
         }
 
         public float CellSize() {
             return 1.0f; 
+        }
+
+        public Vector2Int GetCurrentTile() {
+            var robotPosition = GetApproximatePosition();
+            return new Vector2Int((int) robotPosition.x, (int) robotPosition.y);
+        }
+
+        public static void Synchronize(List<CoarseGrainedMap> maps) {
+            var globalMap = new bool[maps[0]._width, maps[0]._width];
+            
+            foreach (var map in maps) {
+                for (int x = 0; x < map._width; x++) {
+                    for (int y = 0; y < map._height; y++) {
+                        globalMap[x, y] |= map._tilesCoveredStatus[x, y];
+                    }
+                }
+            }
+
+            foreach (var map in maps) 
+                map._tilesCoveredStatus = globalMap.Clone() as bool[,];
+        }
+
+        // Returns false only if the tile is known to be solid
+        public bool IsPotentiallyExplorable(Vector2Int coordinate) {
+            var withinBounds= coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
+            // To avoid giving away information which the robot cannot know, tiles outside the map bounds are
+            // considered explorable
+            if (!withinBounds) return true;
+
+            return (!_tilesCoveredStatus[coordinate.x, coordinate.y]) && GetSlamTileStatuses(coordinate).All(status => status != SlamTileStatus.Solid);
+        }
+
+        private List<SlamTileStatus> GetSlamTileStatuses(Vector2Int coordinate) {
+            var slamCoord = coordinate * 2;
+            return new List<SlamTileStatus>() {
+                _slamMap.GetStatusOfTile(slamCoord),
+                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right),
+                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up),
+                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up + Vector2Int.right),
+            };
         }
     }
     
