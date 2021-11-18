@@ -106,6 +106,20 @@ namespace Dora.Statistics {
         }
         
         public void LogicUpdate(List<MonaRobot> robots) {
+            // Reduce ray traces to 5 / sec (Every 2 logic ticks)
+            if (_currentTick % 2 != 0) {
+                _currentTick++;
+                foreach (var robot in robots) {
+                    if (robot.Controller.Constraints.AutomaticallyUpdateSlam) {
+                        var slamMap = robot.Controller.SlamMap;
+                        slamMap.UpdateApproxPosition(robot.transform.position);
+                        slamMap.SetApproxRobotAngle(robot.Controller.GetForwardAngleRelativeToXAxis());
+                    }
+                }
+
+                return;
+            }
+            
             List<int> newlyExploredTriangles = new List<int>();
             float visibilityRange = GlobalSettings.LidarRange;
 
