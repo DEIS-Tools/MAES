@@ -19,10 +19,10 @@ namespace Dora.ExplorationAlgorithm {
 
         public void UpdateLogic() {
             // Testing
-            _robotController.ReceiveBroadcast();
+            // _robotController.ReceiveBroadcast();
 
             // Testing
-            _robotController.Broadcast("Test!");
+            // _robotController.Broadcast("Test!");
 
             // if (_robotController.GetRobotID() == 30)
                 // _robotController.SenseNearbyRobots();

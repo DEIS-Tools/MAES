@@ -38,7 +38,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         private readonly List<(Vector2Int, int)> _coarseOcclusionPointsVisitedThisSearchMode = new List<(Vector2Int, int)>();
         private List<(Vector2Int, bool)> _currentTargetPath = null; // bool represents, if it has been visited or not.
         private Vector2Int? _currentPartialMovementTarget = null;
-        private readonly float DISTANCE_BETWEEN_SAME_OCC_POINT = 2f; // If two occlusion points are closer than this, they are the same
+        private readonly float DISTANCE_BETWEEN_SAME_OCC_POINT = 1f; // If two occlusion points are closer than this, they are the same
         private readonly float VORONOI_BOUNDARY_EQUAL_DISTANCE_DELTA = 2f;
         private VoronoiHeuristic _heuristic;
         private UnexploredTilesComparer _unexploredTilesComparer;
@@ -47,6 +47,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
 
         // Debugging variables
         private Vector2Int? _closestOcclusionPoint = null;
+        private int _occlusionPointsWithinView = 0;
         private int _regionSizeCoarseTiles;
         private int _unexploredTilesInRegion;
 
@@ -251,6 +252,8 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         private void EnterSearchMode() {
             var coarseMap = _robotController.GetSlamMap().GetCoarseMap();
             var coarseOcclusionPoints = FindClosestOcclusionPoints();
+            _occlusionPointsWithinView = coarseOcclusionPoints.Count;
+
             // Occlusion points close to something visited recently will not be visited
             var coarseOcclusionPointsNotVisitedThisSearchMode = new List<Vector2Int>();
             foreach (var op in coarseOcclusionPoints) {
@@ -302,7 +305,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         private void SetCurrentMovementTarget(Vector2Int sortedTargetList) {
             // Find a the course coordinate and generate path
             var robotCoarseTile = _robotController.GetSlamMap().GetCoarseMap().GetPositionCoarseTile();
-            var path = _robotController.GetSlamMap().GetCoarseMap().GetPath(sortedTargetList, true);
+            var path = _robotController.GetSlamMap().GetVisibleTilesCoarseMap().GetPath(robotCoarseTile,sortedTargetList, true);
 
             if (path == null) {
                 Debug.Log($"Could not find path between {robotCoarseTile} and {sortedTargetList}");
@@ -384,7 +387,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             var edgeTiles = FindEdgeTiles(visibleCoarseTiles);
             
             // Filter out edge tiles, that are walls. They can't show anything new
-            var nonSolidEdgeTiles = edgeTiles.Where(e => !coarseMap.IsOptimisticSolid(e)).ToList();
+            var nonSolidEdgeTiles = edgeTiles.Where(e => !coarseMap.IsSolid(e)).ToList();
 
             // Debug.Log("--------------------------");
             var furthestAwayTileDistance = 0f;
@@ -580,7 +583,8 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
 
         public string GetDebugInfo() {
             var info = new StringBuilder();
-            
+
+            info.AppendLine($"Heuristic: {this._heuristic}");
             if (_currentTargetPath != null && _currentTargetPath.Count > 0) {
                 var finalTarget = _currentTargetPath[_currentTargetPath.Count - 1];
                 info.Append($"Current final target: x:{finalTarget.Item1.x}, y:{finalTarget.Item1.y}\n");
@@ -590,7 +594,11 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             if (_currentPartialMovementTarget.HasValue)
                 info.Append($"Current partial target: x:{_currentPartialMovementTarget.Value.x}, y:{_currentPartialMovementTarget.Value.y}\n");
             else info.Append("Voronoi has no partial target\n");
-            
+
+            if(_currentSearchPhase == VoronoiSearchPhase.SEARCH_MODE || _currentSearchPhase == VoronoiSearchPhase.EXPAND_VORONOI)
+                info.AppendLine($"Occlusion Points within range: {_occlusionPointsWithinView}");
+            else
+                info.AppendLine($"Occlusion Points within range: Not in search mode");
             if (_closestOcclusionPoint.HasValue)
                 info.Append($"Closest occlusion point slamtile: x:{_closestOcclusionPoint.Value.x}, y:{_closestOcclusionPoint.Value.y}\n");
             else info.Append("No closest occlusion point\n");

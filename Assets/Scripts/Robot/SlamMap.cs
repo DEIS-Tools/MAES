@@ -18,7 +18,7 @@ namespace Dora.Robot {
         private readonly int _widthInTiles, _heightInTiles;
         
         private SlamTileStatus[,] _tiles;
-        private SlamTileStatus[,] _currentlyVisibleTiles;
+        public SlamTileStatus[,] _currentlyVisibleTiles;
         private SimulationMap<bool> _collisionMap;
         private IPathFinder _pathFinder;
 
@@ -35,6 +35,8 @@ namespace Dora.Robot {
         
         // Low resolution map
         public CoarseGrainedMap CoarseMap;
+        // Low resolution map only considering what is visible now
+        public VisibleTilesCoarseMap VisibleTilesCoarseMap;
 
 
         public SlamMap(SimulationMap<bool> collisionMap, RobotConstraints robotConstraints, int randomSeed) {
@@ -51,6 +53,8 @@ namespace Dora.Robot {
             _pathFinder = new AStar();
             
             CoarseMap = new CoarseGrainedMap(this, collisionMap.WidthInTiles, collisionMap.HeightInTiles, _scaledOffset);
+            VisibleTilesCoarseMap = new VisibleTilesCoarseMap(this, collisionMap.WidthInTiles,
+                collisionMap.HeightInTiles, _scaledOffset);
 
             for (int x = 0; x < _widthInTiles; x++)
                 for (int y = 0; y < _heightInTiles; y++)
@@ -302,6 +306,10 @@ namespace Dora.Robot {
 
         public CoarseGrainedMap GetCoarseMap() {
             return CoarseMap;
+        }
+
+        public VisibleTilesCoarseMap GetVisibleTilesCoarseMap() {
+            return VisibleTilesCoarseMap;
         }
     }
 }

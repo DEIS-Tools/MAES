@@ -27,5 +27,7 @@ namespace Dora.Robot {
         public RelativePosition GetRelativePosition(Vector2Int target);
         
         public CoarseGrainedMap GetCoarseMap();
+
+        public VisibleTilesCoarseMap GetVisibleTilesCoarseMap();
     }
 }
