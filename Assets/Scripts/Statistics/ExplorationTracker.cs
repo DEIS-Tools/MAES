@@ -106,10 +106,14 @@ namespace Dora.Statistics {
             return new Vector2Int((int)robotPosition.x, (int)robotPosition.y);
         }
 
+        private int tickCount = 0;
         public void LogicUpdate(List<MonaRobot> robots) {
+            tickCount++;
             List<int> newlyExploredTriangles = new List<int>();
             float visibilityRange = GlobalSettings.LidarRange;
-
+            
+            if (tickCount % 2 == 0) return;
+            
             foreach (var robot in robots) {
                 SlamMap slamMap = null;
 

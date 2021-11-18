@@ -13,7 +13,7 @@ namespace Dora {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 15;
             var sizes = new List<(int, int)>() {(50,50), (100,100), (200,200)};
-            var maxRunTime = 20;// 1 * minute;
+            var maxRunTime = 40 * minute;// 1 * minute;
             SimulationEndCriteriaDelegate hasFinishedFunc = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker
                                                                                  .CoverageProportion > 0.99f); 
@@ -36,9 +36,9 @@ namespace Dora {
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
                 {
                     ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "voronoi"),
+                    ((seed) => new RandomExplorationAlgorithm(seed), "random"),
                     // ((seed) => new BrickAndMortar(robotConstraints, seed), "bnm"),
                     // ((seed) => new SsbAlgorithm(robotConstraints, seed),"ssb"),
-                    ((seed) => new RandomExplorationAlgorithm(seed), "random")
                 };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(
