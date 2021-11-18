@@ -12,33 +12,33 @@ namespace Dora {
         public static Queue<SimulationScenario> GenerateArticleScenarios(int runs) {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 15;
-            var sizes = new List<(int, int)>() {(50,50), (100,100), (200,200)};
+            var sizes = new List<(int, int)>() {(200,200)};
             var maxRunTime = 40 * minute;// 1 * minute;
             SimulationEndCriteriaDelegate hasFinishedFunc = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker
                                                                                  .CoverageProportion > 0.99f); 
             var robotConstraints = new RobotConstraints(
-                broadcastRange: 15.0f,
+                broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: false,
                 senseNearbyRobotRange: 10f,
                 senseNearbyRobotBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
-                slamPositionInaccuracy: 0.2f,
+                slamPositionInaccuracy: 0.2f, // TODO
                 distributeSlam: true,
                 environmentTagReadRange: 4.0f
             );
             
             
-            for (int i = 0; i < runs; i++) {
+            for (int i = 1; i < runs; i++) { // TODO
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
                 {
-                    ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "voronoi"),
-                    ((seed) => new RandomExplorationAlgorithm(seed), "random"),
+                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"ssb"),
+                    //((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "voronoi"),
+                    //((seed) => new RandomExplorationAlgorithm(seed), "random"),
                     // ((seed) => new BrickAndMortar(robotConstraints, seed), "bnm"),
-                    // ((seed) => new SsbAlgorithm(robotConstraints, seed),"ssb"),
                 };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(
@@ -375,7 +375,7 @@ namespace Dora {
                     automaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
                     slamSynchronizeIntervalInTicks: 10,
-                    slamPositionInaccuracy: 0.0f, // TODO!
+                    slamPositionInaccuracy: 0.2f,
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f
                 );

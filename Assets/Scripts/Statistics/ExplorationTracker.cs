@@ -98,22 +98,17 @@ namespace Dora.Statistics {
                 _tilesCovered++;
                 _isCovered[robotPos.x, robotPos.y] = true;
             }
-                
         }
 
         private Vector2Int GetCoverageMapPosition(Vector2 robotPosition) {
             robotPosition = robotPosition - _collisionMap.ScaledOffset;
             return new Vector2Int((int)robotPosition.x, (int)robotPosition.y);
         }
-
-        private int tickCount = 0;
+        
         public void LogicUpdate(List<MonaRobot> robots) {
-            tickCount++;
             List<int> newlyExploredTriangles = new List<int>();
             float visibilityRange = GlobalSettings.LidarRange;
-            
-            if (tickCount % 2 == 0) return;
-            
+
             foreach (var robot in robots) {
                 SlamMap slamMap = null;
 

@@ -19,6 +19,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private RobotConstraints _constraints;
         private CoarseGrainedMap _navigationMap;
         private int _randomSeed;
+        // The robots must reserve their starting position at the begginning of the map
+        private bool _hasPerformedInitialReservation = false;
 
         private TileReservationSystem _reservationSystem;
 
@@ -77,6 +79,17 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
         public void UpdateLogic() {
             _currentTick++;
+
+            // Only triggered upon initial ticks of the simulation
+            if (!_hasPerformedInitialReservation) {
+                if (_reservationSystem.IsTileReservedByThisRobot(_navigationMap.GetCurrentTile()))
+                    _hasPerformedInitialReservation = true;
+                else {
+                    _reservationSystem.Reserve(new HashSet<Vector2Int>(){_navigationMap.GetCurrentTile()});
+                    return;
+                }
+            }
+            
             // If waiting mode was engaged last tick, then switch back to normal mode
             _isWaiting = false;
             int tickCount = 0;
@@ -87,7 +100,6 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 _backtrackingPath = null;
                 _nextBackTrackStep = null;
                 _controller.StopCurrentTask();
-                _controller.Move(0.5f, true);
             }
 
             ProcessIncomingCommunication();
@@ -736,16 +748,15 @@ namespace Dora.ExplorationAlgorithm.SSB {
             // Spiraling could not be fully simulated - No bids
             if(spiralFinishCost == null)
                 return bids;
+            
+            var robotPosInt = _navigationMap.GetCurrentTile();
 
             var reservedTiles = _reservationSystem.GetTilesReservedByOtherRobots();
             // Generate a bid based on the length of the calculated path to reach the bp (if present)
             foreach (var bp in backTrackingPoints) {
-                var potentialPath = _navigationMap.GetPath(bp, excludedTiles: reservedTiles);
-                if (potentialPath != null) {
-                    var pathLength = GetRobotPathLength(potentialPath);
-                    bids.Add(new Bid(bp, spiralFinishCost.Value + pathLength, _controller.GetRobotID()));
-                    // Debug.Log($"Robot: {_controller.GetRobotID()} added bid of cost {spiralFinishCost.Value + pathLength} for tile {bp}");
-                }
+                var distanceCost = Geometry.ManhattanDistance(robotPosInt, bp);
+                bids.Add(new Bid(bp, spiralFinishCost.Value + distanceCost, _controller.GetRobotID()));
+                // Debug.Log($"Robot: {_controller.GetRobotID()} added bid of cost {spiralFinishCost.Value + pathLength} for tile {bp}");
             }
             
             return bids;

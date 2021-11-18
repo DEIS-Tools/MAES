@@ -149,13 +149,13 @@ namespace Dora.MapGeneration.PathFinding {
             return _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
         }
         
-        public List<Vector2Int>? GetPath(Vector2Int target, HashSet<Vector2Int> excludedTiles) {
+        public List<Vector2Int>? GetPath(Vector2Int target, HashSet<Vector2Int> excludedTiles, float maxPathCost = float.MaxValue) {
             if (excludedTiles.Contains(target))
                 return null;
             
             var approxPosition = GetApproximatePosition();
             _excludedTiles = excludedTiles;
-            var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this); 
+            var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this, false); 
             _excludedTiles = new HashSet<Vector2Int>();
             return path;
         }
