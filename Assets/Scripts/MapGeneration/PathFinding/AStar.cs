@@ -11,6 +11,7 @@ using static Dora.MapGeneration.CardinalDirection.RelativeDirection;
 using JetBrains.Annotations;
 using UnityEngine;
 
+
 namespace Dora.MapGeneration {
     public class AStar : IPathFinder {
         
@@ -49,6 +50,7 @@ namespace Dora.MapGeneration {
         }
 
         public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false, bool acceptPartialPaths = false) {
+            
             var candidates = new List<AStarTile>();
             var bestCandidateOnTile = new Dictionary<Vector2Int, AStarTile>();
             var startTileHeuristic = OctileHeuristic(startCoordinate, targetCoordinate);
