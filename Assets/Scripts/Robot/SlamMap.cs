@@ -18,7 +18,7 @@ namespace Dora.Robot {
         private readonly int _widthInTiles, _heightInTiles;
         
         private SlamTileStatus[,] _tiles;
-        public SlamTileStatus[,] _currentlyVisibleTiles;
+        public Dictionary<Vector2Int, SlamTileStatus> _currentlyVisibleTiles;
         private SimulationMap<bool> _collisionMap;
         private IPathFinder _pathFinder;
 
@@ -49,7 +49,8 @@ namespace Dora.Robot {
             _scale = collisionMap.Scale;
             _scaledOffset = collisionMap.ScaledOffset;
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
-            _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
+
+            _currentlyVisibleTiles = new Dictionary<Vector2Int, SlamTileStatus>();
             this.random = new Random(randomSeed);
             _pathFinder = new AStar();
             
@@ -101,23 +102,22 @@ namespace Dora.Robot {
         }
 
         public void ResetRobotVisibility() {
-            _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
-            for (int x = 0; x < _currentlyVisibleTiles.GetLength(0); x++) {
-                for (int y = 0; y < _currentlyVisibleTiles.GetLength(1); y++) {
-                    _currentlyVisibleTiles[x, y] = SlamTileStatus.Unseen;
-                }
-            }
+            _currentlyVisibleTiles = new Dictionary<Vector2Int, SlamTileStatus>();
         }
 
         public void SetCurrentlyVisibleByTriangle(int triangleIndex, bool isOpen) {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
-            if (_currentlyVisibleTiles[localCoordinate.x, localCoordinate.y] != SlamTileStatus.Solid)
-                _currentlyVisibleTiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+
+            if (!_currentlyVisibleTiles.ContainsKey(localCoordinate)) {
+                _currentlyVisibleTiles[localCoordinate] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+            }
+            else if (_currentlyVisibleTiles[localCoordinate] != SlamTileStatus.Solid)
+                _currentlyVisibleTiles[localCoordinate] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
         }
 
         public SlamTileStatus GetVisibleTileByTriangleIndex(int triangleIndex) {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
-            return _currentlyVisibleTiles[localCoordinate.x, localCoordinate.y];
+            return _currentlyVisibleTiles[localCoordinate];
         }
 
         public SlamTileStatus GetTileByTriangleIndex(int triangleIndex) {
@@ -192,16 +192,7 @@ namespace Dora.Robot {
         }
 
         public Dictionary<Vector2Int, SlamTileStatus> GetCurrentlyVisibleTiles() {
-            var res = new Dictionary<Vector2Int, SlamTileStatus>();
-            
-            for (int x = 0; x < _widthInTiles; x++) {
-                for (int y = 0; y < _heightInTiles; y++) {
-                    if (_currentlyVisibleTiles[x, y] != SlamTileStatus.Unseen)
-                        res[new Vector2Int(x, y)] = _currentlyVisibleTiles[x, y];
-                }
-            }
-
-            return res;
+            return _currentlyVisibleTiles;
         }
 
         public SlamTileStatus GetStatusOfTile(Vector2Int tile) {

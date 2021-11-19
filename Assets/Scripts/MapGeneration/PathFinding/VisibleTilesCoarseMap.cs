@@ -36,7 +36,7 @@ namespace Dora.MapGeneration.PathFinding {
             var slamTile = ToSlamMapCoordinate(coordinate);
 
             // Anything not currently visible is solid
-            if (_slamMap._currentlyVisibleTiles[slamTile.x, slamTile.y] == SlamMap.SlamTileStatus.Unseen)
+            if (_slamMap._currentlyVisibleTiles[slamTile] == SlamMap.SlamTileStatus.Unseen)
                 return true;
 
             // Check if the coarse tile is actually solid
@@ -56,7 +56,9 @@ namespace Dora.MapGeneration.PathFinding {
             var slamTile = ToSlamMapCoordinate(coordinate);
 
             // Anything not currently visible is solid
-            if (_slamMap._currentlyVisibleTiles[slamTile.x, slamTile.y] == SlamMap.SlamTileStatus.Unseen)
+            if (!_slamMap._currentlyVisibleTiles.ContainsKey(slamTile))
+                return true;
+            if (_slamMap._currentlyVisibleTiles[slamTile] == SlamMap.SlamTileStatus.Unseen)
                 return true;
 
             // Check if the coarse tile is actually solid
