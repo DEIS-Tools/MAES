@@ -10,10 +10,8 @@ using Dora.Robot;
 using Dora.Utilities;
 using JetBrains.Annotations;
 using UnityEditor;
-using UnityEditor.UI;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.WSA;
 using Debug = UnityEngine.Debug;
 using Random = System.Random;
 
@@ -236,7 +234,8 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
                 _currentTargetPath = null;
                 return true;
             }
-
+            
+            
             if (_robotController.SenseNearbyRobots().Count > 0) {
                 switch (_currentSearchPhase) {
                     case VoronoiSearchPhase.SEARCH_MODE:
