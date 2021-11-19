@@ -27,7 +27,8 @@ namespace Dora {
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
-                environmentTagReadRange: 4.0f
+                environmentTagReadRange: 4.0f,
+                lidarRange: 7f
             );
             
             
@@ -141,7 +142,8 @@ namespace Dora {
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: false,
-                    environmentTagReadRange: 4.0f
+                    environmentTagReadRange: 4.0f,
+                    lidarRange: 7f
                 );
 
                 if (i % 2 != 0) {
@@ -222,7 +224,8 @@ namespace Dora {
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: false,
-                    environmentTagReadRange: 4.0f
+                    environmentTagReadRange: 4.0f,
+                    lidarRange: 7f
                 );
 
                 if (i % 2 == 0) {
@@ -302,7 +305,8 @@ namespace Dora {
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.5f,
                     distributeSlam: false,
-                    environmentTagReadRange: 4.0f
+                    environmentTagReadRange: 4.0f,
+                    lidarRange: 7f
                 );
                 
                 /*scenarios.Enqueue(new SimulationScenario(
@@ -377,7 +381,8 @@ namespace Dora {
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: true,
-                    environmentTagReadRange: 4.0f
+                    environmentTagReadRange: 4.0f,
+                    lidarRange: 7f
                 );
 
                 // scenarios.Enqueue(new SimulationScenario(

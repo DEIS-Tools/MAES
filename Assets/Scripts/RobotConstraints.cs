@@ -22,8 +22,10 @@ namespace Dora {
 
         public readonly float MaxRayCastRange;
 
+        public readonly float LidarRange;
 
-        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyRobotRange, bool senseNearbyRobotBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks, int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam, float environmentTagReadRange) : this() {
+
+        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyRobotRange, bool senseNearbyRobotBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks, int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam, float environmentTagReadRange, float lidarRange) : this() {
             BroadcastRange = broadcastRange;
             BroadcastBlockedByWalls = broadcastBlockedByWalls;
             SenseNearbyRobotRange = senseNearbyRobotRange;
@@ -36,7 +38,8 @@ namespace Dora {
             DistributeSlam = distributeSlam;
             
             EnvironmentTagReadRange = environmentTagReadRange;
-            
+            LidarRange = lidarRange;
+
             MaxRayCastRange = Math.Max(SenseNearbyRobotRange, BroadcastRange);
         }
 
