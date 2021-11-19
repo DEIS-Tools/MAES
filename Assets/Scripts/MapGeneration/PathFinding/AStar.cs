@@ -48,6 +48,9 @@ namespace Dora.MapGeneration {
             return GetPath(startCoordinate, targetCoordinate, pathFindingMap, true, acceptPartialPaths);
         }
 
+        private static int maxTickCountPath = 0;
+        private static int maxTickCountNoPath = 0;
+
         public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false, bool acceptPartialPaths = false) {
             var candidates = new List<AStarTile>();
             var bestCandidateOnTile = new Dictionary<Vector2Int, AStarTile>();
@@ -61,8 +64,13 @@ namespace Dora.MapGeneration {
                 var currentTile = DequeueBestCandidate(candidates);
                 
                 var currentCoordinate = new Vector2Int(currentTile.X, currentTile.Y);
-                if (currentCoordinate == targetCoordinate)
+                if (currentCoordinate == targetCoordinate) {
+                    if (loopCount > maxTickCountPath) 
+                        Debug.Log($"Max successful path loops: {maxTickCountPath = loopCount}");
+                    
                     return currentTile.Path();
+                }
+                    
 
                 foreach (var dir in CardinalDirection.AllDirections()) {
                     Vector2Int candidateCoord = currentCoordinate + dir.Vector;
@@ -94,6 +102,9 @@ namespace Dora.MapGeneration {
                 if (loopCount > 100000) {
                     throw new Exception("A* could not find path within 10000 loop runs");
                 }
+                
+                if (loopCount > 5000)
+                    return null;
 
                 loopCount++;
             }
@@ -113,6 +124,9 @@ namespace Dora.MapGeneration {
                 return GetPath(startCoordinate, new Vector2Int(closestTile.X, closestTile.Y),
                     pathFindingMap, beOptimistic, false);
             }
+
+            if (loopCount > maxTickCountNoPath)
+                Debug.Log($"Failed to find path after {maxTickCountNoPath = loopCount} cycles");
 
             return null;
         }

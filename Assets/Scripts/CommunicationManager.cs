@@ -126,13 +126,16 @@ namespace Dora {
             else if (angleMod >= 44.95f && angleMod <= 45f) angle -= 0.005f;
                 
             var wallsTravelledThrough = 0;
-            _rayTracingMap.Raytrace(pos1, angle, distance,
-                (_, cellIsSolid) => {
-                    if (cellIsSolid) {
-                        wallsTravelledThrough++;
-                    }
-                    return true;
-                });
+            if (_robotConstraints.BroadcastBlockedByWalls) { // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                _rayTracingMap.Raytrace(pos1, angle, distance,
+                    (_, cellIsSolid) => {
+                        if (cellIsSolid) {
+                            wallsTravelledThrough++;
+                        }
+                        return true;
+                    });
+            }
+            
             return new CommunicationInfo(distance, angle, wallsTravelledThrough);
         }
 

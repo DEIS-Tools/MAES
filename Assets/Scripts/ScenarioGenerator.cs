@@ -29,9 +29,8 @@ namespace Dora {
                 distributeSlam: true,
                 environmentTagReadRange: 4.0f
             );
-            
-            
-            for (int i = 0; i < runs; i++) { // TODO
+
+            for (int i = 0; i < runs; i++) {
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
                 {
