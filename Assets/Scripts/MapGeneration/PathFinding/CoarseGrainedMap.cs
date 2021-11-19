@@ -114,12 +114,12 @@ namespace Dora.MapGeneration.PathFinding {
         }
 
         public List<Vector2Int> FromSlamMapCoordinates(List<Vector2Int> slamCoords) {
-            var CoarseCoords = new HashSet<Vector2Int>();
+            var coarseCoords = new HashSet<Vector2Int>();
             foreach(var slamCoord in slamCoords) {
-                CoarseCoords.Add(FromSlamMapCoordinate(slamCoord));
+                coarseCoords.Add(FromSlamMapCoordinate(slamCoord));
             }
             
-            return CoarseCoords.ToList();
+            return coarseCoords.ToList();
         }
 
         // Converts the given 
