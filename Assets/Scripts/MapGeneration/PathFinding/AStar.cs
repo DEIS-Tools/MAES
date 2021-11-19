@@ -151,9 +151,9 @@ namespace Dora.MapGeneration {
                 var currentCoordinate = new Vector2Int(currentTile.X, currentTile.Y);
                 
                 // Skip if a better candidate has been added to the queue since this was added 
-                if(bestCandidateOnTile.ContainsKey(currentCoordinate) && bestCandidateOnTile[currentCoordinate] != startingTile)
+                if(bestCandidateOnTile.ContainsKey(currentCoordinate) && bestCandidateOnTile[currentCoordinate] != currentTile)
                     continue;
-                
+
                 if (currentCoordinate == targetCoordinate) {
                     if (loopCount > maxTickCountPath) 
                         Debug.Log($"Max successful path loops: {maxTickCountPath = loopCount}");
@@ -188,7 +188,7 @@ namespace Dora.MapGeneration {
                     throw new Exception("A* could not find path within 10000 loop runs");
                 }
                 
-                if (loopCount > 15000) // TODO
+                if (loopCount > 1000) // TODO
                     return null;
 
                 loopCount++;

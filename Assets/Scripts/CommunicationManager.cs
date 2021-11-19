@@ -126,7 +126,7 @@ namespace Dora {
             else if (angleMod >= 44.95f && angleMod <= 45f) angle -= 0.005f;
                 
             var wallsTravelledThrough = 0;
-            if (_robotConstraints.BroadcastBlockedByWalls) { // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if (_robotConstraints.BroadcastBlockedByWalls || _robotConstraints.SenseNearbyRobotBlockedByWalls) {
                 _rayTracingMap.Raytrace(pos1, angle, distance,
                     (_, cellIsSolid) => {
                         if (cellIsSolid) {

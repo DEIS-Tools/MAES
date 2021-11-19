@@ -16,12 +16,14 @@ namespace Dora {
             var maxRunTime = 60 * minute;// 1 * minute;
             SimulationEndCriteriaDelegate hasFinishedFunc = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker
-                                                                                 .CoverageProportion > 0.99f); 
+                                                                                 .CoverageProportion > 0.99f);
+            
+            
             var robotConstraints = new RobotConstraints(
                 broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: false,
                 senseNearbyRobotRange: 10f,
-                senseNearbyRobotBlockedByWalls: true,
+                senseNearbyRobotBlockedByWalls: false,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
