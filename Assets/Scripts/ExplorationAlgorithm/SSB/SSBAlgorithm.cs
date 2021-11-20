@@ -442,6 +442,10 @@ namespace Dora.ExplorationAlgorithm.SSB {
             return false;
         }
 
+        private bool IsSolidOrExplored(RelativeDirection direction) {
+            return IsTileSolidOrExplored(_navigationMap.GetRelativeNeighbour(direction));
+        }
+        
         // Determine whether the tile is physically blocked or marked as explored
         private bool IsTileSolidOrExplored(Vector2Int tileCoord) {
             return _navigationMap.GetTileStatus(tileCoord) == SlamMap.SlamTileStatus.Solid 
@@ -542,7 +546,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 if (!IsTileSolidOrExplored(front)) _backTrackingPoints.Add(front);
                 return _navigationMap.GetRelativeNeighbour(_oppositeLateralSide);
             } 
-                
+            
+            if (!IsTileSolidOrExplored(ols)) _backTrackingPoints.Add(ols);
             return _navigationMap.GetRelativeNeighbour(Front);
         }
 
@@ -555,21 +560,21 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 return _referenceLateralSide;
             if (frontBlocked) 
                 return _oppositeLateralSide;
-            return RelativeDirection.Front;
+            return Front;
         }
 
         // Adds backtracking points as specified by the algorithm presented in the SSB paper
         // In the SSB variation of the BP identification, a tile is only considered to be a BP if
         // it has solid tile to its immediate right or left
         private void DetectBacktrackingPoints() {
-            if (!IsBlocked(Right)) {
-                if (IsBlocked(Front) || IsBlocked(FrontRight) || IsBlocked(RearRight))
-                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Right)); // TODO? temp points?
+            if (!IsSolidOrExplored(Right)) {
+                if (IsSolidOrExplored(Front) || IsSolidOrExplored(FrontRight) || IsSolidOrExplored(RearRight))
+                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Right)); 
             }
 
-            if (!IsBlocked(Left)) {
-                if (IsBlocked(Front) || IsBlocked(FrontLeft) || IsBlocked(RearLeft))
-                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Left)); // TODO temp points?
+            if (!IsSolidOrExplored(Left)) {
+                if (IsSolidOrExplored(Front) || IsSolidOrExplored(FrontLeft) || IsSolidOrExplored(RearLeft))
+                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Left)); 
             }
         }
 
