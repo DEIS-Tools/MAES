@@ -8,7 +8,6 @@ using Dora.MapGeneration.PathFinding;
 using Dora.Robot;
 using Dora.Utilities;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using static Dora.MapGeneration.CardinalDirection;
 using static Dora.MapGeneration.CardinalDirection.RelativeDirection;
 
@@ -451,38 +450,32 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private Vector2Int? FindBestBackTrackingTarget() {
             // Remove all bps that have been explored since discovery
             _backTrackingPoints.RemoveWhere(IsTileBlocked);
-
-            // Find path to each bp, and exclude bps where the path does not exist
-            var robotPosition = _navigationMap.GetApproximatePosition();
-            var bpPaths = _backTrackingPoints
-                .Select(bp => (bp, _navigationMap.GetPath(bp)))
-                .Where(path => path.Item2 != null)
-                .ToList();
             
-            if (bpPaths.Count == 0) {
+            if (_backTrackingPoints.Count == 0) {
                 // If no bps are within reach, then try to locate one nearby
                 var nearbyBp = FindNearbyBP(_backTrackingPoints);
                 if (nearbyBp != null) {
                     // If location was successful, then try to find target again
                     _backTrackingPoints.Add(nearbyBp.Value);
-                    return FindBestBackTrackingTarget();
                 } else {
                     return null;
                 }
             }
-            
-            Vector2Int minDistanceBp = bpPaths[0].bp;
-            var minDist = GetRobotPathLength(bpPaths[0].Item2!);
-            foreach (var item in bpPaths.Skip(1)) {
-                var dist = GetRobotPathLength(bpPaths[0].Item2!);
-                if (dist < minDist) {
-                    minDist = dist;
-                    minDistanceBp = item.bp;
-                }
+
+            // Order bps by euclidean distance
+            var robotPosition = _navigationMap.GetCurrentTile();
+            var orderedBps = _backTrackingPoints
+                .OrderBy(bp => Vector2Int.Distance(robotPosition, bp));
+
+            // Find closest tile that has an eligible path
+            var reservedTiles = _reservationSystem.GetTilesReservedByOtherRobots();
+            foreach (var bp in orderedBps) {
+                var path = _navigationMap.GetPathSteps(bp, reservedTiles);
+                if (path != null)
+                    return bp;
             }
             
-            //Debug.Log($"Robot {_controller.GetRobotID()} chose tile from local list: {minDistanceBp}");
-            return minDistanceBp;
+            return null;
         }
 
         // Looks through nearby tiles to find a bp
@@ -750,8 +743,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 return bids;
             
             var robotPosInt = _navigationMap.GetCurrentTile();
-
-            var reservedTiles = _reservationSystem.GetTilesReservedByOtherRobots();
+            
             // Generate a bid based on the length of the calculated path to reach the bp (if present)
             foreach (var bp in backTrackingPoints) {
                 var distanceCost = Geometry.ManhattanDistance(robotPosInt, bp);

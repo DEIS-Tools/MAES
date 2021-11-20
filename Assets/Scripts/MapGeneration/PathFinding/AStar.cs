@@ -10,6 +10,8 @@ using UnityEngine;
 using static Dora.MapGeneration.CardinalDirection.RelativeDirection;
 using JetBrains.Annotations;
 using UnityEngine;
+using Priority_Queue;
+
 
 namespace Dora.MapGeneration {
     public class AStar : IPathFinder {
@@ -20,6 +22,7 @@ namespace Dora.MapGeneration {
             public readonly float Heuristic;
             public readonly float Cost;
             public readonly float TotalCost;
+            public readonly int TotalCostInt;
 
             public AStarTile(int x, int y, AStarTile? parent, float heuristic, float cost) {
                 X = x;
@@ -28,8 +31,9 @@ namespace Dora.MapGeneration {
                 Heuristic = heuristic;
                 this.Cost = cost;
                 this.TotalCost = cost + heuristic;
+                this.TotalCostInt = (int) (TotalCost * 1000f);
             }
-            
+
             public List<Vector2Int> Path() {
                 var path = new List<Vector2Int>();
 
@@ -49,20 +53,26 @@ namespace Dora.MapGeneration {
         }
 
         public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false, bool acceptPartialPaths = false) {
-            var candidates = new List<AStarTile>();
+            IPriorityQueue<AStarTile, float> candidates = new SimplePriorityQueue<AStarTile, float>();
             var bestCandidateOnTile = new Dictionary<Vector2Int, AStarTile>();
             var startTileHeuristic = OctileHeuristic(startCoordinate, targetCoordinate);
             var startingTile = new AStarTile(startCoordinate.x, startCoordinate.y, null, startTileHeuristic, 0);
-            candidates.Add(startingTile);
+            candidates.Enqueue(startingTile, startingTile.TotalCost);
             bestCandidateOnTile[startCoordinate] = startingTile;
 
             int loopCount = 0; 
             while (candidates.Count > 0) {
-                var currentTile = DequeueBestCandidate(candidates);
                 
+                var currentTile = candidates.Dequeue();
                 var currentCoordinate = new Vector2Int(currentTile.X, currentTile.Y);
-                if (currentCoordinate == targetCoordinate)
+                
+                // Skip if a better candidate has been added to the queue since this was added 
+                if(bestCandidateOnTile.ContainsKey(currentCoordinate) && bestCandidateOnTile[currentCoordinate] != currentTile)
+                    continue;
+
+                if (currentCoordinate == targetCoordinate) 
                     return currentTile.Path();
+                
 
                 foreach (var dir in CardinalDirection.AllDirections()) {
                     Vector2Int candidateCoord = currentCoordinate + dir.Vector;
@@ -82,18 +92,17 @@ namespace Dora.MapGeneration {
                     // Check if this path is 'cheaper' than any previous path to this candidate tile 
                     if (!bestCandidateOnTile.ContainsKey(candidateCoord) || bestCandidateOnTile[candidateCoord].TotalCost > candidateCost) {
                         var newTile = new AStarTile(candidateCoord.x, candidateCoord.y, currentTile, heuristic, cost);
-                        // Remove previous best entry if present
-                        if(bestCandidateOnTile.ContainsKey(candidateCoord))
-                            candidates.Remove(bestCandidateOnTile[candidateCoord]);
                         // Save this as the new best candidate for this tile
                         bestCandidateOnTile[candidateCoord] = newTile;
-                        candidates.Add(newTile);
+                        candidates.Enqueue(newTile, newTile.TotalCost);
                     }
                 }
 
-                if (loopCount > 100000) {
-                    throw new Exception("A* could not find path within 10000 loop runs");
-                }
+                if (loopCount > 8000) {
+                    Debug.Log("A star loop count exceeded 8000, stopping pathfinding prematurely");
+                    return null;
+                } 
+                    
 
                 loopCount++;
             }
