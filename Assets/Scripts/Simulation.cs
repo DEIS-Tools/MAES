@@ -46,7 +46,7 @@ namespace Dora {
             
             _communicationManager.SetRobotReferences(_robots);
 
-            ExplorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer);
+            ExplorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer, scenario.RobotConstraints);
         }
 
         public void SetSelectedRobot([CanBeNull] MonaRobot robot) {

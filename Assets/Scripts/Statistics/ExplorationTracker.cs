@@ -36,6 +36,7 @@ namespace Dora.Statistics {
         private readonly int _coverableTiles;
         private int _tilesCovered = 0;
         private bool _isFirstTick = true;
+        private RobotConstraints _constraints;
 
         public List<SnapShot<float>> _coverSnapshots = new List<SnapShot<float>>();
         public List<SnapShot<float>> _exploreSnapshots = new List<SnapShot<float>>();
@@ -50,10 +51,11 @@ namespace Dora.Statistics {
             }
         }
 
-        public ExplorationTracker(SimulationMap<bool> collisionMap, ExplorationVisualizer explorationVisualizer) {
+        public ExplorationTracker(SimulationMap<bool> collisionMap, ExplorationVisualizer explorationVisualizer, RobotConstraints constraints) {
             var explorableTriangles = 0;
             _collisionMap = collisionMap;
             _explorationVisualizer = explorationVisualizer;
+            _constraints = constraints;
             _explorationMap = collisionMap.FMap(isCellSolid => {
                 if (!isCellSolid)
                     explorableTriangles++;
@@ -121,7 +123,7 @@ namespace Dora.Statistics {
             }
             
             List<int> newlyExploredTriangles = new List<int>();
-            float visibilityRange = GlobalSettings.LidarRange;
+            float visibilityRange = _constraints.LidarRange;
 
             foreach (var robot in robots) {
                 SlamMap slamMap = null;
@@ -164,7 +166,7 @@ namespace Dora.Statistics {
             if (_selectedRobot == null)
                 _explorationVisualizer.SetExplored(newlyExploredTriangles);
             else
-                _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, false);
+                _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, true);
 
             _currentTick++;
         }
@@ -174,7 +176,7 @@ namespace Dora.Statistics {
 
             if (robot != null) { 
                 // Update map to show slam map for given robot
-                _explorationVisualizer.SetExplored(robot.Controller.SlamMap, false);
+                _explorationVisualizer.SetExplored(robot.Controller.SlamMap, true);
             }
             else {
                 // Update map to show exploration progress for all robots

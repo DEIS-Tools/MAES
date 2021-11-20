@@ -9,16 +9,114 @@ using static Dora.MapGeneration.RobotSpawner;
 
 namespace Dora {
     public class ScenarioGenerator {
-        const int minute = 60;
-        public static Queue<SimulationScenario> GenerateArticleScenarios(int runs) {
+         private const int Minute = 60;
+
+        public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
+            Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
+            var numberOfRobots = 1;
+            var maxRunTime = 60 * Minute;
+            var width = 50;
+            var height = 50;
+            SimulationEndCriteriaDelegate hasFinishedFunc =
+                (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime);
+
+            var robotConstraints = new RobotConstraints(
+                broadcastRange: float.MaxValue,
+                broadcastBlockedByWalls: false,
+                senseNearbyRobotRange: 7f,
+                senseNearbyRobotBlockedByWalls: true,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f, 
+                distributeSlam: true,
+                environmentTagReadRange: 4.0f,
+                lidarRange: 7.0f
+            );
+
+            for (int i = 0; i < 1; i++) {
+                var randomSeed = i;
+                
+                var caveConfig = new CaveMapConfig(
+                    width,
+                    height,
+                    randomSeed,
+                    4,
+                    4,
+                    45,
+                    10,
+                    10,
+                    1,
+                    1f);
+                var officeConfig = new OfficeMapConfig(
+                    width,
+                    height,
+                    randomSeed,
+                    20,
+                    4,
+                    6,
+                    2,
+                    2,
+                    85,
+                    1,
+                    1f);
+                
+                var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
+                {
+                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
+                    ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
+                    ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
+                    // TODO: Include The next frontier
+                };
+
+                foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
+                    scenarios.Enqueue(new SimulationScenario(
+                        seed: randomSeed,
+                        hasFinishedSim: hasFinishedFunc,
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                            map, 
+                            randomSeed, 
+                            numberOfRobots, 
+                            0.6f,
+                            createAlgorithmDelegate),
+                        robotConstraints: robotConstraints,
+                        $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
+                    ));
+                    scenarios.Enqueue(new SimulationScenario(
+                        seed: randomSeed,
+                        hasFinishedSim: hasFinishedFunc,
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                            map, 
+                            randomSeed, 
+                            numberOfRobots, 
+                            0.6f,
+                            new Coord(0,0),
+                            createAlgorithmDelegate),
+                        robotConstraints: robotConstraints,
+                        $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                    ));
+                }
+            }
+            
+            
+            
+
+            return scenarios;
+        }
+        
+        
+        public static Queue<SimulationScenario> GenerateArticleScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 15;
+            var runs = 20;
             var sizes = new List<(int, int)>() {(200,200)};
-            var maxRunTime = 60 * minute;// 1 * minute;
-            SimulationEndCriteriaDelegate hasFinishedFunc = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
+            var maxRunTime = 60 * Minute;
+            SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker
-                                                                                 .CoverageProportion > 0.99f); 
-            var robotConstraints = new RobotConstraints(
+                                                                                 .CoverageProportion > 0.995f); 
+            var robotConstraintsBlockedByWalls = new RobotConstraints(
                 broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: false,
                 senseNearbyRobotRange: 10f,
@@ -28,18 +126,39 @@ namespace Dora {
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
-                environmentTagReadRange: 4.0f
+                environmentTagReadRange: 4.0f,
+                lidarRange: 7f
+            );
+            
+            // This will short circuit the population of the adjacency, which 
+            // can improve the simulation performance of algorithms, where communication
+            // is not blocked by walls significantly, e.g. SSB.
+            // This does not effect the performance in terms of exploration
+            // since if all signals can travels through walls, we don't care about ray tracing and counting number
+            // of walls encountered.
+            var robotConstraintsThroughWalls = new RobotConstraints(
+                broadcastRange: float.MaxValue,
+                broadcastBlockedByWalls: false,
+                senseNearbyRobotRange: 10f,
+                senseNearbyRobotBlockedByWalls: false,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f, 
+                distributeSlam: true,
+                environmentTagReadRange: 4.0f,
+                lidarRange: 7f
             );
             
             
-            for (int i = 0; i < runs; i++) { // TODO
+            for (int i = 0; i < runs; i++) { 
                 int randomSeed = i;
-                var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
+                var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
                 {
-                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"ssb"),
-                    //((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "voronoi"),
-                    //((seed) => new RandomExplorationAlgorithm(seed), "random"),
-                    // ((seed) => new BrickAndMortar(robotConstraints, seed), "bnm"),
+                    ("SSB", (seed) => new SsbAlgorithm(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
+                    ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsBlockedByWalls, 1), robotConstraintsBlockedByWalls),
+                    ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsThroughWalls),
+                    ("BNM", (seed) => new BrickAndMortar(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
                 };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(
@@ -65,10 +184,11 @@ namespace Dora {
                         85,
                         1,
                         1f);
-                    foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
+                    
+                    foreach (var (algorithmName, createAlgorithmDelegate, constraints) in algorithmsAndFileNames) {
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
-                            hasFinishedSim: hasFinishedFunc,
+                            hasFinishedSim: shouldEndSim,
                             mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                                 map, 
@@ -76,12 +196,12 @@ namespace Dora {
                                 numberOfRobots, 
                                 0.6f,
                                 createAlgorithmDelegate),
-                            robotConstraints: robotConstraints,
+                            robotConstraints: constraints,
                             $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
                         ));
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
-                            hasFinishedSim: hasFinishedFunc,
+                            hasFinishedSim: shouldEndSim,
                             mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                                 map, 
@@ -90,7 +210,7 @@ namespace Dora {
                                 0.6f,
                                 new Coord(0,0),
                                 createAlgorithmDelegate),
-                            robotConstraints: robotConstraints,
+                            robotConstraints: constraints,
                             $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
                         ));
                     }
@@ -131,18 +251,18 @@ namespace Dora {
                     1,
                     1f);
 
-                
                 var robotConstraints = new RobotConstraints(
-                    broadcastRange: 15.0f,
-                    broadcastBlockedByWalls: true,
+                    broadcastRange: float.MaxValue,
+                    broadcastBlockedByWalls: false,
                     senseNearbyRobotRange: 10f,
                     senseNearbyRobotBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
                     slamSynchronizeIntervalInTicks: 10,
-                    slamPositionInaccuracy: 0.2f,
-                    distributeSlam: false,
-                    environmentTagReadRange: 4.0f
+                    slamPositionInaccuracy: 0.2f, 
+                    distributeSlam: true,
+                    environmentTagReadRange: 4.0f,
+                    lidarRange: 7f
                 );
 
                 if (i % 2 != 0) {
@@ -223,7 +343,8 @@ namespace Dora {
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: false,
-                    environmentTagReadRange: 4.0f
+                    environmentTagReadRange: 4.0f,
+                    lidarRange: 7.0f
                 );
 
                 if (i % 2 == 0) {
@@ -303,7 +424,8 @@ namespace Dora {
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.5f,
                     distributeSlam: false,
-                    environmentTagReadRange: 4.0f
+                    environmentTagReadRange: 4.0f,
+                    lidarRange: 7.0f
                 );
                 
                 /*scenarios.Enqueue(new SimulationScenario(
@@ -378,7 +500,8 @@ namespace Dora {
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: true,
-                    environmentTagReadRange: 4.0f
+                    environmentTagReadRange: 4.0f,
+                    lidarRange: 7.0f
                 );
 
                 // scenarios.Enqueue(new SimulationScenario(
@@ -430,8 +553,8 @@ namespace Dora {
                 1f);
 
             var officeConfig = new OfficeMapConfig(
-                100,
-                100,
+                50,
+                50,
                 randomSeed,
                 58,
                 4,    
@@ -451,21 +574,21 @@ namespace Dora {
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f,
-                distributeSlam: false,
-                environmentTagReadRange: 4.0f
+                distributeSlam: true,
+                environmentTagReadRange: 4.0f,
+                lidarRange: 7f
             );
             
             scenarios.Enqueue(new SimulationScenario(
                 seed: randomSeed, 
-                hasFinishedSim: simulation => simulation.SimulateTimeSeconds >= 60 * minute,
+                hasFinishedSim: simulation => simulation.SimulateTimeSeconds >= 60 * Minute,
                 mapSpawner: generator => generator.GenerateOfficeMap(officeConfig, 2.0f),
-                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                     map,
                     randomSeed,
-                    1,
+                    5,
                     0.6f,
-                    new Coord(0,0),
-                    (seed) => new TnfExplorationAlgorithm(3, 9)),
+                    (seed) => new TnfExplorationAlgorithm(4, 8)),
                 robotConstraints: robotConstraints,
                 "TNF-office-test-" + randomSeed
             ));

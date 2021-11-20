@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Dora.MapGeneration.PathFinding;
 using Dora.Robot;
 using Dora.Utilities;
@@ -43,6 +44,9 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
 
         private List<Frontier> _frontiers;
         private static int _tagId = 0;
+        private List<CommunicationManager.SensedObject<int>> _lastSeenNeighbours;
+
+        private bool _currentlyMitigatingCollision = false;
 
         private Vector2Int _robotPos = new Vector2Int(0, 0);
         private LinkedList<PathStep> _path;
@@ -51,6 +55,7 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         private const float MinimumMoveDistance = 0.1f;
 
         private int _logicTicksSinceLastCommunication = 0;
+        private bool _bonked = false;
 
 
         private class Frontier {
@@ -106,22 +111,17 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         }
 
         private float CoordinationFactor(Frontier frontier) {
-            var neighbours = _robotController.SenseNearbyRobots();
-            if (_robotTnfStatus != TnfStatus.Communicating) {
-                if (neighbours.Count <= 0) {
-                    return 0;
-                }
-                _robotTnfStatus = TnfStatus.Communicating;
-                _robotController.Broadcast((_map, _robotController.GetRobotID()));
+            if (_lastSeenNeighbours.Count <= 0) {
+                return 0;
             }
 
             var sum = 0f;
-            foreach (var neighbour in neighbours) {
+            foreach (var neighbour in _lastSeenNeighbours) {
                 var pos = _robotPos + Vector2Int.RoundToInt(Geometry.VectorFromDegreesAndMagnitude(neighbour.Angle, neighbour.Distance));
                 var normalizerConstant = _frontiers.Max(f => f.cells.Select(c => Vector2Int.Distance(pos, c.Item1)).Max());
                 sum += WavefrontNormalized(frontier, pos, normalizerConstant);
             }
-            return sum;
+            return sum *5;
         }
 
         private float UtilityFunction(Frontier frontier, float normalizerConstant) {
@@ -130,13 +130,28 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
 
         public void UpdateLogic() {
 
+            var id = _robotController.GetRobotID();
             _robotPos = _map.GetCurrentPositionSlamTile();
-            _logicTicksSinceLastCommunication++;
-            _logicTicksSinceLastCommunication %= 15;
-            if (_robotController.HasCollidedSinceLastLogicTick()) {
-                _robotController.StopCurrentTask();
-                CollisionMitigation();
+            
+            if (_logicTicksSinceLastCommunication == 0) {
+                _lastSeenNeighbours = _robotController.SenseNearbyRobots();
+                if (_lastSeenNeighbours.Any()) {
+                    _robotController.StopCurrentTask();
+                    _currentlyMitigatingCollision = false;
+                    _robotTnfStatus = TnfStatus.Communicating;
+                    _robotController.Broadcast((_map, _robotController.GetRobotID()));
+                }
+                _logicTicksSinceLastCommunication++;
                 return;
+            }
+            _logicTicksSinceLastCommunication++;
+            _logicTicksSinceLastCommunication %= 40;
+            
+            if (_robotController.IsCurrentlyColliding() && !_currentlyMitigatingCollision) {
+                _currentlyMitigatingCollision = true;
+                _robotController.StopCurrentTask();
+                _bonked = true;
+                _robotTnfStatus = TnfStatus.AwaitCollisionMitigation;
             }
 
             switch (_robotTnfStatus) {
@@ -163,50 +178,75 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         }
 
         private void CollisionMitigation() {
-            _robotTnfStatus = TnfStatus.AwaitNextFrontier;
             if (_robotController.GetStatus() != RobotStatus.Idle) return;
-            _robotController.Move(.5f, true);
+            if (_bonked) {
+                _bonked = false;
+                _robotController.Move(.75f, true);
+                return;
+            }
+            var opponents = _robotController.SenseNearbyRobots();
+            
+            if (opponents.Any()) {
+                // Someone saw you. Find someplace a bit away from them and try to find a new frontier.
+                _currentlyMitigatingCollision = true;
+                var escapeTarget = new Vector2Int(0, 0);
+                foreach (var bot in opponents) {
+                    var v = Geometry.VectorFromDegreesAndMagnitude(bot.Angle, bot.Distance);
+                    escapeTarget += Vector2Int.RoundToInt(v);
+                }
+                // escapeTarget /= Mathf.Max(opponents.Count / 2, 1);
+                escapeTarget = _robotPos + escapeTarget;
+                escapeTarget = _map.GetCoarseMap().FromSlamMapCoordinate(escapeTarget);
+                
+                _path.Clear(); // No need to follow your old path - you're gonna get a new frontier from your new position.
+                _nextTileInPath = new PathStep(_robotPos, escapeTarget, new HashSet<Vector2Int>());
+                _robotTnfStatus = TnfStatus.AwaitMoving;
+                return;
+            }
+            _currentlyMitigatingCollision = false;
+            // No one saw you. Just scooch backwards a bit and try to find a new frontier, buddy!
+            _robotTnfStatus = TnfStatus.AwaitNextFrontier;
         }
 
         private void AwaitCommunication() {
             var received = _robotController.ReceiveBroadcast();
-            if (received.Any()) {
-                var newMaps = new List<SlamMap>();
-                foreach (var package in received) {
-                    var pack = ((SlamAlgorithmInterface, int)) package;
-                    newMaps.Add(pack.Item1 as SlamMap);
-                }
-                SlamMap.Combine(_map as SlamMap, newMaps);
+            if (!received.Any()) {
                 _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+                return;
             }
+            var newMaps = new List<SlamMap>();
+            foreach (var package in received) {
+                var pack = ((SlamAlgorithmInterface, int)) package;
+                newMaps.Add(pack.Item1 as SlamMap);
+            }
+            SlamMap.Combine(_map as SlamMap, newMaps);
+            _robotTnfStatus = TnfStatus.AwaitNextFrontier;
 
         }
 
         [CanBeNull]
         private Frontier CalculateNextFrontier(Vector2Int currentPosition) {
-            // Get frontiers
-            if (_frontiers != null) {
-                foreach (var frontier in _frontiers) {
-                    UnVisualizeFrontier(frontier);
-                }
-            }
+            // if (_frontiers != null) {
+            //     foreach (var frontier in _frontiers) {
+            //         UnVisualizeFrontier(frontier);
+            //     }
+            // }
             _frontiers = GetFrontiers();
-
-            // For each frontier:
+            
             if (_frontiers.Count <= 0) {
                 return null;
             }
             var normalizerConstant = _frontiers.Max(f => f.cells.Select(c => Vector2Int.Distance(currentPosition, c.Item1)).Max());
             foreach (var frontier in _frontiers) {
                 frontier.UtilityValue = UtilityFunction(frontier, normalizerConstant);
-                VisualizeFrontier(frontier);
+                // VisualizeFrontier(frontier);
             }
             return _frontiers.OrderByDescending(f => f.UtilityValue).First();
 
         }
 
         private void MoveToFrontier(Frontier bestFrontier, Vector2Int currentPosition) {
-            VisualizeNextFrontier(bestFrontier);
+            // VisualizeNextFrontier(bestFrontier);
             var targetCell = GetFrontierMoveTarget(bestFrontier);
             var targetCellAsCoarseTile = _map.GetCoarseMap().FromSlamMapCoordinate(targetCell);
             var path = _map.GetCoarseMap().GetPathSteps(targetCellAsCoarseTile);
@@ -221,8 +261,8 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
                 return;
             }
 
-            var comManager = CommunicationManager.singletonInstance;
-            comManager.DepositTag(new TnfTag(_tagId++, true), Vector2.Scale(targetCell, new Vector2(.5f, .5f)));
+            // var comManager = CommunicationManager.singletonInstance;
+            // comManager.DepositTag(new TnfTag(_tagId++, true), Vector2.Scale(targetCell, new Vector2(.5f, .5f)));
             _path = new LinkedList<PathStep>(path);
             if (!_path.Any()) {
                 _robotTnfStatus = TnfStatus.AwaitNextFrontier;
@@ -272,7 +312,7 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         }
 
         private void DoMovement(LinkedList<PathStep> path) {
-            if (_robotController.IsCurrentlyColliding()) {
+            if (_robotController.IsCurrentlyColliding() && !_currentlyMitigatingCollision) {
                 _robotTnfStatus = TnfStatus.AwaitCollisionMitigation;
                 _robotController.StopCurrentTask();
                 return;
@@ -289,7 +329,9 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
                 }
                 else {
                     StartMoving();
-                    _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+                    if (_nextTileInPath == null) {
+                        _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+                    }
                     return;
                 }
 
@@ -302,8 +344,11 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
                 return;
             }
             var relativePosition = _map.GetCoarseMap().GetTileCenterRelativePosition(_nextTileInPath.End);
-            if (relativePosition.Distance < MinimumMoveDistance)
+            if (relativePosition.Distance < MinimumMoveDistance) {
+                _nextTileInPath = null;
+                _currentlyMitigatingCollision = false;
                 return;
+            }
             if (Mathf.Abs(relativePosition.RelativeAngle) <= AngleDelta) {
                 _robotController.Move(relativePosition.Distance);
             }
@@ -379,7 +424,10 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         }
 
         public string GetDebugInfo() {
-            return _robotTnfStatus.ToString();
+            var sb = new StringBuilder();
+            sb.AppendLine($"TnfStatus: {_robotTnfStatus.ToString()}");
+            sb.AppendLine(_nextTileInPath != null ? $"Current movement target: {_nextTileInPath.End}": "");
+            return sb.ToString();
         }
 
 

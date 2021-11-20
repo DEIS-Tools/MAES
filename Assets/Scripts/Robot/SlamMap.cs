@@ -7,7 +7,6 @@ using Dora.MapGeneration.PathFinding;
 using Dora.Utilities;
 using JetBrains.Annotations;
 using UnityEditor;
-using UnityEditor.UI;
 using UnityEngine;
 using Random = System.Random;
 
@@ -18,7 +17,7 @@ namespace Dora.Robot {
         private readonly int _widthInTiles, _heightInTiles;
         
         private SlamTileStatus[,] _tiles;
-        private SlamTileStatus[,] _currentlyVisibleTiles;
+        public Dictionary<Vector2Int, SlamTileStatus> _currentlyVisibleTiles;
         private SimulationMap<bool> _collisionMap;
         private IPathFinder _pathFinder;
 
@@ -36,6 +35,8 @@ namespace Dora.Robot {
         
         // Low resolution map
         public CoarseGrainedMap CoarseMap;
+        // Low resolution map only considering what is visible now
+        public VisibleTilesCoarseMap VisibleTilesCoarseMap;
 
 
         public SlamMap(SimulationMap<bool> collisionMap, RobotConstraints robotConstraints, int randomSeed) {
@@ -47,11 +48,14 @@ namespace Dora.Robot {
             _scale = collisionMap.Scale;
             _scaledOffset = collisionMap.ScaledOffset;
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
-            _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
+
+            _currentlyVisibleTiles = new Dictionary<Vector2Int, SlamTileStatus>();
             this.random = new Random(randomSeed);
             _pathFinder = new AStar();
             
             CoarseMap = new CoarseGrainedMap(this, collisionMap.WidthInTiles, collisionMap.HeightInTiles, _scaledOffset);
+            VisibleTilesCoarseMap = new VisibleTilesCoarseMap(this, collisionMap.WidthInTiles,
+                collisionMap.HeightInTiles, _scaledOffset);
 
             for (int x = 0; x < _widthInTiles; x++)
                 for (int y = 0; y < _heightInTiles; y++)
@@ -97,23 +101,29 @@ namespace Dora.Robot {
         }
 
         public void ResetRobotVisibility() {
-            _currentlyVisibleTiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
-            for (int x = 0; x < _currentlyVisibleTiles.GetLength(0); x++) {
-                for (int y = 0; y < _currentlyVisibleTiles.GetLength(1); y++) {
-                    _currentlyVisibleTiles[x, y] = SlamTileStatus.Unseen;
-                }
-            }
+            _currentlyVisibleTiles = new Dictionary<Vector2Int, SlamTileStatus>();
         }
 
         public void SetCurrentlyVisibleByTriangle(int triangleIndex, bool isOpen) {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
-            if (_currentlyVisibleTiles[localCoordinate.x, localCoordinate.y] != SlamTileStatus.Solid)
-                _currentlyVisibleTiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+
+            
+            if (!_currentlyVisibleTiles.ContainsKey(localCoordinate)) {
+                var newStatus = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+                _currentlyVisibleTiles[localCoordinate] = newStatus;
+                CoarseMap.UpdateTile(CoarseMap.FromSlamMapCoordinate(localCoordinate), newStatus);
+            }
+            else if (_currentlyVisibleTiles[localCoordinate] != SlamTileStatus.Solid) {
+                var newStatus = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+                _currentlyVisibleTiles[localCoordinate] = newStatus;
+                CoarseMap.UpdateTile(CoarseMap.FromSlamMapCoordinate(localCoordinate), newStatus);
+            }
+                
         }
 
         public SlamTileStatus GetVisibleTileByTriangleIndex(int triangleIndex) {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
-            return _currentlyVisibleTiles[localCoordinate.x, localCoordinate.y];
+            return _currentlyVisibleTiles.ContainsKey(localCoordinate) ? _currentlyVisibleTiles[localCoordinate] : SlamTileStatus.Unseen;
         }
 
         public SlamTileStatus GetTileByTriangleIndex(int triangleIndex) {
@@ -167,7 +177,7 @@ namespace Dora.Robot {
                 map._tiles = globalMap.Clone() as SlamTileStatus[,];
             
             // Synchronize coarse maps
-            CoarseGrainedMap.Synchronize(maps.Select(m => m.CoarseMap).ToList());
+            CoarseGrainedMap.Synchronize(maps.Select(m => m.CoarseMap).ToList(), globalMap);
         }
         
 
@@ -211,16 +221,7 @@ namespace Dora.Robot {
         }
 
         public Dictionary<Vector2Int, SlamTileStatus> GetCurrentlyVisibleTiles() {
-            var res = new Dictionary<Vector2Int, SlamTileStatus>();
-            
-            for (int x = 0; x < _widthInTiles; x++) {
-                for (int y = 0; y < _heightInTiles; y++) {
-                    if (_currentlyVisibleTiles[x, y] != SlamTileStatus.Unseen)
-                        res[new Vector2Int(x, y)] = _currentlyVisibleTiles[x, y];
-                }
-            }
-
-            return res;
+            return _currentlyVisibleTiles;
         }
 
         public SlamTileStatus GetStatusOfTile(Vector2Int tile) {
@@ -329,6 +330,10 @@ namespace Dora.Robot {
 
         public CoarseGrainedMap GetCoarseMap() {
             return CoarseMap;
+        }
+
+        public VisibleTilesCoarseMap GetVisibleTilesCoarseMap() {
+            return VisibleTilesCoarseMap;
         }
     }
 }

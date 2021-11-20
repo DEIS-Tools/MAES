@@ -4,7 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Dora.MapGeneration;
-using UnityEditor.UI;
 
 public class MeshGenerator : MonoBehaviour {
     /**
