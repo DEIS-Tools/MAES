@@ -123,7 +123,7 @@ namespace Dora.Robot {
 
         public SlamTileStatus GetVisibleTileByTriangleIndex(int triangleIndex) {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
-            return _currentlyVisibleTiles[localCoordinate];
+            return _currentlyVisibleTiles.ContainsKey(localCoordinate) ? _currentlyVisibleTiles[localCoordinate] : SlamTileStatus.Unseen;
         }
 
         public SlamTileStatus GetTileByTriangleIndex(int triangleIndex) {

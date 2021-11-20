@@ -12,9 +12,9 @@ namespace Dora.Statistics {
         private Mesh mesh;
 
         private readonly Color32 _solidColor = new Color32(0, 0, 0, 255);
-        private readonly Color32 _exploredColor = new Color32(50, 220, 126, 255);
-        private readonly Color32 _slamSeenColor = new Color32(50, 160, 240, 255);
-        private readonly Color32 _unexploredColor = new Color32(100, 100, 100, 255);
+        private readonly Color32 _exploredColor = new Color32(32, 130, 57, 255);
+        private readonly Color32 _slamSeenColor = new Color32(50, 120, 180, 255);
+        private readonly Color32 _unexploredColor = new Color32(170, 170, 170, 255);
 
         private int _widthInTiles, _heightInTiles;
         private int _widthInVertices, _heightInVertices;
