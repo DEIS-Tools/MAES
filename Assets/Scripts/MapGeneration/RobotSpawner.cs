@@ -25,7 +25,11 @@ namespace Dora.MapGeneration
                 r2.RoomSizeExcludingEdgeTiles() - r1.RoomSizeExcludingEdgeTiles());
 
             var biggestRoom = collisionMap.rooms[0];
-            var possibleSpawnTiles = biggestRoom.tiles.Except(biggestRoom.edgeTiles).ToList();
+            
+            // We need to peel off two layers of edges to make sure, that no robot is on a partly covered tile
+            var roomWithoutEdgeTiles = biggestRoom.tiles.Except(biggestRoom.edgeTiles).ToList();
+            var secondLayerOfEdgesTiles = FindEdgeTiles(roomWithoutEdgeTiles, true);
+            var possibleSpawnTiles = roomWithoutEdgeTiles.Except(secondLayerOfEdgesTiles).ToList();
 
             if (possibleSpawnTiles.Count < numberOfRobots)
                 throw new ArgumentException("Room not big enough to fit the robots");
@@ -59,12 +63,21 @@ namespace Dora.MapGeneration
 
         public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, Coord? suggestedStartingPoint, CreateAlgorithmDelegate createAlgorithmDelegate) {
             List<MonaRobot> robots = new List<MonaRobot>();
-
             // Get all spawnable tiles. We cannot spawn adjacent to a wall
             List<Coord> possibleSpawnTiles = new List<Coord>();
-            foreach (var room in collisionMap.rooms) {
-                possibleSpawnTiles.AddRange(room.tiles.Except(room.edgeTiles));
+
+            for (int x = 0; x < collisionMap.WidthInTiles; x++) {
+                for (int y = 0; y < collisionMap.HeightInTiles; y++) {
+                    if (collisionMap.GetTileByLocalCoordinate(x, y).IsTrueForAll(solid => !solid)) {
+                        possibleSpawnTiles.Add(new Coord(x, y));
+                    }
+                    
+                }
             }
+
+            // Remove the edges to make sure the robots are not in a solid coarse tile
+            var edgeTiles = FindEdgeTiles(possibleSpawnTiles, true);
+            possibleSpawnTiles = possibleSpawnTiles.Except(edgeTiles).ToList();
             
             // Offset suggested starting point to map
             suggestedStartingPoint = new Coord(suggestedStartingPoint.Value.x - (int)collisionMap.ScaledOffset.x,
@@ -206,6 +219,37 @@ namespace Dora.MapGeneration
             algorithm.SetController(robot.Controller);
 
             return robot;
+        }
+        
+        private List<Coord> FindEdgeTiles(List<Coord> tiles, bool checkDiagonal) {
+            var tilesHashSet = new HashSet<Coord>();
+            foreach (var tile in tiles) tilesHashSet.Add(tile);
+            
+            // An edge is any tile, where a neighbor is missing in the set of tiles.
+            var edgeTiles = new List<Coord>();
+
+            foreach (var tile in tilesHashSet) {
+                var isEdge = false;
+                for (int x = tile.x - 1; x <= tile.x + 1; x++) {
+                    for (int y = tile.y - 1; y <= tile.y + 1; y++) {
+                        if (checkDiagonal) {
+                            if (x == tile.x || y == tile.y) {
+                                var neighbour = new Coord(x, y);
+                                if (!tilesHashSet.Contains(neighbour)) isEdge = true;
+                            } 
+                        }
+                        else {
+                            var neighbour = new Coord(x, y);
+                            if (!tilesHashSet.Contains(neighbour)) isEdge = true;
+                        }
+                        
+                    }
+                }
+                
+                if(isEdge) edgeTiles.Add(tile);
+            }
+
+            return edgeTiles;
         }
 
 
