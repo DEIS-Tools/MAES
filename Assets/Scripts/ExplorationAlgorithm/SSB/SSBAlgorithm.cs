@@ -326,6 +326,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
         private void MoveToSpiralTarget(RelativePosition relativePosition) {
             if (Mathf.Abs(relativePosition.RelativeAngle) > 1f) {
+                // Detect backtracking points before rotating
+                DetectBacktrackingPoints();
                 // When rotating, also clear all reservations except for the current tile.
                 // This is done to avoid blocking other robots with trailing reservations from this spiral
                 _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
@@ -340,6 +342,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     return;
                 }
                 
+                // Also detect back tracking points after reloading 
                 DetectBacktrackingPoints();
                 
                 // Finally move towards the target
