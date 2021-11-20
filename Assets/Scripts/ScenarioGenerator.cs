@@ -8,19 +8,115 @@ using static Dora.MapGeneration.RobotSpawner;
 
 namespace Dora {
     public class ScenarioGenerator {
-        static int minute = 60;
-        public static Queue<SimulationScenario> GenerateArticleScenarios(int runs) {
+        private const int Minute = 60;
+
+        public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            var numberOfRobots = 15;
-            var sizes = new List<(int, int)>() {(200,200)};
-            var maxRunTime = 60 * minute;// 1 * minute;
-            SimulationEndCriteriaDelegate hasFinishedFunc = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
-                                                                             || simulation.ExplorationTracker
-                                                                                 .CoverageProportion > 0.99f); 
+            var numberOfRobots = 1;
+            var maxRunTime = 60 * Minute;
+            var width = 50;
+            var height = 50;
+            SimulationEndCriteriaDelegate hasFinishedFunc =
+                (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime);
+
             var robotConstraints = new RobotConstraints(
                 broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 10f,
+                senseNearbyRobotRange: 7f,
+                senseNearbyRobotBlockedByWalls: true,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f, 
+                distributeSlam: true,
+                environmentTagReadRange: 4.0f
+            );
+
+            for (int i = 0; i < 1; i++) {
+                var randomSeed = i;
+                
+                var caveConfig = new CaveMapConfig(
+                    width,
+                    height,
+                    randomSeed,
+                    4,
+                    4,
+                    45,
+                    10,
+                    10,
+                    1,
+                    1f);
+                var officeConfig = new OfficeMapConfig(
+                    width,
+                    height,
+                    randomSeed,
+                    20,
+                    4,
+                    6,
+                    2,
+                    2,
+                    85,
+                    1,
+                    1f);
+                
+                var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
+                {
+                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
+                    ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
+                    ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
+                    // TODO: Include The next frontier
+                };
+
+                foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
+                    scenarios.Enqueue(new SimulationScenario(
+                        seed: randomSeed,
+                        hasFinishedSim: hasFinishedFunc,
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                            map, 
+                            randomSeed, 
+                            numberOfRobots, 
+                            0.6f,
+                            createAlgorithmDelegate),
+                        robotConstraints: robotConstraints,
+                        $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
+                    ));
+                    scenarios.Enqueue(new SimulationScenario(
+                        seed: randomSeed,
+                        hasFinishedSim: hasFinishedFunc,
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                            map, 
+                            randomSeed, 
+                            numberOfRobots, 
+                            0.6f,
+                            new Coord(0,0),
+                            createAlgorithmDelegate),
+                        robotConstraints: robotConstraints,
+                        $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                    ));
+                }
+            }
+            
+            
+            
+
+            return scenarios;
+        }
+
+        public static Queue<SimulationScenario> GenerateArticleScenarios() {
+            Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
+            var numberOfRobots = 15;
+            var runs = 20;
+            var sizes = new List<(int, int)>() {(200,200)};
+            var maxRunTime = 60 * Minute;
+            SimulationEndCriteriaDelegate hasFinishedFunc = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
+                                                                             || simulation.ExplorationTracker
+                                                                                 .CoverageProportion > 0.995f); 
+            var robotConstraints = new RobotConstraints(
+                broadcastRange: float.MaxValue,
+                broadcastBlockedByWalls: false,
+                senseNearbyRobotRange: 7f,
                 senseNearbyRobotBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
@@ -31,14 +127,14 @@ namespace Dora {
             );
             
             
-            for (int i = 0; i < runs; i++) { // TODO
+            for (int i = 0; i < runs; i++) { 
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
                 {
-                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"ssb"),
-                    //((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "voronoi"),
-                    //((seed) => new RandomExplorationAlgorithm(seed), "random"),
-                    // ((seed) => new BrickAndMortar(robotConstraints, seed), "bnm"),
+                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
+                    ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
+                    ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
+                    ((seed) => new BrickAndMortar(robotConstraints, seed), "BNM"),
                 };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(
