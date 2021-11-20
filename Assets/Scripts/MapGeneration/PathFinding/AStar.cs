@@ -56,87 +56,6 @@ namespace Dora.MapGeneration {
         private static int maxTickCountNoPath = 0;
 
         public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false, bool acceptPartialPaths = false) {
-            return GetPathFast(startCoordinate, targetCoordinate, pathFindingMap, beOptimistic, acceptPartialPaths);
-            var candidates = new List<AStarTile>();
-            var bestCandidateOnTile = new Dictionary<Vector2Int, AStarTile>();
-            var startTileHeuristic = OctileHeuristic(startCoordinate, targetCoordinate);
-            var startingTile = new AStarTile(startCoordinate.x, startCoordinate.y, null, startTileHeuristic, 0);
-            candidates.Add(startingTile);
-            bestCandidateOnTile[startCoordinate] = startingTile;
-
-            int loopCount = 0; 
-            while (candidates.Count > 0) {
-                var currentTile = DequeueBestCandidate(candidates);
-                
-                var currentCoordinate = new Vector2Int(currentTile.X, currentTile.Y);
-                if (currentCoordinate == targetCoordinate) {
-                    if (loopCount > maxTickCountPath) 
-                        Debug.Log($"Max successful path loops: {maxTickCountPath = loopCount}");
-                    
-                    return currentTile.Path();
-                }
-                    
-
-                foreach (var dir in CardinalDirection.AllDirections()) {
-                    Vector2Int candidateCoord = currentCoordinate + dir.Vector;
-                    // Only consider non-solid tiles
-                    if (IsSolid(candidateCoord, pathFindingMap, beOptimistic) && candidateCoord != targetCoordinate) continue;
-
-                    if (dir.IsDiagonal()) {
-                        // To travel diagonally, the two neighbouring tiles must also be free
-                        if (IsSolid(currentCoordinate + dir.Previous().Vector, pathFindingMap, beOptimistic)
-                        || IsSolid(currentCoordinate + dir.Next().Vector, pathFindingMap, beOptimistic))
-                            continue;
-                    }
-                    
-                    var cost = currentTile.Cost + Vector2Int.Distance(currentCoordinate, candidateCoord);
-                    var heuristic = OctileHeuristic(candidateCoord, targetCoordinate);
-                    var candidateCost = cost + heuristic;
-                    // Check if this path is 'cheaper' than any previous path to this candidate tile 
-                    if (!bestCandidateOnTile.ContainsKey(candidateCoord) || bestCandidateOnTile[candidateCoord].TotalCost > candidateCost) {
-                        var newTile = new AStarTile(candidateCoord.x, candidateCoord.y, currentTile, heuristic, cost);
-                        // Remove previous best entry if present
-                        if(bestCandidateOnTile.ContainsKey(candidateCoord))
-                            candidates.Remove(bestCandidateOnTile[candidateCoord]);
-                        // Save this as the new best candidate for this tile
-                        bestCandidateOnTile[candidateCoord] = newTile;
-                        candidates.Add(newTile);
-                    }
-                }
-
-                if (loopCount > 100000) {
-                    throw new Exception("A* could not find path within 10000 loop runs");
-                }
-                
-                if (loopCount > 5000)
-                    return null;
-
-                loopCount++;
-            }
-            
-            if (acceptPartialPaths) {
-                // Find lowest heuristic tile, as it is closest to the target
-                Vector2Int? lowestHeuristicKey = null;
-                float lowestHeuristic = float.MaxValue;
-                foreach (var kv in bestCandidateOnTile) {
-                    if (kv.Value.Heuristic < lowestHeuristic) {
-                        lowestHeuristic = kv.Value.Heuristic;
-                        lowestHeuristicKey = kv.Key;
-                    }
-                }
-
-                var closestTile = bestCandidateOnTile[lowestHeuristicKey.Value];
-                return GetPath(startCoordinate, new Vector2Int(closestTile.X, closestTile.Y),
-                    pathFindingMap, beOptimistic, false);
-            }
-
-            if (loopCount > maxTickCountNoPath)
-                Debug.Log($"Failed to find path after {maxTickCountNoPath = loopCount} cycles");
-
-            return null;
-        }
-        
-        public List<Vector2Int>? GetPathFast(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false, bool acceptPartialPaths = false) {
             IPriorityQueue<AStarTile, float> candidates = new SimplePriorityQueue<AStarTile, float>();
             var bestCandidateOnTile = new Dictionary<Vector2Int, AStarTile>();
             var startTileHeuristic = OctileHeuristic(startCoordinate, targetCoordinate);
@@ -184,12 +103,11 @@ namespace Dora.MapGeneration {
                     }
                 }
 
-                if (loopCount > 100000) {
-                    throw new Exception("A* could not find path within 10000 loop runs");
-                }
-                
-                if (loopCount > 8000) // TODO
+                if (loopCount > 8000) {
+                    Debug.Log("A star loop count exceeded 8000, stopping pathfinding prematurely");
                     return null;
+                } 
+                    
 
                 loopCount++;
             }
