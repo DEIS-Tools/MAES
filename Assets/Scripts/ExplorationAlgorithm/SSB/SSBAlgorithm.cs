@@ -76,9 +76,18 @@ namespace Dora.ExplorationAlgorithm.SSB {
             _reservationSystem= new TileReservationSystem(this);
         }
 
+        private bool debugValue = false;
+        
         public void UpdateLogic() {
             _currentTick++;
 
+            if (debugValue) {
+                var count = Enumerable.Range(0, 50)
+                    .SelectMany(x => Enumerable.Range(0, 50).Select(y => new Vector2Int(x, y)))
+                    .Where(v => !_navigationMap.IsTileExplored(v) && _navigationMap.GetTileStatus(v) == SlamMap.SlamTileStatus.Open);
+                Debug.Log(String.Join(",", count));
+            }
+            
             // Only triggered upon initial ticks of the simulation
             if (!_hasPerformedInitialReservation) {
                 if (_reservationSystem.IsTileReservedByThisRobot(_navigationMap.GetCurrentTile()))
@@ -231,9 +240,11 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 // Wait until next tick to ensure that reservations are cleared before making new ones
                 _isWaiting = true;
                 
-                // Check if any of the tiles in the next part of the path have become blocked
+                // Check if any of the tiles (except the current one) in the next part of the path have become blocked
                 // (This can happen when all sub tiles tiles are revealed)
-                if (_nextBackTrackStep!.CrossedTiles.Any(t => _navigationMap.GetTileStatus(t, true) == SlamMap.SlamTileStatus.Solid)) {
+                // The first one (current tile of the robot) is skipped as the robot may be standing on a partly solid
+                // tile, either because it spawned there or because it was pushed there by other robots 
+                if (_nextBackTrackStep!.CrossedTiles.Skip(1).Any(t => _navigationMap.GetTileStatus(t, true) == SlamMap.SlamTileStatus.Solid)) {
                     _nextBackTrackStep = null;
                     _backtrackingPath = null;
                 }
@@ -431,6 +442,13 @@ namespace Dora.ExplorationAlgorithm.SSB {
             return false;
         }
 
+        // Determine whether the tile is physically blocked or marked as explored
+        private bool IsTileSolidOrExplored(Vector2Int tileCoord) {
+            return _navigationMap.GetTileStatus(tileCoord) == SlamMap.SlamTileStatus.Solid 
+                || _navigationMap.IsTileExplored(tileCoord);
+        }
+
+        // Determines if it is impossible to move to the given tile in spiral mode (true if solid, explored or reserved)
         private bool IsTileBlocked(Vector2Int tileCoord) {
             if (_navigationMap.GetTileStatus(tileCoord) == SlamMap.SlamTileStatus.Solid)
                 return true; // physically blocked
@@ -505,14 +523,26 @@ namespace Dora.ExplorationAlgorithm.SSB {
             var rlsBlocked = IsTileBlocked(rls);
             var olsBlocked = IsTileBlocked(ols);
 
-            if (frontTileBlocked && rlsBlocked && olsBlocked)
+            if (frontTileBlocked && rlsBlocked && olsBlocked) {
+                // Special cases where spiraling is blocked by reserved tiled from backtracking robots,
+                // but not explored or solid. In this case we should always add these points to the bp candidates as
+                // the other robot may not mark them as explored
+                if (!IsTileSolidOrExplored(front)) _backTrackingPoints.Add(front);
+                if (!IsTileSolidOrExplored(rls)) _backTrackingPoints.Add(rls);
+                if (!IsTileSolidOrExplored(ols)) _backTrackingPoints.Add(ols);
                 return null; // No more open tiles left. Spiraling has finished
-
+            }
+            
             // The following is the spiral algorithm specified by the bsa paper
             if (!rlsBlocked) 
                 return _navigationMap.GetRelativeNeighbour(_referenceLateralSide);
-            if (frontTileBlocked) 
+            if (!IsTileSolidOrExplored(rls)) _backTrackingPoints.Add(rls);
+
+            if (frontTileBlocked) {
+                if (!IsTileSolidOrExplored(front)) _backTrackingPoints.Add(front);
                 return _navigationMap.GetRelativeNeighbour(_oppositeLateralSide);
+            } 
+                
             return _navigationMap.GetRelativeNeighbour(Front);
         }
 
