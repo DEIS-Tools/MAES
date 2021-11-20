@@ -128,18 +128,27 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             if ((!IsDoneWithCurrentPath() && _robotController.GetStatus() == RobotStatus.Idle)) {
                 var nextStep = GetNextStep();
                 if (nextStep != null) {
-                    _currentPartialMovementTarget = nextStep.Value;
-                    var relativePosition = _robotController.GetSlamMap().GetCoarseMap()
-                        .GetTileCenterRelativePosition(_currentPartialMovementTarget.Value);
+                    // We move to partly unseen targets. If they turn out to be solid, find a new target
+                    if (_robotController.GetSlamMap().GetCoarseMap().GetTileStatus(nextStep.Value) !=
+                        SlamMap.SlamTileStatus.Solid) {
+                        _currentPartialMovementTarget = nextStep.Value;
+                        var relativePosition = _robotController.GetSlamMap().GetCoarseMap()
+                            .GetTileCenterRelativePosition(_currentPartialMovementTarget.Value);
                     
-                    // Find delta
-                    float delta = 1.0f;
-                    if (Math.Abs(relativePosition.RelativeAngle) <= delta) {
-                        _robotController.Move((relativePosition.Distance));
+                        // Find delta
+                        float delta = 1.5f;
+                        if (Math.Abs(relativePosition.RelativeAngle) <= delta) {
+                            _robotController.Move((relativePosition.Distance));
+                        }
+                        else {
+                            _robotController.Rotate(relativePosition.RelativeAngle);
+                        }
                     }
                     else {
-                        _robotController.Rotate(relativePosition.RelativeAngle);
+                        _currentTargetPath = null;
+                        _currentPartialMovementTarget = null;
                     }
+                    
                 }
                 else {
                     Debug.Log("Next step == null");
@@ -228,14 +237,12 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
                 _robotController.StopCurrentTask();
                 return true;
             }
-                
 
             if (IsDoneWithCurrentPath()) {
                 _currentTargetPath = null;
                 return true;
             }
-            
-            
+
             if (_robotController.SenseNearbyRobots().Count > 0) {
                 switch (_currentSearchPhase) {
                     case VoronoiSearchPhase.SEARCH_MODE:
@@ -307,8 +314,7 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
             // Find a the course coordinate and generate path
             var robotCoarseTile = _robotController.GetSlamMap().GetCoarseMap().GetCurrentTile();
             var path = _robotController.GetSlamMap().GetVisibleTilesCoarseMap().GetPathSteps(robotCoarseTile, target, true);
-            // var path = _robotController.GetSlamMap().GetVisibleTilesCoarseMap().GetPath(robotCoarseTile,target, true);
-
+            
             if (path == null) {
                 Debug.Log($"Could not find path between {robotCoarseTile} and {target}");
             }
@@ -503,7 +509,6 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
 
             var coarseMap = _robotController.GetSlamMap().GetCoarseMap();
             
-            // since the path finder uses bigger tiles than the slam map, we can risk looking for a tile without a known path
             var unExploredInRegion = region.Tiles.Where(e => !_isExploredMap.ContainsKey(e) || _isExploredMap[e] == false).ToList();
 
             unExploredInRegion =

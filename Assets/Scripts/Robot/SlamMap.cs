@@ -138,6 +138,12 @@ namespace Dora.Robot {
         }
 
         public void UpdateApproxPosition(Vector2 worldPosition) {
+            if (Math.Abs(_robotConstraints.SlamPositionInaccuracy) < 0.0000001f) {
+                this.ApproximatePosition = worldPosition;
+                return;
+            }
+                
+            
             var sign = random.Next(2) == 1 ? -1 : 1;
             var multiplier = random.NextDouble() * sign;
             var newInaccuracy = _lastInaccuracyX + multiplier * (_robotConstraints.SlamPositionInaccuracy / 10f);
