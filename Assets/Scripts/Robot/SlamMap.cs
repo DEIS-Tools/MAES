@@ -107,11 +107,18 @@ namespace Dora.Robot {
         public void SetCurrentlyVisibleByTriangle(int triangleIndex, bool isOpen) {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
 
+            
             if (!_currentlyVisibleTiles.ContainsKey(localCoordinate)) {
-                _currentlyVisibleTiles[localCoordinate] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+                var newStatus = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+                _currentlyVisibleTiles[localCoordinate] = newStatus;
+                CoarseMap.UpdateTile(CoarseMap.FromSlamMapCoordinate(localCoordinate), newStatus);
             }
-            else if (_currentlyVisibleTiles[localCoordinate] != SlamTileStatus.Solid)
-                _currentlyVisibleTiles[localCoordinate] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+            else if (_currentlyVisibleTiles[localCoordinate] != SlamTileStatus.Solid) {
+                var newStatus = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
+                _currentlyVisibleTiles[localCoordinate] = newStatus;
+                CoarseMap.UpdateTile(CoarseMap.FromSlamMapCoordinate(localCoordinate), newStatus);
+            }
+                
         }
 
         public SlamTileStatus GetVisibleTileByTriangleIndex(int triangleIndex) {
@@ -170,7 +177,7 @@ namespace Dora.Robot {
                 map._tiles = globalMap.Clone() as SlamTileStatus[,];
             
             // Synchronize coarse maps
-            CoarseGrainedMap.Synchronize(maps.Select(m => m.CoarseMap).ToList());
+            CoarseGrainedMap.Synchronize(maps.Select(m => m.CoarseMap).ToList(), globalMap);
         }
         
         public Vector2 GetApproxPosition() {

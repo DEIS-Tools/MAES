@@ -12,8 +12,9 @@ namespace Dora.MapGeneration.PathFinding {
     // This represents a low-resolution map where the robot can comfortably fit inside a single cell
     public class CoarseGrainedMap : IPathFindingMap {
         
-        private SlamMap _slamMap;
+        private readonly SlamMap _slamMap;
         private bool[,] _tilesCoveredStatus;
+        private SlamTileStatus[,] _optimisticTileStatuses;
         private HashSet<Vector2Int> _excludedTiles = new HashSet<Vector2Int>();
         private int _width, _height;
         private Vector2 _offset;
@@ -25,6 +26,7 @@ namespace Dora.MapGeneration.PathFinding {
             _height = height;
             _offset = offset;
             _tilesCoveredStatus = new bool[width, height];
+            _optimisticTileStatuses = new SlamTileStatus[width, height];
             _aStar = new AStar();
         }
 
@@ -88,7 +90,7 @@ namespace Dora.MapGeneration.PathFinding {
         // Combines two SlamTileStatus in a 'optimistic' fashion.
         // If any status is solid both are consider solid. Otherwise, if any status is open both are considered open
         // Unseen is returned only if all statuses are unseen 
-        private SlamTileStatus AggregateStatusOptimistic(SlamTileStatus status1, SlamTileStatus status2) {
+        private static SlamTileStatus AggregateStatusOptimistic(SlamTileStatus status1, SlamTileStatus status2) {
             if (status1 == SlamTileStatus.Solid || status2 == SlamTileStatus.Solid)
                 return SlamTileStatus.Solid;
             if (status1 == SlamTileStatus.Open || status2 == SlamTileStatus.Open)
@@ -181,8 +183,7 @@ namespace Dora.MapGeneration.PathFinding {
         public bool IsOptimisticSolid(Vector2Int coordinate) {
             if (_excludedTiles.Contains(coordinate))
                 return true;
-            var tileStatus = GetTileStatus(coordinate, optismistic: true); 
-            return tileStatus != SlamTileStatus.Open;
+            return _optimisticTileStatuses[coordinate.x, coordinate.y] != SlamTileStatus.Open;
         }
 
         public float CellSize() {
@@ -194,19 +195,34 @@ namespace Dora.MapGeneration.PathFinding {
             return new Vector2Int((int) robotPosition.x, (int) robotPosition.y);
         }
 
-        public static void Synchronize(List<CoarseGrainedMap> maps) {
-            var globalMap = new bool[maps[0]._width, maps[0]._width];
-            
+        public static void Synchronize(List<CoarseGrainedMap> maps, SlamTileStatus[,] newSlamStatuses) {
+            // Synchronize exploration bool statuses
+            var globalExplorationStatuses = new bool[maps[0]._width, maps[0]._width];
             foreach (var map in maps) {
                 for (int x = 0; x < map._width; x++) {
                     for (int y = 0; y < map._height; y++) {
-                        globalMap[x, y] |= map._tilesCoveredStatus[x, y];
+                        globalExplorationStatuses[x, y] |= map._tilesCoveredStatus[x, y];
                     }
                 }
             }
-
             foreach (var map in maps) 
-                map._tilesCoveredStatus = globalMap.Clone() as bool[,];
+                map._tilesCoveredStatus = globalExplorationStatuses.Clone() as bool[,];
+            
+            // Synchronize tile statuses
+            var globalMap = new SlamTileStatus[maps[0]._width, maps[0]._height];
+            for (int x = 0; x < maps[0]._width; x++) {
+                for (int y = 0; y < maps[0]._height; y++) {
+                    int slamX = x * 2;
+                    int slamY = y * 2;
+                    var status = newSlamStatuses[slamX, slamY];
+                    status = AggregateStatusOptimistic(status, newSlamStatuses[slamX + 1, slamY]);
+                    status = AggregateStatusOptimistic(status, newSlamStatuses[slamX + 1, slamY + 1]);
+                    status = AggregateStatusOptimistic(status, newSlamStatuses[slamX, slamY + 1]);
+                    globalMap[x, y] = status;
+                }
+            }
+            foreach (var map in maps) 
+                map._optimisticTileStatuses = globalMap.Clone() as SlamTileStatus[,];
         }
 
         // Returns false only if the tile is known to be solid
@@ -227,6 +243,13 @@ namespace Dora.MapGeneration.PathFinding {
                 _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up),
                 _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up + Vector2Int.right),
             };
+        }
+
+        public void UpdateTile(Vector2Int courseCoord, SlamTileStatus observedStatus) {
+            // If some sub-tile of the coarse tile is known to be solid, then new status does not matter
+            // Other wise assign the new status (either open or solid)
+            if (_optimisticTileStatuses[courseCoord.x, courseCoord.y] != SlamTileStatus.Solid) 
+                _optimisticTileStatuses[courseCoord.x, courseCoord.y] = observedStatus;
         }
     }
     
