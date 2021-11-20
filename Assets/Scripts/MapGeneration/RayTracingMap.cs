@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Dora.MapGeneration {
     public class RayTracingMap<TCell> {
-        private readonly SimulationMap<TCell> _map;
+        public readonly SimulationMap<TCell> _map;
         private readonly RayTracingTriangle[] _traceableTriangles;
 
         // The order in which edges are stored for each RayTracingTriangle

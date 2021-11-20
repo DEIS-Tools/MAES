@@ -36,6 +36,11 @@ namespace Dora {
             _environmentTags.Add(tag);
         }
 
+        public void RemoveEnvironmentTagAt(Vector2 position) {
+            var tag = _environmentTags.Find(t => t.WorldPosition == position);
+            _environmentTags.Remove(tag);
+        }
+
         // Debugging measure to visualize communication between robots
         public void AddCommunicationTrail(MonaRobot robot1, MonaRobot robot2) {
             _links.Enqueue(new CommunicationLink(robot1, robot2, _currentTick, _currentTick + 10));

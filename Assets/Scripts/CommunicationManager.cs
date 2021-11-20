@@ -9,6 +9,7 @@ using Dora.Utilities;
 using UnityEngine;
 using static Dora.MapGeneration.EnvironmentTaggingMap;
 using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
 
 namespace Dora {
     // Messages sent through this class will be subject to communication range and line of sight.
@@ -28,6 +29,8 @@ namespace Dora {
 
         // Map for storing and retrieving all tags deposited by robots
         private readonly EnvironmentTaggingMap _environmentTaggingMap;
+
+        public static CommunicationManager singletonInstance;
         
         private int _localTickCounter = 0;
         
@@ -81,6 +84,7 @@ namespace Dora {
             _visualizer = visualizer;
             _rayTracingMap = new RayTracingMap<bool>(collisionMap);
             _environmentTaggingMap = new EnvironmentTaggingMap(collisionMap);
+            singletonInstance = this;
         }
 
         // Adds a message to the broadcast queue
@@ -236,6 +240,22 @@ namespace Dora {
             
             if (GlobalSettings.ShowEnvironmentTags)
                 _visualizer.AddEnvironmentTag(placedTag);
+        }
+
+        public void DepositTag(ITag tag, Vector2 position) {
+            var scale = _rayTracingMap._map.Scale;
+            var pos = Vector2.Scale(position, new Vector2(scale, scale)) + _rayTracingMap._map.ScaledOffset;
+            var placedTag = _environmentTaggingMap.AddTag(pos, tag);
+
+            if (GlobalSettings.ShowEnvironmentTags) {
+                _visualizer.AddEnvironmentTag(placedTag);
+            }
+        }
+
+        public void RemoveTagAt(Vector2 position) {
+            var scale = _rayTracingMap._map.Scale;
+            var pos = Vector2.Scale(position, new Vector2(scale, scale)) + _rayTracingMap._map.ScaledOffset;
+            _visualizer.RemoveEnvironmentTagAt(pos);
         }
 
         public List<PlacedTag> ReadNearbyTags(MonaRobot robot) {

@@ -430,8 +430,8 @@ namespace Dora {
                 1f);
 
             var officeConfig = new OfficeMapConfig(
-                60,
-                60,
+                100,
+                100,
                 randomSeed,
                 58,
                 4,    
@@ -450,22 +450,22 @@ namespace Dora {
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
-                slamPositionInaccuracy: 0.5f,
+                slamPositionInaccuracy: 0.2f,
                 distributeSlam: false,
                 environmentTagReadRange: 4.0f
             );
             
             scenarios.Enqueue(new SimulationScenario(
                 seed: randomSeed, 
-                hasFinishedSim: simulation => simulation.SimulateTimeSeconds >= 20 * minute,
+                hasFinishedSim: simulation => simulation.SimulateTimeSeconds >= 60 * minute,
                 mapSpawner: generator => generator.GenerateOfficeMap(officeConfig, 2.0f),
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                     map,
                     randomSeed,
                     1,
                     0.6f,
-                    new Coord(25,10),
-                    (seed) => new TnfExplorationAlgorithm(2, 4)),
+                    new Coord(0,0),
+                    (seed) => new TnfExplorationAlgorithm(3, 9)),
                 robotConstraints: robotConstraints,
                 "TNF-office-test-" + randomSeed
             ));

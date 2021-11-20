@@ -4,12 +4,13 @@ using UnityEngine;
 namespace Dora.Utilities {
     public class Geometry {
         public static float DistanceBetween(in Vector2 p1, in Vector2 p2) {
-            if (p1.Equals(p2)) return 0f;
-
-            var xDelta = p2.x - p1.x;
-            var yDelta = p2.y - p1.y;
-
-            return Mathf.Sqrt(Mathf.Pow(xDelta, 2f) + Mathf.Pow(yDelta, 2f));
+            return Vector2.Distance(p1, p2);
+            // if (p1.Equals(p2)) return 0f;
+            //
+            // var xDelta = p2.x - p1.x;
+            // var yDelta = p2.y - p1.y;
+            //
+            // return Mathf.Sqrt(Mathf.Pow(xDelta, 2f) + Mathf.Pow(yDelta, 2f));
         }
 
 

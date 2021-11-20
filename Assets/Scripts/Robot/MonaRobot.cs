@@ -60,7 +60,7 @@ namespace Dora.Robot {
         }
 
         public void OnMouseDown() {
-            CameraController.SingletonInstance.movementTransform = transform;
+            CameraController.singletonInstance.movementTransform = transform;
             OnRobotSelected(this);
         }
     }

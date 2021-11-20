@@ -9,11 +9,7 @@ namespace Dora.Utilities {
         /// Extension method for converting a SLAM tile to a TNF cell
         /// </summary>
         public static (Vector2Int, float) ToTnfCell(this KeyValuePair<Vector2Int, SlamMap.SlamTileStatus> tile) {
-            return tile.Value switch
-            {
-                SlamMap.SlamTileStatus.Unseen => (tile.Key, 0.5f),
-                _ => (tile.Key, 0f)
-            };
+            return (tile.Key, tile.Value.ToTnfCellValue());
         }
 
         public static float ToTnfCellValue(this SlamMap.SlamTileStatus status) {
