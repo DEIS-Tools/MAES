@@ -314,7 +314,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         private void MoveToSpiralTarget(RelativePosition relativePosition) {
-            if (Mathf.Abs(relativePosition.RelativeAngle) > 0.5f) {
+            if (Mathf.Abs(relativePosition.RelativeAngle) > 1f) {
                 // When rotating, also clear all reservations except for the current tile.
                 // This is done to avoid blocking other robots with trailing reservations from this spiral
                 _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
@@ -423,7 +423,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             var targetRelativePosition = _navigationMap
                 .GetTileCenterRelativePosition(_navigationMap.GetGlobalNeighbour(targetDirection));
             // Assert that we are pointed in the right direction
-            if (Mathf.Abs(targetRelativePosition.RelativeAngle) <= 1.0f) 
+            if (Mathf.Abs(targetRelativePosition.RelativeAngle) <= 1.5f) 
                 return true;
             
             // otherwise rotate to face the target tile
@@ -440,7 +440,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         private void MoveTo(RelativePosition relativePosition) {
-            if (Mathf.Abs(relativePosition.RelativeAngle) > 0.5f)
+            if (Mathf.Abs(relativePosition.RelativeAngle) > 1.5f)
                 _controller.Rotate(relativePosition.RelativeAngle);
             else {
                 _controller.Move(relativePosition.Distance);
@@ -595,6 +595,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             return null;
         }
 
+        
         // Returns true unless the tile is known to be solid or if the tile is reserved by another robot
         private bool IsPotentiallyExplorable(Vector2Int tile) {
             return !_navigationMap.IsPotentiallyExplorable(tile) || _reservationSystem.IsTileReservedByOtherRobot(tile);
