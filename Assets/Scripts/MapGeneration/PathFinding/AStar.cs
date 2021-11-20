@@ -52,9 +52,6 @@ namespace Dora.MapGeneration {
             return GetPath(startCoordinate, targetCoordinate, pathFindingMap, true, acceptPartialPaths);
         }
 
-        private static int maxTickCountPath = 0;
-        private static int maxTickCountNoPath = 0;
-
         public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false, bool acceptPartialPaths = false) {
             IPriorityQueue<AStarTile, float> candidates = new SimplePriorityQueue<AStarTile, float>();
             var bestCandidateOnTile = new Dictionary<Vector2Int, AStarTile>();
@@ -73,11 +70,9 @@ namespace Dora.MapGeneration {
                 if(bestCandidateOnTile.ContainsKey(currentCoordinate) && bestCandidateOnTile[currentCoordinate] != currentTile)
                     continue;
 
-                if (currentCoordinate == targetCoordinate) {
-                    if (loopCount > maxTickCountPath) 
-                        Debug.Log($"Max successful path loops: {maxTickCountPath = loopCount}");
+                if (currentCoordinate == targetCoordinate) 
                     return currentTile.Path();
-                }
+                
 
                 foreach (var dir in CardinalDirection.AllDirections()) {
                     Vector2Int candidateCoord = currentCoordinate + dir.Vector;
@@ -127,9 +122,6 @@ namespace Dora.MapGeneration {
                 return GetPath(startCoordinate, new Vector2Int(closestTile.X, closestTile.Y),
                     pathFindingMap, beOptimistic, false);
             }
-
-            if (loopCount > maxTickCountNoPath)
-                Debug.Log($"Failed to find path after {maxTickCountNoPath = loopCount} cycles");
 
             return null;
         }
