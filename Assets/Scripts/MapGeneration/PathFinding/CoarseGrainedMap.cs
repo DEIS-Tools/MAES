@@ -151,23 +151,23 @@ namespace Dora.MapGeneration.PathFinding {
             return _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
         }
         
-        public List<Vector2Int>? GetPath(Vector2Int target, HashSet<Vector2Int> excludedTiles, float maxPathCost = float.MaxValue) {
-            if (excludedTiles.Contains(target))
+        public List<Vector2Int>? GetPath(Vector2Int target, HashSet<Vector2Int> excludedTiles = null, float maxPathCost = float.MaxValue) {
+            if (excludedTiles != null && excludedTiles.Contains(target))
                 return null;
             
             var approxPosition = GetApproximatePosition();
-            _excludedTiles = excludedTiles;
+            if (excludedTiles != null) _excludedTiles = excludedTiles;
             var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this, false); 
             _excludedTiles = new HashSet<Vector2Int>();
             return path;
         }
 
-        public List<PathStep>? GetPathSteps(Vector2Int target, HashSet<Vector2Int> excludedTiles) {
-            if (excludedTiles.Contains(target))
+        public List<PathStep>? GetPathSteps(Vector2Int target, HashSet<Vector2Int> excludedTiles = null) {
+            if (excludedTiles != null && excludedTiles.Contains(target))
                 return null;
             
             var approxPosition = GetApproximatePosition();
-            _excludedTiles = excludedTiles;
+            if (excludedTiles != null) _excludedTiles = excludedTiles;
             var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
             _excludedTiles = new HashSet<Vector2Int>();
             return path == null ? null : _aStar.PathToSteps(path, 0.4f);

@@ -173,7 +173,7 @@ namespace Dora.Robot {
             foreach (var map in maps) {
                 for (int x = 0; x < map._widthInTiles; x++) {
                     for (int y = 0; y < map._heightInTiles; y++) {
-                        if (map._tiles[x, y] != SlamTileStatus.Unseen)
+                        if (map._tiles[x, y] != SlamTileStatus.Unseen && globalMap[x, y] != SlamTileStatus.Solid)
                             globalMap[x, y] = map._tiles[x, y];
                     }
                 }
@@ -185,7 +185,7 @@ namespace Dora.Robot {
             // Synchronize coarse maps
             CoarseGrainedMap.Synchronize(maps.Select(m => m.CoarseMap).ToList(), globalMap);
         }
-        
+
         public Vector2 GetApproxPosition() {
             return ApproximatePosition;
         }
