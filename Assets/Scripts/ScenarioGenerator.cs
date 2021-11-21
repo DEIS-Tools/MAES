@@ -541,8 +541,8 @@ namespace Dora {
             int randomSeed = 4 + 2;
 
             var mapConfig = new CaveMapConfig(
-                60,
-                60,
+                100,
+                100,
                 randomSeed,
                 4,
                 2,
@@ -553,8 +553,8 @@ namespace Dora {
                 1f);
 
             var officeConfig = new OfficeMapConfig(
-                50,
-                50,
+                200,
+                200,
                 randomSeed,
                 58,
                 4,    
@@ -574,7 +574,7 @@ namespace Dora {
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f,
-                distributeSlam: true,
+                distributeSlam: false,
                 environmentTagReadRange: 4.0f,
                 lidarRange: 7f
             );
@@ -582,13 +582,13 @@ namespace Dora {
             scenarios.Enqueue(new SimulationScenario(
                 seed: randomSeed, 
                 hasFinishedSim: simulation => simulation.SimulateTimeSeconds >= 60 * Minute,
-                mapSpawner: generator => generator.GenerateOfficeMap(officeConfig, 2.0f),
+                mapSpawner: generator => generator.GenerateOfficeMap(config: officeConfig, 2.0f),
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                     map,
                     randomSeed,
-                    5,
+                    15,
                     0.6f,
-                    (seed) => new TnfExplorationAlgorithm(4, 8)),
+                    (seed) => new TnfExplorationAlgorithm(4, 4, randomSeed)),
                 robotConstraints: robotConstraints,
                 "TNF-office-test-" + randomSeed
             ));

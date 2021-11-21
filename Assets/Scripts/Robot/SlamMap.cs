@@ -182,8 +182,8 @@ namespace Dora.Robot {
         
 
         /// <summary>
-        /// Synchronizes one map with a collection of <see cref="SlamTileStatus"/> arrays.
-        /// </summary>
+        /// Synchronizes one map with a list of other <see cref="SlamMap"/>s.
+        /// </summary>s
         /// 
         public static void Combine(SlamMap target, List<SlamMap> others) {
             var globalMap = new SlamTileStatus[target._widthInTiles, target._heightInTiles];
@@ -201,6 +201,7 @@ namespace Dora.Robot {
             }
  
             target._tiles = globalMap.Clone() as SlamTileStatus[,];
+            CoarseGrainedMap.Combine(target.CoarseMap, others.Select(o => o.GetCoarseMap()).ToList(), globalMap);
         }
 
         public Vector2 GetApproxPosition() {

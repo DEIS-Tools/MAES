@@ -28,7 +28,6 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         }
 
         private enum TnfStatus {
-            Communicating,
             AwaitMoving,
             AwaitRotating,
             AwaitNextFrontier,
@@ -38,24 +37,29 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
 
         private IRobotController _robotController;
         private TnfStatus _robotTnfStatus;
-        private SlamAlgorithmInterface _map;
+        private CoarseGrainedMap _map;
         private int Alpha { get; }
         private int Beta { get; }
 
         private List<Frontier> _frontiers;
-        private static int _tagId = 0;
+        private static int _tagId;
         private List<CommunicationManager.SensedObject<int>> _lastSeenNeighbours;
 
-        private bool _currentlyMitigatingCollision = false;
+        //private bool _currentlyMitigatingCollision = false;
 
-        private Vector2Int _robotPos = new Vector2Int(0, 0);
+        private Vector2 _robotPos = new Vector2(0, 0);
+        private Vector2Int _robotPosInt = new Vector2Int(0, 0);
+        private int _robotId = -1;
         private LinkedList<PathStep> _path;
         private PathStep _nextTileInPath;
-        private const float AngleDelta = 1f;
-        private const float MinimumMoveDistance = 0.1f;
+        private const float AngleDelta = .5f;
+        private const float MinimumMoveDistance = .3f;
 
-        private int _logicTicksSinceLastCommunication = 0;
-        private bool _bonked = false;
+        private int _logicTicksSinceLastCommunication;
+        private bool _bonked;
+        private readonly System.Random _random;
+        private bool _isCommunicating;
+        private int _ticksSpentColliding;
 
 
         private class Frontier {
@@ -67,6 +71,13 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             }
 
             public float UtilityValue { get; set; }
+        }
+        
+        public TnfExplorationAlgorithm(int alpha, int beta, int randomSeed) {
+            Alpha = alpha;
+            Beta = beta;
+            _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+            _random = new System.Random(randomSeed);
         }
 
         private float InformationPotential((Vector2Int, float) cell, List<(Vector2Int, float)> neighbours) {
@@ -87,7 +98,7 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
                         continue;
                     }
                     var position = new Vector2Int(x, y);
-                    var v = _map.GetStatusOfTile(position).ToTnfCellValue();
+                    var v = _map.GetTileStatus(position).ToTnfCellValue();
                     res.Add((position, v));
                 }
             }
@@ -95,33 +106,34 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             return res;
         }
 
-        private float WavefrontNormalized(Frontier frontier, Vector2Int fromPosition, float normalizerConstant) {
+        private float WavefrontNormalized(Frontier frontier, Vector2 fromPosition, float normalizerConstant) {
             var wave = Wavefront(frontier, fromPosition).ToList();
             var distFactor = Mathf.Sqrt(wave.Select(d => d / normalizerConstant).Sum());
             return distFactor;
         }
 
-        private float DistanceFactor(Frontier f, Vector2Int from, float normalizerConstant) {
+        private float DistanceFactor(Frontier f, Vector2 from, float normalizerConstant) {
             var val = WavefrontNormalized(f, from, normalizerConstant);
-            return Mathf.Pow(val, Alpha) * Mathf.Pow(1 - val, Beta);
+            return Mathf.Pow(val, Alpha - 1) * Mathf.Pow(1 - val, Beta - 1);
         }
 
-        private IEnumerable<float> Wavefront(Frontier frontier, Vector2Int fromPosition) {
-            return frontier.cells.Select(cell => Vector2Int.Distance(fromPosition, cell.Item1));
+        private IEnumerable<float> Wavefront(Frontier frontier, Vector2 fromPosition) {
+            return frontier.cells.Select(cell => Vector2.Distance(fromPosition, cell.Item1));
         }
 
         private float CoordinationFactor(Frontier frontier) {
+            _lastSeenNeighbours = _robotController.SenseNearbyRobots();
             if (_lastSeenNeighbours.Count <= 0) {
                 return 0;
             }
 
             var sum = 0f;
             foreach (var neighbour in _lastSeenNeighbours) {
-                var pos = _robotPos + Vector2Int.RoundToInt(Geometry.VectorFromDegreesAndMagnitude(neighbour.Angle, neighbour.Distance));
-                var normalizerConstant = _frontiers.Max(f => f.cells.Select(c => Vector2Int.Distance(pos, c.Item1)).Max());
+                var pos = _robotPos + Geometry.VectorFromDegreesAndMagnitude(neighbour.Angle, neighbour.Distance);
+                var normalizerConstant = _frontiers.Max(f => f.cells.Select(c => Vector2.Distance(pos, c.Item1)).Max());
                 sum += WavefrontNormalized(frontier, pos, normalizerConstant);
             }
-            return sum *5;
+            return sum;
         }
 
         private float UtilityFunction(Frontier frontier, float normalizerConstant) {
@@ -129,45 +141,54 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         }
 
         public void UpdateLogic() {
+            _robotPos = _map.GetApproximatePosition();
+            _robotPosInt = Vector2Int.RoundToInt(_robotPos);
 
-            var id = _robotController.GetRobotID();
-            _robotPos = _map.GetCurrentPositionSlamTile();
-            
             if (_logicTicksSinceLastCommunication == 0) {
                 _lastSeenNeighbours = _robotController.SenseNearbyRobots();
                 if (_lastSeenNeighbours.Any()) {
                     _robotController.StopCurrentTask();
-                    _currentlyMitigatingCollision = false;
-                    _robotTnfStatus = TnfStatus.Communicating;
-                    _robotController.Broadcast((_map, _robotController.GetRobotID()));
+                    // _currentlyMitigatingCollision = false;
+                    _isCommunicating = true;
+                    _robotController.Broadcast((_robotController.GetSlamMap(), _robotController.GetRobotID()));
                 }
                 _logicTicksSinceLastCommunication++;
                 return;
             }
             _logicTicksSinceLastCommunication++;
-            _logicTicksSinceLastCommunication %= 40;
-            
-            if (_robotController.IsCurrentlyColliding() && !_currentlyMitigatingCollision) {
-                _currentlyMitigatingCollision = true;
+            _logicTicksSinceLastCommunication %= 20;
+
+            if (_robotController.HasCollidedSinceLastLogicTick() /* && !_currentlyMitigatingCollision*/) {
+                // _currentlyMitigatingCollision = true;
                 _robotController.StopCurrentTask();
                 _bonked = true;
                 _robotTnfStatus = TnfStatus.AwaitCollisionMitigation;
             }
 
+            if (_robotController.IsCurrentlyColliding()) {
+                _ticksSpentColliding++;
+            }
+
+            if (_ticksSpentColliding == 5) {
+                HardReset();
+            }
+
+            if (_isCommunicating) {
+                AwaitCommunication();
+                _isCommunicating = false;
+            }
+
             switch (_robotTnfStatus) {
                 case TnfStatus.AwaitNextFrontier:
                     var nextFrontier = CalculateNextFrontier(_robotPos);
-                    if (nextFrontier == null || _robotTnfStatus == TnfStatus.Communicating) {
+                    if (nextFrontier == null /*|| _robotTnfStatus == TnfStatus.Communicating*/) {
                         break;
                     }
-                    MoveToFrontier(nextFrontier, _robotPos);
+                    MoveToFrontier(nextFrontier);
                     break;
                 case TnfStatus.AwaitMoving:
                 case TnfStatus.AwaitRotating:
                     DoMovement(_path);
-                    break;
-                case TnfStatus.Communicating:
-                    AwaitCommunication();
                     break;
                 case TnfStatus.AwaitCollisionMitigation:
                     CollisionMitigation();
@@ -177,66 +198,83 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             }
         }
 
+        private void HardReset() {
+            _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+            _robotController.StopCurrentTask();
+            _frontiers = null;
+            _robotPos = _map.GetApproximatePosition();
+            _robotPosInt = Vector2Int.RoundToInt(_robotPos);
+            _path = null;
+            _nextTileInPath = null;
+            _bonked = false;
+            _isCommunicating = false;
+            _ticksSpentColliding = 0;
+        }
+
         private void CollisionMitigation() {
             if (_robotController.GetStatus() != RobotStatus.Idle) return;
             if (_bonked) {
                 _bonked = false;
-                _robotController.Move(.75f, true);
+                _robotController.Move(.1f, true);
                 return;
             }
-            var opponents = _robotController.SenseNearbyRobots();
-            
-            if (opponents.Any()) {
-                // Someone saw you. Find someplace a bit away from them and try to find a new frontier.
-                _currentlyMitigatingCollision = true;
-                var escapeTarget = new Vector2Int(0, 0);
-                foreach (var bot in opponents) {
-                    var v = Geometry.VectorFromDegreesAndMagnitude(bot.Angle, bot.Distance);
-                    escapeTarget += Vector2Int.RoundToInt(v);
+
+            var possibleOptions = GetNeighbouringCells((_robotPosInt, 0)).Select(c => c.Item1).ToList();
+            var blockedOptions = new List<Vector2Int>();
+            var others = _robotController.SenseNearbyRobots();
+            foreach (var bot in others) {
+                blockedOptions.Add(Vector2Int.RoundToInt(bot.GetRelativePosition(_robotPos, _map.GetApproximateGlobalDegrees())));
+            }
+            foreach (var position in possibleOptions) {
+                if (_map.GetTileStatus(position) == SlamMap.SlamTileStatus.Solid) {
+                    blockedOptions.Add(position);
                 }
-                // escapeTarget /= Mathf.Max(opponents.Count / 2, 1);
-                escapeTarget = _robotPos + escapeTarget;
-                escapeTarget = _map.GetCoarseMap().FromSlamMapCoordinate(escapeTarget);
-                
-                _path.Clear(); // No need to follow your old path - you're gonna get a new frontier from your new position.
-                _nextTileInPath = new PathStep(_robotPos, escapeTarget, new HashSet<Vector2Int>());
-                _robotTnfStatus = TnfStatus.AwaitMoving;
+            }
+            possibleOptions = possibleOptions.Except(blockedOptions).ToList();
+            if (!possibleOptions.Any()) {
                 return;
             }
-            _currentlyMitigatingCollision = false;
-            // No one saw you. Just scooch backwards a bit and try to find a new frontier, buddy!
-            _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+            var pickedOption = possibleOptions[_random.Next(0, possibleOptions.Count - 1)];
+
+            _path.Clear(); // No need to follow your old path - you're gonna get a new frontier from your new position.
+            _nextTileInPath = new PathStep(_robotPosInt, pickedOption, new HashSet<Vector2Int>());
+            _robotTnfStatus = TnfStatus.AwaitMoving;
         }
 
         private void AwaitCommunication() {
             var received = _robotController.ReceiveBroadcast();
             if (!received.Any()) {
-                _robotTnfStatus = TnfStatus.AwaitNextFrontier;
                 return;
             }
-            var newMaps = new List<SlamMap>();
+            var newMaps = new List<SlamMap> {_robotController.GetSlamMap() as SlamMap};
             foreach (var package in received) {
                 var pack = ((SlamAlgorithmInterface, int)) package;
                 newMaps.Add(pack.Item1 as SlamMap);
             }
-            SlamMap.Combine(_map as SlamMap, newMaps);
-            _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+
+            // Largest Robot ID synchronizes to save on Simulator CPU time
+            if (!received.Cast<(SlamAlgorithmInterface, int)>().Any(p => p.Item2 > _robotId)) {
+                SlamMap.Synchronize(newMaps);
+            }
+            if (_robotTnfStatus == TnfStatus.OutOfFrontiers) {
+                _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+            }
 
         }
 
         [CanBeNull]
-        private Frontier CalculateNextFrontier(Vector2Int currentPosition) {
+        private Frontier CalculateNextFrontier(Vector2 currentPosition) {
             // if (_frontiers != null) {
             //     foreach (var frontier in _frontiers) {
             //         UnVisualizeFrontier(frontier);
             //     }
             // }
             _frontiers = GetFrontiers();
-            
+
             if (_frontiers.Count <= 0) {
                 return null;
             }
-            var normalizerConstant = _frontiers.Max(f => f.cells.Select(c => Vector2Int.Distance(currentPosition, c.Item1)).Max());
+            var normalizerConstant = _frontiers.Max(f => f.cells.Select(c => Vector2.Distance(currentPosition, c.Item1)).Max());
             foreach (var frontier in _frontiers) {
                 frontier.UtilityValue = UtilityFunction(frontier, normalizerConstant);
                 // VisualizeFrontier(frontier);
@@ -245,11 +283,10 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
 
         }
 
-        private void MoveToFrontier(Frontier bestFrontier, Vector2Int currentPosition) {
+        private void MoveToFrontier(Frontier bestFrontier) {
             // VisualizeNextFrontier(bestFrontier);
             var targetCell = GetFrontierMoveTarget(bestFrontier);
-            var targetCellAsCoarseTile = _map.GetCoarseMap().FromSlamMapCoordinate(targetCell);
-            var path = _map.GetCoarseMap().GetPathSteps(targetCellAsCoarseTile);
+            var path = _map.GetTnfPathAsPathSteps(targetCell);
             if (path == null) {
                 _frontiers.Remove(bestFrontier);
                 if (!_frontiers.Any()) {
@@ -257,12 +294,12 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
                     return;
                 }
                 var newFrontier = _frontiers.OrderByDescending(f => f.UtilityValue).First();
-                MoveToFrontier(newFrontier, currentPosition);
+                MoveToFrontier(newFrontier);
                 return;
             }
 
-            // var comManager = CommunicationManager.singletonInstance;
-            // comManager.DepositTag(new TnfTag(_tagId++, true), Vector2.Scale(targetCell, new Vector2(.5f, .5f)));
+            var comManager = CommunicationManager.singletonInstance;
+            comManager.DepositTag(new TnfTag(_tagId++, true), targetCell);
             _path = new LinkedList<PathStep>(path);
             if (!_path.Any()) {
                 _robotTnfStatus = TnfStatus.AwaitNextFrontier;
@@ -275,13 +312,13 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             StartMoving();
         }
 
-        private void VisualizeNextFrontier(Frontier frontier) {
-            var comManager = CommunicationManager.singletonInstance;
-            foreach (var cell in frontier.cells) {
-                var pos = Vector2.Scale(cell.Item1, new Vector2(.5f, .5f));
-                comManager.DepositTag(new TnfTag(_tagId++, Color.magenta), pos);
-            }
-        }
+        // private void VisualizeNextFrontier(Frontier frontier) {
+        //     var comManager = CommunicationManager.singletonInstance;
+        //     foreach (var cell in frontier.cells) {
+        //         var pos = Vector2.Scale(cell.Item1, new Vector2(.5f, .5f));
+        //         comManager.DepositTag(new TnfTag(_tagId++, Color.magenta), pos);
+        //     }
+        // }
 
         private Vector2Int GetFrontierMoveTarget(Frontier frontier) {
             var count = frontier.cells.Count;
@@ -292,31 +329,31 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
                 (frontier.cells[first].Item1.x + frontier.cells[middle].Item1.x + frontier.cells[last].Item1.x) / 3,
                 (frontier.cells[first].Item1.y + frontier.cells[middle].Item1.y + frontier.cells[last].Item1.y) / 3
             );
-            return Vector2Int.Distance(_robotPos, dest) < 2f ? frontier.cells[middle].Item1 : dest;
+            return _map.GetTileCenterRelativePosition(dest).Distance < MinimumMoveDistance ? frontier.cells[middle].Item1 : dest;
         }
 
-        private void VisualizeFrontier(Frontier frontier) {
-            var comManager = CommunicationManager.singletonInstance;
-            foreach (var cell in frontier.cells) {
-                var pos = Vector2.Scale(cell.Item1, new Vector2(.5f, .5f));
-                comManager.DepositTag(new TnfTag(_tagId++, false), pos);
-            }
-        }
-
-        private void UnVisualizeFrontier(Frontier frontier) {
-            var comManager = CommunicationManager.singletonInstance;
-            foreach (var cell in frontier.cells) {
-                var pos = Vector2.Scale(cell.Item1, new Vector2(.5f, .5f));
-                comManager.RemoveTagAt(pos);
-            }
-        }
+        // private void VisualizeFrontier(Frontier frontier) {
+        //     var comManager = CommunicationManager.singletonInstance;
+        //     foreach (var cell in frontier.cells) {
+        //         var pos = Vector2.Scale(cell.Item1, new Vector2(.5f, .5f));
+        //         comManager.DepositTag(new TnfTag(_tagId++, false), pos);
+        //     }
+        // }
+        //
+        // private void UnVisualizeFrontier(Frontier frontier) {
+        //     var comManager = CommunicationManager.singletonInstance;
+        //     foreach (var cell in frontier.cells) {
+        //         var pos = Vector2.Scale(cell.Item1, new Vector2(.5f, .5f));
+        //         comManager.RemoveTagAt(pos);
+        //     }
+        // }
 
         private void DoMovement(LinkedList<PathStep> path) {
-            if (_robotController.IsCurrentlyColliding() && !_currentlyMitigatingCollision) {
-                _robotTnfStatus = TnfStatus.AwaitCollisionMitigation;
-                _robotController.StopCurrentTask();
-                return;
-            }
+            // if (_robotController.IsCurrentlyColliding() /*&& !_currentlyMitigatingCollision*/) {
+            //     _robotTnfStatus = TnfStatus.AwaitCollisionMitigation;
+            //     _robotController.StopCurrentTask();
+            //     return;
+            // }
 
             if (_robotController.GetStatus() == RobotStatus.Idle) {
                 if (path != null && path.Count > 0) {
@@ -334,23 +371,28 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
                     }
                     return;
                 }
-
-                StartMoving();
+                if (_nextTileInPath != null) {
+                    StartMoving();
+                }
+                else {
+                    _robotTnfStatus = TnfStatus.AwaitNextFrontier;
+                }
             }
         }
 
         private void StartMoving() {
-            if (_robotController.GetStatus() != RobotStatus.Idle) {
+            if (_robotController.GetStatus() != RobotStatus.Idle || _nextTileInPath == null) {
                 return;
             }
-            var relativePosition = _map.GetCoarseMap().GetTileCenterRelativePosition(_nextTileInPath.End);
+            var relativePosition = _map.GetTileCenterRelativePosition(_nextTileInPath.End);
             if (relativePosition.Distance < MinimumMoveDistance) {
                 _nextTileInPath = null;
-                _currentlyMitigatingCollision = false;
+                // _currentlyMitigatingCollision = false;
                 return;
             }
             if (Mathf.Abs(relativePosition.RelativeAngle) <= AngleDelta) {
                 _robotController.Move(relativePosition.Distance);
+                _robotTnfStatus = TnfStatus.AwaitMoving;
             }
             else {
                 _robotController.Rotate(relativePosition.RelativeAngle);
@@ -361,7 +403,7 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
         private List<Frontier> GetFrontiers() {
             var res = new List<Frontier>();
             var edges = new LinkedList<(Vector2Int, float)>();
-            var map = this._map.GetExploredTiles();
+            var map = _map.GetExploredTiles();
 
             // Find edges
             var mapAsList = map.ToList();
@@ -412,21 +454,16 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             return res;
         }
 
-        public TnfExplorationAlgorithm(int alpha, int beta) {
-            Alpha = alpha;
-            Beta = beta;
-            _robotTnfStatus = TnfStatus.AwaitNextFrontier;
-        }
-
         public void SetController(Robot2DController controller) {
             _robotController = controller;
-            _map = _robotController.GetSlamMap();
+            _map = _robotController.GetSlamMap().GetCoarseMap();
+            _robotId = _robotController.GetRobotID();
         }
 
         public string GetDebugInfo() {
             var sb = new StringBuilder();
             sb.AppendLine($"TnfStatus: {_robotTnfStatus.ToString()}");
-            sb.AppendLine(_nextTileInPath != null ? $"Current movement target: {_nextTileInPath.End}": "");
+            sb.AppendLine(_nextTileInPath != null ? $"Current movement target: {_nextTileInPath.End}" : "");
             return sb.ToString();
         }
 
