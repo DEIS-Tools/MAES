@@ -111,15 +111,15 @@ namespace Dora {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 15;
             var runs = 20;
-            var sizes = new List<(int, int)>() {(200,200)};
+            var sizes = new List<(int, int)>() {(50, 50), (100, 100), (200,200)};
             var maxRunTime = 60 * Minute;
             SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker
                                                                                  .CoverageProportion > 0.995f); 
             var robotConstraintsBlockedByWalls = new RobotConstraints(
                 broadcastRange: float.MaxValue,
-                broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 10f,
+                broadcastBlockedByWalls: true,
+                senseNearbyRobotRange: 7f,
                 senseNearbyRobotBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
@@ -139,7 +139,7 @@ namespace Dora {
             var robotConstraintsThroughWalls = new RobotConstraints(
                 broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 10f,
+                senseNearbyRobotRange: 7f,
                 senseNearbyRobotBlockedByWalls: false,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
@@ -156,9 +156,9 @@ namespace Dora {
                 var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
                 {
                     ("SSB", (seed) => new SsbAlgorithm(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
-                    ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsBlockedByWalls, 1), robotConstraintsBlockedByWalls),
-                    ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsThroughWalls),
-                    ("BNM", (seed) => new BrickAndMortar(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
+                    //("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsBlockedByWalls, 1), robotConstraintsBlockedByWalls),
+                    //("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsThroughWalls),
+                    //("BNM", (seed) => new BrickAndMortar(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
                 };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(

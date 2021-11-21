@@ -96,7 +96,7 @@ namespace Dora {
         }
 
         private void CreateStatisticsFile() {
-            var csvWriter = new StatisticsCSVWriter(_currentSimulation,$"dora/{_currentScenario.StatisticsFileName}");
+            var csvWriter = new StatisticsCSVWriter(_currentSimulation,$"{_currentScenario.StatisticsFileName}");
             csvWriter.CreateCSVFile(",");
         }
 
