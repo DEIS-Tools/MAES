@@ -4,7 +4,6 @@ using System.Text;
 using Dora.MapGeneration.PathFinding;
 using Dora.Robot;
 using Dora.Utilities;
-using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Dora.ExplorationAlgorithm.TheNextFrontier {
@@ -261,9 +260,8 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             }
 
         }
-
-        [CanBeNull]
-        private Frontier CalculateNextFrontier(Vector2 currentPosition) {
+        
+        private Frontier? CalculateNextFrontier(Vector2 currentPosition) {
             // if (_frontiers != null) {
             //     foreach (var frontier in _frontiers) {
             //         UnVisualizeFrontier(frontier);

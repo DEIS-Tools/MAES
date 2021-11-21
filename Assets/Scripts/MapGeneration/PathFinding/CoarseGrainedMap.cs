@@ -168,31 +168,30 @@ namespace Dora.MapGeneration.PathFinding {
                 ? _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this) 
                 : _aStar.GetPath(Vector2Int.RoundToInt(approxPosition), target, this);
         }
-
-        public List<Vector2Int>? GetPath(Vector2Int target, HashSet<Vector2Int> excludedTiles, float maxPathCost = float.MaxValue) {
-            if (excludedTiles.Contains(target))
+        
+        public List<Vector2Int>? GetPath(Vector2Int target, HashSet<Vector2Int> excludedTiles = null, float maxPathCost = float.MaxValue) {
+            if (excludedTiles != null && excludedTiles.Contains(target))
                 return null;
 
             var approxPosition = GetApproximatePosition();
-            _excludedTiles = excludedTiles;
-            var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this, false);
+            if (excludedTiles != null) _excludedTiles = excludedTiles;
+            var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this, false); 
             _excludedTiles = new HashSet<Vector2Int>();
             return path;
         }
 
-        public List<PathStep>? GetPathSteps(Vector2Int target, HashSet<Vector2Int> excludedTiles) {
-            if (excludedTiles.Contains(target))
+        public List<PathStep>? GetPathSteps(Vector2Int target, HashSet<Vector2Int> excludedTiles = null) {
+            if (excludedTiles != null && excludedTiles.Contains(target))
                 return null;
 
             var approxPosition = GetApproximatePosition();
-            _excludedTiles = excludedTiles;
+            if (excludedTiles != null) _excludedTiles = excludedTiles;
             var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
             _excludedTiles = new HashSet<Vector2Int>();
             return path == null ? null : _aStar.PathToSteps(path, 0.4f);
         }
-
-        [CanBeNull]
-        public List<PathStep> GetTnfPathAsPathSteps(Vector2Int target) {
+        
+        public List<PathStep>? GetTnfPathAsPathSteps(Vector2Int target) {
             var path = GetPath(target, beOptimistic: false);
             return path == null
                 ? null
@@ -291,8 +290,7 @@ namespace Dora.MapGeneration.PathFinding {
 
         private List<SlamTileStatus> GetSlamTileStatuses(Vector2Int coordinate) {
             var slamCoord = coordinate * 2;
-            return new List<SlamTileStatus>()
-            {
+            return new List<SlamTileStatus>() {
                 _slamMap.GetStatusOfTile(slamCoord),
                 _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right),
                 _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up),

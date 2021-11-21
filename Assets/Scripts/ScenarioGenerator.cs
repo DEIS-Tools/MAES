@@ -588,7 +588,7 @@ namespace Dora {
                     randomSeed,
                     15,
                     0.6f,
-                    (seed) => new TnfExplorationAlgorithm(4, 4, randomSeed)),
+                    (seed) => new TnfExplorationAlgorithm(5, 9, randomSeed)),
                 robotConstraints: robotConstraints,
                 "TNF-office-test-" + randomSeed
             ));

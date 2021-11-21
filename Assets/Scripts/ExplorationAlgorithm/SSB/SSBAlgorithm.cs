@@ -24,9 +24,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private TileReservationSystem _reservationSystem;
 
         private State _currentState = State.Backtracking;
-        // The waiting variable is used to wait a tick without performing any movement action
-        private bool _isWaiting = false;
-        
+
         // Backtracking variables
         private Vector2Int? _backtrackTarget;
         private Queue<PathStep>? _backtrackingPath;
@@ -46,6 +44,11 @@ namespace Dora.ExplorationAlgorithm.SSB {
         
         // Primitive time tracking mechanism
         private int _currentTick = 0;
+        // Used to perform idle waiting
+        private int _ticksToWait = 0;
+        // Track amount of ticks that the robot has waited for another robot to move.
+        // This is a deadlock avoidance measure
+        private int _ticksWaitedInDeadlock = 0;
         
         // State variable for tracking the last time that this robot requested or received
         // a list of bp's from other robots
@@ -76,9 +79,18 @@ namespace Dora.ExplorationAlgorithm.SSB {
             _reservationSystem= new TileReservationSystem(this);
         }
 
+        private bool debugValue = false;
+        
         public void UpdateLogic() {
             _currentTick++;
 
+            if (debugValue) {
+                var count = Enumerable.Range(0, 50)
+                    .SelectMany(x => Enumerable.Range(0, 50).Select(y => new Vector2Int(x, y)))
+                    .Where(v => !_navigationMap.IsTileExplored(v) && _navigationMap.GetTileStatus(v) == SlamMap.SlamTileStatus.Open);
+                Debug.Log(String.Join(",", count));
+            }
+            
             // Only triggered upon initial ticks of the simulation
             if (!_hasPerformedInitialReservation) {
                 if (_reservationSystem.IsTileReservedByThisRobot(_navigationMap.GetCurrentTile()))
@@ -89,8 +101,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 }
             }
             
-            // If waiting mode was engaged last tick, then switch back to normal mode
-            _isWaiting = false;
+            // If in wait mode 
+            _ticksToWait--;
+            if (_ticksToWait < 0) _ticksToWait = 0;
             int tickCount = 0;
             
             if (_controller.HasCollidedSinceLastLogicTick()) {
@@ -102,7 +115,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             }
 
             ProcessIncomingCommunication();
-            while (_controller.GetStatus() == RobotStatus.Idle && _currentState != State.Terminated && !_isWaiting) {
+            while (_ticksToWait <= 0 && _controller.GetStatus() == RobotStatus.Idle && _currentState != State.Terminated) {
 
                 if (_currentState == State.Backtracking) 
                     PerformBackTrack();
@@ -167,7 +180,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 // (if enough time has passed since last request)
                 if (_currentTick - _lastBPRequestTick >= MinimumTicksBetweenBpRequests) {
                     BroadcastBPRequest();
-                    _isWaiting = true;
+                    _ticksToWait = 1;
                 }
                 
                 if (_tickOfLastRequestSentByThisRobot == _currentTick - 3) {
@@ -179,14 +192,14 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     _backtrackTarget = FindBestBackTrackingTarget();
                     // If no local backtracking points could be found either, then wait till next tick
                     if (_backtrackTarget == null)
-                        _isWaiting = true;
+                        _ticksToWait = 1;
                 } else if (_tickOfLastRequestSentByThisRobot == _currentTick - 1) {
                     // Broadcast this robots bps now to match timing of other robots that has just received the request  
                     // Debug.Log($"[{_currentTick}] Auctioneer robot {_controller.GetRobotID()} broadcasting {_backTrackingPoints.Count} bps");
                     _controller.Broadcast(new BackTrackingPointsMessage(_controller.GetRobotID(),new HashSet<Vector2Int>(_backTrackingPoints)));
-                    _isWaiting = true;
+                    _ticksToWait = 1;
                 }else {
-                    _isWaiting = true;
+                    _ticksToWait = 1;
                 }
                 
                 return;
@@ -200,11 +213,10 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
             // Find path to target, if no path has been found previously
             if (_backtrackingPath == null) {
-                var reservedTiles = _reservationSystem.GetTilesReservedByOtherRobots(); 
-                var path = _navigationMap.GetPathSteps(_backtrackTarget!.Value, reservedTiles);
+                var path = _navigationMap.GetPathSteps(_backtrackTarget!.Value);
                 if (path == null) {
-                    // TODO What to do? Wait and try again later? Start auction after waiting x ticks without success?
-                    _isWaiting = true;
+                    _ticksToWait = 10;
+                    _backtrackTarget = null;
                     return;
                 }
                 _backtrackingPath ??= new Queue<PathStep>(path!);    
@@ -229,11 +241,13 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 _nextBackTrackStep ??= _backtrackingPath!.Dequeue();    
                 _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
                 // Wait until next tick to ensure that reservations are cleared before making new ones
-                _isWaiting = true;
+                _ticksToWait = 1;
                 
-                // Check if any of the tiles in the next part of the path have become blocked
+                // Check if any of the tiles (except the current one) in the next part of the path have become blocked
                 // (This can happen when all sub tiles tiles are revealed)
-                if (_nextBackTrackStep!.CrossedTiles.Any(t => _navigationMap.GetTileStatus(t, true) == SlamMap.SlamTileStatus.Solid)) {
+                // The first one (current tile of the robot) is skipped as the robot may be standing on a partly solid
+                // tile, either because it spawned there or because it was pushed there by other robots 
+                if (_nextBackTrackStep!.CrossedTiles.Skip(1).Any(t => _navigationMap.GetTileStatus(t, true) == SlamMap.SlamTileStatus.Solid)) {
                     _nextBackTrackStep = null;
                     _backtrackingPath = null;
                 }
@@ -247,13 +261,25 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 if (_reservationSystem.AnyTilesReservedByOtherRobot(_nextBackTrackStep!.CrossedTiles)) {
                     _backtrackingPath = null;
                     _nextBackTrackStep = null;
+                    if (_ticksWaitedInDeadlock > 100) {
+                        // Deadlock avoidance: after waiting 10 seconds, delete target bp and find a new one
+                        _ticksWaitedInDeadlock = 0;
+                        _backtrackTarget = null;
+                        return;
+                    }
+                    _ticksToWait = 10;
+                    _ticksWaitedInDeadlock += 10;
+                    
                 } else {
                     // otherwise try to reserve the tiles of this path step and wait for confirmation
                     _reservationSystem.Reserve(_nextBackTrackStep!.CrossedTiles);
-                    _isWaiting = true;
+                    _ticksToWait = 1;
                 }
                 return;
             }
+            
+            // The robot can proceed, clear deadlock counter
+            _ticksWaitedInDeadlock = 0;
             
             // Check if the robot needs to move to reach next step target 
             var relativeTarget = _navigationMap.GetTileCenterRelativePosition(_nextBackTrackStep!.End);
@@ -314,7 +340,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         private void MoveToSpiralTarget(RelativePosition relativePosition) {
-            if (Mathf.Abs(relativePosition.RelativeAngle) > 0.5f) {
+            if (Mathf.Abs(relativePosition.RelativeAngle) > 1f) {
+                // Detect backtracking points before rotating
+                DetectBacktrackingPoints();
                 // When rotating, also clear all reservations except for the current tile.
                 // This is done to avoid blocking other robots with trailing reservations from this spiral
                 _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
@@ -325,10 +353,11 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 if (!nextTileReserved) {
                     // Cannot move into target tile as it is not yet reserved by this robot,
                     // wait until next tick and then check again
-                    _isWaiting = true;
+                    _ticksToWait = 1;
                     return;
                 }
                 
+                // Also detect back tracking points after reloading 
                 DetectBacktrackingPoints();
                 
                 // Finally move towards the target
@@ -423,7 +452,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             var targetRelativePosition = _navigationMap
                 .GetTileCenterRelativePosition(_navigationMap.GetGlobalNeighbour(targetDirection));
             // Assert that we are pointed in the right direction
-            if (Mathf.Abs(targetRelativePosition.RelativeAngle) <= 1.0f) 
+            if (Mathf.Abs(targetRelativePosition.RelativeAngle) <= 1.5f) 
                 return true;
             
             // otherwise rotate to face the target tile
@@ -431,6 +460,17 @@ namespace Dora.ExplorationAlgorithm.SSB {
             return false;
         }
 
+        private bool IsSolidOrExplored(RelativeDirection direction) {
+            return IsTileSolidOrExplored(_navigationMap.GetRelativeNeighbour(direction));
+        }
+        
+        // Determine whether the tile is physically blocked or marked as explored
+        private bool IsTileSolidOrExplored(Vector2Int tileCoord) {
+            return _navigationMap.GetTileStatus(tileCoord) == SlamMap.SlamTileStatus.Solid 
+                || _navigationMap.IsTileExplored(tileCoord);
+        }
+
+        // Determines if it is impossible to move to the given tile in spiral mode (true if solid, explored or reserved)
         private bool IsTileBlocked(Vector2Int tileCoord) {
             if (_navigationMap.GetTileStatus(tileCoord) == SlamMap.SlamTileStatus.Solid)
                 return true; // physically blocked
@@ -440,7 +480,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         }
 
         private void MoveTo(RelativePosition relativePosition) {
-            if (Mathf.Abs(relativePosition.RelativeAngle) > 0.5f)
+            if (Mathf.Abs(relativePosition.RelativeAngle) > 1.5f)
                 _controller.Rotate(relativePosition.RelativeAngle);
             else {
                 _controller.Move(relativePosition.Distance);
@@ -468,9 +508,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 .OrderBy(bp => Vector2Int.Distance(robotPosition, bp));
 
             // Find closest tile that has an eligible path
-            var reservedTiles = _reservationSystem.GetTilesReservedByOtherRobots();
             foreach (var bp in orderedBps) {
-                var path = _navigationMap.GetPathSteps(bp, reservedTiles);
+                var path = _navigationMap.GetPathSteps(bp);
                 if (path != null)
                     return bp;
             }
@@ -505,14 +544,27 @@ namespace Dora.ExplorationAlgorithm.SSB {
             var rlsBlocked = IsTileBlocked(rls);
             var olsBlocked = IsTileBlocked(ols);
 
-            if (frontTileBlocked && rlsBlocked && olsBlocked)
+            if (frontTileBlocked && rlsBlocked && olsBlocked) {
+                // Special cases where spiraling is blocked by reserved tiled from backtracking robots,
+                // but not explored or solid. In this case we should always add these points to the bp candidates as
+                // the other robot may not mark them as explored
+                if (!IsTileSolidOrExplored(front)) _backTrackingPoints.Add(front);
+                if (!IsTileSolidOrExplored(rls)) _backTrackingPoints.Add(rls);
+                if (!IsTileSolidOrExplored(ols)) _backTrackingPoints.Add(ols);
                 return null; // No more open tiles left. Spiraling has finished
-
+            }
+            
             // The following is the spiral algorithm specified by the bsa paper
             if (!rlsBlocked) 
                 return _navigationMap.GetRelativeNeighbour(_referenceLateralSide);
-            if (frontTileBlocked) 
+            if (!IsTileSolidOrExplored(rls)) _backTrackingPoints.Add(rls);
+
+            if (frontTileBlocked) {
+                if (!IsTileSolidOrExplored(front)) _backTrackingPoints.Add(front);
                 return _navigationMap.GetRelativeNeighbour(_oppositeLateralSide);
+            } 
+            
+            if (!IsTileSolidOrExplored(ols)) _backTrackingPoints.Add(ols);
             return _navigationMap.GetRelativeNeighbour(Front);
         }
 
@@ -525,21 +577,21 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 return _referenceLateralSide;
             if (frontBlocked) 
                 return _oppositeLateralSide;
-            return RelativeDirection.Front;
+            return Front;
         }
 
         // Adds backtracking points as specified by the algorithm presented in the SSB paper
         // In the SSB variation of the BP identification, a tile is only considered to be a BP if
         // it has solid tile to its immediate right or left
         private void DetectBacktrackingPoints() {
-            if (!IsBlocked(Right)) {
-                if (IsBlocked(Front) || IsBlocked(FrontRight) || IsBlocked(RearRight))
-                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Right)); // TODO? temp points?
+            if (!IsSolidOrExplored(Right)) {
+                if (IsSolidOrExplored(Front) || IsSolidOrExplored(FrontRight) || IsSolidOrExplored(RearRight))
+                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Right)); 
             }
 
-            if (!IsBlocked(Left)) {
-                if (IsBlocked(Front) || IsBlocked(FrontLeft) || IsBlocked(RearLeft))
-                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Left)); // TODO temp points?
+            if (!IsSolidOrExplored(Left)) {
+                if (IsSolidOrExplored(Front) || IsSolidOrExplored(FrontLeft) || IsSolidOrExplored(RearLeft))
+                    _backTrackingPoints.Add(_navigationMap.GetRelativeNeighbour(Left)); 
             }
         }
 
@@ -595,6 +647,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             return null;
         }
 
+        
         // Returns true unless the tile is known to be solid or if the tile is reserved by another robot
         private bool IsPotentiallyExplorable(Vector2Int tile) {
             return !_navigationMap.IsPotentiallyExplorable(tile) || _reservationSystem.IsTileReservedByOtherRobot(tile);

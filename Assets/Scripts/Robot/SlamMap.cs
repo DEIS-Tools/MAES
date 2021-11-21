@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 using Dora.MapGeneration;
 using Dora.MapGeneration.PathFinding;
 using Dora.Utilities;
-using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 using Random = System.Random;
@@ -138,6 +137,12 @@ namespace Dora.Robot {
         }
 
         public void UpdateApproxPosition(Vector2 worldPosition) {
+            if (Math.Abs(_robotConstraints.SlamPositionInaccuracy) < 0.0000001f) {
+                this.ApproximatePosition = worldPosition;
+                return;
+            }
+                
+            
             var sign = random.Next(2) == 1 ? -1 : 1;
             var multiplier = random.NextDouble() * sign;
             var newInaccuracy = _lastInaccuracyX + multiplier * (_robotConstraints.SlamPositionInaccuracy / 10f);
@@ -167,7 +172,7 @@ namespace Dora.Robot {
             foreach (var map in maps) {
                 for (int x = 0; x < map._widthInTiles; x++) {
                     for (int y = 0; y < map._heightInTiles; y++) {
-                        if (map._tiles[x, y] != SlamTileStatus.Unseen)
+                        if (map._tiles[x, y] != SlamTileStatus.Unseen && globalMap[x, y] != SlamTileStatus.Solid)
                             globalMap[x, y] = map._tiles[x, y];
                     }
                 }

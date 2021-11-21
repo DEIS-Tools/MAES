@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using Dora.Robot;
 using Dora.Robot.Task;
-using JetBrains.Annotations;
 using UnityEngine;
 using static Dora.CommunicationManager;
 using static Dora.MapGeneration.EnvironmentTaggingMap;
@@ -26,7 +25,7 @@ namespace Dora {
 
         private MonaRobot _robot;
         private RobotStatus _currentStatus = RobotStatus.Idle;
-        [CanBeNull] private ITask _currentTask;
+        private ITask? _currentTask;
 
         public CommunicationManager CommunicationManager { get; set; }
         public SlamMap SlamMap { get; set; }
@@ -275,7 +274,7 @@ namespace Dora {
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
             info.AppendLine($"Current task: {_currentTask?.GetType()}");
-            info.Append($"Slam position: {approxPosition.x.ToString("#.00")}, {approxPosition.y.ToString("#.00")}\n");
+            info.Append($"Slam position: {approxPosition.x.ToString("#.0")}, {approxPosition.y.ToString("#.0")}\n");
             info.Append($"Slam tile: {SlamMap.GetCurrentPositionSlamTile()}\n");
             info.Append($"Coarse tile: {SlamMap.GetCoarseMap().FromSlamMapCoordinate(SlamMap.GetCurrentPositionSlamTile())}\n");
             info.Append($"Is colliding: {IsCurrentlyColliding()}");
