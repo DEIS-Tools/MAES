@@ -24,9 +24,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
         private TileReservationSystem _reservationSystem;
 
         private State _currentState = State.Backtracking;
-        // The waiting variable is used to wait a tick without performing any movement action
-        private bool _isWaiting = false;
-        
+
         // Backtracking variables
         private Vector2Int? _backtrackTarget;
         private Queue<PathStep>? _backtrackingPath;
@@ -46,6 +44,11 @@ namespace Dora.ExplorationAlgorithm.SSB {
         
         // Primitive time tracking mechanism
         private int _currentTick = 0;
+        // Used to perform idle waiting
+        private int _ticksToWait = 0;
+        // Track amount of ticks that the robot has waited for another robot to move.
+        // This is a deadlock avoidance measure
+        private int _ticksWaitedInDeadlock = 0;
         
         // State variable for tracking the last time that this robot requested or received
         // a list of bp's from other robots
@@ -98,8 +101,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 }
             }
             
-            // If waiting mode was engaged last tick, then switch back to normal mode
-            _isWaiting = false;
+            // If in wait mode 
+            _ticksToWait--;
+            if (_ticksToWait < 0) _ticksToWait = 0;
             int tickCount = 0;
             
             if (_controller.HasCollidedSinceLastLogicTick()) {
@@ -111,7 +115,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             }
 
             ProcessIncomingCommunication();
-            while (_controller.GetStatus() == RobotStatus.Idle && _currentState != State.Terminated && !_isWaiting) {
+            while (_ticksToWait <= 0 && _controller.GetStatus() == RobotStatus.Idle && _currentState != State.Terminated) {
 
                 if (_currentState == State.Backtracking) 
                     PerformBackTrack();
@@ -176,7 +180,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 // (if enough time has passed since last request)
                 if (_currentTick - _lastBPRequestTick >= MinimumTicksBetweenBpRequests) {
                     BroadcastBPRequest();
-                    _isWaiting = true;
+                    _ticksToWait = 1;
                 }
                 
                 if (_tickOfLastRequestSentByThisRobot == _currentTick - 3) {
@@ -188,14 +192,14 @@ namespace Dora.ExplorationAlgorithm.SSB {
                     _backtrackTarget = FindBestBackTrackingTarget();
                     // If no local backtracking points could be found either, then wait till next tick
                     if (_backtrackTarget == null)
-                        _isWaiting = true;
+                        _ticksToWait = 1;
                 } else if (_tickOfLastRequestSentByThisRobot == _currentTick - 1) {
                     // Broadcast this robots bps now to match timing of other robots that has just received the request  
                     // Debug.Log($"[{_currentTick}] Auctioneer robot {_controller.GetRobotID()} broadcasting {_backTrackingPoints.Count} bps");
                     _controller.Broadcast(new BackTrackingPointsMessage(_controller.GetRobotID(),new HashSet<Vector2Int>(_backTrackingPoints)));
-                    _isWaiting = true;
+                    _ticksToWait = 1;
                 }else {
-                    _isWaiting = true;
+                    _ticksToWait = 1;
                 }
                 
                 return;
@@ -209,11 +213,10 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
             // Find path to target, if no path has been found previously
             if (_backtrackingPath == null) {
-                var reservedTiles = _reservationSystem.GetTilesReservedByOtherRobots(); 
-                var path = _navigationMap.GetPathSteps(_backtrackTarget!.Value, reservedTiles);
+                var path = _navigationMap.GetPathSteps(_backtrackTarget!.Value);
                 if (path == null) {
-                    // TODO What to do? Wait and try again later? Start auction after waiting x ticks without success?
-                    _isWaiting = true;
+                    _ticksToWait = 10;
+                    _backtrackTarget = null;
                     return;
                 }
                 _backtrackingPath ??= new Queue<PathStep>(path!);    
@@ -238,7 +241,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 _nextBackTrackStep ??= _backtrackingPath!.Dequeue();    
                 _reservationSystem.ClearThisRobotsReservationsExcept(_navigationMap.GetCurrentTile());
                 // Wait until next tick to ensure that reservations are cleared before making new ones
-                _isWaiting = true;
+                _ticksToWait = 1;
                 
                 // Check if any of the tiles (except the current one) in the next part of the path have become blocked
                 // (This can happen when all sub tiles tiles are revealed)
@@ -258,13 +261,25 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 if (_reservationSystem.AnyTilesReservedByOtherRobot(_nextBackTrackStep!.CrossedTiles)) {
                     _backtrackingPath = null;
                     _nextBackTrackStep = null;
+                    if (_ticksWaitedInDeadlock > 100) {
+                        // Deadlock avoidance: after waiting 10 seconds, delete target bp and find a new one
+                        _ticksWaitedInDeadlock = 0;
+                        _backtrackTarget = null;
+                        return;
+                    }
+                    _ticksToWait = 10;
+                    _ticksWaitedInDeadlock += 10;
+                    
                 } else {
                     // otherwise try to reserve the tiles of this path step and wait for confirmation
                     _reservationSystem.Reserve(_nextBackTrackStep!.CrossedTiles);
-                    _isWaiting = true;
+                    _ticksToWait = 1;
                 }
                 return;
             }
+            
+            // The robot can proceed, clear deadlock counter
+            _ticksWaitedInDeadlock = 0;
             
             // Check if the robot needs to move to reach next step target 
             var relativeTarget = _navigationMap.GetTileCenterRelativePosition(_nextBackTrackStep!.End);
@@ -338,7 +353,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 if (!nextTileReserved) {
                     // Cannot move into target tile as it is not yet reserved by this robot,
                     // wait until next tick and then check again
-                    _isWaiting = true;
+                    _ticksToWait = 1;
                     return;
                 }
                 
@@ -493,9 +508,8 @@ namespace Dora.ExplorationAlgorithm.SSB {
                 .OrderBy(bp => Vector2Int.Distance(robotPosition, bp));
 
             // Find closest tile that has an eligible path
-            var reservedTiles = _reservationSystem.GetTilesReservedByOtherRobots();
             foreach (var bp in orderedBps) {
-                var path = _navigationMap.GetPathSteps(bp, reservedTiles);
+                var path = _navigationMap.GetPathSteps(bp);
                 if (path != null)
                     return bp;
             }
