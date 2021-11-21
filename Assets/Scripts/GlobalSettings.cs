@@ -20,7 +20,7 @@ namespace Dora {
 
         // Statistics
         public static readonly bool ShouldWriteCSVResults = true;
-        public static readonly int TicksPerStatsSnapShot = 50;
+        public static readonly int TicksPerStatsSnapShot = 10;
 
         public static readonly string StatisticsOutPutPath =
             Environment.GetFolderPath(Environment.SpecialFolder.Desktop) 
