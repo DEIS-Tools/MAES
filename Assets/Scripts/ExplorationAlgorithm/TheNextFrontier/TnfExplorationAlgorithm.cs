@@ -235,7 +235,7 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             }
             var pickedOption = possibleOptions[_random.Next(0, possibleOptions.Count - 1)];
 
-            _path.Clear(); // No need to follow your old path - you're gonna get a new frontier from your new position.
+            _path?.Clear(); // No need to follow your old path - you're gonna get a new frontier from your new position.
             _nextTileInPath = new PathStep(_robotPosInt, pickedOption, new HashSet<Vector2Int>());
             _robotTnfStatus = TnfStatus.AwaitMoving;
         }
@@ -450,6 +450,10 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             }
 
             return res;
+        }
+
+        public bool IsOutOfFrontiers() {
+            return _robotTnfStatus == TnfStatus.OutOfFrontiers;
         }
 
         public void SetController(Robot2DController controller) {

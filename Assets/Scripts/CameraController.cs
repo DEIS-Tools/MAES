@@ -55,8 +55,10 @@ namespace Dora {
                 c.gameObject.SetActive(false);
             }
 
-            currentCam = _cams.Find(c => c.camera.name == "Camera45").camera;
+            currentCam = _cams.Find(c => c.camera.name == "Camera90").camera;
             currentCam.gameObject.SetActive(true);
+            PrepareZoom(-200f);
+            newPosition += transform.right * 35;
         }
 
         // Update is called once per frame

@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace Dora {
     public class Simulator : MonoBehaviour {
-        private SimulationPlayState _playState = SimulationPlayState.Paused;
+        private SimulationPlayState _playState = SimulationPlayState.FastAsPossible;
 
         public GameObject SimulationPrefab;
         private Queue<SimulationScenario> _scenarios;
@@ -36,9 +36,9 @@ namespace Dora {
             Physics.autoSimulation = false;
             Physics2D.simulationMode = SimulationMode2D.Script;
 
-            //_scenarios = ScenarioGenerator.GenerateArticleScenarios();
+            _scenarios = ScenarioGenerator.GenerateArticleScenarios();
             //_scenarios = ScenarioGenerator.GenerateSsbScenarios();
-            _scenarios = ScenarioGenerator.GenerateTnfScenarios();
+            // _scenarios = ScenarioGenerator.GenerateTnfScenarios();
             CreateSimulation(_scenarios.Dequeue());
         }
 

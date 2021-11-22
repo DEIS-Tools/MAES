@@ -111,11 +111,16 @@ namespace Dora {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 15;
             var runs = 20;
-            var sizes = new List<(int, int)>() {(50, 50), (100, 100), (200,200)};
+            var sizes = new List<(int, int)>() {/*(50, 50), (100, 100), */(200,200)};
             var maxRunTime = 60 * Minute;
             SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker
-                                                                                 .CoverageProportion > 0.995f); 
+                                                                                 .CoverageProportion > 0.995f);
+            // Overwrite for when simulating TNF, which aims at exploration, and not coverage.
+            shouldEndSim = simulation => simulation.SimulateTimeSeconds >= maxRunTime
+                                                                          || simulation.ExplorationTracker
+                                                                              .ExploredProportion > .995f
+                                                                          || simulation.TnfBotsOutOfFrontiers();
             var robotConstraintsBlockedByWalls = new RobotConstraints(
                 broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: true,
@@ -126,6 +131,20 @@ namespace Dora {
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
+                environmentTagReadRange: 4.0f,
+                lidarRange: 7f
+            );
+            
+            var robotConstraintsTnfScenario = new RobotConstraints(
+                broadcastRange: float.MaxValue,
+                broadcastBlockedByWalls: false,
+                senseNearbyRobotRange: float.MaxValue,
+                senseNearbyRobotBlockedByWalls: false,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f, 
+                distributeSlam: false,
                 environmentTagReadRange: 4.0f,
                 lidarRange: 7f
             );
@@ -151,14 +170,15 @@ namespace Dora {
             );
             
             
-            for (int i = 0; i < runs; i++) { 
+            for (int i = 0; i < 20; i++) { 
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
                 {
-                    ("SSB", (seed) => new SsbAlgorithm(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
-                    //("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsBlockedByWalls, 1), robotConstraintsBlockedByWalls),
-                    //("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsThroughWalls),
-                    //("BNM", (seed) => new BrickAndMortar(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
+                    ("TNF", (seed) => new TnfExplorationAlgorithm(8, 8, seed), robotConstraintsTnfScenario)
+                    // ("SSB", (seed) => new SsbAlgorithm(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
+                    // ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsBlockedByWalls, 1), robotConstraintsBlockedByWalls),
+                    // ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsThroughWalls),
+                    // ("BNM", (seed) => new BrickAndMortar(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
                 };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(

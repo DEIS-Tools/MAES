@@ -98,8 +98,8 @@ namespace Dora.MapGeneration {
                     }
                 }
 
-                if (loopCount > 50000) {
-                    Debug.Log($"A star loop count exceeded 8000, stopping pathfinding prematurely. [{startCoordinate} -> {targetCoordinate}]");
+                if (loopCount > 100000) {
+                    Debug.Log($"A star loop count exceeded 100000, stopping pathfinding prematurely. [{startCoordinate} -> {targetCoordinate}]");
                     return null;
                 } 
                     
