@@ -110,54 +110,75 @@ namespace Dora {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 15;
             var runs = 20;
-            var sizes = new List<(int, int)>() {(50, 50), (100, 100), (200,200)};
+            var sizes = new List<(int, int)>() {(50, 50), (100,100), (200,200)};
             var maxRunTime = 60 * Minute;
             SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker
-                                                                                 .CoverageProportion > 0.995f); 
-            var robotConstraintsBlockedByWalls = new RobotConstraints(
-                broadcastRange: float.MaxValue,
-                broadcastBlockedByWalls: true,
+                                                                                 .CoverageProportion > 0.995f);
+            
+            var robotConstraintsRBW = new RobotConstraints(
+                broadcastRange: 0,
+                broadcastBlockedByWalls: false,
+                senseNearbyRobotRange: 0,
+                senseNearbyRobotBlockedByWalls: false,
+                automaticallyUpdateSlam: false,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f, 
+                distributeSlam: false,
+                environmentTagReadRange: 0f,
+                lidarRange: 0f
+            );
+            
+            var robotConstraintsLVD = new RobotConstraints(
+                broadcastRange: 0,
+                broadcastBlockedByWalls: false,
                 senseNearbyRobotRange: 7f,
                 senseNearbyRobotBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
-                distributeSlam: true,
-                environmentTagReadRange: 4.0f,
+                distributeSlam: false,
+                environmentTagReadRange: 0f,
                 lidarRange: 7f
             );
             
-            // This will short circuit the population of the adjacency, which 
-            // can improve the simulation performance of algorithms, where communication
-            // is not blocked by walls significantly, e.g. SSB.
-            // This does not effect the performance in terms of exploration
-            // since if all signals can travels through walls, we don't care about ray tracing and counting number
-            // of walls encountered.
-            var robotConstraintsThroughWalls = new RobotConstraints(
+            var robotConstraintsTNF = new RobotConstraints(
+                broadcastRange: 15,
+                broadcastBlockedByWalls: true,
+                senseNearbyRobotRange: 12f,
+                senseNearbyRobotBlockedByWalls: true,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f, 
+                distributeSlam: false,
+                environmentTagReadRange: 0f,
+                lidarRange: 7f
+            );
+            
+            var robotConstraintsSSB = new RobotConstraints(
                 broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 7f,
+                senseNearbyRobotRange: 7.0f,
                 senseNearbyRobotBlockedByWalls: false,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
-                environmentTagReadRange: 4.0f,
+                environmentTagReadRange: 0f,
                 lidarRange: 7f
-            );
-            
-            
+            ); 
+
             for (int i = 0; i < runs; i++) { 
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
                 {
-                    ("SSB", (seed) => new SsbAlgorithm(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
-                    //("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsBlockedByWalls, 1), robotConstraintsBlockedByWalls),
-                    //("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsThroughWalls),
-                    //("BNM", (seed) => new BrickAndMortar(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
+                    ("SSB", (seed) => new SsbAlgorithm(robotConstraintsSSB, seed), robotConstraintsSSB),
+                    ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsLVD, 1), robotConstraintsLVD),
+                    ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsRBW),
                 };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(

@@ -192,7 +192,13 @@ namespace Dora {
                         var r2Position = r2.transform.position;
                         var r1Vector2 = new Vector2(r1Position.x, r1Position.y);
                         var r2Vector2 = new Vector2(r2Position.x, r2Position.y);
-                        _adjacencyMatrix[(r1.id, r2.id)] = RayTraceCommunication(r1Vector2, r2Vector2);
+                        try {
+                            _adjacencyMatrix[(r1.id, r2.id)] = RayTraceCommunication(r1Vector2, r2Vector2);
+                        }
+                        catch (Exception e) {
+                            _adjacencyMatrix[(r1.id, r2.id)] = new CommunicationInfo(float.MaxValue, 90, 1);
+                        }
+                        
                     }
                 }
             }
