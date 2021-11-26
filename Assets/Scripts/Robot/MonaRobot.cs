@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using Dora.ExplorationAlgorithm;
+﻿using System.Collections.Generic;
+using Maes.ExplorationAlgorithm;
 using UnityEngine;
 
-namespace Dora.Robot {
+namespace Maes.Robot {
     public class MonaRobot : MonoBehaviour, ISimulationUnit {
         public Transform leftWheelTransform;
         public Transform rightWheelTransform;

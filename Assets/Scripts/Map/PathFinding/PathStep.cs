@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Dora.MapGeneration.PathFinding {
+namespace Maes.Map.PathFinding {
     // Represents a single line in a path. Used for creating tile reservations when traversing the path
     public class PathStep {
         public readonly Vector2Int Start;

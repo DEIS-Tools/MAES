@@ -1,16 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using Dora.MapGeneration;
-using Dora.Robot;
-using Dora.Statistics;
-using Dora.Utilities;
+using Maes.Statistics;
+using Maes.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Dora {
+namespace Maes {
     public class Simulator : MonoBehaviour {
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Dora.Robot {
+namespace Maes.Robot {
     public class MovementDirective {
         public readonly float LeftWheelSpeed;
         public readonly float RightWheelSpeed;

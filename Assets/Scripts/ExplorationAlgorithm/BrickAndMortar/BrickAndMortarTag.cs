@@ -1,12 +1,11 @@
 using System.Collections.Generic;
-using Dora.MapGeneration;
+using Maes.Map;
 using UnityEngine;
-using static Dora.ExplorationAlgorithm.BrickAndMortar;
 
-namespace Dora.ExplorationAlgorithm {
+namespace Maes.ExplorationAlgorithm.BrickAndMortar {
     public class BrickAndMortarTag: EnvironmentTaggingMap.ITag {
 
-        public TileStatus Status;
+        public BrickAndMortar.TileStatus Status;
         public readonly int ID;
         public const int UnknownNeighbour = -1;
         public int[] NeighbourIds = new int[8];
@@ -15,7 +14,7 @@ namespace Dora.ExplorationAlgorithm {
 
         private Dictionary<int, int> _robotIdToLastTraversalDirection = new Dictionary<int, int>();
 
-        public BrickAndMortarTag(TileStatus status, int id) {
+        public BrickAndMortarTag(BrickAndMortar.TileStatus status, int id) {
             Status = status;
             ID = id;
             for (int i = 0; i < 8; i++) 
@@ -46,7 +45,7 @@ namespace Dora.ExplorationAlgorithm {
         private Color _visitedColor = new Color(50f / 255f, 50f / 255f, 50f / 255f, 1f);
 
         public void DrawGizmos(Vector3 position) {
-            Gizmos.color = Status == TileStatus.Visited ? _visitedColor : _exploredColor;
+            Gizmos.color = Status == BrickAndMortar.TileStatus.Visited ? _visitedColor : _exploredColor;
             Gizmos.DrawCube(new Vector3(position.x, position.y, -_tagCubeSize.z / 2f), _tagCubeSize);
         }
         

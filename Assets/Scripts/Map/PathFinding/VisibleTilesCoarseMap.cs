@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Dora.Robot;
+using Maes.Robot;
 using UnityEngine;
 
-namespace Dora.MapGeneration.PathFinding {
+namespace Maes.Map.PathFinding {
     public class VisibleTilesCoarseMap : IPathFindingMap {
         private readonly SlamMap _slamMap;
         private readonly int _width;

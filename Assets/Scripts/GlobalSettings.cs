@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace Dora {
+namespace Maes {
     // This class contains all settings related to an instance of an simulation
     public static class GlobalSettings {
         // Times per second that robot logic is updated

@@ -1,21 +1,18 @@
 using System.Collections.Generic;
-using Dora.MapGeneration;
-using Dora.MapGeneration.PathFinding;
-using Dora.Utilities;
+using Maes.Map.PathFinding;
 using UnityEngine;
-using static Dora.Robot.SlamMap;
 
-namespace Dora.Robot {
+namespace Maes.Robot {
     public interface SlamAlgorithmInterface {
         public Vector2 GetApproxPosition();
 
-        public Dictionary<Vector2Int, SlamTileStatus> GetExploredTiles();
+        public Dictionary<Vector2Int, SlamMap.SlamTileStatus> GetExploredTiles();
         
-        public Dictionary<Vector2Int, SlamTileStatus> GetCurrentlyVisibleTiles();
+        public Dictionary<Vector2Int, SlamMap.SlamTileStatus> GetCurrentlyVisibleTiles();
 
         public Vector2Int GetCurrentPositionSlamTile();
 
-        public SlamTileStatus GetStatusOfTile(Vector2Int tile);
+        public SlamMap.SlamTileStatus GetStatusOfTile(Vector2Int tile);
 
         public float GetRobotAngleDeg();
         

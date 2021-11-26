@@ -1,19 +1,12 @@
 #nullable enable
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using Dora.MapGeneration.PathFinding;
-using JetBrains.Annotations;
+using Maes.Utilities;
+using Maes.Utilities.Priority_Queue;
 using UnityEngine;
-using static Dora.MapGeneration.CardinalDirection.RelativeDirection;
-using JetBrains.Annotations;
-using UnityEngine;
-using Priority_Queue;
 
-
-namespace Dora.MapGeneration {
+namespace Maes.Map.PathFinding {
     public class AStar : IPathFinder {
         
         private class AStarTile {

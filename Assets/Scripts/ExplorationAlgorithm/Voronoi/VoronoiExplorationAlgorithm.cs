@@ -1,21 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.RegularExpressions;
-using Dora.Robot;
-using Dora.Utilities;
-using JetBrains.Annotations;
-using UnityEditor;
+using Maes.Robot;
+using Maes.Robot.Task;
+using Maes.Utilities;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Debug = UnityEngine.Debug;
 using Random = System.Random;
 
-namespace Dora.ExplorationAlgorithm.Voronoi {
+namespace Maes.ExplorationAlgorithm.Voronoi {
     public class VoronoiExplorationAlgorithm : IExplorationAlgorithm {
         private IRobotController _robotController;
         private readonly Random _random;

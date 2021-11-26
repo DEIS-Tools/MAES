@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Dora.Robot.Task {
+namespace Maes.Robot.Task {
     public class FiniteMovementTask : ITask {
         private readonly float _targetDistance;
         private readonly Transform _robotTransform;

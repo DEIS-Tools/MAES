@@ -1,13 +1,13 @@
-using System;
 using System.Collections.Generic;
-using Dora.ExplorationAlgorithm;
-using Dora.ExplorationAlgorithm.SSB;
-using Dora.ExplorationAlgorithm.Voronoi;
-using Dora.ExplorationAlgorithm.TheNextFrontier;
-using Dora.MapGeneration;
-using static Dora.MapGeneration.RobotSpawner;
+using Maes.ExplorationAlgorithm.BrickAndMortar;
+using Maes.ExplorationAlgorithm.RandomBallisticWalk;
+using Maes.ExplorationAlgorithm.SSB;
+using Maes.ExplorationAlgorithm.TheNextFrontier;
+using Maes.ExplorationAlgorithm.Voronoi;
+using Maes.Map;
+using Maes.Map.MapGen;
 
-namespace Dora {
+namespace Maes {
     public class ScenarioGenerator {
          private const int Minute = 60;
          
@@ -37,7 +37,7 @@ namespace Dora {
             
             for (int i = 0; i < runs; i++) { 
                 int randomSeed = i;
-                var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
+                var algorithmsAndFileNames = new List<(string, RobotSpawner.CreateAlgorithmDelegate, RobotConstraints)>()
                 {
                     ("LVD-long-range", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsLVD, 1), robotConstraintsLVD),
                 };
@@ -150,7 +150,7 @@ namespace Dora {
                     1,
                     1f);
                 
-                var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
+                var algorithmsAndFileNames = new List<(RobotSpawner.CreateAlgorithmDelegate, string)>()
                 {
                     ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
                     ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
@@ -270,7 +270,7 @@ namespace Dora {
 
             for (int i = 0; i < runs; i++) { 
                 int randomSeed = i;
-                var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
+                var algorithmsAndFileNames = new List<(string, RobotSpawner.CreateAlgorithmDelegate, RobotConstraints)>()
                 {
                     ("TNF", (seed) => new TnfExplorationAlgorithm(8, 8, seed), robotConstraintsTNF),
                     ("SSB", (seed) => new SsbAlgorithm(robotConstraintsSSB, seed), robotConstraintsSSB),

@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Dora.Utilities;
-using UnityEngine;
+using Maes.Utilities;
 
-namespace Dora.MapGeneration {
+namespace Maes.Map {
     public class SimulationMapTile<TCell> {
         // A tile is a rectangle consisting of 8 triangle shaped cells.
         // The triangles are arranged in 4 different orientations

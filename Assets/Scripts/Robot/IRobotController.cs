@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.U2D;
-using static Dora.MapGeneration.EnvironmentTaggingMap;
+using Maes.Map;
+using Maes.Robot.Task;
 
-namespace Dora.Robot {
+namespace Maes.Robot {
     public interface IRobotController {
         int GetRobotID();
 
@@ -41,10 +41,10 @@ namespace Dora.Robot {
         List<object> ReceiveBroadcast();
 
         // Deposits a tag into the environment at the current position of the robot
-        void DepositTag(ITag tag);
+        void DepositTag(EnvironmentTaggingMap.ITag tag);
         
         // Returns a list of all environment tags that are within sensor range 
-        List<RelativeObject<ITag>> ReadNearbyTags();
+        List<RelativeObject<EnvironmentTaggingMap.ITag>> ReadNearbyTags();
         
         public readonly struct DetectedWall {
             public readonly float distance;

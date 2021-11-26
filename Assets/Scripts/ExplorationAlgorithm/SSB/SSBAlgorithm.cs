@@ -1,17 +1,16 @@
 #nullable enable
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Dora.MapGeneration;
-using Dora.MapGeneration.PathFinding;
-using Dora.Robot;
-using Dora.Utilities;
+using Maes.Map.PathFinding;
+using Maes.Robot;
+using Maes.Robot.Task;
+using Maes.Utilities;
 using UnityEngine;
-using static Dora.MapGeneration.CardinalDirection;
-using static Dora.MapGeneration.CardinalDirection.RelativeDirection;
+using static Maes.Utilities.CardinalDirection;
+using static Maes.Utilities.CardinalDirection.RelativeDirection;
 
-namespace Dora.ExplorationAlgorithm.SSB {
+namespace Maes.ExplorationAlgorithm.SSB {
     public partial class SsbAlgorithm : IExplorationAlgorithm {
 
         private IRobotController _controller;
@@ -36,9 +35,9 @@ namespace Dora.ExplorationAlgorithm.SSB {
 
         // Spiraling information
         // The side that the outer wall of the spiral is on, relative to the spiraling robot
-        private RelativeDirection _referenceLateralSide;
+        private CardinalDirection.RelativeDirection _referenceLateralSide;
         // The opposite side of the rls. This is the side pointing toward the center of the spiral
-        private RelativeDirection _oppositeLateralSide;
+        private CardinalDirection.RelativeDirection _oppositeLateralSide;
         // Target for next step in spiral movement
         private Vector2Int? _nextSpiralTarget;
         
@@ -460,7 +459,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             return false;
         }
 
-        private bool IsSolidOrExplored(RelativeDirection direction) {
+        private bool IsSolidOrExplored(CardinalDirection.RelativeDirection direction) {
             return IsTileSolidOrExplored(_navigationMap.GetRelativeNeighbour(direction));
         }
         
@@ -568,7 +567,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             return _navigationMap.GetRelativeNeighbour(Front);
         }
 
-        private RelativeDirection? GetSpiralTargetDirection(bool frontBlocked, bool rlsBlocked, bool olsBlocked) {
+        private CardinalDirection.RelativeDirection? GetSpiralTargetDirection(bool frontBlocked, bool rlsBlocked, bool olsBlocked) {
             if (frontBlocked && rlsBlocked && olsBlocked)
                 return null; // No more open tiles left. Spiraling has finished
 
@@ -653,7 +652,7 @@ namespace Dora.ExplorationAlgorithm.SSB {
             return !_navigationMap.IsPotentiallyExplorable(tile) || _reservationSystem.IsTileReservedByOtherRobot(tile);
         }
 
-        private bool IsBlocked(RelativeDirection direction) {
+        private bool IsBlocked(CardinalDirection.RelativeDirection direction) {
             return IsTileBlocked(_navigationMap.GetRelativeNeighbour(direction));
         }
 

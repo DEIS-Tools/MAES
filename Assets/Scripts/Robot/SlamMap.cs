@@ -1,15 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using Dora.MapGeneration;
-using Dora.MapGeneration.PathFinding;
-using Dora.Utilities;
-using UnityEditor;
+using Maes.Map;
+using Maes.Map.PathFinding;
+using Maes.Utilities;
 using UnityEngine;
 using Random = System.Random;
 
-namespace Dora.Robot {
+namespace Maes.Robot {
     public class SlamMap : SlamAlgorithmInterface, IPathFindingMap{
         // Size of a tile in world space
         private readonly float _tileSize;

@@ -1,6 +1,6 @@
 using System;
 
-namespace Dora.MapGeneration {
+namespace Maes.Map.MapGen {
     public struct OfficeMapConfig {
         // Bitmap size is always +1 larger in both axis
         // due to the marching squares algorithm using 4 points per square

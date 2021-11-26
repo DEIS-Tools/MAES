@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 
-namespace Dora.MapGeneration {
+namespace Maes.Utilities {
     
     // Represents the 8 directions found on a compass 
     public class CardinalDirection {

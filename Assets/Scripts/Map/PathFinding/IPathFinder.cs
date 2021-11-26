@@ -1,9 +1,7 @@
 using System.Collections.Generic;
-using Dora.MapGeneration.PathFinding;
-using JetBrains.Annotations;
 using UnityEngine;
 
-namespace Dora.MapGeneration {
+namespace Maes.Map.PathFinding {
     public interface IPathFinder {
 
         public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false, bool acceptPartialPaths = false);

@@ -1,17 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
-using System.Security.Cryptography;
-using Dora.MapGeneration;
-using Dora.Robot;
-using Dora.Utilities;
+using Maes.Map;
+using Maes.Robot;
+using Maes.Utilities;
 using UnityEngine;
-using static Dora.MapGeneration.EnvironmentTaggingMap;
 using Vector2 = UnityEngine.Vector2;
-using Vector3 = UnityEngine.Vector3;
 
-namespace Dora {
+namespace Maes {
     // Messages sent through this class will be subject to communication range and line of sight.
     // Communication is non-instantaneous. Messages will be received by other robots after one logic tick. 
     public class CommunicationManager : ISimulationUnit {
@@ -243,14 +239,14 @@ namespace Dora {
             return resultSet;
         }
 
-        public void DepositTag(MonaRobot robot, ITag tag) {
+        public void DepositTag(MonaRobot robot, EnvironmentTaggingMap.ITag tag) {
             var placedTag = _environmentTaggingMap.AddTag(robot.transform.position, tag);
             
             if (GlobalSettings.ShowEnvironmentTags)
                 _visualizer.AddEnvironmentTag(placedTag);
         }
 
-        public void DepositTag(ITag tag, Vector2 position) {
+        public void DepositTag(EnvironmentTaggingMap.ITag tag, Vector2 position) {
             var scale = _rayTracingMap._map.Scale;
             var pos = Vector2.Scale(position, new Vector2(scale, scale)) + _rayTracingMap._map.ScaledOffset;
             var placedTag = _environmentTaggingMap.AddTag(pos, tag);
@@ -266,7 +262,7 @@ namespace Dora {
             _visualizer.RemoveEnvironmentTagAt(pos);
         }
 
-        public List<PlacedTag> ReadNearbyTags(MonaRobot robot) {
+        public List<EnvironmentTaggingMap.PlacedTag> ReadNearbyTags(MonaRobot robot) {
             var tags = _environmentTaggingMap.GetTagsNear(robot.transform.position,
                 _robotConstraints.EnvironmentTagReadRange);
 

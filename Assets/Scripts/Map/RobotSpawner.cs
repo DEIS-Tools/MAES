@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dora.ExplorationAlgorithm;
-using Dora.Robot;
+using Maes.ExplorationAlgorithm;
+using Maes.Map.MapGen;
+using Maes.Robot;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
-namespace Dora.MapGeneration
+namespace Maes.Map
 {
     public class RobotSpawner: MonoBehaviour {
         public delegate IExplorationAlgorithm CreateAlgorithmDelegate(int randomSeed);

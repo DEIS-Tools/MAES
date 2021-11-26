@@ -1,9 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Dora {
+namespace Maes {
     public class SimulationInfoUIController : MonoBehaviour {
         public Image Mask;
         public Text ProgressPercentageText;

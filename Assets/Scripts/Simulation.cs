@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Dora.ExplorationAlgorithm.TheNextFrontier;
-using Dora.MapGeneration;
-using Dora.Robot;
-using Dora.Statistics;
 using JetBrains.Annotations;
+using Maes.ExplorationAlgorithm.TheNextFrontier;
+using Maes.Map;
+using Maes.Map.MapGen;
+using Maes.Robot;
+using Maes.Statistics;
 using UnityEngine;
 
-namespace Dora {
+namespace Maes {
     public class Simulation : MonoBehaviour, ISimulationUnit {
         public int SimulatedLogicTicks { get; private set; } = 0;
         public int SimulatedPhysicsTicks { get; private set; } = 0;

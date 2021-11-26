@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Dora.MapGeneration {
+namespace Maes.Map {
     
     /// This type holds all environment tags deposited by robots in the simulated environment 
     /// This map is represented as a 2D array of tiles to make lookup faster

@@ -1,10 +1,7 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Dora {
+namespace Maes {
     public class SimulationSpeedController : MonoBehaviour {
         public Simulator simulator;
         public Button pauseButton;

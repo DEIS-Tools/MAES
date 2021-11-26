@@ -2,16 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dora.MapGeneration;
-using Dora.Robot;
-using Dora.Robot.Task;
-using Dora.Utilities;
-using JetBrains.Annotations;
-using UnityEditor;
+using Maes.Robot;
+using Maes.Robot.Task;
+using Maes.Utilities;
 using UnityEngine;
 using Random = System.Random;
 
-namespace Dora.ExplorationAlgorithm {
+namespace Maes.ExplorationAlgorithm.BrickAndMortar {
     public class BrickAndMortar: IExplorationAlgorithm {
 
         private RobotConstraints _constraints;

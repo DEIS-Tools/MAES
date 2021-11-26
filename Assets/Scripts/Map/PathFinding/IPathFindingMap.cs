@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Dora.MapGeneration {
+namespace Maes.Map.PathFinding {
     public interface IPathFindingMap {
 
         public bool IsSolid(Vector2Int coordinate);

@@ -1,15 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using UnityEngine;
-using static Dora.Statistics.ExplorationTracker;
 
-namespace Dora.Statistics {
+namespace Maes.Statistics {
     public class StatisticsCSVWriter {
         private readonly Simulation _simulation;
-        private readonly List<SnapShot<float>> _coverSnapShots;
-        private readonly List<SnapShot<float>> _exploreSnapshots;
+        private readonly List<ExplorationTracker.SnapShot<float>> _coverSnapShots;
+        private readonly List<ExplorationTracker.SnapShot<float>> _exploreSnapshots;
         private string path;
         
 

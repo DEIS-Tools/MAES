@@ -1,4 +1,4 @@
-namespace Dora.Robot {
+namespace Maes.Robot {
     public class RelativePosition {
         public readonly float Distance;
         public readonly float RelativeAngle;

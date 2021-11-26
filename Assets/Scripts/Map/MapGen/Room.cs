@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
-
-namespace Dora.MapGeneration {
+namespace Maes.Map.MapGen {
     public class Room : IComparable<Room> {
         public List<Coord> tiles;
 

@@ -1,11 +1,10 @@
 using System.Collections.Generic;
-using System.Diagnostics;
-using Dora.MapGeneration;
-using Dora.Robot;
+using Maes.Map;
+using Maes.Robot;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Dora.Statistics {
+namespace Maes.Statistics {
     public class ExplorationVisualizer : MonoBehaviour {
         public MeshRenderer meshRenderer;
         public MeshFilter meshFilter;

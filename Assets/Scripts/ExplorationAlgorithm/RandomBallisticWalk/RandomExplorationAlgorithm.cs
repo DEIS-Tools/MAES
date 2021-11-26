@@ -1,8 +1,8 @@
-﻿using Dora.Robot;
-using UnityEngine;
+﻿using Maes.Robot;
+using Maes.Robot.Task;
 using Random = System.Random;
 
-namespace Dora.ExplorationAlgorithm {
+namespace Maes.ExplorationAlgorithm.RandomBallisticWalk {
     public class RandomExplorationAlgorithm : IExplorationAlgorithm {
         private IRobotController _robotController;
         private bool _hasJustRotated = false;
@@ -18,15 +18,6 @@ namespace Dora.ExplorationAlgorithm {
         }
 
         public void UpdateLogic() {
-            // Testing
-            // _robotController.ReceiveBroadcast();
-
-            // Testing
-            // _robotController.Broadcast("Test!");
-
-            // if (_robotController.GetRobotID() == 30)
-                // _robotController.SenseNearbyRobots();
-
             _robotController.ReadNearbyTags();
             var status = _robotController.GetStatus();
             if (status == RobotStatus.Idle) {

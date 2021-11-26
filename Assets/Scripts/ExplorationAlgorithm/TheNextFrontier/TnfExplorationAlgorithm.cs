@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Dora.MapGeneration.PathFinding;
-using Dora.Robot;
-using Dora.Utilities;
+using Maes.Map.PathFinding;
+using Maes.Robot;
+using Maes.Robot.Task;
+using Maes.Utilities;
 using UnityEngine;
 
-namespace Dora.ExplorationAlgorithm.TheNextFrontier {
+namespace Maes.ExplorationAlgorithm.TheNextFrontier {
     public class TnfExplorationAlgorithm : IExplorationAlgorithm {
         private static class Gaussian {
             private const float A = 5f, B = .5f, C = .1f; // Magnitude, Mean, and Spread.

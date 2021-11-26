@@ -1,11 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using Dora.Utilities;
+using Maes.Map.MapGen;
+using Maes.Utilities;
 using UnityEngine;
 
-namespace Dora.MapGeneration {
+namespace Maes.Map {
     // A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles
     // This matches the structure of the map exported by the MapGenerator
     public class SimulationMap<TCell> : IEnumerable<(int, TCell)> {

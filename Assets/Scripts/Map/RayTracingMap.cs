@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Dora.Utilities;
+using Maes.Utilities;
 using UnityEngine;
 
-namespace Dora.MapGeneration {
+namespace Maes.Map {
     public class RayTracingMap<TCell> {
         public readonly SimulationMap<TCell> _map;
         private readonly RayTracingTriangle[] _traceableTriangles;

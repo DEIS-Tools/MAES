@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using System.Diagnostics;
-using Dora.Robot;
+using Maes.Robot;
 using UnityEngine;
 
-namespace Dora.Utilities {
+namespace Maes.Utilities {
     public static class ExtensionUtils {
         /// <summary>
         /// Extension method for converting a SLAM tile to a TNF cell

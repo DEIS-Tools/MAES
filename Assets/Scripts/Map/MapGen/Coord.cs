@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Dora.MapGeneration {
+namespace Maes.Map.MapGen {
     public struct Coord {
         public int x;
         public int y;
