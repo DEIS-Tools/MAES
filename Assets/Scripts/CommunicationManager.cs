@@ -192,6 +192,8 @@ namespace Dora {
                         var r2Position = r2.transform.position;
                         var r1Vector2 = new Vector2(r1Position.x, r1Position.y);
                         var r2Vector2 = new Vector2(r2Position.x, r2Position.y);
+                        // TODO: This fails 2 / 40.000.000.000 times. We need unit tests to eliminate the problems.
+                        // They are caused by rays with angles of 45 or 90 degrees.
                         try {
                             _adjacencyMatrix[(r1.id, r2.id)] = RayTraceCommunication(r1Vector2, r2Vector2);
                         }
