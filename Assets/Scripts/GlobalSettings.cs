@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+
 namespace Dora {
     // This class contains all settings related to an instance of an simulation
     public static class GlobalSettings {
@@ -15,7 +18,12 @@ namespace Dora {
         public static readonly bool DrawCommunication = true;
         public static readonly bool ShowEnvironmentTags = true;
 
+        // Statistics
         public static readonly bool ShouldWriteCSVResults = true;
-        public static readonly int TicksPerStatsSnapShot = 50;
+        public static readonly int TicksPerStatsSnapShot = 10;
+
+        public static readonly string StatisticsOutPutPath =
+            Environment.GetFolderPath(Environment.SpecialFolder.Desktop) 
+            + Path.DirectorySeparatorChar + "MaesStatistics" + Path.DirectorySeparatorChar;
     }
 }

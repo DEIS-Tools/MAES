@@ -9,7 +9,96 @@ using static Dora.MapGeneration.RobotSpawner;
 namespace Dora {
     public class ScenarioGenerator {
          private const int Minute = 60;
+         
+         public static Queue<SimulationScenario> GenerateVoronoiLongRangeScenarios() {
+             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
+            var numberOfRobots = 15;
+            var runs = 20;
+            var sizes = new List<(int, int)>() {(200,200)};
+            var maxRunTime = 60 * Minute;
+            SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
+                                                                             || simulation.ExplorationTracker
+                                                                                 .CoverageProportion > 0.995f);
+            
+            var robotConstraintsLVD = new RobotConstraints(
+                broadcastRange: 0,
+                broadcastBlockedByWalls: false,
+                senseNearbyRobotRange: 20f,
+                senseNearbyRobotBlockedByWalls: true,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f, 
+                distributeSlam: false,
+                environmentTagReadRange: 0f,
+                lidarRange: 20f
+            );
+            
+            for (int i = 0; i < runs; i++) { 
+                int randomSeed = i;
+                var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
+                {
+                    ("LVD-long-range", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsLVD, 1), robotConstraintsLVD),
+                };
+                foreach (var (width, height) in sizes) {
+                    var caveConfig = new CaveMapConfig(
+                        width,
+                        height,
+                        randomSeed,
+                        4,
+                        4,
+                        45,
+                        10,
+                        10,
+                        1,
+                        1f);
+                    var officeConfig = new OfficeMapConfig(
+                        width,
+                        height,
+                        randomSeed,
+                        20,
+                        4,
+                        6,
+                        2,
+                        2,
+                        85,
+                        1,
+                        1f);
+                    
+                    foreach (var (algorithmName, createAlgorithmDelegate, constraints) in algorithmsAndFileNames) {
+                        scenarios.Enqueue(new SimulationScenario(
+                            seed: randomSeed,
+                            hasFinishedSim: shouldEndSim,
+                            mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                            robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                                map, 
+                                randomSeed, 
+                                numberOfRobots, 
+                                0.6f,
+                                createAlgorithmDelegate),
+                            robotConstraints: constraints,
+                            $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
+                        ));
+                        scenarios.Enqueue(new SimulationScenario(
+                            seed: randomSeed,
+                            hasFinishedSim: shouldEndSim,
+                            mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
+                            robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                                map, 
+                                randomSeed, 
+                                numberOfRobots, 
+                                0.6f,
+                                new Coord(0,0),
+                                createAlgorithmDelegate),
+                            robotConstraints: constraints,
+                            $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                        ));
+                    }
+                }
+            }
 
+            return scenarios;
+         }
         public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 1;
@@ -110,54 +199,75 @@ namespace Dora {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 15;
             var runs = 20;
-            var sizes = new List<(int, int)>() {(200,200)};
+            var sizes = new List<(int, int)>() {(50, 50), (100,100), (200,200)};
             var maxRunTime = 60 * Minute;
             SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker
-                                                                                 .CoverageProportion > 0.995f); 
-            var robotConstraintsBlockedByWalls = new RobotConstraints(
-                broadcastRange: float.MaxValue,
+                                                                                 .CoverageProportion > 0.995f);
+            
+            var robotConstraintsRBW = new RobotConstraints(
+                broadcastRange: 0,
                 broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 10f,
+                senseNearbyRobotRange: 0,
+                senseNearbyRobotBlockedByWalls: false,
+                automaticallyUpdateSlam: false,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f, 
+                distributeSlam: false,
+                environmentTagReadRange: 0f,
+                lidarRange: 0f
+            );
+            
+            var robotConstraintsLVD = new RobotConstraints(
+                broadcastRange: 0,
+                broadcastBlockedByWalls: false,
+                senseNearbyRobotRange: 7f,
                 senseNearbyRobotBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
-                distributeSlam: true,
-                environmentTagReadRange: 4.0f,
+                distributeSlam: false,
+                environmentTagReadRange: 0f,
                 lidarRange: 7f
             );
             
-            // This will short circuit the population of the adjacency, which 
-            // can improve the simulation performance of algorithms, where communication
-            // is not blocked by walls significantly, e.g. SSB.
-            // This does not effect the performance in terms of exploration
-            // since if all signals can travels through walls, we don't care about ray tracing and counting number
-            // of walls encountered.
-            var robotConstraintsThroughWalls = new RobotConstraints(
+            var robotConstraintsTNF = new RobotConstraints(
+                broadcastRange: 15,
+                broadcastBlockedByWalls: true,
+                senseNearbyRobotRange: 12f,
+                senseNearbyRobotBlockedByWalls: true,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f, 
+                distributeSlam: false,
+                environmentTagReadRange: 0f,
+                lidarRange: 7f
+            );
+            
+            var robotConstraintsSSB = new RobotConstraints(
                 broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 10f,
+                senseNearbyRobotRange: 7.0f,
                 senseNearbyRobotBlockedByWalls: false,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
-                environmentTagReadRange: 4.0f,
+                environmentTagReadRange: 0f,
                 lidarRange: 7f
-            );
-            
-            
+            ); 
+
             for (int i = 0; i < runs; i++) { 
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
                 {
-                    ("SSB", (seed) => new SsbAlgorithm(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
-                    ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsBlockedByWalls, 1), robotConstraintsBlockedByWalls),
-                    ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsThroughWalls),
-                    ("BNM", (seed) => new BrickAndMortar(robotConstraintsThroughWalls, seed), robotConstraintsThroughWalls),
+                    ("SSB", (seed) => new SsbAlgorithm(robotConstraintsSSB, seed), robotConstraintsSSB),
+                    ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsLVD, 1), robotConstraintsLVD),
+                    ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsRBW),
                 };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(

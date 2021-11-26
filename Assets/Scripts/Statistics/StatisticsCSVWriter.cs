@@ -13,17 +13,14 @@ namespace Dora.Statistics {
         private string path;
         
 
-        public StatisticsCSVWriter(Simulation simulation, string fileNameWithoutExtension,string pathWithoutFileName = null) {
+        public StatisticsCSVWriter(Simulation simulation, string fileNameWithoutExtension) {
             _coverSnapShots = simulation.ExplorationTracker._coverSnapshots;
             _exploreSnapshots = simulation.ExplorationTracker._exploreSnapshots;
             _simulation = simulation;
             var resultForFileName =
                 $"e{(int)_exploreSnapshots[_exploreSnapshots.Count - 1].Value}-c{(int)_coverSnapShots[_coverSnapShots.Count - 1].Value}";
-            if(pathWithoutFileName == null)
-                path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + Path.DirectorySeparatorChar + fileNameWithoutExtension + "-" + resultForFileName + ".csv";
-            else {
-                path = pathWithoutFileName + Path.DirectorySeparatorChar + fileNameWithoutExtension + "-" + resultForFileName + ".csv";
-            }
+            Directory.CreateDirectory(GlobalSettings.StatisticsOutPutPath);
+            path = GlobalSettings.StatisticsOutPutPath + fileNameWithoutExtension + "-" + resultForFileName + ".csv";
         }
 
         public void CreateCSVFile(string separator) {
