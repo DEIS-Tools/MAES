@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Dora.Utilities {
+namespace Maes.Utilities {
     public class Functional {
         public delegate T Factory<T>();
 

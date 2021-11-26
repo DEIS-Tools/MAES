@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace Dora {
+namespace Maes {
     // This class contains all settings related to an instance of an simulation
     public static class GlobalSettings {
         // Times per second that robot logic is updated
@@ -19,7 +19,7 @@ namespace Dora {
         public static readonly bool ShowEnvironmentTags = true;
 
         // Statistics
-        public static readonly bool ShouldWriteCSVResults = true;
+        public static readonly bool ShouldWriteCSVResults = false;
         public static readonly int TicksPerStatsSnapShot = 10;
 
         public static readonly string StatisticsOutPutPath =

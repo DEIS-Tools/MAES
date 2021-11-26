@@ -1,4 +1,6 @@
-﻿namespace Dora.ExplorationAlgorithm {
+﻿using Maes.Robot;
+
+namespace Maes.ExplorationAlgorithm {
     public interface IExplorationAlgorithm : ISavable<object> {
         public void UpdateLogic();
 

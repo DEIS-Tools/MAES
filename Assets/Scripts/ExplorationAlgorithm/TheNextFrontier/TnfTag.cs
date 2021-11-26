@@ -1,8 +1,7 @@
-using System.Collections.Generic;
-using Dora.MapGeneration;
+using Maes.Map;
 using UnityEngine;
 
-namespace Dora.ExplorationAlgorithm.TheNextFrontier {
+namespace Maes.ExplorationAlgorithm.TheNextFrontier {
     public class TnfTag : EnvironmentTaggingMap.ITag {
         public readonly int ID;
         private Color _color;

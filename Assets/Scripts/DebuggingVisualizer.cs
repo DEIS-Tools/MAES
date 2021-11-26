@@ -1,10 +1,9 @@
 using System.Collections.Generic;
-using System.Diagnostics;
-using Dora.Robot;
+using Maes.Map;
+using Maes.Robot;
 using UnityEngine;
-using static Dora.MapGeneration.EnvironmentTaggingMap;
 
-namespace Dora {
+namespace Maes {
     public class DebuggingVisualizer : ISimulationUnit {
         
         private Queue<CommunicationLink> _links = new Queue<CommunicationLink>();
@@ -12,7 +11,7 @@ namespace Dora {
         private int _currentTick = 0;
 
         // Environment tags
-        private readonly List<PlacedTag> _environmentTags = new List<PlacedTag>();
+        private readonly List<EnvironmentTaggingMap.PlacedTag> _environmentTags = new List<EnvironmentTaggingMap.PlacedTag>();
 
         private readonly Color _tagColor = new Color(50f / 255f, 120f / 255f, 255f / 255f);
         private readonly Color _readableTagColor = new Color(255f / 255f, 150f / 255f, 255f / 255f);
@@ -32,7 +31,7 @@ namespace Dora {
         }
 
         // Debugging measure to visualize all environment tags
-        public void AddEnvironmentTag(PlacedTag tag) {
+        public void AddEnvironmentTag(EnvironmentTaggingMap.PlacedTag tag) {
             _environmentTags.Add(tag);
         }
 

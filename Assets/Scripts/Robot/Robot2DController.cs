@@ -1,15 +1,12 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Dora.Robot;
-using Dora.Robot.Task;
+using Maes.Map;
+using Maes.Robot.Task;
 using UnityEngine;
-using static Dora.CommunicationManager;
-using static Dora.MapGeneration.EnvironmentTaggingMap;
 
-namespace Dora {
+namespace Maes.Robot {
     public class Robot2DController : IRobotController {
         private Rigidbody2D _rigidbody;
         private Transform _transform;
@@ -291,12 +288,12 @@ namespace Dora {
         }
 
         // Deposits an environment tag at the current position of the robot
-        public void DepositTag(ITag tag) {
+        public void DepositTag(EnvironmentTaggingMap.ITag tag) {
             CommunicationManager.DepositTag(_robot, tag);
         }
 
         // Returns a list of all environment tags that are within sensor range
-        public List<RelativeObject<ITag>> ReadNearbyTags() {
+        public List<RelativeObject<EnvironmentTaggingMap.ITag>> ReadNearbyTags() {
             var tags = CommunicationManager.ReadNearbyTags(_robot);
             return tags.Select(placedTag => ToRelativePosition(placedTag.WorldPosition, placedTag.tag)).ToList();
         }
@@ -308,9 +305,9 @@ namespace Dora {
             return new RelativeObject<T>(distance, angle, item);
         }
 
-        public List<SensedObject<int>> SenseNearbyRobots() {
+        public List<CommunicationManager.SensedObject<int>> SenseNearbyRobots() {
             return CommunicationManager.SenseNearbyRobots(_robot.id)
-                .Select(e => new SensedObject<int>(
+                .Select(e => new CommunicationManager.SensedObject<int>(
                     e.Distance, 
                     Vector2.SignedAngle(this._robot.transform.up, 
                                                 new Vector2(Mathf.Cos(e.Angle * Mathf.Deg2Rad), 
@@ -319,7 +316,7 @@ namespace Dora {
                 .ToList();
         }
 
-        public SlamAlgorithmInterface GetSlamMap() {
+        public ISlamAlgorithm GetSlamMap() {
             return this.SlamMap;
         }
     }

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Dora.Robot.Task {
+namespace Maes.Robot.Task {
     // Represents a task to rotate the robot by a given amount of degrees
     public class FiniteRotationTask : ITask {
         private readonly float _degreesToRotate;

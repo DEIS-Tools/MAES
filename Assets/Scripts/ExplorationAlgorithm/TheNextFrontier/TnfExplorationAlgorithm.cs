@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Dora.MapGeneration.PathFinding;
-using Dora.Robot;
-using Dora.Utilities;
+using Maes.Map;
+using Maes.Map.PathFinding;
+using Maes.Robot;
+using Maes.Robot.Task;
+using Maes.Utilities;
 using UnityEngine;
 
-namespace Dora.ExplorationAlgorithm.TheNextFrontier {
+namespace Maes.ExplorationAlgorithm.TheNextFrontier {
     public class TnfExplorationAlgorithm : IExplorationAlgorithm {
         private static class Gaussian {
             private const float A = 5f, B = .5f, C = .1f; // Magnitude, Mean, and Spread.
@@ -241,12 +243,12 @@ namespace Dora.ExplorationAlgorithm.TheNextFrontier {
             }
             var newMaps = new List<SlamMap> {_robotController.GetSlamMap() as SlamMap};
             foreach (var package in received) {
-                var pack = ((SlamAlgorithmInterface, int)) package;
+                var pack = ((ISlamAlgorithm, int)) package;
                 newMaps.Add(pack.Item1 as SlamMap);
             }
 
             // Largest Robot ID synchronizes to save on Simulator CPU time
-            if (!received.Cast<(SlamAlgorithmInterface, int)>().Any(p => p.Item2 > _robotId)) {
+            if (!received.Cast<(ISlamAlgorithm, int)>().Any(p => p.Item2 > _robotId)) {
                 SlamMap.Synchronize(newMaps);
             }
             if (_robotTnfStatus == TnfStatus.OutOfFrontiers) {

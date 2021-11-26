@@ -1,4 +1,4 @@
-namespace Dora.Robot.Task {
+namespace Maes.Robot.Task {
     public class InfiniteRotationTasK : ITask {
         private readonly bool _counterClockWise;
 

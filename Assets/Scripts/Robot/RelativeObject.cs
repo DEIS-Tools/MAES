@@ -1,6 +1,6 @@
 using System;
 
-namespace Dora.Robot {
+namespace Maes.Robot {
     // Represents a relative position to some object of type T
     public class RelativeObject<T> {
 

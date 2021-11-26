@@ -1,21 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.RegularExpressions;
-using Dora.Robot;
-using Dora.Utilities;
-using JetBrains.Annotations;
-using UnityEditor;
+using Maes.Map;
+using Maes.Robot;
+using Maes.Robot.Task;
+using Maes.Utilities;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Debug = UnityEngine.Debug;
 using Random = System.Random;
 
-namespace Dora.ExplorationAlgorithm.Voronoi {
+namespace Maes.ExplorationAlgorithm.Voronoi {
     public class VoronoiExplorationAlgorithm : IExplorationAlgorithm {
         private IRobotController _robotController;
         private readonly Random _random;
@@ -504,7 +500,6 @@ namespace Dora.ExplorationAlgorithm.Voronoi {
         }
 
         private List<Vector2Int> FindUnexploredTilesWithinRegion(VoronoiRegion region) {
-            // TODO: The voronoi region may be empty, if the robot is 1/4 the size of a slam tile and is located between tiles, but surrounded by other robots
             if (region.IsEmpty()) return new List<Vector2Int>();
 
             var coarseMap = _robotController.GetSlamMap().GetCoarseMap();
