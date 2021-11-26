@@ -35,8 +35,6 @@ namespace Maes.Map.MapGen {
 
         private const int WALL_TYPE = 1, ROOM_TYPE = 0;
 
-        private bool is2D;
-
         public void ClearMesh() {
             squareGrid = null;
             Destroy(innerWalls.gameObject.GetComponent<MeshCollider>());
@@ -47,12 +45,10 @@ namespace Maes.Map.MapGen {
             triangleDictionary.Clear();
             outlines.Clear();
             checkedVertices.Clear();
-            is2D = false;
         }
 
         public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight,
             bool removeRoundedCorners, List<Room> rooms) {
-            this.is2D = is2D;
 
             // Generate grid of squares containing control nodes and between nodes 
             // for the marching square algorithm
@@ -216,14 +212,9 @@ namespace Maes.Map.MapGen {
                     wallVertices.Add(vertices[outline[i + 1]]); // top right (1)
 
                     // The wall stick out in different axes depending on 2D or 3D.
-                    if (is2D) {
-                        wallVertices.Add(vertices[outline[i]] - Vector3.back * wallHeight); // bottom left (2)
-                        wallVertices.Add(vertices[outline[i + 1]] - Vector3.back * wallHeight); // bottom right (3)
-                    }
-                    else {
-                        wallVertices.Add(vertices[outline[i]] - Vector3.up * wallHeight); // bottom left (2)
-                        wallVertices.Add(vertices[outline[i + 1]] - Vector3.up * wallHeight); // bottom right (3)
-                    }
+                    wallVertices.Add(vertices[outline[i]] - Vector3.back * wallHeight); // bottom left (2)
+                    wallVertices.Add(vertices[outline[i + 1]] - Vector3.back * wallHeight); // bottom right (3)
+                    
 
                     // The "outside" of the mesh with the texture depends on the order
                     // Since the rotation is vertical for 2D, we have to invert the order
@@ -243,11 +234,6 @@ namespace Maes.Map.MapGen {
             innerWallsMesh.vertices = wallVertices.ToArray();
             innerWallsMesh.triangles = wallTriangles.ToArray();
             innerWalls.mesh = innerWallsMesh;
-
-            if (!is2D) {
-                MeshCollider wallCollider = innerWalls.gameObject.AddComponent<MeshCollider>();
-                wallCollider.sharedMesh = innerWallsMesh;
-            }
         }
 
         // According to the marching squares algorithm,
@@ -372,14 +358,9 @@ namespace Maes.Map.MapGen {
             for (int i = 0; i < points.Length; i++) {
                 if (points[i].vertexIndex == -1) {
                     points[i].vertexIndex = vertices.Count;
-                    if (this.is2D) {
-                        // The map is rotated in 2d mode
-                        var pos2D = new Vector3(points[i].position.x, points[i].position.z, points[i].position.y);
-                        vertices.Add(pos2D);
-                    }
-                    else {
-                        vertices.Add(points[i].position);
-                    }
+                    // The map is rotated in 2d mode
+                    var pos2D = new Vector3(points[i].position.x, points[i].position.z, points[i].position.y);
+                    vertices.Add(pos2D);
                 }
             }
         }
