@@ -111,7 +111,7 @@ namespace Dora {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 15;
             var runs = 20;
-            var sizes = new List<(int, int)>() {/*(50, 50), (100, 100), */(200,200)};
+            var sizes = new List<(int, int)>() {(50, 50), (100, 100), (200,200)};
             var maxRunTime = 60 * Minute;
             SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker

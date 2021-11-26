@@ -29,8 +29,6 @@ namespace Dora {
 
         // Map for storing and retrieving all tags deposited by robots
         private readonly EnvironmentTaggingMap _environmentTaggingMap;
-
-        public static CommunicationManager singletonInstance;
         
         private int _localTickCounter = 0;
         
@@ -84,7 +82,6 @@ namespace Dora {
             _visualizer = visualizer;
             _rayTracingMap = new RayTracingMap<bool>(collisionMap);
             _environmentTaggingMap = new EnvironmentTaggingMap(collisionMap);
-            singletonInstance = this;
         }
 
         // Adds a message to the broadcast queue

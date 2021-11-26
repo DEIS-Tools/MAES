@@ -73,6 +73,9 @@ namespace Dora {
             _communicationManager.PhysicsUpdate();
         }
 
+        /// <summary>
+        /// Tests specifically if The Next Frontier is no longer doing any work.
+        /// </summary>
         public bool TnfBotsOutOfFrontiers() {
             var res = true;
             foreach (var monaRobot in _robots) {
