@@ -295,13 +295,6 @@ namespace Maes.Map {
             return new RelativePosition(distance, angle);
         }
 
-        public RelativePosition GetRelativePosition(Vector2Int target) {
-            var robotPosition = GetApproxPosition();
-            var distance = Vector2.Distance(robotPosition, (Vector2) target);
-            var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetRobotAngleDeg()), target - robotPosition);
-            return new RelativePosition(distance, angle);
-        }
-
         public float CellSize() {
             return _collisionMap.Scale;
         }
