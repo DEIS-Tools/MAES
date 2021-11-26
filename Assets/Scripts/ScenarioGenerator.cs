@@ -13,6 +13,9 @@ namespace Maes {
     public class ScenarioGenerator {
          private const int Minute = 60;
          
+         /// <summary>
+         /// Generates the scenarios used for the testing of LVD's long-range experiements.
+         /// </summary>
          public static Queue<SimulationScenario> GenerateVoronoiLongRangeScenarios() {
              Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 15;
@@ -102,6 +105,10 @@ namespace Maes {
 
             return scenarios;
          }
+         
+         /// <summary>
+         /// Generates the scenarios used for the YouTube video recordings.
+         /// </summary>
         public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 1;
@@ -196,7 +203,9 @@ namespace Maes {
             return scenarios;
         }
         
-        
+        /// <summary>
+        /// Generates the scenarios used for the main experiments of the MAES paper.
+        /// </summary>
         public static Queue<SimulationScenario> GenerateArticleScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 25;
@@ -338,6 +347,9 @@ namespace Maes {
             return scenarios;
         }
         
+        /// <summary>
+        /// Generates scenarios with the LVD algorithm.
+        /// </summary>
         public static Queue<SimulationScenario> GenerateVoronoiScenarios() {
            Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
 
@@ -419,6 +431,9 @@ namespace Maes {
             return scenarios; 
         }
         
+        /// <summary>
+        /// Generates scenarios with the RBW algorithm.
+        /// </summary>
         public static Queue<SimulationScenario> GenerateBallisticScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
 
@@ -501,6 +516,10 @@ namespace Maes {
             return scenarios;
         }
         
+        /// <summary>
+        /// Generates scenarios with the BNM algorithm.<br/>
+        /// <b>WARNING!!!</b>: Algorithm not fully implemented. Will not work as advertised.
+        /// </summary>
         public static Queue<SimulationScenario> GenerateBrickAndMortarScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
 
@@ -577,6 +596,9 @@ namespace Maes {
             return scenarios;
         }
      
+        /// <summary>
+        /// Generates scenarios with the SSB algorithm.
+        /// </summary>
          public static Queue<SimulationScenario> GenerateSsbScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
 
@@ -640,6 +662,9 @@ namespace Maes {
             return scenarios;
         }
 
+        /// <summary>
+        /// Generates scenarios with the TNF algorithm.
+        /// </summary>
         public static Queue<SimulationScenario> GenerateTnfScenarios() {
             var scenarios = new Queue<SimulationScenario>();
 

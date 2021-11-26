@@ -20,6 +20,16 @@ namespace Maes.Map
 
         public float RobotRelativeSize;
 
+        /// <summary>
+        /// Spawns the robots in the biggest room. For building type map this is usually the hall way.
+        /// </summary>
+        /// <param name="collisionMap">Information regarding the possible spawn positions</param>
+        /// <param name="seed">Injected into the spawned robots</param>
+        /// <param name="numberOfRobots">How many robots should be created. The map may not fit all robots, which would throw an exception</param>
+        /// <param name="robotRelativeSize">Robot size relative to a tile</param>
+        /// <param name="createAlgorithmDelegate">Used to inject the exploration algorithm into the robot controller</param>
+        /// <returns>List of all robot game objects.</returns>
+        /// <exception cref="ArgumentException">If not enough open tiles for the requested number of robots.</exception>
         public List<MonaRobot> SpawnRobotsInBiggestRoom(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
             this.RobotRelativeSize = robotRelativeSize; 
             List<MonaRobot> robots = new List<MonaRobot>();
@@ -65,6 +75,17 @@ namespace Maes.Map
             return robots;
         }
 
+        /// <summary>
+        /// Spawns the robots either from the lower left corner or at the suggested starting point.
+        /// </summary>
+        /// <param name="collisionMap">Information regarding the possible spawn positions</param>
+        /// <param name="seed">Injected into the spawned robots</param>
+        /// <param name="numberOfRobots">How many robots should be created. The map may not fit all robots, which would throw an exception</param>
+        /// <param name="robotRelativeSize">Robot size relative to a tile</param>
+        /// <param name="suggestedStartingPoint">A flooding algorithm is performed to spawn robots as close as possible to this point.</param>
+        /// <param name="createAlgorithmDelegate">Used to inject the exploration algorithm into the robot controller</param>
+        /// <returns>List of all robot game objects.</returns>
+        /// <exception cref="ArgumentException">If not enough open tiles for the requested number of robots.</exception>
         public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, Vector2Int? suggestedStartingPoint, CreateAlgorithmDelegate createAlgorithmDelegate) {
             this.RobotRelativeSize = robotRelativeSize; 
             List<MonaRobot> robots = new List<MonaRobot>();
@@ -148,6 +169,16 @@ namespace Maes.Map
             return robots;
         }
 
+        /// <summary>
+        /// SHOULD ONLY BE USED FOR BUILDING TYPE MAPS. Not cave maps.
+        /// Spawns the robot in a spiraling pattern around the boundary of the map, but only in the hallways.
+        /// </summary>
+        /// <param name="collisionMap">Information regarding the possible spawn positions</param>
+        /// <param name="seed">Injected into the spawned robots</param>
+        /// <param name="numberOfRobots">How many robots should be created. The map may not fit all robots, which would throw an exception</param>
+        /// <param name="robotRelativeSize">Robot size relative to a tile</param>
+        /// <param name="createAlgorithmDelegate">Used to inject the exploration algorithm into the robot controller</param>
+        /// <returns>List of all robot game objects.</returns>
         public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
             this.RobotRelativeSize = robotRelativeSize; 
             var robots = new List<MonaRobot>();
