@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace Dora {
     public class Simulator : MonoBehaviour {
-        private SimulationPlayState _playState = SimulationPlayState.FastAsPossible;
+        private SimulationPlayState _playState = SimulationPlayState.Paused;
 
         public GameObject SimulationPrefab;
         private Queue<SimulationScenario> _scenarios;
