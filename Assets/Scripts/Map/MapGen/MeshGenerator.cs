@@ -50,7 +50,7 @@ namespace Maes.Map.MapGen {
             is2D = false;
         }
 
-        public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight, bool is2D,
+        public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight,
             bool removeRoundedCorners, List<Room> rooms) {
             this.is2D = is2D;
 
@@ -79,24 +79,9 @@ namespace Maes.Map.MapGen {
             // Apply mesh to wall roof
             wallRoof.mesh = wallRoofMesh;
 
-            // This bit of code allows us to apply a texture on the mesh
-            // Tiling refers to using the same texture next to each other.
-            /*int tileAmount = 10;
-        Vector2[] uvs = new Vector2[vertices.Count];
-        for (int i = 0; i < vertices.Count; i ++) {
-            float percentX = Mathf.InverseLerp(-map.GetLength(0) / 2 * squareSize,map.GetLength(0) / 2 * squareSize,vertices[i].x) * tileAmount;
-            float percentY = Mathf.InverseLerp(-map.GetLength(0) / 2 * squareSize,map.GetLength(0) / 2 * squareSize,vertices[i].z) * tileAmount;
-            uvs[i] = new Vector2(percentX, percentY);
-        }
-        wallRoofMesh.uv = uvs;*/
-
-            if (is2D) {
-                CreateWallMesh(wallHeight);
-                Generate2DColliders();
-            }
-            else {
-                CreateWallMesh(wallHeight);
-            }
+            CreateWallMesh(wallHeight);
+            Generate2DColliders();
+            
 
             return GenerateCollisionMap(squareGrid,
                 new Vector2(squareGrid.XOffset, squareGrid.YOffset),

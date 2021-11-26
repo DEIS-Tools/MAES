@@ -19,27 +19,14 @@ namespace Maes.Map.MapGen {
         // Variable used for drawing gizmos on selection for debugging.
         private int[,] mapToDraw = null;
         
-        private void MovePlaneAndWallRoofToFitWallHeight(float wallHeight, bool is2D = true) {
-            // Move walls and wall roof to above plane depending on wall height
-            // The axis depends on whether it is 3D or 2D.
-            if (is2D) {
-                Vector3 newPosition = wallRoof.position;
-                newPosition.z = -wallHeight;
-                wallRoof.position = newPosition;
+        private void MovePlaneAndWallRoofToFitWallHeight(float wallHeight) {
+            Vector3 newPosition = wallRoof.position;
+            newPosition.z = -wallHeight;
+            wallRoof.position = newPosition;
 
-                newPosition = innerWalls.position;
-                newPosition.z = -wallHeight;
-                innerWalls.position = newPosition;
-            }
-            else {
-                Vector3 newPosition = wallRoof.position;
-                newPosition.y = wallHeight;
-                wallRoof.position = newPosition;
-
-                newPosition = innerWalls.position;
-                newPosition.y = wallHeight;
-                innerWalls.position = newPosition;
-            }
+            newPosition = innerWalls.position;
+            newPosition.z = -wallHeight;
+            innerWalls.position = newPosition;
         }
 
         private void ResizePlaneToFitMap(int bitMapHeight, int bitMapWidth, float scaling, float padding = 0.1f) {
@@ -53,10 +40,14 @@ namespace Maes.Map.MapGen {
             meshGenerator.ClearMesh();
         }
 
-        /**
-	 * Methods for creating building map
-	 */
-        public SimulationMap<bool> GenerateBuildingMap(BuildingMapConfig config, float wallHeight, bool is2D = true) {
+        /// <summary>
+        /// Generates a building map using the unity game objects Plane, InnerWalls and WallRoof.
+        /// </summary>
+        /// <param name="config">Determines how the map is generated</param>
+        /// <param name="wallHeight">A lower height can make it easier to see the robots. Must be a positive value.</param>
+        /// <returns> A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles as
+        /// used in the Marching Squares Algorithm.</returns>
+        public SimulationMap<bool> GenerateBuildingMap(BuildingMapConfig config, float wallHeight) {
             // Clear and destroy objects from previous map
             clearMap();
         
@@ -86,16 +77,15 @@ namespace Maes.Map.MapGen {
             // The rooms should now reflect their relative shifted positions after adding borders round map.
             rooms.ForEach(r => r.OffsetCoordsBy(config.borderSize, config.borderSize));
             MeshGenerator meshGen = GetComponent<MeshGenerator>();
-            var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], config.scaling, wallHeight, is2D, true,
+            var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], config.scaling, wallHeight, true,
                 rooms);
-
-            if (is2D) {
-                plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
-            }
+            
+            // Rotate to fit 2D view
+            plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
 
             ResizePlaneToFitMap(config.bitMapHeight, config.bitMapWidth, config.scaling);
 
-            MovePlaneAndWallRoofToFitWallHeight(wallHeight, is2D);
+            MovePlaneAndWallRoofToFitWallHeight(wallHeight);
 
             return collisionMap;
         }
@@ -471,24 +461,27 @@ namespace Maes.Map.MapGen {
             return (amountOfHall / (float) mapSize) * 100f;
         }
 
-        /**
-	 * METHODS for creating cave
-	 */
-        public SimulationMap<bool> GenerateCaveMap(CaveMapConfig caveConfig, float wallHeight, bool is2D = true) {
+        /// <summary>
+        /// Generates a cave map using the unity game objects Plane, InnerWalls and WallRoof.
+        /// </summary>
+        /// <param name="caveConfig">Determines how the cave map should look</param>
+        /// <param name="wallHeight">A smaller wall height can make it easier to see the robots. Must be a positive value.</param>
+        /// <returns> A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles as
+        /// used in the Marching Squares Algorithm.</returns>
+        public SimulationMap<bool> GenerateCaveMap(CaveMapConfig caveConfig, float wallHeight) {
             // Clear and destroy objects from previous map
             clearMap();
 
-            var collisionMap = CreateCaveMapWithMesh(caveConfig, wallHeight, is2D);
+            var collisionMap = CreateCaveMapWithMesh(caveConfig, wallHeight);
 
             ResizePlaneToFitMap(caveConfig.bitMapHeight, caveConfig.bitMapWidth, caveConfig.scaling);
 
-            MovePlaneAndWallRoofToFitWallHeight(wallHeight, is2D);
+            MovePlaneAndWallRoofToFitWallHeight(wallHeight);
 
             return collisionMap;
         }
 
-        private SimulationMap<bool> CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 3.0f,
-            bool is2D = true) {
+        private SimulationMap<bool> CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 3.0f) {
             // Fill map with random walls and empty tiles (Looks kinda like a QR code)
             var randomlyFilledMap = CreateRandomFillMap(caveConfig);
 
@@ -519,12 +512,12 @@ namespace Maes.Map.MapGen {
             survivingRooms.ForEach(r => r.OffsetCoordsBy(caveConfig.borderSize, caveConfig.borderSize));
 
             MeshGenerator meshGen = GetComponent<MeshGenerator>();
-            var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], caveConfig.scaling, wallHeight, is2D,
+            var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], caveConfig.scaling, wallHeight,
                 false, survivingRooms);
 
-            if (is2D) {
-                plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
-            }
+            // Rotate to fit 2D view
+            plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
+            
 
             return collisionMap;
         }
