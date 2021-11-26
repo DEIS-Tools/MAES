@@ -500,7 +500,6 @@ namespace Maes.ExplorationAlgorithm.Voronoi {
         }
 
         private List<Vector2Int> FindUnexploredTilesWithinRegion(VoronoiRegion region) {
-            // TODO: The voronoi region may be empty, if the robot is 1/4 the size of a slam tile and is located between tiles, but surrounded by other robots
             if (region.IsEmpty()) return new List<Vector2Int>();
 
             var coarseMap = _robotController.GetSlamMap().GetCoarseMap();

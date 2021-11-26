@@ -38,11 +38,13 @@ namespace Maes {
             _scenario = scenario;
             _collisionMap = scenario.MapSpawner(MapGenerator);
 
+            
             _communicationManager = new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
             RobotSpawner.CommunicationManager = _communicationManager;
             RobotSpawner.RobotConstraints = scenario.RobotConstraints;
             
             _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
+            _communicationManager.SetRobotRelativeSize(RobotSpawner.RobotRelativeSize);
             foreach (var robot in _robots)
                 robot.OnRobotSelected = SetSelectedRobot;
             

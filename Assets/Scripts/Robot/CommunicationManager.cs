@@ -29,6 +29,8 @@ namespace Maes.Robot {
         
         private Dictionary<(int, int), CommunicationInfo> _adjacencyMatrix = null;
 
+        private float _robotRelativeSize;
+
         private readonly struct Message {
             public readonly object Contents;
             public readonly MonaRobot Sender;
@@ -77,6 +79,10 @@ namespace Maes.Robot {
             _visualizer = visualizer;
             _rayTracingMap = new RayTracingMap<bool>(collisionMap);
             _environmentTaggingMap = new EnvironmentTaggingMap(collisionMap);
+        }
+
+        public void SetRobotRelativeSize(float robotRelativeSize) {
+            _robotRelativeSize = robotRelativeSize;
         }
 
         // Adds a message to the broadcast queue
@@ -304,7 +310,7 @@ namespace Maes.Robot {
             // Perform trace from the center of the robot
             var result1 = _rayTracingMap.FindIntersection(robot.transform.position, globalAngle, range, (_, isSolid) => !isSolid);
             var distance1 = result1 == null ? float.MaxValue : Vector2.Distance(robotPosition, result1.Value.Item1);
-            var robotSize = 0.6f; // TODO! Get actual size of robot
+            var robotSize = _robotRelativeSize;
             
             // Perform trace from the left side perimeter of the robot
             var offsetLeft = Geometry.VectorFromDegreesAndMagnitude((globalAngle + 90) % 360, robotSize / 2f);

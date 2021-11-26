@@ -18,7 +18,10 @@ namespace Maes.Map
 
         public RobotConstraints RobotConstraints;
 
+        public float RobotRelativeSize;
+
         public List<MonaRobot> SpawnRobotsInBiggestRoom(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
+            this.RobotRelativeSize = robotRelativeSize; 
             List<MonaRobot> robots = new List<MonaRobot>();
 
             // Sort by room size
@@ -63,6 +66,7 @@ namespace Maes.Map
         }
 
         public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, Vector2Int? suggestedStartingPoint, CreateAlgorithmDelegate createAlgorithmDelegate) {
+            this.RobotRelativeSize = robotRelativeSize; 
             List<MonaRobot> robots = new List<MonaRobot>();
             // Get all spawnable tiles. We cannot spawn adjacent to a wall
             List<Vector2Int> possibleSpawnTiles = new List<Vector2Int>();
@@ -145,6 +149,7 @@ namespace Maes.Map
         }
 
         public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
+            this.RobotRelativeSize = robotRelativeSize; 
             var robots = new List<MonaRobot>();
 
             var hallWays = collisionMap.rooms.FindAll(r => r.isHallWay).ToList();

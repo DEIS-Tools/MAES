@@ -23,6 +23,8 @@ namespace Maes.Robot {
         public readonly float MaxRayCastRange;
 
         public readonly float LidarRange;
+        
+        // TODO: Add robot size to constraints class
 
 
         public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyRobotRange, bool senseNearbyRobotBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks, int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam, float environmentTagReadRange, float lidarRange) : this() {

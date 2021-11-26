@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Maes.Map.PathFinding;
 using Maes.Robot;
 using Maes.Utilities;
 using UnityEngine;
 
-namespace Maes.Map.PathFinding {
+namespace Maes.Map {
 
     // This represents a low-resolution map where the robot can comfortably fit inside a single cell
     public class CoarseGrainedMap : IPathFindingMap {

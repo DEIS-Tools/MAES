@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using Maes.Map.PathFinding;
 using Maes.Robot;
 using UnityEngine;
 
-namespace Maes.Map.PathFinding {
+namespace Maes.Map {
     public class VisibleTilesCoarseMap : IPathFindingMap {
         private readonly SlamMap _slamMap;
         private readonly int _width;
