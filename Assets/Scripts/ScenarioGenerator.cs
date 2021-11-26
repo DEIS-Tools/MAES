@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Dora.ExplorationAlgorithm;
 using Dora.ExplorationAlgorithm.SSB;
 using Dora.ExplorationAlgorithm.Voronoi;
+using Dora.ExplorationAlgorithm.TheNextFrontier;
 using Dora.MapGeneration;
 using static Dora.MapGeneration.RobotSpawner;
 
@@ -204,20 +205,12 @@ namespace Dora {
             SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime
                                                                              || simulation.ExplorationTracker
                                                                                  .CoverageProportion > 0.995f);
+            // Overwrite for when simulating TNF, which aims at exploration, and not coverage.
+            SimulationEndCriteriaDelegate shouldEndTnfSim = simulation => simulation.SimulateTimeSeconds >= maxRunTime
+                                                                          || simulation.ExplorationTracker
+                                                                              .ExploredProportion > .995f
+                                                                          || simulation.TnfBotsOutOfFrontiers();
             
-            var robotConstraintsRBW = new RobotConstraints(
-                broadcastRange: 0,
-                broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 0,
-                senseNearbyRobotBlockedByWalls: false,
-                automaticallyUpdateSlam: false,
-                slamUpdateIntervalInTicks: 10,
-                slamSynchronizeIntervalInTicks: 10,
-                slamPositionInaccuracy: 0.2f, 
-                distributeSlam: false,
-                environmentTagReadRange: 0f,
-                lidarRange: 0f
-            );
             
             var robotConstraintsLVD = new RobotConstraints(
                 broadcastRange: 0,
@@ -247,6 +240,20 @@ namespace Dora {
                 lidarRange: 7f
             );
             
+            var robotConstraintsRBW = new RobotConstraints(
+                broadcastRange: 0,
+                broadcastBlockedByWalls: false,
+                senseNearbyRobotRange: 0,
+                senseNearbyRobotBlockedByWalls: false,
+                automaticallyUpdateSlam: false,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f, 
+                distributeSlam: false,
+                environmentTagReadRange: 0f,
+                lidarRange: 0f
+            );
+            
             var robotConstraintsSSB = new RobotConstraints(
                 broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: false,
@@ -265,10 +272,11 @@ namespace Dora {
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
                 {
+                    ("TNF", (seed) => new TnfExplorationAlgorithm(8, 8, seed), robotConstraintsTNF),
                     ("SSB", (seed) => new SsbAlgorithm(robotConstraintsSSB, seed), robotConstraintsSSB),
                     ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsLVD, 1), robotConstraintsLVD),
                     ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsRBW),
-                };
+                    };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(
                         width,
@@ -297,7 +305,7 @@ namespace Dora {
                     foreach (var (algorithmName, createAlgorithmDelegate, constraints) in algorithmsAndFileNames) {
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
-                            hasFinishedSim: shouldEndSim,
+                            hasFinishedSim: algorithmName == "TNF" ? shouldEndTnfSim : shouldEndSim,
                             mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                                 map, 
@@ -310,7 +318,7 @@ namespace Dora {
                         ));
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
-                            hasFinishedSim: shouldEndSim,
+                            hasFinishedSim: algorithmName == "TNF" ? shouldEndTnfSim : shouldEndSim,
                             mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                                 map, 
@@ -640,6 +648,67 @@ namespace Dora {
                     "SSB-cave-biggestroom-" + randomSeed
                 ));
             }
+
+            return scenarios;
+        }
+
+        public static Queue<SimulationScenario> GenerateTnfScenarios() {
+            var scenarios = new Queue<SimulationScenario>();
+
+            int randomSeed = 4 + 2;
+
+            var mapConfig = new CaveMapConfig(
+                100,
+                100,
+                randomSeed,
+                4,
+                2,
+                48,
+                10,
+                1,
+                1,
+                1f);
+
+            var officeConfig = new OfficeMapConfig(
+                200,
+                200,
+                randomSeed,
+                58,
+                4,    
+                5,
+                2,
+                1,
+                75,
+                1,
+                1f);
+
+            var robotConstraints = new RobotConstraints(
+                broadcastRange: 15.0f,
+                broadcastBlockedByWalls: true,
+                senseNearbyRobotRange: 5f,
+                senseNearbyRobotBlockedByWalls: true,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f,
+                distributeSlam: false,
+                environmentTagReadRange: 4.0f,
+                lidarRange: 7f
+            );
+            
+            scenarios.Enqueue(new SimulationScenario(
+                seed: randomSeed, 
+                hasFinishedSim: simulation => simulation.SimulateTimeSeconds >= 60 * Minute,
+                mapSpawner: generator => generator.GenerateOfficeMap(config: officeConfig, 2.0f),
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                    map,
+                    randomSeed,
+                    15,
+                    0.6f,
+                    (seed) => new TnfExplorationAlgorithm(5, 9, randomSeed)),
+                robotConstraints: robotConstraints,
+                "TNF-office-test-" + randomSeed
+            ));
 
             return scenarios;
         }

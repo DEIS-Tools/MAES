@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Dora.ExplorationAlgorithm.TheNextFrontier;
 using Dora.MapGeneration;
 using Dora.Robot;
 using Dora.Statistics;
@@ -70,6 +71,18 @@ namespace Dora {
             SimulatedPhysicsTicks++;
             _debugVisualizer.PhysicsUpdate();
             _communicationManager.PhysicsUpdate();
+        }
+
+        /// <summary>
+        /// Tests specifically if The Next Frontier is no longer doing any work.
+        /// </summary>
+        public bool TnfBotsOutOfFrontiers() {
+            var res = true;
+            foreach (var monaRobot in _robots) {
+                res &= (monaRobot.ExplorationAlgorithm as TnfExplorationAlgorithm)?.IsOutOfFrontiers() ?? true;
+            }
+
+            return res;
         }
 
         private void OnDrawGizmos() {

@@ -38,6 +38,7 @@ namespace Dora {
 
             _scenarios = ScenarioGenerator.GenerateArticleScenarios();
             //_scenarios = ScenarioGenerator.GenerateSsbScenarios();
+            // _scenarios = ScenarioGenerator.GenerateTnfScenarios();
             CreateSimulation(_scenarios.Dequeue());
         }
 

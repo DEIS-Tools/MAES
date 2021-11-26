@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Dora {
     public class CameraController : MonoBehaviour {
-        public static CameraController SingletonInstance;
+        public static CameraController singletonInstance;
         public Transform movementTransform;
 
         private List<CamAssembly> _cams;
@@ -39,7 +39,7 @@ namespace Dora {
 
         // Start is called before the first frame update
         void Start() {
-            SingletonInstance = this;
+            singletonInstance = this;
             var t = transform; // Temp storage of build-in is (apparently) more efficient than repeated access.
             newPosition = t.position;
             newRotation = t.rotation;

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using Dora.Robot;
 using Dora.Robot.Task;
-using JetBrains.Annotations;
 using UnityEngine;
 using static Dora.CommunicationManager;
 using static Dora.MapGeneration.EnvironmentTaggingMap;
@@ -26,7 +25,7 @@ namespace Dora {
 
         private MonaRobot _robot;
         private RobotStatus _currentStatus = RobotStatus.Idle;
-        [CanBeNull] private ITask _currentTask;
+        private ITask? _currentTask;
 
         public CommunicationManager CommunicationManager { get; set; }
         public SlamMap SlamMap { get; set; }

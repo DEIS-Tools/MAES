@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 using Dora.MapGeneration;
 using Dora.MapGeneration.PathFinding;
 using Dora.Utilities;
-using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 using Random = System.Random;
@@ -184,6 +183,30 @@ namespace Dora.Robot {
             
             // Synchronize coarse maps
             CoarseGrainedMap.Synchronize(maps.Select(m => m.CoarseMap).ToList(), globalMap);
+        }
+        
+
+        /// <summary>
+        /// Synchronizes one map with a list of other <see cref="SlamMap"/>s.
+        /// </summary>s
+        /// 
+        public static void Combine(SlamMap target, List<SlamMap> others) {
+            var globalMap = new SlamTileStatus[target._widthInTiles, target._heightInTiles];
+            for (int x = 0; x < globalMap.GetLength(0); x++) 
+            for (int y = 0; y < globalMap.GetLength(1); y++) 
+                globalMap[x, y] = SlamTileStatus.Unseen;
+
+            foreach (var other in others) {
+                for (int x = 0; x < target._widthInTiles; x++) {
+                    for (int y = 0; y < target._heightInTiles; y++) {
+                        if (other._tiles[x,y] != SlamTileStatus.Unseen)
+                            globalMap[x, y] = target._tiles[x, y];
+                    }
+                }
+            }
+ 
+            target._tiles = globalMap.Clone() as SlamTileStatus[,];
+            CoarseGrainedMap.Combine(target.CoarseMap, others.Select(o => o.GetCoarseMap()).ToList(), globalMap);
         }
 
         public Vector2 GetApproxPosition() {
