@@ -1,7 +1,7 @@
 using System;
 
 namespace Maes.Map.MapGen {
-    public struct OfficeMapConfig {
+    public struct BuildingMapConfig {
         // Bitmap size is always +1 larger in both axis
         // due to the marching squares algorithm using 4 points per square
         public readonly int widthInTiles;
@@ -21,21 +21,21 @@ namespace Maes.Map.MapGen {
 
         // Value in [0,100] determining the likelihood of an office being split
         // Higher value = more but smaller rooms.
-        public readonly uint officeSplitChancePercent;
+        public readonly uint roomSplitChancePercent;
 
         public readonly int borderSize;
 
         public readonly float scaling;
 
-        public OfficeMapConfig(int widthInTiles, int heightInTiles, int randomSeed, float maxHallInPercent,
-            int hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint officeSplitChancePercent,
+        public BuildingMapConfig(int widthInTiles, int heightInTiles, int randomSeed, float maxHallInPercent,
+            int hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint roomSplitChancePercent,
             int borderSize, float scaling) {
             if ((2 * doorPadding + doorWidth) > minRoomSideLength) {
                 throw new ArgumentOutOfRangeException(
                     "Door width cannot be bigger than the smallest side lenght of rooms plus two times doorPadding");
             }
 
-            if (officeSplitChancePercent > 100) {
+            if (roomSplitChancePercent > 100) {
                 throw new ArgumentOutOfRangeException("officeSplitChance cannot be greater than 100");
             }
 
@@ -50,7 +50,7 @@ namespace Maes.Map.MapGen {
             this.minRoomSideLength = minRoomSideLength;
             this.doorWidth = doorWidth;
             this.doorPadding = doorPadding;
-            this.officeSplitChancePercent = officeSplitChancePercent;
+            this.roomSplitChancePercent = roomSplitChancePercent;
             this.borderSize = borderSize;
             this.scaling = scaling;
         }

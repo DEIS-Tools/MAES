@@ -5,6 +5,7 @@ using Maes.ExplorationAlgorithm;
 using Maes.Map.MapGen;
 using Maes.Robot;
 using UnityEngine;
+using static Maes.Utilities.Geometry;
 
 namespace Maes.Map
 {
@@ -61,15 +62,15 @@ namespace Maes.Map
             return robots;
         }
 
-        public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, Coord? suggestedStartingPoint, CreateAlgorithmDelegate createAlgorithmDelegate) {
+        public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, Vector2Int? suggestedStartingPoint, CreateAlgorithmDelegate createAlgorithmDelegate) {
             List<MonaRobot> robots = new List<MonaRobot>();
             // Get all spawnable tiles. We cannot spawn adjacent to a wall
-            List<Coord> possibleSpawnTiles = new List<Coord>();
+            List<Vector2Int> possibleSpawnTiles = new List<Vector2Int>();
 
             for (int x = 0; x < collisionMap.WidthInTiles; x++) {
                 for (int y = 0; y < collisionMap.HeightInTiles; y++) {
                     if (collisionMap.GetTileByLocalCoordinate(x, y).IsTrueForAll(solid => !solid)) {
-                        possibleSpawnTiles.Add(new Coord(x, y));
+                        possibleSpawnTiles.Add(new Vector2Int(x, y));
                     }
                     
                 }
@@ -80,22 +81,22 @@ namespace Maes.Map
             possibleSpawnTiles = possibleSpawnTiles.Except(edgeTiles).ToList();
             
             // Offset suggested starting point to map
-            suggestedStartingPoint = new Coord(suggestedStartingPoint.Value.x - (int)collisionMap.ScaledOffset.x,
+            suggestedStartingPoint = new Vector2Int(suggestedStartingPoint.Value.x - (int)collisionMap.ScaledOffset.x,
                 suggestedStartingPoint.Value.y - (int)collisionMap.ScaledOffset.y);
             
             possibleSpawnTiles.Sort((c1, c2) => {
-                return c1.ManhattanDistanceTo(suggestedStartingPoint.Value) -
-                        c2.ManhattanDistanceTo(suggestedStartingPoint.Value);
+                return ManhattanDistance(c1, suggestedStartingPoint.Value) -
+                       ManhattanDistance(c2, suggestedStartingPoint.Value);
             });
             
             
             // Flooding algorithm to find next tiles from neighbors
-            var spawnTilesSelected = new List<Coord>();
+            var spawnTilesSelected = new List<Vector2Int>();
             var startCoord = possibleSpawnTiles[0];
-            Queue<Coord> queue = new Queue<Coord>();
+            Queue<Vector2Int> queue = new Queue<Vector2Int>();
             queue.Enqueue(startCoord);
             while (queue.Count > 0 && spawnTilesSelected.Count < numberOfRobots) {
-                Coord tile = queue.Dequeue();
+                Vector2Int tile = queue.Dequeue();
                 spawnTilesSelected.Add(tile);
 
                 // Check immediate neighbours
@@ -103,7 +104,7 @@ namespace Maes.Map
                     for (int y = tile.y - 1; y <= tile.y + 1; y++) {
                         if (IsInMapRange(x, y, collisionMap.WidthInTiles, collisionMap.HeightInTiles)
                             && (y == tile.y || x == tile.x)) {
-                            var neighbourCoord = new Coord(x, y);
+                            var neighbourCoord = new Vector2Int(x, y);
                             if (!spawnTilesSelected.Contains(neighbourCoord)
                                 && possibleSpawnTiles.Contains(neighbourCoord)
                                 && !queue.Contains(neighbourCoord)) {
@@ -147,7 +148,7 @@ namespace Maes.Map
             var robots = new List<MonaRobot>();
 
             var hallWays = collisionMap.rooms.FindAll(r => r.isHallWay).ToList();
-            List<Coord> possibleSpawnTiles = new List<Coord>();
+            List<Vector2Int> possibleSpawnTiles = new List<Vector2Int>();
             foreach (var hallWay in hallWays) {
                 possibleSpawnTiles.AddRange(hallWay.tiles.Except(hallWay.edgeTiles));
             }
@@ -221,12 +222,12 @@ namespace Maes.Map
             return robot;
         }
         
-        private List<Coord> FindEdgeTiles(List<Coord> tiles, bool checkDiagonal) {
-            var tilesHashSet = new HashSet<Coord>();
+        private List<Vector2Int> FindEdgeTiles(List<Vector2Int> tiles, bool checkDiagonal) {
+            var tilesHashSet = new HashSet<Vector2Int>();
             foreach (var tile in tiles) tilesHashSet.Add(tile);
             
             // An edge is any tile, where a neighbor is missing in the set of tiles.
-            var edgeTiles = new List<Coord>();
+            var edgeTiles = new List<Vector2Int>();
 
             foreach (var tile in tilesHashSet) {
                 var isEdge = false;
@@ -234,12 +235,12 @@ namespace Maes.Map
                     for (int y = tile.y - 1; y <= tile.y + 1; y++) {
                         if (checkDiagonal) {
                             if (x == tile.x || y == tile.y) {
-                                var neighbour = new Coord(x, y);
+                                var neighbour = new Vector2Int(x, y);
                                 if (!tilesHashSet.Contains(neighbour)) isEdge = true;
                             } 
                         }
                         else {
-                            var neighbour = new Coord(x, y);
+                            var neighbour = new Vector2Int(x, y);
                             if (!tilesHashSet.Contains(neighbour)) isEdge = true;
                         }
                         

@@ -1,4 +1,4 @@
-namespace Maes {
+namespace Maes.UI {
     public enum SimulationPlayState {
         Paused = 0,
         Play = 1,

@@ -1,6 +1,6 @@
 using System;
 
-namespace Maes {
+namespace Maes.Robot {
     public readonly struct RobotConstraints {
         // Broadcasting
         public readonly float BroadcastRange;

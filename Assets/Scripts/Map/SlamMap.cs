@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Maes.Map;
 using Maes.Map.PathFinding;
+using Maes.Robot;
 using Maes.Utilities;
 using UnityEngine;
 using Random = System.Random;
 
-namespace Maes.Robot {
-    public class SlamMap : SlamAlgorithmInterface, IPathFindingMap{
+namespace Maes.Map {
+    public class SlamMap : ISlamAlgorithm, IPathFindingMap{
         // Size of a tile in world space
         private readonly float _tileSize;
         private readonly int _widthInTiles, _heightInTiles;

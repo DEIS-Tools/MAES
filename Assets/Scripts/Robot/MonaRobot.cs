@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Maes.ExplorationAlgorithm;
+using Maes.UI;
 using UnityEngine;
 
 namespace Maes.Robot {

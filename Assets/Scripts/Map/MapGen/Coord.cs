@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 
 namespace Maes.Map.MapGen {
-    public struct Coord {
+    /*public struct Coord {
         public int x;
         public int y;
 
@@ -53,5 +53,5 @@ namespace Maes.Map.MapGen {
         public int ManhattanDistanceTo(Coord other) {
             return Math.Abs(this.x - other.x) + Math.Abs(this.y - other.y);
         }
-    }
+    }*/
 }

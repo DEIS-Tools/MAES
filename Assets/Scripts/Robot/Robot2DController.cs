@@ -316,7 +316,7 @@ namespace Maes.Robot {
                 .ToList();
         }
 
-        public SlamAlgorithmInterface GetSlamMap() {
+        public ISlamAlgorithm GetSlamMap() {
             return this.SlamMap;
         }
     }

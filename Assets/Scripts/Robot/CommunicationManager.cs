@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Maes.Map;
-using Maes.Robot;
 using Maes.Utilities;
 using UnityEngine;
 using Vector2 = UnityEngine.Vector2;
 
-namespace Maes {
+namespace Maes.Robot {
     // Messages sent through this class will be subject to communication range and line of sight.
     // Communication is non-instantaneous. Messages will be received by other robots after one logic tick. 
     public class CommunicationManager : ISimulationUnit {

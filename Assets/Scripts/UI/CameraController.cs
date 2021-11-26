@@ -4,7 +4,7 @@ using UnityEngine;
 
 // ReSharper disable ConvertIfStatementToNullCoalescingAssignment
 
-namespace Maes {
+namespace Maes.UI {
     public class CameraController : MonoBehaviour {
         public static CameraController singletonInstance;
         public Transform movementTransform;

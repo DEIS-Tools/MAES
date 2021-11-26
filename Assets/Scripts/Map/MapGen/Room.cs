@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using static Maes.Utilities.Geometry;
 
 namespace Maes.Map.MapGen {
     public class Room : IComparable<Room> {
-        public List<Coord> tiles;
+        public List<Vector2Int> tiles;
 
         public bool[,] tilesAsArray; // If true, it is contained in room
         // The tiles next to the walls surrounding the room
-        public List<Coord> edgeTiles;
+        public List<Vector2Int> edgeTiles;
         public List<Room> connectedRooms;
         public int roomSize;
         public bool isAccessibleFromMainRoom;
@@ -18,14 +20,14 @@ namespace Maes.Map.MapGen {
         public Room() {
         }
 
-        public Room(List<Coord> roomTiles, int[,] map) {
+        public Room(List<Vector2Int> roomTiles, int[,] map) {
             tiles = roomTiles;
             roomSize = tiles.Count;
             connectedRooms = new List<Room>();
             tilesAsArray = new bool[map.GetLength(0), map.GetLength(1)];
 
-            edgeTiles = new List<Coord>();
-            foreach (Coord tile in tiles) {
+            edgeTiles = new List<Vector2Int>();
+            foreach (Vector2Int tile in tiles) {
                 tilesAsArray[tile.x, tile.y] = true;
                 for (int x = tile.x - 1; x <= tile.x + 1; x++) {
                     for (int y = tile.y - 1; y <= tile.y + 1; y++) {
@@ -44,7 +46,7 @@ namespace Maes.Map.MapGen {
         public bool IsWithinRangeOf(Room other, int range) {
             foreach (var tile in this.edgeTiles) {
                 foreach (var oTile in other.edgeTiles) {
-                    if (tile.ManhattanDistanceTo(oTile) <= range)
+                    if(ManhattanDistance(tile, oTile) <= range)
                         return true;
                 }
             }
@@ -52,8 +54,8 @@ namespace Maes.Map.MapGen {
             return false;
         }
 
-        public List<Coord> GetWallSurroundingRoom(int wallThickness = 1) {
-            var surroundingWalls = new HashSet<Coord>();
+        public List<Vector2Int> GetWallSurroundingRoom(int wallThickness = 1) {
+            var surroundingWalls = new HashSet<Vector2Int>();
 
             int smallestXValue, biggestXValue;
             int smallestYValue, biggestYValue;
@@ -70,7 +72,7 @@ namespace Maes.Map.MapGen {
             for (int x = smallestXValue - wallThickness; x <= biggestXValue + wallThickness; x++) {
                 for (int y = smallestYValue - wallThickness; y <= biggestYValue + wallThickness; y++) {
                     // Check if neighbours are within tiles && this is not in tiles
-                    var c = new Coord(x, y);
+                    var c = new Vector2Int(x, y);
                     bool isSurroundingWall = false;
                     // If any neighbor is within our tiles, we are part of the surrounding wall
                     for (int xn = x - wallThickness; xn <= x + wallThickness; xn++) {
@@ -110,7 +112,7 @@ namespace Maes.Map.MapGen {
             return surroundingWalls.ToList();
         }
 
-        public List<Coord> GetSharedWallTiles(Room other, int wallThickness = 1) {
+        public List<Vector2Int> GetSharedWallTiles(Room other, int wallThickness = 1) {
             var walls = this.GetWallSurroundingRoom(wallThickness);
             var otherWalls = other.GetWallSurroundingRoom(wallThickness);
 
@@ -153,15 +155,15 @@ namespace Maes.Map.MapGen {
         }
 
         public void OffsetCoordsBy(int x, int y) {
-            var newTiles = new List<Coord>();
-            var newEdgeTiles = new List<Coord>();
+            var newTiles = new List<Vector2Int>();
+            var newEdgeTiles = new List<Vector2Int>();
 
             foreach (var t in tiles) {
-                newTiles.Add(new Coord(t.x + x, t.y + y));
+                newTiles.Add(new Vector2Int(t.x + x, t.y + y));
             }
 
             foreach (var t in edgeTiles) {
-                newEdgeTiles.Add(new Coord(t.x + x, t.y + y));
+                newEdgeTiles.Add(new Vector2Int(t.x + x, t.y + y));
             }
 
             this.tiles = newTiles;

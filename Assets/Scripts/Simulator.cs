@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Maes.Statistics;
+using Maes.UI;
 using Maes.Utilities;
 using UnityEngine;
 using UnityEngine.UI;

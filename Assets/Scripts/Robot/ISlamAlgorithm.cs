@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using Maes.Map;
 using Maes.Map.PathFinding;
 using UnityEngine;
 
 namespace Maes.Robot {
-    public interface SlamAlgorithmInterface {
+    public interface ISlamAlgorithm {
         public Vector2 GetApproxPosition();
 
         public Dictionary<Vector2Int, SlamMap.SlamTileStatus> GetExploredTiles();

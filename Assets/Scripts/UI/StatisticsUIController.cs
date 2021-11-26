@@ -1,8 +1,7 @@
-using Maes;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Dora
+namespace Maes.UI
 {
     public class StatisticsUIController : MonoBehaviour
     {

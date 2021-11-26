@@ -66,6 +66,6 @@ namespace Maes.Robot {
 
         List<CommunicationManager.SensedObject<int>> SenseNearbyRobots();
 
-        SlamAlgorithmInterface GetSlamMap();
+        ISlamAlgorithm GetSlamMap();
     }
 }

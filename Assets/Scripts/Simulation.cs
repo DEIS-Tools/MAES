@@ -6,6 +6,7 @@ using Maes.Map;
 using Maes.Map.MapGen;
 using Maes.Robot;
 using Maes.Statistics;
+using Maes.UI;
 using UnityEngine;
 
 namespace Maes {

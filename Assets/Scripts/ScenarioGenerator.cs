@@ -6,6 +6,8 @@ using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.ExplorationAlgorithm.Voronoi;
 using Maes.Map;
 using Maes.Map.MapGen;
+using Maes.Robot;
+using UnityEngine;
 
 namespace Maes {
     public class ScenarioGenerator {
@@ -53,7 +55,7 @@ namespace Maes {
                         10,
                         1,
                         1f);
-                    var officeConfig = new OfficeMapConfig(
+                    var officeConfig = new BuildingMapConfig(
                         width,
                         height,
                         randomSeed,
@@ -70,7 +72,7 @@ namespace Maes {
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
                             hasFinishedSim: shouldEndSim,
-                            mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                            mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(officeConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                                 map, 
                                 randomSeed, 
@@ -89,7 +91,7 @@ namespace Maes {
                                 randomSeed, 
                                 numberOfRobots, 
                                 0.6f,
-                                new Coord(0,0),
+                                new Vector2Int(0,0),
                                 createAlgorithmDelegate),
                             robotConstraints: constraints,
                             $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
@@ -137,7 +139,7 @@ namespace Maes {
                     10,
                     1,
                     1f);
-                var officeConfig = new OfficeMapConfig(
+                var officeConfig = new BuildingMapConfig(
                     width,
                     height,
                     randomSeed,
@@ -162,7 +164,7 @@ namespace Maes {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: hasFinishedFunc,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(officeConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
@@ -181,7 +183,7 @@ namespace Maes {
                             randomSeed, 
                             numberOfRobots, 
                             0.6f,
-                            new Coord(0,0),
+                            new Vector2Int(0,0),
                             createAlgorithmDelegate),
                         robotConstraints: robotConstraints,
                         $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
@@ -198,7 +200,7 @@ namespace Maes {
         
         public static Queue<SimulationScenario> GenerateArticleScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            var numberOfRobots = 15;
+            var numberOfRobots = 25;
             var runs = 20;
             var sizes = new List<(int, int)>() {(50, 50), (100,100), (200,200)};
             var maxRunTime = 60 * Minute;
@@ -251,7 +253,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 0f
+                lidarRange: 7f
             );
             
             var robotConstraintsSSB = new RobotConstraints(
@@ -272,10 +274,10 @@ namespace Maes {
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(string, RobotSpawner.CreateAlgorithmDelegate, RobotConstraints)>()
                 {
-                    ("TNF", (seed) => new TnfExplorationAlgorithm(8, 8, seed), robotConstraintsTNF),
+                    ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsRBW),
                     ("SSB", (seed) => new SsbAlgorithm(robotConstraintsSSB, seed), robotConstraintsSSB),
                     ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsLVD, 1), robotConstraintsLVD),
-                    ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsRBW),
+                    ("TNF", (seed) => new TnfExplorationAlgorithm(8, 8, seed), robotConstraintsTNF)
                     };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(
@@ -289,7 +291,7 @@ namespace Maes {
                         10,
                         1,
                         1f);
-                    var officeConfig = new OfficeMapConfig(
+                    var officeConfig = new BuildingMapConfig(
                         width,
                         height,
                         randomSeed,
@@ -306,7 +308,7 @@ namespace Maes {
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
                             hasFinishedSim: algorithmName == "TNF" ? shouldEndTnfSim : shouldEndSim,
-                            mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                            mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(officeConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                                 map, 
                                 randomSeed, 
@@ -325,7 +327,7 @@ namespace Maes {
                                 randomSeed, 
                                 numberOfRobots, 
                                 0.6f,
-                                new Coord(0,0),
+                                new Vector2Int(0,0),
                                 createAlgorithmDelegate),
                             robotConstraints: constraints,
                             $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
@@ -355,7 +357,7 @@ namespace Maes {
                     1,
                     1f);
 
-                var officeConfig = new OfficeMapConfig(
+                var officeConfig = new BuildingMapConfig(
                     50,
                     50,
                     randomSeed,
@@ -386,7 +388,7 @@ namespace Maes {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(officeConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
@@ -407,7 +409,7 @@ namespace Maes {
                             randomSeed, 
                             1, 
                             0.6f,
-                            new Coord(0,0),
+                            new Vector2Int(0,0),
                             (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1)),
                         robotConstraints: robotConstraints,
                         "Voronoi-cave-together-" + randomSeed
@@ -436,7 +438,7 @@ namespace Maes {
                     1,
                     1f);
 
-                var officeConfig = new OfficeMapConfig(
+                var officeConfig = new BuildingMapConfig(
                     30,
                     30,
                     randomSeed,
@@ -468,7 +470,7 @@ namespace Maes {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(officeConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
@@ -489,7 +491,7 @@ namespace Maes {
                             randomSeed, 
                             1, 
                             0.6f,
-                            new Coord(0,0),
+                            new Vector2Int(0,0),
                             (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 2)),
                         robotConstraints: robotConstraints,
                         "RBW-hallway-" + randomSeed
@@ -518,7 +520,7 @@ namespace Maes {
                     1,
                     1f);
 
-                var officeConfig = new OfficeMapConfig(
+                var officeConfig = new BuildingMapConfig(
                     60,
                     60,
                     randomSeed,
@@ -561,7 +563,7 @@ namespace Maes {
                 scenarios.Enqueue(new SimulationScenario(
                     seed: randomSeed,
                     hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
-                    mapSpawner: (mapGenerator) => mapGenerator.GenerateOfficeMap(officeConfig, 2.0f),
+                    mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(officeConfig, 2.0f),
                     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                         map, 
                         randomSeed, 
@@ -594,7 +596,7 @@ namespace Maes {
                     1,
                     1f);
 
-                var officeConfig = new OfficeMapConfig(
+                var officeConfig = new BuildingMapConfig(
                     60,
                     60,
                     randomSeed,
@@ -669,7 +671,7 @@ namespace Maes {
                 1,
                 1f);
 
-            var officeConfig = new OfficeMapConfig(
+            var officeConfig = new BuildingMapConfig(
                 200,
                 200,
                 randomSeed,
@@ -699,7 +701,7 @@ namespace Maes {
             scenarios.Enqueue(new SimulationScenario(
                 seed: randomSeed, 
                 hasFinishedSim: simulation => simulation.SimulateTimeSeconds >= 60 * Minute,
-                mapSpawner: generator => generator.GenerateOfficeMap(config: officeConfig, 2.0f),
+                mapSpawner: generator => generator.GenerateBuildingMap(config: officeConfig, 2.0f),
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                     map,
                     randomSeed,

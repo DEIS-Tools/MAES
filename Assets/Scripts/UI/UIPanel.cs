@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Maes {
+namespace Maes.UI {
     [RequireComponent(typeof(RectTransform))]
     public class UIPanel : MonoBehaviour {
         public CameraController cameraController;

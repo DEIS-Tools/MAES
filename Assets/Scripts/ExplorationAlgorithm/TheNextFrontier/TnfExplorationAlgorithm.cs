@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Maes.Map;
 using Maes.Map.PathFinding;
 using Maes.Robot;
 using Maes.Robot.Task;
@@ -242,12 +243,12 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
             }
             var newMaps = new List<SlamMap> {_robotController.GetSlamMap() as SlamMap};
             foreach (var package in received) {
-                var pack = ((SlamAlgorithmInterface, int)) package;
+                var pack = ((ISlamAlgorithm, int)) package;
                 newMaps.Add(pack.Item1 as SlamMap);
             }
 
             // Largest Robot ID synchronizes to save on Simulator CPU time
-            if (!received.Cast<(SlamAlgorithmInterface, int)>().Any(p => p.Item2 > _robotId)) {
+            if (!received.Cast<(ISlamAlgorithm, int)>().Any(p => p.Item2 > _robotId)) {
                 SlamMap.Synchronize(newMaps);
             }
             if (_robotTnfStatus == TnfStatus.OutOfFrontiers) {

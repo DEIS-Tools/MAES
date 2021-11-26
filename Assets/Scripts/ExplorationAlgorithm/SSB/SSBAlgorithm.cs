@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Maes.Map;
 using Maes.Map.PathFinding;
 using Maes.Robot;
 using Maes.Robot.Task;

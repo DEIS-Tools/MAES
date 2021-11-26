@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Maes {
+namespace Maes.UI {
     public class SimulationInfoUIController : MonoBehaviour {
         public Image Mask;
         public Text ProgressPercentageText;

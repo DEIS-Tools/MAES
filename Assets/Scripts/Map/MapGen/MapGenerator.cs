@@ -18,33 +18,7 @@ namespace Maes.Map.MapGen {
 
         // Variable used for drawing gizmos on selection for debugging.
         private int[,] mapToDraw = null;
-
-        void Update() {
-            if (Input.GetButtonUp("Jump")) {
-                /*var config = new CaveMapConfig(100,
-                100,
-                Time.time.ToString(),
-                4,
-                2,
-                48,
-                10,
-                1,
-                1,
-                2);
-            var map = GenerateCaveMap(config, 
-                                        3.0f,
-                                        true);*/
-                /*var officeConfig = new OfficeMapConfig(60, 60, Time.time.ToString(), 8, 3, 5, 2, 0, 65, 2, 2.0f);
-            var map = GenerateOfficeMap(officeConfig, 3.0f, true);*/
-            }
-
-
-            /*if (Input.GetMouseButtonDown(1) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))
-        {
-            clearMap();
-        }*/
-        }
-
+        
         private void MovePlaneAndWallRoofToFitWallHeight(float wallHeight, bool is2D = true) {
             // Move walls and wall roof to above plane depending on wall height
             // The axis depends on whether it is 3D or 2D.
@@ -80,9 +54,9 @@ namespace Maes.Map.MapGen {
         }
 
         /**
-	 * Methods for creating office map
+	 * Methods for creating building map
 	 */
-        public SimulationMap<bool> GenerateOfficeMap(OfficeMapConfig config, float wallHeight, bool is2D = true) {
+        public SimulationMap<bool> GenerateBuildingMap(BuildingMapConfig config, float wallHeight, bool is2D = true) {
             // Clear and destroy objects from previous map
             clearMap();
         
@@ -92,17 +66,17 @@ namespace Maes.Map.MapGen {
 
             var mapWithHalls = GenerateMapWithHalls(emptyMap, config, random);
 
-            var mapWithWallsAroundOffices = AddWallAroundOfficeRegions(mapWithHalls, config);
+            var mapWithWallsAroundRooms = AddWallAroundRoomRegions(mapWithHalls, config);
 
-            var mapWithOfficeRooms = GenerateOfficesBetweenHalls(mapWithWallsAroundOffices, config, random);
+            var mapWithRooms = GenerateRoomsBetweenHalls(mapWithWallsAroundRooms, config, random);
 
-            var closedHallwayMap = CloseOffHallwayEnds(mapWithOfficeRooms);
+            var closedHallwayMap = CloseOffHallwayEnds(mapWithRooms);
 
-            // Offices and halls sorted according to biggest hall first. Biggest hall set to main room.
+            // Rooms and halls sorted according to biggest hall first. Biggest hall set to main room.
             // If both rooms are halls, sort according to size
-            var offices = GetSortedOfficeRooms(closedHallwayMap);
+            var rooms = GetSortedRooms(closedHallwayMap);
 
-            var connectedMap = ConnectOfficesWithDoors(offices, closedHallwayMap, random, config);
+            var connectedMap = ConnectRoomsWithDoors(rooms, closedHallwayMap, random, config);
 
             var borderedMap = CreateBorderedMap(connectedMap, config.bitMapWidth, config.bitMapHeight, config.borderSize);
 
@@ -110,10 +84,10 @@ namespace Maes.Map.MapGen {
             // mapToDraw = borderedMap;
 
             // The rooms should now reflect their relative shifted positions after adding borders round map.
-            offices.ForEach(r => r.OffsetCoordsBy(config.borderSize, config.borderSize));
+            rooms.ForEach(r => r.OffsetCoordsBy(config.borderSize, config.borderSize));
             MeshGenerator meshGen = GetComponent<MeshGenerator>();
             var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], config.scaling, wallHeight, is2D, true,
-                offices);
+                rooms);
 
             if (is2D) {
                 plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
@@ -126,14 +100,14 @@ namespace Maes.Map.MapGen {
             return collisionMap;
         }
 
-        private int[,] ConnectOfficesWithDoors(List<Room> sortedOffices, int[,] oldMap, Random random,
-            OfficeMapConfig config) {
+        private int[,] ConnectRoomsWithDoors(List<Room> sortedRooms, int[,] oldMap, Random random,
+            BuildingMapConfig config) {
             int[,] connectedMap = oldMap.Clone() as int[,];
             // Whether the given room is connected to the main room
             List<Room> connectedRooms = new List<Room>();
             List<Room> nonConnectedRooms = new List<Room>();
 
-            foreach (var room in sortedOffices) {
+            foreach (var room in sortedRooms) {
                 if (room.isAccessibleFromMainRoom)
                     connectedRooms.Add(room);
                 else
@@ -160,7 +134,7 @@ namespace Maes.Map.MapGen {
                         smallestYValue = sharedWallTiles.Aggregate((agg, next) => next.y < agg.y ? next : agg).y;
                         biggestYValue = sharedWallTiles.Aggregate((agg, next) => next.y > agg.y ? next : agg).y;
 
-                        List<Coord> line;
+                        List<Vector2Int> line;
                         int maxDoors = random.Next(1, 4);
                         if (smallestYValue == biggestYValue || smallestXValue == biggestXValue)
                             maxDoors = 1;
@@ -242,23 +216,23 @@ namespace Maes.Map.MapGen {
                 }
             }
 
-            // Recursive call that continues, until all offices and halls are connected
-            connectedMap = ConnectOfficesWithDoors(sortedOffices, connectedMap, random, config);
+            // Recursive call that continues, until all rooms and halls are connected
+            connectedMap = ConnectRoomsWithDoors(sortedRooms, connectedMap, random, config);
 
             return connectedMap;
         }
 
-        private List<Room> GetSortedOfficeRooms(int[,] map) {
-            List<List<Coord>> roomRegions = GetRegions(map, ROOM_TYPE, HALL_TYPE);
+        private List<Room> GetSortedRooms(int[,] map) {
+            List<List<Vector2Int>> roomRegions = GetRegions(map, ROOM_TYPE, HALL_TYPE);
 
-            List<Room> offices = new List<Room>();
+            List<Room> rooms = new List<Room>();
             foreach (var region in roomRegions) {
-                offices.Add(new Room(region, map));
+                rooms.Add(new Room(region, map));
             }
 
             // Sort by first tiletype = Hall, then size
             // Descending order. Hallway > other room types
-            offices.Sort((o1, o2) => {
+            rooms.Sort((o1, o2) => {
                 var o1x = o1.tiles[0].x;
                 var o1y = o1.tiles[0].y;
                 var o2x = o2.tiles[0].x;
@@ -272,10 +246,10 @@ namespace Maes.Map.MapGen {
                 return o2.roomSize - o1.roomSize;
             });
             // This should now be the biggest hallway
-            offices[0].isMainRoom = true;
-            offices[0].isAccessibleFromMainRoom = true;
+            rooms[0].isMainRoom = true;
+            rooms[0].isAccessibleFromMainRoom = true;
 
-            return offices;
+            return rooms;
         }
 
         private int[,] CloseOffHallwayEnds(int[,] oldMap) {
@@ -295,42 +269,42 @@ namespace Maes.Map.MapGen {
             return map;
         }
 
-        private int[,] GenerateOfficesBetweenHalls(int[,] oldMap, OfficeMapConfig config, Random random) {
-            var mapWithOffices = oldMap.Clone() as int[,];
+        private int[,] GenerateRoomsBetweenHalls(int[,] oldMap, BuildingMapConfig config, Random random) {
+            var mapWithRooms = oldMap.Clone() as int[,];
 
-            List<List<Coord>> officeRegions = GetRegions(mapWithOffices, ROOM_TYPE);
+            List<List<Vector2Int>> roomRegions = GetRegions(mapWithRooms, ROOM_TYPE);
 
-            foreach (List<Coord> officeRegion in officeRegions) {
-                SplitOfficeRegion(mapWithOffices, officeRegion, config, false, true, random);
+            foreach (List<Vector2Int> roomRegion in roomRegions) {
+                SplitRoomRegion(mapWithRooms, roomRegion, config, false, true, random);
             }
 
-            return mapWithOffices;
+            return mapWithRooms;
         }
 
         // This function has side effects on the map!
-        private void SplitOfficeRegion(int[,] map, List<Coord> officeRegion, OfficeMapConfig config, bool splitOnXAxis,
+        private void SplitRoomRegion(int[,] map, List<Vector2Int> roomRegion, BuildingMapConfig config, bool splitOnXAxis,
             bool forceSplit, Random random) {
-            // Check if we want to split. This allows for different size offices
-            bool shouldSplit = random.Next(0, 100) <= config.officeSplitChancePercent;
+            // Check if we want to split. This allows for different size rooms
+            bool shouldSplit = random.Next(0, 100) <= config.roomSplitChancePercent;
 
             if (!shouldSplit && !forceSplit)
                 return;
 
             // Find where to split
-            // Rotate 90 degrees every time an office is split
+            // Rotate 90 degrees every time an room is split
             // We either use the x axis or y axis as starting point
             List<int> coords;
             if (splitOnXAxis)
-                coords = officeRegion.Select(coord => coord.x).ToList();
+                coords = roomRegion.Select(coord => coord.x).ToList();
             else
-                coords = officeRegion.Select(coord => coord.y).ToList();
+                coords = roomRegion.Select(coord => coord.y).ToList();
 
             // Filter out coords that would be too close to the edges to allow for 2 rooms side by side according to config.minRoomSideLength
             var sortedCoords = coords.OrderBy(c => c).ToList();
             var smallestValue = sortedCoords[0];
             var biggestValue = sortedCoords[sortedCoords.Count - 1];
 
-            // +1 to allow for wall between office spaces
+            // +1 to allow for wall between room spaces
             var filteredCoords = sortedCoords.FindAll(x =>
                 x + config.minRoomSideLength < biggestValue - config.minRoomSideLength && // Right side
                 x > smallestValue + config.minRoomSideLength
@@ -340,7 +314,7 @@ namespace Maes.Map.MapGen {
             if (filteredCoords.Count == 0) {
                 // Force split only gets once chance to avoid stack overflow
                 if (!forceSplit) {
-                    SplitOfficeRegion(map, officeRegion, config, !splitOnXAxis, true, random);
+                    SplitRoomRegion(map, roomRegion, config, !splitOnXAxis, true, random);
                 }
 
                 return;
@@ -352,44 +326,44 @@ namespace Maes.Map.MapGen {
 
             // Create wall
             if (splitOnXAxis) {
-                foreach (var c in officeRegion) {
+                foreach (var c in roomRegion) {
                     if (c.x == wallStartCoord)
                         map[c.x, c.y] = WALL_TYPE;
                 }
             }
             else {
-                foreach (var c in officeRegion) {
+                foreach (var c in roomRegion) {
                     if (c.y == wallStartCoord)
                         map[c.x, c.y] = WALL_TYPE;
                 }
             }
 
             // Get two new regions
-            List<Coord> newRegion1, newRegion2;
-            Coord region1Tile, region2Tile; // A random tile from each region. We use flooding algorithm to find the rest
+            List<Vector2Int> newRegion1, newRegion2;
+            Vector2Int region1Tile, region2Tile; // A random tile from each region. We use flooding algorithm to find the rest
             if (splitOnXAxis) {
-                region1Tile = officeRegion.Find(c => c.x < wallStartCoord);
-                region2Tile = officeRegion.Find(c => c.x > wallStartCoord);
+                region1Tile = roomRegion.Find(c => c.x < wallStartCoord);
+                region2Tile = roomRegion.Find(c => c.x > wallStartCoord);
             }
             else {
-                region1Tile = officeRegion.Find(c => c.y < wallStartCoord);
-                region2Tile = officeRegion.Find(c => c.y > wallStartCoord);
+                region1Tile = roomRegion.Find(c => c.y < wallStartCoord);
+                region2Tile = roomRegion.Find(c => c.y > wallStartCoord);
             }
 
             newRegion1 = GetRegionTiles(region1Tile.x, region1Tile.y, map);
             newRegion2 = GetRegionTiles(region2Tile.x, region2Tile.y, map);
 
             // Run function recursively
-            SplitOfficeRegion(map, newRegion1, config, !splitOnXAxis, false, random);
-            SplitOfficeRegion(map, newRegion2, config, !splitOnXAxis, false, random);
+            SplitRoomRegion(map, newRegion1, config, !splitOnXAxis, false, random);
+            SplitRoomRegion(map, newRegion2, config, !splitOnXAxis, false, random);
         }
 
-        private int[,] AddWallAroundOfficeRegions(int[,] oldMap, OfficeMapConfig config) {
-            var mapWithOfficeWalls = oldMap.Clone() as int[,];
+        private int[,] AddWallAroundRoomRegions(int[,] oldMap, BuildingMapConfig config) {
+            var mapWithRoomWalls = oldMap.Clone() as int[,];
 
-            List<List<Coord>> officeRegions = GetRegions(mapWithOfficeWalls, ROOM_TYPE);
+            List<List<Vector2Int>> roomRegions = GetRegions(mapWithRoomWalls, ROOM_TYPE);
 
-            foreach (var region in officeRegions) {
+            foreach (var region in roomRegions) {
                 // Get smallest and largest x and y
                 var sortedXsAsc = region.Select(c => c.x).ToList().OrderBy(x => x).ToList();
                 var sortedYsAsc = region.Select(c => c.y).ToList().OrderBy(y => y).ToList();
@@ -401,23 +375,23 @@ namespace Maes.Map.MapGen {
 
                 foreach (var coord in region) {
                     if (coord.x == smallestX || coord.x == biggestX || coord.y == smallestY || coord.y == biggestY) {
-                        mapWithOfficeWalls[coord.x, coord.y] = WALL_TYPE;
+                        mapWithRoomWalls[coord.x, coord.y] = WALL_TYPE;
                     }
                 }
             }
 
-            return mapWithOfficeWalls;
+            return mapWithRoomWalls;
         }
 
-        private int[,] GenerateMapWithHalls(int[,] map, OfficeMapConfig config, Random random) {
+        private int[,] GenerateMapWithHalls(int[,] map, BuildingMapConfig config, Random random) {
             var mapWithHalls = map.Clone() as int[,];
 
             // Rotate 90 degrees every time a hallway is generated
             bool usingXAxis = true;
             while (GetHallPercentage(mapWithHalls) < config.maxHallInPercent) {
                 // We always split the currently biggest room
-                List<List<Coord>> roomRegions = GetRegions(mapWithHalls, ROOM_TYPE);
-                List<Coord> biggestRoom = roomRegions.OrderByDescending(l => l.Count).ToList()[0];
+                List<List<Vector2Int>> roomRegions = GetRegions(mapWithHalls, ROOM_TYPE);
+                List<Vector2Int> biggestRoom = roomRegions.OrderByDescending(l => l.Count).ToList()[0];
 
                 // We either use the x axis or y axis as starting point
                 List<int> coords;
@@ -430,7 +404,7 @@ namespace Maes.Map.MapGen {
                 var sortedCoords = coords.OrderBy(c => c).ToList();
                 var smallestValue = sortedCoords[0];
                 var biggestValue = sortedCoords[sortedCoords.Count - 1];
-                // Plus 2 to allow for inner walls in the office spaces
+                // Plus 2 to allow for inner walls in the room spaces
                 var filteredCoords = sortedCoords.FindAll(x =>
                     x + config.minRoomSideLength + 2 < biggestValue - config.minRoomSideLength + 2 && // Right side
                     x > smallestValue + config.minRoomSideLength + 2
@@ -661,22 +635,22 @@ namespace Maes.Map.MapGen {
         (List<Room> surviningRooms, int[,] map) RemoveRoomsAndWallsBelowThreshold(int wallThreshold, int roomThreshold,
             int[,] map) {
             var cleanedMap = map.Clone() as int[,];
-            List<List<Coord>> wallRegions = GetRegions(cleanedMap, WALL_TYPE);
+            List<List<Vector2Int>> wallRegions = GetRegions(cleanedMap, WALL_TYPE);
 
-            foreach (List<Coord> wallRegion in wallRegions) {
+            foreach (List<Vector2Int> wallRegion in wallRegions) {
                 if (wallRegion.Count < wallThreshold) {
-                    foreach (Coord tile in wallRegion) {
+                    foreach (Vector2Int tile in wallRegion) {
                         cleanedMap[tile.x, tile.y] = ROOM_TYPE;
                     }
                 }
             }
 
-            List<List<Coord>> roomRegions = GetRegions(cleanedMap, ROOM_TYPE);
+            List<List<Vector2Int>> roomRegions = GetRegions(cleanedMap, ROOM_TYPE);
             List<Room> survivingRooms = new List<Room>();
 
-            foreach (List<Coord> roomRegion in roomRegions) {
+            foreach (List<Vector2Int> roomRegion in roomRegions) {
                 if (roomRegion.Count < roomThreshold) {
-                    foreach (Coord tile in roomRegion) {
+                    foreach (Vector2Int tile in roomRegion) {
                         cleanedMap[tile.x, tile.y] = WALL_TYPE;
                     }
                 }
@@ -714,8 +688,8 @@ namespace Maes.Map.MapGen {
 
 
             int bestDistance = 0;
-            Coord bestTileA = new Coord();
-            Coord bestTileB = new Coord();
+            Vector2Int bestTileA = new Vector2Int();
+            Vector2Int bestTileB = new Vector2Int();
             Room bestRoomA = new Room();
             Room bestRoomB = new Room();
             bool possibleConnectionFound = false;
@@ -728,8 +702,8 @@ namespace Maes.Map.MapGen {
 
                     for (int tileIndexA = 0; tileIndexA < roomA.edgeTiles.Count; tileIndexA++) {
                         for (int tileIndexB = 0; tileIndexB < roomB.edgeTiles.Count; tileIndexB++) {
-                            Coord tileA = roomA.edgeTiles[tileIndexA];
-                            Coord tileB = roomB.edgeTiles[tileIndexB];
+                            Vector2Int tileA = roomA.edgeTiles[tileIndexA];
+                            Vector2Int tileB = roomB.edgeTiles[tileIndexB];
                             int distanceBetweenRooms =
                                 (int) (Mathf.Pow(tileA.x - tileB.x, 2) + Mathf.Pow(tileA.y - tileB.y, 2));
 
@@ -754,17 +728,17 @@ namespace Maes.Map.MapGen {
             return connectedMap;
         }
 
-        void CreatePassage(Room roomA, Room roomB, Coord tileA, Coord tileB, int[,] map, int passageWidth) {
+        void CreatePassage(Room roomA, Room roomB, Vector2Int tileA, Vector2Int tileB, int[,] map, int passageWidth) {
             Room.ConnectRooms(roomA, roomB);
             // Debug.DrawLine (CoordToWorldPoint (tileA), CoordToWorldPoint (tileB), Color.green, 10);
 
-            List<Coord> line = GetLine(tileA, tileB);
-            foreach (Coord c in line) {
+            List<Vector2Int> line = GetLine(tileA, tileB);
+            foreach (Vector2Int c in line) {
                 MakeRoomOfLine(c, passageWidth, map);
             }
         }
 
-        private void MakeRoomOfLine(Coord c, int r, int[,] map) {
+        private void MakeRoomOfLine(Vector2Int c, int r, int[,] map) {
             for (int x = -r; x <= r; x++) {
                 for (int y = -r; y <= r; y++) {
                     if (x * x + y * y <= r * r) {
@@ -778,8 +752,8 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        private List<Coord> GetLine(Coord from, Coord to) {
-            List<Coord> line = new List<Coord>();
+        private List<Vector2Int> GetLine(Vector2Int from, Vector2Int to) {
+            List<Vector2Int> line = new List<Vector2Int>();
 
             int x = from.x;
             int y = from.y;
@@ -805,7 +779,7 @@ namespace Maes.Map.MapGen {
 
             int gradientAccumulation = longest / 2;
             for (int i = 0; i < longest; i++) {
-                line.Add(new Coord(x, y));
+                line.Add(new Vector2Int(x, y));
 
                 if (inverted) {
                     y += step;
@@ -831,12 +805,12 @@ namespace Maes.Map.MapGen {
         }
 
         // Just used be drawing a line for debugging
-        private Vector3 CoordToWorldPoint(Coord tile, int width, int height) {
+        private Vector3 CoordToWorldPoint(Vector2Int tile, int width, int height) {
             return new Vector3(-width / 2 + .5f + tile.x, 2, -height / 2 + .5f + tile.y);
         }
 
-        private List<List<Coord>> GetRegions(int[,] map, params int[] tileTypes) {
-            List<List<Coord>> regions = new List<List<Coord>>();
+        private List<List<Vector2Int>> GetRegions(int[,] map, params int[] tileTypes) {
+            List<List<Vector2Int>> regions = new List<List<Vector2Int>>();
             // Flags if a given coordinate has already been accounted for
             // 1 = yes, 0 = no
             int[,] mapFlags = new int[map.GetLength(0), map.GetLength(1)];
@@ -845,10 +819,10 @@ namespace Maes.Map.MapGen {
             for (int x = 0; x < map.GetLength(0); x++) {
                 for (int y = 0; y < map.GetLength(1); y++) {
                     if (mapFlags[x, y] == notCounted && tileTypes.Contains(map[x, y])) {
-                        List<Coord> newRegion = GetRegionTiles(x, y, map);
+                        List<Vector2Int> newRegion = GetRegionTiles(x, y, map);
                         regions.Add(newRegion);
 
-                        foreach (Coord tile in newRegion) {
+                        foreach (Vector2Int tile in newRegion) {
                             mapFlags[tile.x, tile.y] = counted;
                         }
                     }
@@ -862,18 +836,18 @@ namespace Maes.Map.MapGen {
         // For example if it starts at some point, that is an empty room tile
         // if will return all room tiles connected (in this region).
         // This is a similar algorithm to the one used in MS Paint for filling.
-        private List<Coord> GetRegionTiles(int startX, int startY, int[,] map) {
-            List<Coord> tiles = new List<Coord>();
+        private List<Vector2Int> GetRegionTiles(int startX, int startY, int[,] map) {
+            List<Vector2Int> tiles = new List<Vector2Int>();
             int[,] mapFlags = new int[map.GetLength(0), map.GetLength(1)];
             int counted = 1, notCounted = 0;
             int tileType = map[startX, startY];
 
-            Queue<Coord> queue = new Queue<Coord>();
-            queue.Enqueue(new Coord(startX, startY));
+            Queue<Vector2Int> queue = new Queue<Vector2Int>();
+            queue.Enqueue(new Vector2Int(startX, startY));
             mapFlags[startX, startY] = counted;
 
             while (queue.Count > 0) {
-                Coord tile = queue.Dequeue();
+                Vector2Int tile = queue.Dequeue();
                 tiles.Add(tile);
 
                 for (int x = tile.x - 1; x <= tile.x + 1; x++) {
@@ -881,7 +855,7 @@ namespace Maes.Map.MapGen {
                         if (IsInMapRange(x, y, map) && (y == tile.y || x == tile.x)) {
                             if (mapFlags[x, y] == notCounted && map[x, y] == tileType) {
                                 mapFlags[x, y] = counted;
-                                queue.Enqueue(new Coord(x, y));
+                                queue.Enqueue(new Vector2Int(x, y));
                             }
                         }
                     }
