@@ -31,7 +31,7 @@ In order to test you algorithm, make sure you configure the simulator to use a s
 Instructions for this can be found in [Changing Simulation Setup](#changing-simulation-setup-and-scenarios).
 
 
-### Extracting Statistics
+## Extracting Statistics
 Maes supports extraction of data as csv files regarding both coverage and exploration.
 Configuring statistics gathering is done in the [GlobalSettings.cs](Assets/Scripts/GlobalSettings.cs). 
 Here the path for the statistics files can be changed, statistics gathering can be enabled/disabled and the interval for saving the data of a given simulation can be changed.
