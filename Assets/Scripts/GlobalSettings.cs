@@ -19,7 +19,7 @@ namespace Maes {
         public static readonly bool ShowEnvironmentTags = true;
 
         // Statistics
-        public static readonly bool ShouldWriteCSVResults = true;
+        public static readonly bool ShouldWriteCSVResults = false;
         public static readonly int TicksPerStatsSnapShot = 10;
 
         public static readonly string StatisticsOutPutPath =
