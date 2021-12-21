@@ -62,8 +62,8 @@ Lidar Range | Float | Used for ray tracing the vision of an agent. Everything wi
 
 Agent Spawn Configuration:
 
-Name          | Meaning                                                                                          
-------------- |--------------------------------------------------------------------------------------------------
+Name      | Type                                                                                             | Meaning                                                                                          
+------------- |--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------
 Spawn Configuration | Delegate with type: List\<MonaRobot> RobotFactory(SimulationMap<bool> map, RobotSpawner spawner) | A function for spawning the agents in a specific way. Presets are available, such as "togetherAroundPoint" and "spawnInBiggestRoom". Additionally, "inHallways" is a building map type specific spawning configuration
 Number of Agents | Int                                                                                              | The number of agents spawned into the map                                                                                                                 
 Random Seed | Int                                                                                              | Used to provide agents with individual random seeds                                                                                                       
