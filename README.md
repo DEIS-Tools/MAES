@@ -23,6 +23,55 @@ This can be configured inside the [GlobalSettings.cs](Assets/Scripts/GlobalSetti
 
 If you create your own custom scenarios by creating a new method inside [ScenarioGenerator.cs](Assets/Scripts/ScenarioGenerator.cs), remember to call it in the [Simulator.cs](Assets/Scripts/Simulator.cs) **Start()** method.
 
+### Simulator Parameters Explanations
+Map Configuration:
+
+Name     | Type                 | Meaning        
+-------------|----------------------|----------------
+Width    | Int                  | Width in tiles 
+Height   | Int                  | Height in tiles                                                                                                                                                         
+Random Seed | Int                  | Affects the map generation                                                                                                                                              
+Border size  | Int                  | Makes tiles up to n tiles from the border solid, i.e. not traversable                                                                                                   
+Scaling     | Float                | Scales the map, which affects the robots size relative to the map. NOTE: Sometimes has bugs                                                                             
+Random Fill Percent (cave map) | Float in ]0.0-100.0] | Determines the amount of the map that is filled with solid tiles                                                                                                  
+Smoothing Runs (cave map) | Int                  | Smoothes the map like conways game of life. i.e tiles with many solid neighbors turn solid                                                                              
+Connection Passages Width (cave map) | Int                  | Some rooms may not be interconnected after the smoothing runs. In this step corridors are made between the rooms. This parameter determines the width of the corridors. 
+Wall Threshold Size (cave map) | Int                  | All groups of wall tiles smaller than this will be made open (traversable)                                                             
+Room Threshold Size (cave map) | Int                  | All groups of open tiles smaller than this will be made solid (non-traversable)                                                        
+Max Hall Percent (building map) | Float in ]0.0-100.0] | Hall are generated until no longer possible (Minimum room side length disallows further splitting) or until this percentage is reached 
+Hall Width (building map) | Int                  | The width of the generated halls in tiles                                                                         
+Minimum Room Side Length (building map) | Int                  | No room can have a side shorter than this value. A high value results in bigger rooms                             
+Door Width (building map) | Int                  | The width of the doors connecting two rooms                                                                       
+Door Padding (building map) | Int                  | Minimum distance from a door to a wall intersection. A higher value puts the more in the middle of wall sections. 
+
+Agent Constraints:
+
+Name    | Type  | Meaning        
+------------- |-------|----------------
+Broadcast Range | Float | The range at which agents can communicate measured in tiles                                                                        
+Broadcast Blocked by Walls | Bool  | If true, agent communication reguires line of sight                                                                                
+Sense Nearby Agents Range | Float | The range at which agents knows of other agents's presence, i.e. distance and angle to the other agent measured in tiles           
+Sense Nearby Agents Blocked by Walls | Bool  | If true, agents only know of other agents's presence, if they are within line of sight                                             
+Automatically Update SLAM | Bool  | Disables SLAM, which disables position approximation                                                                               
+SLAM Update Interval in Ticks | Int   | SLAM map and position is updated at this rate (10 ticks = 1 second)                                                                
+SLAM Synchronize Interval in Ticks | Int   | If agents are within broadcast range (also includes blocked by walls) they will syncronize maps at this rate (10 ticks = 1 second) 
+SLAM Positioning Inaccuracy | Float | An agent's actual position may differ by up to this value in both the x and y axis                                        
+Distribute SLAM | Bool  | If true, agents will attempt to distribute their slam at every slam synchronize interval                                  
+Environment Tag Read Range | Float | Determines as which range measured in tiles an agent can read a tag                                                       
+Lidar Range | Float | Used for ray tracing the vision of an agent. Everything within line of sight and this distance will be marked as explored 
+
+Agent Spawn Configuration:
+
+Name      | Type                                                                                             | Meaning                                                                                          
+------------- |--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------
+Spawn Configuration | Delegate with type: List\<MonaRobot> RobotFactory(SimulationMap<bool> map, RobotSpawner spawner) | A function for spawning the agents in a specific way. Presets are available, such as "togetherAroundPoint" and "spawnInBiggestRoom". Additionally, "inHallways" is a building map type specific spawning configuration
+Number of Agents | Int                                                                                              | The number of agents spawned into the map                                                                                                                 
+Random Seed | Int                                                                                              | Used to provide agents with individual random seeds                                                                                                       
+Agent Relative Size | Float in ]0, 1.0]                                                                                | The size of an agent relative to a tile. i.e. if this value is 1 an agent's diameter is equal to the length of a tile.                                    
+Exploration Algorithm | Delegate with type: IExplorationAlgorithm CreateAlgorithmDelegate(int randomSeed)                | A function that returns an instance of the exploration algorithm with its dependencies injected (e.g. random seed or other algorithm specific parameters) 
+
+
+
 ## Creating your own algorithm
 In order to implement your own algorithm, you must create a class that implements the [IExplorationAlgorithm.cs](Assets/Scripts/ExplorationAlgorithm/IExplorationAlgorithm.cs) interface.
 This provides the algorithm with access to the robot controller, which in turn provides access to movement controls, slam map and all sensor data available on the agent given the constraints of the scenario.
