@@ -23,6 +23,55 @@ This can be configured inside the [GlobalSettings.cs](Assets/Scripts/GlobalSetti
 
 If you create your own custom scenarios by creating a new method inside [ScenarioGenerator.cs](Assets/Scripts/ScenarioGenerator.cs), remember to call it in the [Simulator.cs](Assets/Scripts/Simulator.cs) **Start()** method.
 
+### Simulator Parameters Explanations
+Map Configuration:
+
+Name          | Meaning        
+------------- |----------------
+Width         | Width in tiles 
+Height        | Height in tiles
+Random Seed   | Affects the map generation
+Border size   | Makes tiles up to n tiles from the border solid, i.e. not traversable
+Scaling       | Scales the map, which affects the robots size relative to the map. NOTE: Sometimes has bugs
+Random fill percent (cave map) | Determines the amount of the map that is filled with solid tiles
+Smoothing Runs (cave map) | Smoothes the map like conways game of life. i.e tiles with many solid neighbors turn solid
+Connection Passages Width (cave map) | Some rooms may not be interconnected after the smoothing runs. In this step corridors are made between the rooms. This parameter determines the width of the corridors.
+Wall threshold size (cave map) | All groups of wall tiles smaller than this will be made open (traversable)
+Room threshold size (cave map) | All groups of open tiles smaller than this will be made solid (non-traversable)
+Max Hall Percent (building map) | Hall are generated until no longer possible (Minimum room side length disallows further splitting) or until this percentage is reached
+Hall width (building map) | The width of the generated halls in tiles
+Minimum room side length (building map) | Any room cannot have a side shorter than this distance. A high value results in bigger rooms 
+Door width (building map) | The width of the doors connecting two rooms
+Door padding (building map) | Minimum distance from a door to a wall intersection. A higher value puts the more in the middle of wall sections.
+
+Agent Constraints:
+
+Name          | Meaning        
+------------- |----------------
+Broadcast range | The range at which agents can communicate measured in tiles
+Broadcast blocked by walls | If true, agent communication reguires line of sight
+Sense nearby Agents Range | The range at which agents knows of other agents presence, i.e. distance and angle to the other agent measured in tiles
+Sense nearby agents blocked by walls | If true, agents only know of other agents presence, if they are within line of sight
+Automatically update SLAM | Disables SLAM, which disables position approximation
+Slam update interval in ticks | SLAM map and position is update at this rate (10 ticks = 1 second)
+Slam synchronize interval in ticks | If agents are within broadcast range (also includes blocked by walls) they will syncronize maps at this rate (10 ticks = 1 second)
+Slam positioning inaccuracy | An agent's actual position may differ by up to this value in both x and y values
+Distribute slam | If true, agents will attempt to distribute their slam at every slam synchronize interval
+Environment tag read range | Determines as which range an agent can read a tag measured in tiles
+Lidar range | Used ray tracing the visibility of an agent. Everything within line of sight and this distance will be marked as explored
+
+Agent Spawn Configuration:
+
+Name          | Meaning        
+------------- |----------------
+Spawn Configuration | A function for spawning the agents in a specific way. Presets are available, such as "togetherAroundPoint" and "spawnInBiggestRoom". Additionally, In Hallways is a building map type specific spawning configuration
+Number of agents | The number of agents spawned into the map
+Random Seed | Used to provide agents with individual random seeds
+Agent Relative Size | The size of an agent relative to a tile. i.e. if 1 an agents diameter is equal to the length of a tile.
+Exploration Algorithm | A function that returns an instance of the exploration algorithm with its dependencies injected (e.g. random seed or other algorithm specific parameters)
+
+
+
 ## Creating your own algorithm
 In order to implement your own algorithm, you must create a class that implements the [IExplorationAlgorithm.cs](Assets/Scripts/ExplorationAlgorithm/IExplorationAlgorithm.cs) interface.
 This provides the algorithm with access to the robot controller, which in turn provides access to movement controls, slam map and all sensor data available on the agent given the constraints of the scenario.
