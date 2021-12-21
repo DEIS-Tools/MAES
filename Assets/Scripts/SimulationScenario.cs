@@ -1,8 +1,9 @@
 using System.Collections.Generic;
-using Dora.MapGeneration;
-using Dora.Robot;
+using Maes.Map;
+using Maes.Map.MapGen;
+using Maes.Robot;
 
-namespace Dora
+namespace Maes
 {
     
     // A function that generates, initializes and returns a world map

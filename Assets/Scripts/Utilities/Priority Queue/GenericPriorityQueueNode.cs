@@ -1,4 +1,4 @@
-﻿namespace Priority_Queue
+﻿namespace Maes.Utilities.Priority_Queue
 {
     public class GenericPriorityQueueNode<TPriority>
     {

@@ -1,4 +1,4 @@
-namespace Dora {
+namespace Maes {
     public interface ISavable<T> {
         public T SaveState();
 

@@ -1,6 +1,6 @@
 using System;
 
-namespace Dora {
+namespace Maes {
     public interface ISimulationUnit : ISavable<Object> {
         public void LogicUpdate();
 

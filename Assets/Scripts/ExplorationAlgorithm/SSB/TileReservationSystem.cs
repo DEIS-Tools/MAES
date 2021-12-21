@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Dora.ExplorationAlgorithm.SSB {
+namespace Maes.ExplorationAlgorithm.SSB {
     public partial class SsbAlgorithm {
 
         public readonly struct Reservation {

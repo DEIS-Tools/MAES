@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Dora.Utilities {
+namespace Maes.Utilities {
     public class Line2D {
         public readonly Vector2 Start, End, MidPoint;
         private readonly float _minY, _maxY;

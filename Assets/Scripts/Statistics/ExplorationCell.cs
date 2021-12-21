@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Dora.Statistics {
+namespace Maes.Statistics {
     public class ExplorationCell {
         public bool isExplorable;
         public bool IsExplored = false;

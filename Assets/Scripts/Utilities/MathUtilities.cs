@@ -1,6 +1,6 @@
 using System;
 
-namespace Dora.Utilities {
+namespace Maes.Utilities {
     public class MathUtilities {
         public static T Clamp<T>(T val, T min, T max) where T : IComparable<T>
         {

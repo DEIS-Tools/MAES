@@ -1,16 +1,10 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using Dora.MapGeneration;
-using Dora.Robot;
 using JetBrains.Annotations;
+using Maes.Map;
+using Maes.Robot;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
-namespace Dora.Statistics {
+namespace Maes.Statistics {
     public class ExplorationTracker {
         // The low-resolution collision map used to create the smoothed map that robots are navigating 
         private SimulationMap<bool> _collisionMap;

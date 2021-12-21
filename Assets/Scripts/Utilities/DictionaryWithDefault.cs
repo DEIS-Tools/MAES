@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Dora.Utilities {
+namespace Maes.Utilities {
     public class DictionaryWithDefault<TKey, TValue> : Dictionary<TKey, TValue>
     {
         TValue _default;

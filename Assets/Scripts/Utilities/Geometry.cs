@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Dora.Utilities {
+namespace Maes.Utilities {
     public class Geometry {
         public static float DistanceBetween(in Vector2 p1, in Vector2 p2) {
             return Vector2.Distance(p1, p2);
