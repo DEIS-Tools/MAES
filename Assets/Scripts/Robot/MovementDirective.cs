@@ -27,10 +27,6 @@ namespace Maes.Robot {
         }
 
         public MovementDirective(float leftWheelSpeed, float rightWheelSpeed) {
-            /*if (leftWheelSpeed > 1.0f || leftWheelSpeed < -1.0f || rightWheelSpeed > 1.0f || rightWheelSpeed < -1.0f)
-                throw new ArgumentException($"Left and right wheel speeds must be within bounds [-1.0, 1.0]" +
-                                            $" but given left/right speeds were {leftWheelSpeed} and {rightWheelSpeed}");*/
-
             RightWheelSpeed = rightWheelSpeed;
             LeftWheelSpeed = leftWheelSpeed;
         }
