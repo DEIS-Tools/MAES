@@ -12,7 +12,7 @@ using static Maes.Map.RobotSpawner;
 namespace Maes {
     public class ScenarioGenerator {
          private const int Minute = 60;
-         
+
          /// <summary>
          /// Generates the scenarios used for the testing of LVD's long-range experiements.
          /// </summary>
@@ -69,8 +69,7 @@ namespace Maes {
                         2,
                         2,
                         85,
-                        1,
-                        1f);
+                        1);
                     
                     foreach (var (algorithmName, createAlgorithmDelegate, constraints) in algorithmsAndFileNames) {
                         scenarios.Enqueue(new SimulationScenario(
@@ -158,8 +157,7 @@ namespace Maes {
                     2,
                     2,
                     85,
-                    1,
-                    1f);
+                    1);
                 
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
                 {
@@ -315,8 +313,7 @@ namespace Maes {
                         2,
                         2,
                         85,
-                        1,
-                        1f);
+                        1);
                     
                     foreach (var (algorithmName, createAlgorithmDelegate, constraints) in algorithmsAndFileNames) {
                         scenarios.Enqueue(new SimulationScenario(
@@ -384,8 +381,7 @@ namespace Maes {
                     2,
                     2,
                     85,
-                    1,
-                    1f);
+                    1);
 
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: float.MaxValue,
@@ -469,8 +465,7 @@ namespace Maes {
                     2,
                     1,
                     75,
-                    1,
-                    1f);
+                    1);
 
                 
                 var robotConstraints = new RobotConstraints(
@@ -556,8 +551,7 @@ namespace Maes {
                     2,
                     1,
                     75,
-                    1,
-                    1f);
+                    1);
 
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
@@ -636,8 +630,7 @@ namespace Maes {
                     2,
                     1,
                     75,
-                    1,
-                    1f);
+                    1);
 
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: float.MaxValue,
@@ -702,8 +695,7 @@ namespace Maes {
                 2,
                 1,
                 75,
-                1,
-                1f);
+                1);
 
             var robotConstraints = new RobotConstraints(
                 broadcastRange: 15.0f,

@@ -19,7 +19,6 @@ namespace Maes.Map {
         public EnvironmentTaggingMap(SimulationMap<bool> collisionMap) {
             this._widthInTiles = collisionMap.WidthInTiles;
             this._heightInTiles = collisionMap.HeightInTiles;
-            this._tileSize = collisionMap.Scale;
             this._scaledOffset = collisionMap.ScaledOffset;
             _tagLists = new List<PlacedTag>[_widthInTiles, _heightInTiles];
             for (int x = 0; x < _widthInTiles; x++) {

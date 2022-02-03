@@ -29,11 +29,11 @@ namespace Maes.Map.MapGen {
             innerWalls.position = newPosition;
         }
 
-        private void ResizePlaneToFitMap(int bitMapHeight, int bitMapWidth, float scaling, float padding = 0.1f) {
+        private void ResizePlaneToFitMap(int bitMapHeight, int bitMapWidth, float padding = 0.1f) {
             // Resize plane below cave to fit size
-            plane.localScale = new Vector3(((bitMapWidth * scaling) / 10f) + padding,
+            plane.localScale = new Vector3(((bitMapWidth) / 10f) + padding,
                 1,
-                ((bitMapHeight * scaling) / 10f) + padding);
+                (bitMapHeight / 10f) + padding);
         }
 
         public void clearMap() {
@@ -77,13 +77,13 @@ namespace Maes.Map.MapGen {
             // The rooms should now reflect their relative shifted positions after adding borders round map.
             rooms.ForEach(r => r.OffsetCoordsBy(config.borderSize, config.borderSize));
             MeshGenerator meshGen = GetComponent<MeshGenerator>();
-            var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], config.scaling, wallHeight, true,
+            var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], wallHeight, true,
                 rooms);
             
             // Rotate to fit 2D view
             plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
 
-            ResizePlaneToFitMap(config.bitMapHeight, config.bitMapWidth, config.scaling);
+            ResizePlaneToFitMap(config.bitMapHeight, config.bitMapWidth);
 
             MovePlaneAndWallRoofToFitWallHeight(wallHeight);
 
@@ -512,7 +512,7 @@ namespace Maes.Map.MapGen {
             survivingRooms.ForEach(r => r.OffsetCoordsBy(caveConfig.borderSize, caveConfig.borderSize));
 
             MeshGenerator meshGen = GetComponent<MeshGenerator>();
-            var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], caveConfig.scaling, wallHeight,
+            var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], wallHeight,
                 false, survivingRooms);
 
             // Rotate to fit 2D view

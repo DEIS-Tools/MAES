@@ -238,15 +238,15 @@ namespace Maes.Map
                 throw new ArgumentException(
                     "Robot relative size cannot exceed 1.0f or be below 0.001f. Otherwise some areas of the map may be impossible to explore");
             robot.transform.localScale = new Vector3(
-                0.495f * relativeSize * collisionMap.Scale,
-                0.495f * relativeSize * collisionMap.Scale,
-                0.495f * relativeSize * collisionMap.Scale
+                0.495f * relativeSize,
+                0.495f * relativeSize,
+                0.495f * relativeSize
             );
 
             float
                 RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
-            robot.transform.position = new Vector3((x * collisionMap.Scale) + RTOffset + collisionMap.ScaledOffset.x,
-                (y * collisionMap.Scale) + RTOffset + collisionMap.ScaledOffset.y);
+            robot.transform.position = new Vector3(x + RTOffset + collisionMap.ScaledOffset.x,
+                y + RTOffset + collisionMap.ScaledOffset.y);
 
             robot.id = robotID;
             robot.ExplorationAlgorithm = algorithm;
