@@ -17,7 +17,6 @@ namespace Maes.Statistics {
 
         private int _widthInTiles, _heightInTiles;
         private int _widthInVertices, _heightInVertices;
-        private float _scale;
         private Vector3 _scaledOffset;
 
         private List<Vector3> _vertices = new List<Vector3>();
@@ -27,11 +26,10 @@ namespace Maes.Statistics {
         private const int ResolutionMultiplier = 2;
         private SimulationMap<ExplorationCell> _map;
 
-        public void SetMap(SimulationMap<ExplorationCell> newMap, float scale, Vector3 offset) {
+        public void SetMap(SimulationMap<ExplorationCell> newMap, Vector3 offset) {
             _map = newMap;
             _widthInTiles = _map.WidthInTiles;
             _heightInTiles = _map.HeightInTiles;
-            _scale = scale;
             _scaledOffset = offset;
             _widthInVertices = _widthInTiles * ResolutionMultiplier + 1;
             _heightInVertices = _heightInTiles * ResolutionMultiplier + 1;
@@ -54,11 +52,11 @@ namespace Maes.Statistics {
 
         private void GenerateTriangleVertices() {
             _vertices.Clear();
-            var vertexDistance = _scale / ResolutionMultiplier;
+            var vertexDistance = 1f / ResolutionMultiplier;
             for (int y = 0; y < _heightInTiles; y++) {
-                var translatedY = y * _scale + _scaledOffset.y;
+                var translatedY = y + _scaledOffset.y;
                 for (int x = 0; x < _widthInTiles; x++) {
-                    var translatedX = x * _scale + _scaledOffset.x;
+                    var translatedX = x + _scaledOffset.x;
                     AddTileTriangleVertices(translatedX, translatedY, vertexDistance);
                 }
             }

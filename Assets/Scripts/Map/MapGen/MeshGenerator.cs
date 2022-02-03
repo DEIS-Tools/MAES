@@ -47,12 +47,12 @@ namespace Maes.Map.MapGen {
             checkedVertices.Clear();
         }
 
-        public SimulationMap<bool> GenerateMesh(int[,] map, float squareSize, float wallHeight,
+        public SimulationMap<bool> GenerateMesh(int[,] map, float wallHeight,
             bool removeRoundedCorners, List<Room> rooms) {
 
             // Generate grid of squares containing control nodes and between nodes 
             // for the marching square algorithm
-            squareGrid = new SquareGrid(map, squareSize);
+            squareGrid = new SquareGrid(map);
 
             vertices = new List<Vector3>();
             triangles = new List<int>();
@@ -80,16 +80,15 @@ namespace Maes.Map.MapGen {
             
 
             return GenerateCollisionMap(squareGrid,
-                new Vector2(squareGrid.XOffset, squareGrid.YOffset),
-                squareSize, removeRoundedCorners, rooms);
+                new Vector2(squareGrid.XOffset, squareGrid.YOffset), removeRoundedCorners, rooms);
         }
 
-        private SimulationMap<bool> GenerateCollisionMap(SquareGrid squareGrid, Vector3 offset, float mapScale,
+        private SimulationMap<bool> GenerateCollisionMap(SquareGrid squareGrid, Vector3 offset,
             bool removeRoundedCorners, List<Room> rooms) {
             var width = squareGrid.squares.GetLength(0);
             var height = squareGrid.squares.GetLength(1);
             // Create a bool type SimulationMap with default value of false in all cells
-            SimulationMap<bool> collisionMap = new SimulationMap<bool>(() => false, width, height, mapScale, offset, rooms);
+            SimulationMap<bool> collisionMap = new SimulationMap<bool>(() => false, width, height, offset, rooms);
 
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
@@ -482,23 +481,25 @@ namespace Maes.Map.MapGen {
             public Square[,] squares;
             public readonly float XOffset, YOffset;
 
-            public SquareGrid(int[,] map, float squareSize) {
+            public SquareGrid(int[,] map) {
                 int nodeCountX = map.GetLength(0);
                 int nodeCountY = map.GetLength(1);
-                float mapWidth = nodeCountX * squareSize;
-                float mapHeight = nodeCountY * squareSize;
+                float mapWidth = nodeCountX;
+                float mapHeight = nodeCountY;
+                // float squareSize = 1f;
 
                 // Create map of control nodes
                 ControlNode[,] controlNodes = new ControlNode[nodeCountX, nodeCountY];
 
-                XOffset = -mapWidth / 2 + squareSize / 2;
-                YOffset = -mapHeight / 2 + squareSize / 2;
+                // In Marching squares, squares are offset by 0.5 
+                XOffset = -mapWidth / 2 + 0.5f;
+                YOffset = -mapHeight / 2 + 0.5f;
 
                 for (int x = 0; x < nodeCountX; x++) {
                     for (int y = 0; y < nodeCountY; y++) {
                         // Divided by 2, since we start in 0,0 and can go both above and below 0.
-                        Vector3 position = new Vector3(x * squareSize + XOffset, 0, y * squareSize + YOffset);
-                        controlNodes[x, y] = new ControlNode(position, map[x, y] == WALL_TYPE, squareSize);
+                        Vector3 position = new Vector3(x + XOffset, 0, y + YOffset);
+                        controlNodes[x, y] = new ControlNode(position, map[x, y] == WALL_TYPE);
                     }
                 }
 
@@ -570,10 +571,10 @@ namespace Maes.Map.MapGen {
             public bool isWall;
             public Node above, right;
 
-            public ControlNode(Vector3 position, bool isWall, float squareSize) : base(position) {
+            public ControlNode(Vector3 position, bool isWall) : base(position) {
                 this.isWall = isWall;
-                above = new Node(base.position + Vector3.forward * squareSize / 2f);
-                right = new Node(base.position + Vector3.right * squareSize / 2f);
+                above = new Node(base.position + Vector3.forward / 2f);
+                right = new Node(base.position + Vector3.right / 2f);
             }
         }
     }
