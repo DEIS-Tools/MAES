@@ -17,10 +17,18 @@ namespace Maes.Robot {
         public readonly bool DistributeSlam;
         
         
+        // *** Ray cast range and count affects both exploration progress and the slam map ***
+        
+        // The amount of traces shot out, higher trace count will result in a more complete map
+        // The smaller the ray cast range the lower amount of traces is needed
+        // If ray cast count is left unspecified, a default amount will be calculated from the ray cast rang
+        public readonly int? RayTraceCount; 
+        // The range/length of each trace
+        public readonly float MaxRayCastRange;
+        
+
         // Environment tagging
         public readonly float EnvironmentTagReadRange;
-
-        public readonly float MaxRayCastRange;
 
         public readonly float LidarRange;
         
