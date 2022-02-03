@@ -17,8 +17,7 @@ namespace Maes.Map
         public CommunicationManager CommunicationManager;
 
         public RobotConstraints RobotConstraints;
-
-        public float RobotRelativeSize;
+        
 
         /// <summary>
         /// Spawns the robots in the biggest room. For building type map this is usually the hall way.
@@ -26,12 +25,10 @@ namespace Maes.Map
         /// <param name="collisionMap">Information regarding the possible spawn positions</param>
         /// <param name="seed">Injected into the spawned robots</param>
         /// <param name="numberOfRobots">How many robots should be created. The map may not fit all robots, which would throw an exception</param>
-        /// <param name="robotRelativeSize">Robot size relative to a tile</param>
         /// <param name="createAlgorithmDelegate">Used to inject the exploration algorithm into the robot controller</param>
         /// <returns>List of all robot game objects.</returns>
         /// <exception cref="ArgumentException">If not enough open tiles for the requested number of robots.</exception>
-        public List<MonaRobot> SpawnRobotsInBiggestRoom(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
-            this.RobotRelativeSize = robotRelativeSize; 
+        public List<MonaRobot> SpawnRobotsInBiggestRoom(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, CreateAlgorithmDelegate createAlgorithmDelegate) {
             List<MonaRobot> robots = new List<MonaRobot>();
 
             // Sort by room size
@@ -64,7 +61,7 @@ namespace Maes.Map
                 robots.Add(CreateRobot(
                     x: tile.x,
                     y: tile.y,
-                    relativeSize: robotRelativeSize,
+                    relativeSize: RobotConstraints.RobotRelativeSize,
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
                     collisionMap: collisionMap,
@@ -81,13 +78,11 @@ namespace Maes.Map
         /// <param name="collisionMap">Information regarding the possible spawn positions</param>
         /// <param name="seed">Injected into the spawned robots</param>
         /// <param name="numberOfRobots">How many robots should be created. The map may not fit all robots, which would throw an exception</param>
-        /// <param name="robotRelativeSize">Robot size relative to a tile</param>
         /// <param name="suggestedStartingPoint">A flooding algorithm is performed to spawn robots as close as possible to this point.</param>
         /// <param name="createAlgorithmDelegate">Used to inject the exploration algorithm into the robot controller</param>
         /// <returns>List of all robot game objects.</returns>
         /// <exception cref="ArgumentException">If not enough open tiles for the requested number of robots.</exception>
-        public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, Vector2Int? suggestedStartingPoint, CreateAlgorithmDelegate createAlgorithmDelegate) {
-            this.RobotRelativeSize = robotRelativeSize; 
+        public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, Vector2Int? suggestedStartingPoint, CreateAlgorithmDelegate createAlgorithmDelegate) {
             List<MonaRobot> robots = new List<MonaRobot>();
             // Get all spawnable tiles. We cannot spawn adjacent to a wall
             List<Vector2Int> possibleSpawnTiles = new List<Vector2Int>();
@@ -157,7 +152,7 @@ namespace Maes.Map
                 var robot = CreateRobot(
                     x: spawnTile.x,
                     y: spawnTile.y,
-                    relativeSize: robotRelativeSize,
+                    relativeSize: RobotConstraints.RobotRelativeSize,
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
                     collisionMap: collisionMap,
@@ -176,11 +171,9 @@ namespace Maes.Map
         /// <param name="collisionMap">Information regarding the possible spawn positions</param>
         /// <param name="seed">Injected into the spawned robots</param>
         /// <param name="numberOfRobots">How many robots should be created. The map may not fit all robots, which would throw an exception</param>
-        /// <param name="robotRelativeSize">Robot size relative to a tile</param>
         /// <param name="createAlgorithmDelegate">Used to inject the exploration algorithm into the robot controller</param>
         /// <returns>List of all robot game objects.</returns>
-        public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, float robotRelativeSize, CreateAlgorithmDelegate createAlgorithmDelegate) {
-            this.RobotRelativeSize = robotRelativeSize; 
+        public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, CreateAlgorithmDelegate createAlgorithmDelegate) {
             var robots = new List<MonaRobot>();
 
             var hallWays = collisionMap.rooms.FindAll(r => r.isHallWay).ToList();
@@ -216,7 +209,7 @@ namespace Maes.Map
                 robots.Add(CreateRobot(
                     x: tile.x,
                     y: tile.y,
-                    relativeSize: robotRelativeSize,
+                    relativeSize: RobotConstraints.RobotRelativeSize,
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
                     collisionMap: collisionMap,

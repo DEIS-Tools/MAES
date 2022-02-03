@@ -27,12 +27,15 @@ namespace Maes.Robot {
         // Movement
         // 1.0f is default. A bigger map with bigger doors would make the robot "feel" slower. It is thus not 
         // a speed value in e.g. km/h .
-        public readonly float RelativeMoveSpeed; 
+        public readonly float RelativeMoveSpeed;
+
+
+        public readonly float RobotRelativeSize;
         
         // TODO: Add robot size to constraints class
 
 
-        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyRobotRange, bool senseNearbyRobotBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks, int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam, float environmentTagReadRange, float lidarRange, float relativeMoveSpeed) : this() {
+        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyRobotRange, bool senseNearbyRobotBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks, int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam, float environmentTagReadRange, float lidarRange, float relativeMoveSpeed, float robotRelativeSize) : this() {
             BroadcastRange = broadcastRange;
             BroadcastBlockedByWalls = broadcastBlockedByWalls;
             SenseNearbyRobotRange = senseNearbyRobotRange;
@@ -47,6 +50,7 @@ namespace Maes.Robot {
             EnvironmentTagReadRange = environmentTagReadRange;
             LidarRange = lidarRange;
             RelativeMoveSpeed = relativeMoveSpeed;
+            RobotRelativeSize = robotRelativeSize;
 
             MaxRayCastRange = Math.Max(SenseNearbyRobotRange, BroadcastRange);
         }
