@@ -37,7 +37,8 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 20f
+                lidarRange: 20f,
+                relativeMoveSpeed: 1f
             );
             
             for (int i = 0; i < runs; i++) { 
@@ -111,7 +112,7 @@ namespace Maes {
          /// </summary>
         public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            var numberOfRobots = 1;
+            var numberOfRobots = 2;
             var maxRunTime = 60 * Minute;
             var width = 50;
             var height = 50;
@@ -129,7 +130,8 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 4.0f,
-                lidarRange: 7.0f
+                lidarRange: 7.0f,
+                relativeMoveSpeed: 10f
             );
 
             for (int i = 0; i < 1; i++) {
@@ -162,8 +164,8 @@ namespace Maes {
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
                 {
                     ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
-                    ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
                     ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
+                    ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
                 };
 
                 foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
@@ -208,7 +210,7 @@ namespace Maes {
         /// </summary>
         public static Queue<SimulationScenario> GenerateArticleScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            var numberOfRobots = 25;
+            var numberOfRobots = 1;
             var runs = 20;
             var sizes = new List<(int, int)>() {(50, 50), (100,100), (200,200)};
             var maxRunTime = 60 * Minute;
@@ -233,7 +235,8 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f
+                lidarRange: 7f,
+                relativeMoveSpeed: 1f
             );
             
             var robotConstraintsTNF = new RobotConstraints(
@@ -247,7 +250,8 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f
+                lidarRange: 7f,
+                relativeMoveSpeed: 1f
             );
             
             var robotConstraintsRBW = new RobotConstraints(
@@ -261,7 +265,8 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f
+                lidarRange: 7f,
+                relativeMoveSpeed: 1f
             );
             
             var robotConstraintsSSB = new RobotConstraints(
@@ -275,16 +280,17 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f
+                lidarRange: 7f,
+                relativeMoveSpeed: 1f
             ); 
 
             for (int i = 0; i < runs; i++) { 
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
                 {
+                    ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsLVD, 1), robotConstraintsLVD),
                     ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsRBW),
                     ("SSB", (seed) => new SsbAlgorithm(robotConstraintsSSB, seed), robotConstraintsSSB),
-                    ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsLVD, 1), robotConstraintsLVD),
                     ("TNF", (seed) => new TnfExplorationAlgorithm(8, 8, seed), robotConstraintsTNF)
                     };
                 foreach (var (width, height) in sizes) {
@@ -392,7 +398,8 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f, 
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7f
+                    lidarRange: 7f,
+                    relativeMoveSpeed: 1f
                 );
 
                 if (i % 2 != 0) {
@@ -477,7 +484,8 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f
+                    lidarRange: 7.0f,
+                    relativeMoveSpeed: 1f
                 );
 
                 if (i % 2 == 0) {
@@ -562,7 +570,8 @@ namespace Maes {
                     slamPositionInaccuracy: 0.5f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f
+                    lidarRange: 7.0f,
+                    relativeMoveSpeed: 1f
                 );
                 
                 /*scenarios.Enqueue(new SimulationScenario(
@@ -641,7 +650,8 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f
+                    lidarRange: 7.0f,
+                    relativeMoveSpeed: 1f
                 );
 
                 scenarios.Enqueue(new SimulationScenario(
@@ -706,7 +716,8 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f,
                 distributeSlam: false,
                 environmentTagReadRange: 4.0f,
-                lidarRange: 7f
+                lidarRange: 7f,
+                relativeMoveSpeed: 1f
             );
             
             scenarios.Enqueue(new SimulationScenario(

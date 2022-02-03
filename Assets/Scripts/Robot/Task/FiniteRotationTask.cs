@@ -23,7 +23,7 @@ namespace Maes.Robot.Task {
         }
 
         public MovementDirective GetNextDirective() {
-            if (_isCompleted) return MovementDirective.NoMovement;
+            if (_isCompleted) return MovementDirective.NoMovement();
 
             // Find the current amount of rotation since starting the task
             var absRotation = GetAbsoluteDegreesRotated();
