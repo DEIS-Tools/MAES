@@ -30,8 +30,6 @@ namespace Maes.Robot {
         // Environment tagging
         public readonly float EnvironmentTagReadRange;
 
-        public readonly float LidarRange;
-        
         // Movement
         // 1.0f is default. A bigger map with bigger doors would make the robot "feel" slower. It is thus not 
         // a speed value in e.g. km/h .
@@ -39,34 +37,33 @@ namespace Maes.Robot {
 
 
         public readonly float RobotRelativeSize;
-        
+
         // TODO: Add robot size to constraints class
 
 
         public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyRobotRange,
             bool senseNearbyRobotBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks,
             int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam,
-            float environmentTagReadRange, float slamRayTraceRange,
+            float environmentTagReadRange, float slamRayTraceRange, float relativeMoveSpeed, float robotRelativeSize,
             int? slamRayTraceCount = null) : this() {
-            SlamRayTraceCount = slamRayTraceCount;
             BroadcastRange = broadcastRange;
             BroadcastBlockedByWalls = broadcastBlockedByWalls;
             SenseNearbyRobotRange = senseNearbyRobotRange;
             SenseNearbyRobotBlockedByWalls = senseNearbyRobotBlockedByWalls;
 
+            // SLAM
             AutomaticallyUpdateSlam = automaticallyUpdateSlam;
             SlamUpdateIntervalInTicks = slamUpdateIntervalInTicks;
             SlamSynchronizeIntervalInTicks = slamSynchronizeIntervalInTicks;
             SlamPositionInaccuracy = slamPositionInaccuracy;
+            SlamRayTraceRange = slamRayTraceRange;
+            SlamRayTraceCount = slamRayTraceCount;
             DistributeSlam = distributeSlam;
 
+            // 
             EnvironmentTagReadRange = environmentTagReadRange;
-            LidarRange = lidarRange;
             RelativeMoveSpeed = relativeMoveSpeed;
             RobotRelativeSize = robotRelativeSize;
-            
-            SlamRayTraceRange = slamRayTraceRange;
         }
-
     }
 }

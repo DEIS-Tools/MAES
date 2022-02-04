@@ -37,7 +37,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 20f,
+                slamRayTraceRange: 20f,
                 relativeMoveSpeed: 1f,
                 robotRelativeSize: 0.6f
             );
@@ -128,7 +128,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 4.0f,
-                lidarRange: 7.0f,
+                slamRayTraceRange: 7.0f,
                 relativeMoveSpeed: 10f,
                 robotRelativeSize: 0.6f
             );
@@ -231,7 +231,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f,
+                slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
                 robotRelativeSize: 0.6f
             );
@@ -247,7 +247,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f,
+                slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
                 robotRelativeSize: 0.6f
             );
@@ -263,7 +263,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f,
+                slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
                 robotRelativeSize: 0.6f
             );
@@ -279,7 +279,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f,
+                slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
                 robotRelativeSize: 0.6f
             ); 
@@ -394,7 +394,7 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f, 
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7f,
+                    slamRayTraceRange: 7f,
                     relativeMoveSpeed: 1f,
                     robotRelativeSize: 0.6f
                 );
@@ -478,7 +478,7 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f,
+                    slamRayTraceRange: 7.0f,
                     relativeMoveSpeed: 1f,
                     robotRelativeSize: 0.6f
                 );
@@ -562,7 +562,7 @@ namespace Maes {
                     slamPositionInaccuracy: 0.5f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f,
+                    slamRayTraceRange: 7.0f,
                     relativeMoveSpeed: 1f,
                     robotRelativeSize: 0.6f
                 );
@@ -641,7 +641,7 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f,
+                    slamRayTraceRange: 7.0f,
                     relativeMoveSpeed: 1f,
                     robotRelativeSize: 0.6f
                 );
@@ -706,7 +706,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f,
                 distributeSlam: false,
                 environmentTagReadRange: 4.0f,
-                lidarRange: 7f,
+                slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
                 robotRelativeSize: 0.6f
             );
