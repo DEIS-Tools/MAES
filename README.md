@@ -100,12 +100,14 @@ A headless run is invoked by adding the command line argument `-batchmode` when 
 
 ![img.png](.readmeAssets/build_setting_screenshot.png)
 
-Headless runs will start simulating immediately on the "**Fast as possible**" speed setting (<img style="height:1em;" src="Assets/UI/fast_as_possible_button.png"/>).
+Headless runs will start simulating immediately on the "**Fast as possible**" speed setting (<img style="height:1ex;" src="Assets/UI/fast_as_possible_button.png"/>), until the scenario queue is empty.
+
+When in batch mode, the application will quit automatically when the scenario queue is empty. 
 
 # Contributors
 
-Philip Irming Holler - [philipholler94@gmail.com](mailto:philipholler94@gmail.com)
+Philip Irming Holler - [philipholler94@gmail.com](mailto:philipholler94@gmail.com?subject=Regarding%20the%20MAES%20Project)
 
-Magnus Kirkegaard Jensen - [magnjensen@gmail.com](mailto:magnjensen@gmail.com)
+Magnus Kirkegaard Jensen - [magnjensen@gmail.com](mailto:magnjensen@gmail.com?subject=Regarding%20the%20MAES%20Project)
 
-Malte Zoëga Andreasen - [malte@mza.dk](mailto:malte@mza.dk)
+Malte Zoëga Andreasen - [malte@mza.dk](mailto:malte@mza.dk?subject=Regarding%20the%20MAES%20Project)
