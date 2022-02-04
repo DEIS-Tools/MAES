@@ -123,12 +123,12 @@ namespace Maes.Statistics {
             foreach (var (index, explorationCell) in newMap) {
                 var vertexIndex = index * 3;
                 var color = _solidColor;
-                if (explorationCell.isExplorable)
+                if (explorationCell.IsExplorable)
                     color = explorationCell.IsExplored ? _exploredColor : _unexploredColor;
                 _colors[vertexIndex] = color;
                 _colors[vertexIndex + 1] = color;
                 _colors[vertexIndex + 2] = color;
-                if (!explorationCell.isExplorable) count++;
+                if (!explorationCell.IsExplorable) count++;
             }
         }
 
@@ -149,7 +149,7 @@ namespace Maes.Statistics {
             foreach (var (index, cell) in map) {
                 var vertexIndex = index * 3;
                 var color = _unexploredColor;
-                if (!cell.isExplorable) color = _solidColor;
+                if (!cell.IsExplorable) color = _solidColor;
                 else if (cell.IsExplored) color = _exploredColor;
 
                 _colors[vertexIndex] = color;

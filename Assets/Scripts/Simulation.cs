@@ -24,7 +24,6 @@ namespace Maes {
         private List<MonaRobot> _robots;
 
         [CanBeNull] private MonaRobot _selectedRobot;
-
         public ExplorationTracker ExplorationTracker { get; private set; }
         private CommunicationManager _communicationManager;
 
@@ -37,7 +36,6 @@ namespace Maes {
         public void SetScenario(SimulationScenario scenario) {
             _scenario = scenario;
             _collisionMap = scenario.MapSpawner(MapGenerator);
-
             
             _communicationManager = new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
             RobotSpawner.CommunicationManager = _communicationManager;

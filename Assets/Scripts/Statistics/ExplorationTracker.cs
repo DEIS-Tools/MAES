@@ -54,16 +54,13 @@ namespace Maes.Statistics {
             _explorationMap = collisionMap.FMap(isCellSolid => {
                 if (!isCellSolid)
                     explorableTriangles++;
-
-                return new ExplorationCell(!isCellSolid);
+                return new ExplorationCell(isExplorable: !isCellSolid);
             });
             _totalExplorableTriangles = explorableTriangles;
-
             
-
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.ScaledOffset);
             _rayTracingMap = new RayTracingMap<ExplorationCell>(_explorationMap);
-
+            
             // Coverage
             _isCovered = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
             _canBeCovered = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
@@ -74,6 +71,17 @@ namespace Maes.Statistics {
                     if (tile.IsTrueForAll(isSolid => !isSolid)) {
                         openTiles++;
                         _canBeCovered[x, y] = true;
+                    }
+                }
+            }
+            
+            // TODO Mandag: Find a way to initialize the is coverable value for all triangles
+            for (int x = 0; x < collisionMap.WidthInTiles; x++) {
+                for (int y = 0; y < collisionMap.WidthInTiles; y++) {
+                    var tile = collisionMap.GetTileByLocalCoordinate(x, y);
+
+                    for (int i = 0; i < 4; i++) {
+                        
                     }
                 }
             }
@@ -88,12 +96,13 @@ namespace Maes.Statistics {
 
         private void UpdateCoverageStatus(MonaRobot robot) {
             var robotPos = GetCoverageMapPosition(robot.transform.position);
-            // If already covered
-            if (_isCovered[robotPos.x, robotPos.y]) return;
-
             if (_canBeCovered[robotPos.x, robotPos.y]) {
-                _tilesCovered++;
-                _isCovered[robotPos.x, robotPos.y] = true;
+                if (!_isCovered[robotPos.x, robotPos.y]) {
+                    // Not covered before
+                    _tilesCovered++;
+                    _isCovered[robotPos.x, robotPos.y] = true;    
+                }
+                
             }
         }
 
@@ -121,6 +130,7 @@ namespace Maes.Statistics {
             _currentTick++;
         }
 
+        // Updates both exploration tracker and robot slam maps
         private void PerformRayTracing(List<MonaRobot> robots, bool shouldUpdateSlamMap) {
             List<int> newlyExploredTriangles = new List<int>();
             float visibilityRange = _constraints.SlamRayTraceRange;
@@ -136,29 +146,30 @@ namespace Maes.Statistics {
                     slamMap = robot.Controller.SlamMap;
                     slamMap.ResetRobotVisibility();
                 }
-                
+
                 // Use amount of traces specified by user, or calculate circumference and use trace at interval of 4
                 float tracesPerMeter = 2f;
                 int traces = _constraints.SlamRayTraceCount ?? (int) (Math.PI * 2f * _constraints.SlamRayTraceRange * tracesPerMeter);
                 float traceIntervalDegrees = 360f / traces;
-                //Debug.Log($"Trace count  {traces} vs {(int) (Math.PI * 2f * _constraints.SlamRayTraceRange)}");
                 for (int i = 0; i < traces; i++) {
                     var angle = i * traceIntervalDegrees;
                     // Avoid ray casts that can be parallel to the lines of a triangle
                     if (angle % 45 == 0) angle += 0.5f;
 
                     _rayTracingMap.Raytrace(robot.transform.position, angle, visibilityRange, (index, cell) => {
-                        if (cell.isExplorable && !cell.IsExplored) {
+                        if (cell.IsExplorable && !cell.IsExplored) {
                             cell.IsExplored = true;
+                            cell.LastExplorationTimeInTicks = _currentTick;
+                            cell.ExplorationTimeInTicks += 1;
                             newlyExploredTriangles.Add(index);
                             ExploredTriangles++;
                         }
                         
                         // Update robot slam map if present (slam map only non-null if 'shouldUpdateSlamMap' is true)
-                        slamMap?.SetExploredByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
-                        slamMap?.SetCurrentlyVisibleByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
+                        slamMap?.SetExploredByTriangle(triangleIndex: index, isOpen: cell.IsExplorable);
+                        slamMap?.SetCurrentlyVisibleByTriangle(triangleIndex: index, isOpen: cell.IsExplorable);
 
-                        return cell.isExplorable;
+                        return cell.IsExplorable;
                     });
                 }
             }
@@ -176,8 +187,7 @@ namespace Maes.Statistics {
             if (robot != null) { 
                 // Update map to show slam map for given robot
                 _explorationVisualizer.SetExplored(robot.Controller.SlamMap, false);
-            }
-            else {
+            } else {
                 // Update map to show exploration progress for all robots
                 _explorationVisualizer.SetExplored(_explorationMap);
             }

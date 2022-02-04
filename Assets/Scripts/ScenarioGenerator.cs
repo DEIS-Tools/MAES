@@ -159,26 +159,12 @@ namespace Maes {
                     85,
                     1);
                 
-                var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
-                {
+                var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>() {
                     ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
                     ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
                     ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
                 };
-
                 foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
-                    scenarios.Enqueue(new SimulationScenario(
-                        seed: randomSeed,
-                        hasFinishedSim: hasFinishedFunc,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
-                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
-                            map, 
-                            randomSeed, 
-                            numberOfRobots,
-                            createAlgorithmDelegate),
-                        robotConstraints: robotConstraints,
-                        $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
-                    ));
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: hasFinishedFunc,
@@ -191,6 +177,18 @@ namespace Maes {
                             createAlgorithmDelegate),
                         robotConstraints: robotConstraints,
                         $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                    ));
+                    scenarios.Enqueue(new SimulationScenario(
+                        seed: randomSeed,
+                        hasFinishedSim: hasFinishedFunc,
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                            map, 
+                            randomSeed, 
+                            numberOfRobots,
+                            createAlgorithmDelegate),
+                        robotConstraints: robotConstraints,
+                        $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
                     ));
                 }
             }
@@ -321,18 +319,6 @@ namespace Maes {
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
                             hasFinishedSim: algorithmName == "TNF" ? shouldEndTnfSim : shouldEndSim,
-                            mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
-                            robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
-                                map, 
-                                randomSeed, 
-                                numberOfRobots,
-                                createAlgorithmDelegate),
-                            robotConstraints: constraints,
-                            $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
-                        ));
-                        scenarios.Enqueue(new SimulationScenario(
-                            seed: randomSeed,
-                            hasFinishedSim: algorithmName == "TNF" ? shouldEndTnfSim : shouldEndSim,
                             mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                                 map, 
@@ -342,6 +328,18 @@ namespace Maes {
                                 createAlgorithmDelegate),
                             robotConstraints: constraints,
                             $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                        ));
+                        scenarios.Enqueue(new SimulationScenario(
+                            seed: randomSeed,
+                            hasFinishedSim: algorithmName == "TNF" ? shouldEndTnfSim : shouldEndSim,
+                            mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                            robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                                map, 
+                                randomSeed, 
+                                numberOfRobots,
+                                createAlgorithmDelegate),
+                            robotConstraints: constraints,
+                            $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
                         ));
                     }
                 }
