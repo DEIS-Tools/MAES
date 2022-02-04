@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Maes.Map;
+using Maes.Statistics;
 using Maes.Utilities;
 using UnityEngine;
 using Vector2 = UnityEngine.Vector2;
@@ -31,6 +32,8 @@ namespace Maes.Robot {
 
         private float _robotRelativeSize;
 
+        public CommunicationTracker CommunicationTracker;
+
         private readonly struct Message {
             public readonly object Contents;
             public readonly MonaRobot Sender;
@@ -43,7 +46,7 @@ namespace Maes.Robot {
             }
         }
 
-        private readonly struct CommunicationInfo {
+        public readonly struct CommunicationInfo {
             public readonly float Distance;
             public readonly float Angle;
             public readonly int WallsCellsPassedThrough;
@@ -79,6 +82,7 @@ namespace Maes.Robot {
             _visualizer = visualizer;
             _rayTracingMap = new RayTracingMap<bool>(collisionMap);
             _environmentTaggingMap = new EnvironmentTaggingMap(collisionMap);
+            CommunicationTracker = new CommunicationTracker(_adjacencyMatrix, robotConstraints);
         }
 
         public void SetRobotRelativeSize(float robotRelativeSize) {
@@ -153,6 +157,10 @@ namespace Maes.Robot {
                 SynchronizeSlamMaps();
             }
 
+            if (GlobalSettings.ShouldWriteCSVResults && GlobalSettings.ShouldWriteCSVResults) {
+                CommunicationTracker.CreateSnapshot(_localTickCounter);
+            }
+
             _adjacencyMatrix = null;
         }
 
@@ -195,6 +203,7 @@ namespace Maes.Robot {
                         var r1Vector2 = new Vector2(r1Position.x, r1Position.y);
                         var r2Vector2 = new Vector2(r2Position.x, r2Position.y);
                         // TODO: This fails 2 / 40.000.000.000 times. We need unit tests to eliminate the problems.
+                        // TODO: Can't we improve performance by only going through half the matrix? - Philip
                         // They are caused by rays with angles of 45 or 90 degrees.
                         try {
                             _adjacencyMatrix[(r1.id, r2.id)] = RayTraceCommunication(r1Vector2, r2Vector2);

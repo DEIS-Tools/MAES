@@ -26,7 +26,7 @@ namespace Maes {
         [CanBeNull] private MonaRobot _selectedRobot;
 
         public ExplorationTracker ExplorationTracker { get; private set; }
-        private CommunicationManager _communicationManager;
+        public CommunicationManager _communicationManager;
 
         // The debugging visualizer provides 
         private DebuggingVisualizer _debugVisualizer = new DebuggingVisualizer();
