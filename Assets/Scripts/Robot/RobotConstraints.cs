@@ -30,7 +30,16 @@ namespace Maes.Robot {
         // Environment tagging
         public readonly float EnvironmentTagReadRange;
 
+        public readonly float LidarRange;
+        
+        // Movement
+        // 1.0f is default. A bigger map with bigger doors would make the robot "feel" slower. It is thus not 
+        // a speed value in e.g. km/h .
+        public readonly float RelativeMoveSpeed;
 
+
+        public readonly float RobotRelativeSize;
+        
         // TODO: Add robot size to constraints class
 
 
@@ -52,7 +61,12 @@ namespace Maes.Robot {
             DistributeSlam = distributeSlam;
 
             EnvironmentTagReadRange = environmentTagReadRange;
+            LidarRange = lidarRange;
+            RelativeMoveSpeed = relativeMoveSpeed;
+            RobotRelativeSize = robotRelativeSize;
+            
             SlamRayTraceRange = slamRayTraceRange;
         }
+
     }
 }

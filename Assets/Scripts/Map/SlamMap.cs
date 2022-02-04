@@ -42,7 +42,6 @@ namespace Maes.Map {
             _randomSeed = randomSeed;
             _widthInTiles = collisionMap.WidthInTiles * 2;
             _heightInTiles = collisionMap.HeightInTiles * 2;
-            _scale = collisionMap.Scale;
             _scaledOffset = collisionMap.ScaledOffset;
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
 
@@ -296,7 +295,7 @@ namespace Maes.Map {
         }
 
         public float CellSize() {
-            return _collisionMap.Scale;
+            return 1f;
         }
         
         public List<Vector2Int>? GetPath(Vector2Int coarseTileFrom, Vector2Int coarseTileTo, bool acceptPartialPaths = false) {

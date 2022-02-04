@@ -61,7 +61,7 @@ namespace Maes.Statistics {
 
             
 
-            _explorationVisualizer.SetMap(_explorationMap, collisionMap.Scale, collisionMap.ScaledOffset);
+            _explorationVisualizer.SetMap(_explorationMap, collisionMap.ScaledOffset);
             _rayTracingMap = new RayTracingMap<ExplorationCell>(_explorationMap);
 
             // Coverage

@@ -1,14 +1,16 @@
 namespace Maes.Robot.Task {
     public class MovementTask : ITask {
-        private readonly bool reverse;
+        private readonly bool _reverse;
+        private readonly float _force;
 
-        public MovementTask(bool reverse = false) {
-            this.reverse = reverse;
+        public MovementTask(float force, bool reverse = false) {
+            _reverse = reverse;
+            _force = force;
         }
 
         public MovementDirective GetNextDirective() {
-            if (reverse) return MovementDirective.Reverse;
-            else return MovementDirective.Forward;
+            if (_reverse) return MovementDirective.Reverse(_force);
+            else return MovementDirective.Forward(_force);
         }
 
         public bool IsCompleted() {

@@ -11,17 +11,19 @@ namespace Maes.Map {
         // The order in which edges are stored for each RayTracingTriangle
         private const int Diagonal = 0, Horizontal = 1, Vertical = 2;
 
+        private static double _maxTraceLengthPerTriangle = Math.Sqrt(2) / 4f; 
+
         public RayTracingMap(SimulationMap<TCell> map) {
             _map = map;
             var totalTriangles = map.WidthInTiles * map.HeightInTiles * 8;
             var trianglesPerRow = map.WidthInTiles * 8;
-            var vertexDistance = map.Scale / 2.0f;
+            var vertexDistance = 0.5f; // Vertices and in triangles are 0.5 tiles apart
 
             _traceableTriangles = new RayTracingTriangle[totalTriangles];
             for (int x = 0; x < map.WidthInTiles; x++) {
                 for (int y = 0; y < map.HeightInTiles; y++) {
                     int index = x * 8 + y * trianglesPerRow;
-                    AddTraceableTriangles(new Vector2(x, y) * map.Scale + map.ScaledOffset, vertexDistance, index,
+                    AddTraceableTriangles(new Vector2(x, y) + map.ScaledOffset, vertexDistance, index,
                         trianglesPerRow);
                 }
             }
@@ -174,8 +176,7 @@ namespace Maes.Map {
             TriangleTrace trace = new TriangleTrace(enteringEdge, startingIndex);
 
             // If a trace travels diagonally in the bottom half of a tile, it will cross at least 4 tiles
-            float maxTraceLengthPerTriangle = Mathf.Sqrt(_map.Scale * _map.Scale + 1) / 4f;
-            int minimumTracesBeforeDistanceCheck = (int) (distance / maxTraceLengthPerTriangle);
+            int minimumTracesBeforeDistanceCheck = (int) (distance / _maxTraceLengthPerTriangle);
             var maxTraces = distance * 8;
             while (true) {
                 if (traceCount > maxTraces) { // Safety measure for avoiding infinite loops 
@@ -236,8 +237,7 @@ namespace Maes.Map {
             TriangleTrace trace = new TriangleTrace(enteringEdge, startingIndex);
 
             // If a trace travels diagonally in the bottom half of a tile, it will cross at least 4 tiles
-            float maxTraceLengthPerTriangle = Mathf.Sqrt(_map.Scale * _map.Scale + 1) / 4f;
-            int minimumTracesBeforeDistanceCheck = (int) (distance / maxTraceLengthPerTriangle);
+            int minimumTracesBeforeDistanceCheck = (int) (distance / _maxTraceLengthPerTriangle);
             while (true) {
                 if (traceCount > 150) { // Safety measure for avoiding infinite loops 
                     Debug.Log($"Equation: {a}x + {b}");

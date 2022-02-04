@@ -25,11 +25,9 @@ namespace Maes.Map.MapGen {
 
         public readonly int borderSize;
 
-        public readonly float scaling;
-
         public BuildingMapConfig(int widthInTiles, int heightInTiles, int randomSeed, float maxHallInPercent,
             int hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint roomSplitChancePercent,
-            int borderSize, float scaling) {
+            int borderSize) {
             if ((2 * doorPadding + doorWidth) > minRoomSideLength) {
                 throw new ArgumentOutOfRangeException(
                     "Door width cannot be bigger than the smallest side lenght of rooms plus two times doorPadding");
@@ -52,7 +50,6 @@ namespace Maes.Map.MapGen {
             this.doorPadding = doorPadding;
             this.roomSplitChancePercent = roomSplitChancePercent;
             this.borderSize = borderSize;
-            this.scaling = scaling;
         }
     }
 }

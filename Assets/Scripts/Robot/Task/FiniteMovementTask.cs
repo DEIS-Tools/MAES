@@ -10,18 +10,20 @@ namespace Maes.Robot.Task {
         private readonly Vector2 _startingPosition;
         private Vector2 _previousPosition;
         private bool _isCompleted = false;
+        private readonly float _force;
 
-        public FiniteMovementTask(Transform robotTransform, float targetDistance, bool reverse = false) {
+        public FiniteMovementTask(Transform robotTransform, float targetDistance, float force, bool reverse = false) {
             _reverse = reverse;
             _targetDistance = targetDistance;
             _robotTransform = robotTransform;
             _startingPosition = robotTransform.position;
             _previousPosition = _startingPosition;
+            _force = force;
         }
 
         public MovementDirective GetNextDirective() {
             if (_isCompleted)
-                return MovementDirective.NoMovement;
+                return MovementDirective.NoMovement();
 
             float remainingDistance = _targetDistance - Vector2.Distance(_startingPosition, _robotTransform.position);
             if (remainingDistance > 0.1f) {
@@ -34,7 +36,7 @@ namespace Maes.Robot.Task {
             }
             else {
                 _isCompleted = true;
-                return MovementDirective.NoMovement;
+                return MovementDirective.NoMovement();
             }
         }
 
@@ -42,7 +44,7 @@ namespace Maes.Robot.Task {
         private float GetForceFactor(float remainingDistance, float currentVelocity) {
             int stopTimeTicks = GetStopTime(currentVelocity);
             float stopDistance = GetDistanceTraveled(currentVelocity, stopTimeTicks);
-            if (stopDistance <= remainingDistance - 0.01f) return 1.0f;
+            if (stopDistance <= remainingDistance - 0.01f) return _force;
             else return 0f;
         }
 

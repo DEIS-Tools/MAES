@@ -11,10 +11,7 @@ namespace Maes.Map {
     public class SimulationMap<TCell> : IEnumerable<(int, TCell)> {
         // The width / height of the map measured in tiles
         public readonly int WidthInTiles, HeightInTiles;
-
-        // The scale of the map in world space
-        public readonly float Scale;
-
+        
         // The scaled offset in world space
         public readonly Vector2 ScaledOffset;
 
@@ -25,11 +22,10 @@ namespace Maes.Map {
         // The tiles of the map (each tile containing 8 triangle cells) 
         private readonly SimulationMapTile<TCell>[,] _tiles;
 
-        public SimulationMap(Functional.Factory<TCell> cellFactory, int widthInTiles, int heightInTiles, float scale,
+        public SimulationMap(Functional.Factory<TCell> cellFactory, int widthInTiles, int heightInTiles,
             Vector2 scaledOffset, List<Room> rooms) {
             this.rooms = rooms;
             ScaledOffset = scaledOffset;
-            Scale = scale;
             WidthInTiles = widthInTiles;
             HeightInTiles = heightInTiles;
             _tiles = new SimulationMapTile<TCell>[widthInTiles, heightInTiles];
@@ -39,9 +35,8 @@ namespace Maes.Map {
         }
 
         // Private constructor for a pre-specified set of tiles. This is used in the FMap function
-        private SimulationMap(SimulationMapTile<TCell>[,] tiles, float scale, Vector2 scaledOffset) {
+        private SimulationMap(SimulationMapTile<TCell>[,] tiles, Vector2 scaledOffset) {
             ScaledOffset = scaledOffset;
-            Scale = scale;
             _tiles = tiles;
             WidthInTiles = tiles.GetLength(0);
             HeightInTiles = tiles.GetLength(1);
@@ -76,7 +71,7 @@ namespace Maes.Map {
 
         // Takes a world coordinates and removes the offset and scale to translate it to a local map coordinate
         private Vector2 ToLocalMapCoordinate(Vector2 worldCoordinate) {
-            var localCoordinate = (worldCoordinate - ScaledOffset) / Scale;
+            var localCoordinate = (worldCoordinate - ScaledOffset);
             if (!IsWithinLocalMapBounds(localCoordinate)) {
                 throw new ArgumentException("The given coordinate " + localCoordinate
                                                                     + "(World coordinate:" + worldCoordinate + " )"
@@ -100,7 +95,7 @@ namespace Maes.Map {
             for (int y = 0; y < HeightInTiles; y++)
                 mappedTiles[x, y] = _tiles[x, y].FMap(mapper);
 
-            return new SimulationMap<TNewCell>(mappedTiles, this.Scale, this.ScaledOffset);
+            return new SimulationMap<TNewCell>(mappedTiles, this.ScaledOffset);
         }
 
         // Enumerates all triangles paired with their index

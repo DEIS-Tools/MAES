@@ -12,7 +12,7 @@ using static Maes.Map.RobotSpawner;
 namespace Maes {
     public class ScenarioGenerator {
          private const int Minute = 60;
-         
+
          /// <summary>
          /// Generates the scenarios used for the testing of LVD's long-range experiements.
          /// </summary>
@@ -37,7 +37,9 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                slamRayTraceRange: 20f
+                lidarRange: 20f,
+                relativeMoveSpeed: 1f,
+                robotRelativeSize: 0.6f
             );
             
             for (int i = 0; i < runs; i++) { 
@@ -68,8 +70,7 @@ namespace Maes {
                         2,
                         2,
                         85,
-                        1,
-                        1f);
+                        1);
                     
                     foreach (var (algorithmName, createAlgorithmDelegate, constraints) in algorithmsAndFileNames) {
                         scenarios.Enqueue(new SimulationScenario(
@@ -79,8 +80,7 @@ namespace Maes {
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                                 map, 
                                 randomSeed, 
-                                numberOfRobots, 
-                                0.6f,
+                                numberOfRobots,
                                 createAlgorithmDelegate),
                             robotConstraints: constraints,
                             $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
@@ -92,8 +92,7 @@ namespace Maes {
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                                 map, 
                                 randomSeed, 
-                                numberOfRobots, 
-                                0.6f,
+                                numberOfRobots,
                                 new Vector2Int(0,0),
                                 createAlgorithmDelegate),
                             robotConstraints: constraints,
@@ -111,7 +110,7 @@ namespace Maes {
          /// </summary>
         public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            var numberOfRobots = 1;
+            var numberOfRobots = 2;
             var maxRunTime = 60 * Minute;
             var width = 50;
             var height = 50;
@@ -129,7 +128,9 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 4.0f,
-                slamRayTraceRange: 7.0f
+                lidarRange: 7.0f,
+                relativeMoveSpeed: 10f,
+                robotRelativeSize: 0.6f
             );
 
             for (int i = 0; i < 1; i++) {
@@ -156,14 +157,13 @@ namespace Maes {
                     2,
                     2,
                     85,
-                    1,
-                    1f);
+                    1);
                 
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
                 {
                     ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
-                    ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
                     ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
+                    ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
                 };
 
                 foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
@@ -174,8 +174,7 @@ namespace Maes {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
-                            numberOfRobots, 
-                            0.6f,
+                            numberOfRobots,
                             createAlgorithmDelegate),
                         robotConstraints: robotConstraints,
                         $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
@@ -187,8 +186,7 @@ namespace Maes {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
-                            numberOfRobots, 
-                            0.6f,
+                            numberOfRobots,
                             new Vector2Int(0,0),
                             createAlgorithmDelegate),
                         robotConstraints: robotConstraints,
@@ -208,7 +206,7 @@ namespace Maes {
         /// </summary>
         public static Queue<SimulationScenario> GenerateArticleScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            var numberOfRobots = 25;
+            var numberOfRobots = 1;
             var runs = 20;
             var sizes = new List<(int, int)>() {(50, 50), (100,100), (200,200)};
             var maxRunTime = 60 * Minute;
@@ -233,7 +231,9 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                slamRayTraceRange: 7f
+                lidarRange: 7f,
+                relativeMoveSpeed: 1f,
+                robotRelativeSize: 0.6f
             );
             
             var robotConstraintsTNF = new RobotConstraints(
@@ -247,7 +247,9 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                slamRayTraceRange: 7f
+                lidarRange: 7f,
+                relativeMoveSpeed: 1f,
+                robotRelativeSize: 0.6f
             );
             
             var robotConstraintsRBW = new RobotConstraints(
@@ -261,7 +263,9 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                slamRayTraceRange: 7f
+                lidarRange: 7f,
+                relativeMoveSpeed: 1f,
+                robotRelativeSize: 0.6f
             );
             
             var robotConstraintsSSB = new RobotConstraints(
@@ -275,16 +279,18 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 0f,
-                slamRayTraceRange: 7f
+                lidarRange: 7f,
+                relativeMoveSpeed: 1f,
+                robotRelativeSize: 0.6f
             ); 
 
             for (int i = 0; i < runs; i++) { 
                 int randomSeed = i;
                 var algorithmsAndFileNames = new List<(string, CreateAlgorithmDelegate, RobotConstraints)>()
                 {
+                    ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsLVD, 1), robotConstraintsLVD),
                     ("RBW", (seed) => new RandomExplorationAlgorithm(seed), robotConstraintsRBW),
                     ("SSB", (seed) => new SsbAlgorithm(robotConstraintsSSB, seed), robotConstraintsSSB),
-                    ("LVD", (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraintsLVD, 1), robotConstraintsLVD),
                     ("TNF", (seed) => new TnfExplorationAlgorithm(8, 8, seed), robotConstraintsTNF)
                     };
                 foreach (var (width, height) in sizes) {
@@ -309,8 +315,7 @@ namespace Maes {
                         2,
                         2,
                         85,
-                        1,
-                        1f);
+                        1);
                     
                     foreach (var (algorithmName, createAlgorithmDelegate, constraints) in algorithmsAndFileNames) {
                         scenarios.Enqueue(new SimulationScenario(
@@ -320,8 +325,7 @@ namespace Maes {
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                                 map, 
                                 randomSeed, 
-                                numberOfRobots, 
-                                0.6f,
+                                numberOfRobots,
                                 createAlgorithmDelegate),
                             robotConstraints: constraints,
                             $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
@@ -333,8 +337,7 @@ namespace Maes {
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                                 map, 
                                 randomSeed, 
-                                numberOfRobots, 
-                                0.6f,
+                                numberOfRobots,
                                 new Vector2Int(0,0),
                                 createAlgorithmDelegate),
                             robotConstraints: constraints,
@@ -378,8 +381,7 @@ namespace Maes {
                     2,
                     2,
                     85,
-                    1,
-                    1f);
+                    1);
 
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: float.MaxValue,
@@ -392,7 +394,9 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f, 
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f,
-                    slamRayTraceRange: 7f
+                    lidarRange: 7f,
+                    relativeMoveSpeed: 1f,
+                    robotRelativeSize: 0.6f
                 );
 
                 if (i % 2 != 0) {
@@ -403,8 +407,7 @@ namespace Maes {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
-                            1, 
-                            0.6f,
+                            1,
                             (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1)),
                         robotConstraints: robotConstraints,
                         "Voronoi-building-hallway-" + randomSeed
@@ -418,8 +421,7 @@ namespace Maes {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
-                            1, 
-                            0.6f,
+                            1,
                             new Vector2Int(0,0),
                             (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1)),
                         robotConstraints: robotConstraints,
@@ -462,8 +464,7 @@ namespace Maes {
                     2,
                     1,
                     75,
-                    1,
-                    1f);
+                    1);
 
                 
                 var robotConstraints = new RobotConstraints(
@@ -477,7 +478,9 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f,
-                    slamRayTraceRange: 7.0f
+                    lidarRange: 7.0f,
+                    relativeMoveSpeed: 1f,
+                    robotRelativeSize: 0.6f
                 );
 
                 if (i % 2 == 0) {
@@ -488,8 +491,7 @@ namespace Maes {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
-                            2, 
-                            0.6f,
+                            2,
                             (seed) => new RandomExplorationAlgorithm(seed)),
                         robotConstraints: robotConstraints,
                         "RBW-building-" + randomSeed
@@ -503,8 +505,7 @@ namespace Maes {
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
-                            1, 
-                            0.6f,
+                            1,
                             new Vector2Int(0,0),
                             (seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 2)),
                         robotConstraints: robotConstraints,
@@ -548,8 +549,7 @@ namespace Maes {
                     2,
                     1,
                     75,
-                    1,
-                    1f);
+                    1);
 
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
@@ -562,7 +562,9 @@ namespace Maes {
                     slamPositionInaccuracy: 0.5f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f,
-                    slamRayTraceRange: 7.0f
+                    lidarRange: 7.0f,
+                    relativeMoveSpeed: 1f,
+                    robotRelativeSize: 0.6f
                 );
                 
                 /*scenarios.Enqueue(new SimulationScenario(
@@ -585,8 +587,7 @@ namespace Maes {
                     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                         map, 
                         randomSeed, 
-                        1, 
-                        0.6f,
+                        1,
                         (seed) => new BrickAndMortar(robotConstraints, seed)),
                     robotConstraints: robotConstraints,
                     "BM-building-hallway-" + randomSeed
@@ -627,8 +628,7 @@ namespace Maes {
                     2,
                     1,
                     75,
-                    1,
-                    1f);
+                    1);
 
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: float.MaxValue,
@@ -641,7 +641,9 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f,
-                    slamRayTraceRange: 7.0f
+                    lidarRange: 7.0f,
+                    relativeMoveSpeed: 1f,
+                    robotRelativeSize: 0.6f
                 );
 
                 scenarios.Enqueue(new SimulationScenario(
@@ -651,8 +653,7 @@ namespace Maes {
                     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsInBiggestRoom(
                         map, 
                         randomSeed, 
-                        5, 
-                        0.6f,
+                        5,
                         (seed) => new SsbAlgorithm(robotConstraints, seed)),
                     robotConstraints: robotConstraints,
                     "SSB-cave-biggestroom-" + randomSeed
@@ -692,8 +693,7 @@ namespace Maes {
                 2,
                 1,
                 75,
-                1,
-                1f);
+                1);
 
             var robotConstraints = new RobotConstraints(
                 broadcastRange: 15.0f,
@@ -706,7 +706,9 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f,
                 distributeSlam: false,
                 environmentTagReadRange: 4.0f,
-                slamRayTraceRange: 7f
+                lidarRange: 7f,
+                relativeMoveSpeed: 1f,
+                robotRelativeSize: 0.6f
             );
             
             scenarios.Enqueue(new SimulationScenario(
@@ -717,7 +719,6 @@ namespace Maes {
                     map,
                     randomSeed,
                     15,
-                    0.6f,
                     (seed) => new TnfExplorationAlgorithm(5, 9, randomSeed)),
                 robotConstraints: robotConstraints,
                 "TNF-building-test-" + randomSeed

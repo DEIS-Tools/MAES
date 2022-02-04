@@ -44,7 +44,7 @@ namespace Maes {
             RobotSpawner.RobotConstraints = scenario.RobotConstraints;
             
             _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
-            _communicationManager.SetRobotRelativeSize(RobotSpawner.RobotRelativeSize);
+            _communicationManager.SetRobotRelativeSize(scenario.RobotConstraints.RobotRelativeSize);
             foreach (var robot in _robots)
                 robot.OnRobotSelected = SetSelectedRobot;
             

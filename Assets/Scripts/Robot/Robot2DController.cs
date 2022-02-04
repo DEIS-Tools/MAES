@@ -207,13 +207,13 @@ namespace Maes.Robot {
             var currentStatus = GetStatus();
             AssertRobotIsInIdleState("rotation");
 
-            _currentTask = new InfiniteRotationTasK(counterClockwise);
+            _currentTask = new InfiniteRotationTasK(counterClockwise, Constraints.RelativeMoveSpeed);
         }
 
 
         public void StartMoving(bool reverse = false) {
             AssertRobotIsInIdleState("Moving Forwards");
-            _currentTask = new MovementTask(reverse);
+            _currentTask = new MovementTask(Constraints.RelativeMoveSpeed, reverse);
         }
 
         // Asserts that the current status is idle, and throws an exception if not
@@ -280,7 +280,7 @@ namespace Maes.Robot {
 
         public void Move(float distanceInMeters, bool reverse = false) {
             AssertRobotIsInIdleState($"Move forwards {distanceInMeters} meters");
-            _currentTask = new FiniteMovementTask(_transform, distanceInMeters, reverse);
+            _currentTask = new FiniteMovementTask(_transform, distanceInMeters, Constraints.RelativeMoveSpeed, reverse);
         }
 
         public float GetGlobalAngle() {
