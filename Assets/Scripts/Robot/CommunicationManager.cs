@@ -120,7 +120,7 @@ namespace Maes.Robot {
             // to make the angle relative to the x axis. (Moving from oregon along the x axis is 0 degrees in out system)
             if (pos1.y > pos2.y) angle = 360f - angle;
 
-            if (distance > _robotConstraints.MaxRayCastRange)
+            if (distance > Math.Max(_robotConstraints.BroadcastRange, _robotConstraints.SenseNearbyRobotRange))
                 return new CommunicationInfo(distance, angle, -1);
 
             var angleMod = angle % 90f;

@@ -37,7 +37,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 20f
+                slamRayTraceRange: 20f
             );
             
             for (int i = 0; i < runs; i++) { 
@@ -129,7 +129,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 4.0f,
-                lidarRange: 7.0f
+                slamRayTraceRange: 7.0f
             );
 
             for (int i = 0; i < 1; i++) {
@@ -233,7 +233,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f
+                slamRayTraceRange: 7f
             );
             
             var robotConstraintsTNF = new RobotConstraints(
@@ -247,7 +247,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f
+                slamRayTraceRange: 7f
             );
             
             var robotConstraintsRBW = new RobotConstraints(
@@ -261,7 +261,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f
+                slamRayTraceRange: 7f
             );
             
             var robotConstraintsSSB = new RobotConstraints(
@@ -275,7 +275,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f
+                slamRayTraceRange: 7f
             ); 
 
             for (int i = 0; i < runs; i++) { 
@@ -392,7 +392,7 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f, 
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7f
+                    slamRayTraceRange: 7f
                 );
 
                 if (i % 2 != 0) {
@@ -477,7 +477,7 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f
+                    slamRayTraceRange: 7.0f
                 );
 
                 if (i % 2 == 0) {
@@ -562,7 +562,7 @@ namespace Maes {
                     slamPositionInaccuracy: 0.5f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f
+                    slamRayTraceRange: 7.0f
                 );
                 
                 /*scenarios.Enqueue(new SimulationScenario(
@@ -641,7 +641,7 @@ namespace Maes {
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f
+                    slamRayTraceRange: 7.0f
                 );
 
                 scenarios.Enqueue(new SimulationScenario(
@@ -706,7 +706,7 @@ namespace Maes {
                 slamPositionInaccuracy: 0.2f,
                 distributeSlam: false,
                 environmentTagReadRange: 4.0f,
-                lidarRange: 7f
+                slamRayTraceRange: 7f
             );
             
             scenarios.Enqueue(new SimulationScenario(

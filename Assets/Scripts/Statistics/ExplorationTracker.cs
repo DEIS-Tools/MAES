@@ -107,10 +107,10 @@ namespace Maes.Statistics {
             var shouldUpdateSlamMap = _constraints.AutomaticallyUpdateSlam && 
                                       _currentTick % _constraints.SlamUpdateIntervalInTicks == 0; 
             PerformRayTracing(robots, shouldUpdateSlamMap);
-
-            // Always update estimated robot position and rotation
-            // regardless of whether the slam map was updated this tick
+            
             if (_constraints.AutomaticallyUpdateSlam) {
+                // Always update estimated robot position and rotation
+                // regardless of whether the slam map was updated this tick
                 foreach (var robot in robots) {
                     var slamMap = robot.Controller.SlamMap;
                     slamMap.UpdateApproxPosition(robot.transform.position);
@@ -123,7 +123,7 @@ namespace Maes.Statistics {
 
         private void PerformRayTracing(List<MonaRobot> robots, bool shouldUpdateSlamMap) {
             List<int> newlyExploredTriangles = new List<int>();
-            float visibilityRange = _constraints.LidarRange;
+            float visibilityRange = _constraints.SlamRayTraceRange;
 
             foreach (var robot in robots) {
                 SlamMap slamMap = null;
@@ -137,8 +137,11 @@ namespace Maes.Statistics {
                     slamMap.ResetRobotVisibility();
                 }
                 
-                int traces = _constraints.RayTraceCount ?? (int) (Math.PI * 2 * _constraints.MaxRayCastRange / 4f);
+                // Use amount of traces specified by user, or calculate circumference and use trace at interval of 4
+                float tracesPerMeter = 2f;
+                int traces = _constraints.SlamRayTraceCount ?? (int) (Math.PI * 2f * _constraints.SlamRayTraceRange * tracesPerMeter);
                 float traceIntervalDegrees = 360f / traces;
+                //Debug.Log($"Trace count  {traces} vs {(int) (Math.PI * 2f * _constraints.SlamRayTraceRange)}");
                 for (int i = 0; i < traces; i++) {
                     var angle = i * traceIntervalDegrees;
                     // Avoid ray casts that can be parallel to the lines of a triangle
