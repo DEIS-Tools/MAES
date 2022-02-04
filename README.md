@@ -100,7 +100,7 @@ A headless run is invoked by adding the command line argument `-batchmode` when 
 
 ![img.png](.readmeAssets/build_setting_screenshot.png)
 
-Headless runs will start simulating immediately on the "**Fast as possible**" speed setting (<img height="1em" src="Assets/UI/fast_as_possible_button.png"/>).
+Headless runs will start simulating immediately on the "**Fast as possible**" speed setting (<img style="height:1em;" src="Assets/UI/fast_as_possible_button.png"/>).
 
 # Contributors
 
