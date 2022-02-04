@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Maes.Robot;
+using UnityEngine;
 using static Maes.Robot.CommunicationManager;
 using static Maes.Statistics.ExplorationTracker;
 
@@ -44,24 +45,20 @@ namespace Maes.Statistics {
         }
 
         private void CreateInterconnectedSnapShot(int tick) {
-            if (AdjacencyMatrixRef != null) {
-                if (AreAllAgentsConnected())
+            if (AdjacencyMatrixRef != null && CommunicationGroups != null) {
+                if (AreAllAgentsConnected(tick))
                     InterconnectionSnapShot[tick] = new SnapShot<bool>(tick, true);
                 else
                     InterconnectionSnapShot[tick] = new SnapShot<bool>(tick, false);
             }
         }
 
-        private bool AreAllAgentsConnected() {
-            foreach (var comInfo in AdjacencyMatrixRef.Values) {
-                // Are robots within communication range?
-                if (comInfo.Distance > _robotConstraints.BroadcastRange)
-                    return false;
-                // Are robots within line of sight?
-                if (_robotConstraints.BroadcastBlockedByWalls && comInfo.WallsCellsPassedThrough > 0)
-                    return false;
+        private bool AreAllAgentsConnected(int tick) {
+            if (CommunicationGroups.Count == 1) {
+                return true;
             }
-            return true;
+
+            return false;
         }
     }
 }

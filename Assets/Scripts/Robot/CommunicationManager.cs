@@ -153,6 +153,12 @@ namespace Maes.Robot {
             _readableMessages.AddRange(_queuedMessages);
             _queuedMessages.Clear();
             _localTickCounter++;
+            
+            if (GlobalSettings.PopulateAdjacencyAndComGroupsEveryTick) {
+                PopulateAdjacencyMatrix();
+                _communicationGroups = GetCommunicationGroups();
+            }
+            
             if (_robotConstraints.AutomaticallyUpdateSlam // Are we using slam?
                 && _robotConstraints.DistributeSlam // Are we distributing slam?
                 && _localTickCounter % _robotConstraints.SlamSynchronizeIntervalInTicks == 0) {
