@@ -30,6 +30,8 @@ namespace Maes.Robot {
         
         private Dictionary<(int, int), CommunicationInfo> _adjacencyMatrix = null;
 
+        private List<HashSet<int>> _communicationGroups = null; 
+
         private float _robotRelativeSize;
 
         public CommunicationTracker CommunicationTracker;
@@ -157,18 +159,21 @@ namespace Maes.Robot {
                 SynchronizeSlamMaps();
             }
 
-            if (GlobalSettings.ShouldWriteCSVResults && GlobalSettings.ShouldWriteCSVResults) {
+            if (GlobalSettings.ShouldWriteCSVResults && _localTickCounter % GlobalSettings.TicksPerStatsSnapShot == 0) {
                 CommunicationTracker.AdjacencyMatrixRef = _adjacencyMatrix;
+                if (_communicationGroups == null) _communicationGroups = GetCommunicationGroups();
+                CommunicationTracker.CommunicationGroups = _communicationGroups;
                 CommunicationTracker.CreateSnapshot(_localTickCounter);
             }
 
-            _adjacencyMatrix = null;
+            this._adjacencyMatrix = null;
+            this._communicationGroups = null;
         }
 
         private void SynchronizeSlamMaps() {
-            var slamGroups = GetCommunicationGroups();
+            this._communicationGroups = GetCommunicationGroups();
 
-            foreach (var group in slamGroups) {
+            foreach (var group in _communicationGroups) {
                 var slamMaps = group
                     .Select(id => _robots.Find(r => r.id == id))
                     .Select(r => r.Controller.SlamMap)
