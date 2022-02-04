@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Maes.Robot;
 using static Maes.Robot.CommunicationManager;
@@ -6,30 +7,32 @@ using static Maes.Statistics.ExplorationTracker;
 namespace Maes.Statistics {
     public class CommunicationTracker {
         public readonly Dictionary<int, SnapShot<bool>> InterconnectionSnapShot = new Dictionary<int, SnapShot<bool>>();
-        private Dictionary<(int, int), CommunicationInfo> _adjacencyMatrixRef;
+        public Dictionary<(int, int), CommunicationInfo> AdjacencyMatrixRef;
         private RobotConstraints _robotConstraints;
 
-        public CommunicationTracker(Dictionary<(int, int), CommunicationInfo> adjacencyMatrixRef, RobotConstraints constraints) {
-            _adjacencyMatrixRef = adjacencyMatrixRef;
+        public CommunicationTracker(RobotConstraints constraints) {
             _robotConstraints = constraints;
         }
 
         public void CreateSnapshot(int tick) {
-            if (AreAllAgentsConnected())
-                InterconnectionSnapShot[tick] = new SnapShot<bool>(tick, true);
-            else
-                InterconnectionSnapShot[tick] = new SnapShot<bool>(tick, false);
+            if (tick == 0) return;
+            if (AdjacencyMatrixRef != null) {
+                if (AreAllAgentsConnected())
+                    InterconnectionSnapShot[tick] = new SnapShot<bool>(tick, true);
+                else
+                    InterconnectionSnapShot[tick] = new SnapShot<bool>(tick, false);
+            }
         }
 
         private bool AreAllAgentsConnected() {
-            foreach (var comInfo in _adjacencyMatrixRef.Values) {
+            foreach (var comInfo in AdjacencyMatrixRef.Values) {
                 // Are robots within communication range?
                 if (comInfo.Distance > _robotConstraints.BroadcastRange)
-                    // Are robots within line of sight?
-                    if (_robotConstraints.BroadcastBlockedByWalls && comInfo.WallsCellsPassedThrough > 0)
-                        return false;
+                    return false;
+                // Are robots within line of sight?
+                if (_robotConstraints.BroadcastBlockedByWalls && comInfo.WallsCellsPassedThrough > 0)
+                    return false;
             }
-
             return true;
         }
     }

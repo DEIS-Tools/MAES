@@ -82,7 +82,7 @@ namespace Maes.Robot {
             _visualizer = visualizer;
             _rayTracingMap = new RayTracingMap<bool>(collisionMap);
             _environmentTaggingMap = new EnvironmentTaggingMap(collisionMap);
-            CommunicationTracker = new CommunicationTracker(_adjacencyMatrix, robotConstraints);
+            CommunicationTracker = new CommunicationTracker(robotConstraints);
         }
 
         public void SetRobotRelativeSize(float robotRelativeSize) {
@@ -158,6 +158,7 @@ namespace Maes.Robot {
             }
 
             if (GlobalSettings.ShouldWriteCSVResults && GlobalSettings.ShouldWriteCSVResults) {
+                CommunicationTracker.AdjacencyMatrixRef = _adjacencyMatrix;
                 CommunicationTracker.CreateSnapshot(_localTickCounter);
             }
 
