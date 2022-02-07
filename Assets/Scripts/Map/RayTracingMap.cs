@@ -23,7 +23,7 @@ namespace Maes.Map {
             for (int x = 0; x < map.WidthInTiles; x++) {
                 for (int y = 0; y < map.HeightInTiles; y++) {
                     int index = x * 8 + y * trianglesPerRow;
-                    AddTraceableTriangles(new Vector2(x, y) + map.ScaledOffset, vertexDistance, index,
+                    AddTraceableTriangles(new Vector2(x, y) + map._offset, vertexDistance, index,
                         trianglesPerRow);
                 }
             }

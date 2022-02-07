@@ -13,13 +13,12 @@ namespace Maes.Map {
         private List<PlacedTag>[,] _tagLists;
 
         private int _widthInTiles, _heightInTiles;
-        private float _tileSize;
-        private Vector2 _scaledOffset;
+        private Vector2 offset;
 
         public EnvironmentTaggingMap(SimulationMap<bool> collisionMap) {
             this._widthInTiles = collisionMap.WidthInTiles;
             this._heightInTiles = collisionMap.HeightInTiles;
-            this._scaledOffset = collisionMap.ScaledOffset;
+            this.offset = collisionMap._offset;
             _tagLists = new List<PlacedTag>[_widthInTiles, _heightInTiles];
             for (int x = 0; x < _widthInTiles; x++) {
                 for (int y = 0; y < _heightInTiles; y++) {
@@ -39,7 +38,7 @@ namespace Maes.Map {
             List<PlacedTag> nearbyTags = new List<PlacedTag>();
             
             var gridPosition = ToLocalMapCoordinate(centerWorldPosition);
-            var maxTileRadius = (int) Math.Ceiling(radius / _tileSize);
+            var maxTileRadius = (int) Math.Ceiling(radius);
             // Find bounding box of cells to check
             int minX = Math.Max(gridPosition.x - maxTileRadius, 0);
             int maxX = Math.Min(gridPosition.x + maxTileRadius, _widthInTiles);
@@ -59,7 +58,7 @@ namespace Maes.Map {
         
         // Takes a world coordinates and removes the offset and scale to translate it to a local map coordinate
         private Vector2Int ToLocalMapCoordinate(Vector2 worldCoordinate) {
-            Vector2 localFloatCoordinate = (worldCoordinate - _scaledOffset) / _tileSize;
+            Vector2 localFloatCoordinate = worldCoordinate - offset;
             Vector2Int localCoordinate = new Vector2Int((int) localFloatCoordinate.x, (int) localFloatCoordinate.y);
             if (!IsWithinLocalMapBounds(localCoordinate)) {
                 throw new ArgumentException("The given coordinate " + localCoordinate
