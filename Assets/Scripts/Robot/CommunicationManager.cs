@@ -120,7 +120,7 @@ namespace Maes.Robot {
             // to make the angle relative to the x axis. (Moving from oregon along the x axis is 0 degrees in out system)
             if (pos1.y > pos2.y) angle = 360f - angle;
 
-            if (distance > Math.Max(_robotConstraints.BroadcastRange, _robotConstraints.SenseNearbyRobotRange))
+            if (distance > Math.Max(_robotConstraints.BroadcastRange, _robotConstraints.SenseNearbyAgentsRange))
                 return new CommunicationInfo(distance, angle, -1);
 
             var angleMod = angle % 90f;
@@ -128,7 +128,7 @@ namespace Maes.Robot {
             else if (angleMod >= 44.95f && angleMod <= 45f) angle -= 0.005f;
                 
             var wallsTravelledThrough = 0;
-            if (_robotConstraints.BroadcastBlockedByWalls || _robotConstraints.SenseNearbyRobotBlockedByWalls) {
+            if (_robotConstraints.BroadcastBlockedByWalls || _robotConstraints.SenseNearbyAgentsBlockedByWalls) {
                 _rayTracingMap.Raytrace(pos1, angle, distance,
                     (_, cellIsSolid) => {
                         if (cellIsSolid) {
@@ -281,8 +281,8 @@ namespace Maes.Robot {
 
                 
                 var comInfo = _adjacencyMatrix[(id, robot.id)];
-                if(comInfo.Distance > _robotConstraints.SenseNearbyRobotRange 
-                   || (comInfo.WallsCellsPassedThrough > 0 && _robotConstraints.SenseNearbyRobotBlockedByWalls))
+                if(comInfo.Distance > _robotConstraints.SenseNearbyAgentsRange 
+                   || (comInfo.WallsCellsPassedThrough > 0 && _robotConstraints.SenseNearbyAgentsBlockedByWalls))
                     continue;
 
                 sensedObjects.Add(new SensedObject<int>(comInfo.Distance, comInfo.Angle, robot.id));

@@ -6,8 +6,8 @@ namespace Maes.Robot {
         public readonly float BroadcastRange;
         public readonly bool BroadcastBlockedByWalls;
 
-        public readonly float SenseNearbyRobotRange;
-        public readonly bool SenseNearbyRobotBlockedByWalls;
+        public readonly float SenseNearbyAgentsRange;
+        public readonly bool SenseNearbyAgentsBlockedByWalls;
 
         // SLAM
         public readonly bool AutomaticallyUpdateSlam;
@@ -34,22 +34,19 @@ namespace Maes.Robot {
         // 1.0f is default. A bigger map with bigger doors would make the robot "feel" slower. It is thus not 
         // a speed value in e.g. km/h .
         public readonly float RelativeMoveSpeed;
+        
+        public readonly float AgentRelativeSize;
 
 
-        public readonly float RobotRelativeSize;
-
-        // TODO: Add robot size to constraints class
-
-
-        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyRobotRange,
-            bool senseNearbyRobotBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks,
+        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyAgentsRange,
+            bool senseNearbyAgentsBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks,
             int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam,
-            float environmentTagReadRange, float slamRayTraceRange, float relativeMoveSpeed, float robotRelativeSize,
+            float environmentTagReadRange, float slamRayTraceRange, float relativeMoveSpeed, float agentRelativeSize,
             int? slamRayTraceCount = null) : this() {
             BroadcastRange = broadcastRange;
             BroadcastBlockedByWalls = broadcastBlockedByWalls;
-            SenseNearbyRobotRange = senseNearbyRobotRange;
-            SenseNearbyRobotBlockedByWalls = senseNearbyRobotBlockedByWalls;
+            SenseNearbyAgentsRange = senseNearbyAgentsRange;
+            SenseNearbyAgentsBlockedByWalls = senseNearbyAgentsBlockedByWalls;
 
             // SLAM
             AutomaticallyUpdateSlam = automaticallyUpdateSlam;
@@ -63,7 +60,7 @@ namespace Maes.Robot {
             // 
             EnvironmentTagReadRange = environmentTagReadRange;
             RelativeMoveSpeed = relativeMoveSpeed;
-            RobotRelativeSize = robotRelativeSize;
+            AgentRelativeSize = agentRelativeSize;
         }
     }
 }

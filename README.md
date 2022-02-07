@@ -56,9 +56,12 @@ Automatically Update SLAM | Bool  | Disables SLAM, which disables position appro
 SLAM Update Interval in Ticks | Int   | SLAM map and position is updated at this rate (10 ticks = 1 second)                                                                
 SLAM Synchronize Interval in Ticks | Int   | If agents are within broadcast range (also includes blocked by walls) they will syncronize maps at this rate (10 ticks = 1 second) 
 SLAM Positioning Inaccuracy | Float | An agent's actual position may differ by up to this value in both the x and y axis                                        
-Distribute SLAM | Bool  | If true, agents will attempt to distribute their slam at every slam synchronize interval                                  
-Environment Tag Read Range | Float | Determines as which range measured in tiles an agent can read a tag                                                       
-Lidar Range | Float | Used for ray tracing the vision of an agent. Everything within line of sight and this distance will be marked as explored 
+Distribute SLAM | Bool  | If true, agents will attempt to distribute their slam at every slam synchronize interval
+Slam Ray Trace Count | Int | Optional value for setting amount of ray traces for each agent. If not set, it will automatically be calculated depending on the range of the SlamRayTraces.
+Slam Ray Trace Range | Float | Used for ray tracing the vision of an agent. Everything within line of sight and this distance will be marked as explored
+Environment Tag Read Range | Float | Determines as which range measured in tiles an agent can read a tag
+Relative Move Speed | Float | Speed relative to tiles. A bigger map with bigger doors would f.x. make the agent move relatively slower, if this parameter remained the same. 1.0f is default. 10f would make the force placed on the robot 10x larger
+Robot Relative Size | Float | A value in ]0, 1.0] that determines the size of the agent relative to a single tile in the environment
 
 Agent Spawn Configuration:
 
@@ -66,8 +69,7 @@ Name      | Type                                                                
 ------------- |--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------
 Spawn Configuration | Delegate with type: List\<MonaRobot> RobotFactory(SimulationMap<bool> map, RobotSpawner spawner) | A function for spawning the agents in a specific way. Presets are available, such as "togetherAroundPoint" and "spawnInBiggestRoom". Additionally, "inHallways" is a building map type specific spawning configuration
 Number of Agents | Int                                                                                              | The number of agents spawned into the map                                                                                                                 
-Random Seed | Int                                                                                              | Used to provide agents with individual random seeds                                                                                                       
-Agent Relative Size | Float in ]0, 1.0]                                                                                | The size of an agent relative to a tile. i.e. if this value is 1 an agent's diameter is equal to the length of a tile.                                    
+Random Seed | Int                                                                                              | Used to provide agents with individual random seeds                                                                                                                                                                           | The size of an agent relative to a tile. i.e. if this value is 1 an agent's diameter is equal to the length of a tile.                                    
 Exploration Algorithm | Delegate with type: IExplorationAlgorithm CreateAlgorithmDelegate(int randomSeed)                | A function that returns an instance of the exploration algorithm with its dependencies injected (e.g. random seed or other algorithm specific parameters) 
 
 
