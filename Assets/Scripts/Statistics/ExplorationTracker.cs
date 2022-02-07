@@ -24,12 +24,14 @@ namespace Maes.Statistics {
         private int _currentTick = 0;
 
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
-        public float CoverageProportion => _tilesCovered / (float)_coverableTiles;
+        // Coverage is measured in 'mini-tiles'. Each large map tile consists of 4 mini-tiles,
+        // where each mini-tile is composed of two triangles
+        public float CoverageProportion => _miniTilesCovered / (float)_coverableTiles;
         
-        private readonly bool[,] _isCovered;
-        private readonly bool[,] _canBeCovered;
+        // private readonly bool[,] _isCovered;
+        // private readonly bool[,] _canBeCovered;
         private readonly int _coverableTiles;
-        private int _tilesCovered = 0;
+        private int _miniTilesCovered = 0;
         private bool _isFirstTick = true;
         private RobotConstraints _constraints;
 
@@ -61,20 +63,21 @@ namespace Maes.Statistics {
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.ScaledOffset);
             _rayTracingMap = new RayTracingMap<ExplorationCell>(_explorationMap);
             
-            // Coverage
-            _isCovered = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
-            _canBeCovered = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
-            var openTiles = 0;
-            for (int x = 0; x < collisionMap.WidthInTiles; x++) {
-                for (int y = 0; y < collisionMap.WidthInTiles; y++) {
-                    var tile = collisionMap.GetTileByLocalCoordinate(x, y);
-                    if (tile.IsTrueForAll(isSolid => !isSolid)) {
-                        openTiles++;
-                        _canBeCovered[x, y] = true;
-                    }
-                }
-            }
+            // // Coverage
+            // _isCovered = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
+            // _canBeCovered = new bool[collisionMap.WidthInTiles, collisionMap.HeightInTiles];
+            // var openTiles = 0;
+            // for (int x = 0; x < collisionMap.WidthInTiles; x++) {
+            //     for (int y = 0; y < collisionMap.WidthInTiles; y++) {
+            //         var tile = collisionMap.GetTileByLocalCoordinate(x, y);
+            //         if (tile.IsTrueForAll(isSolid => !isSolid)) {
+            //             openTiles++;
+            //             _canBeCovered[x, y] = true;
+            //         }
+            //     }
+            // }
             
+            // Register all coverable tiles
             for (int x = 0; x < collisionMap.WidthInTiles; x++) {
                 for (int y = 0; y < collisionMap.WidthInTiles; y++) {
                     var tileCells = collisionMap.GetTileByLocalCoordinate(x, y).GetTriangles();
@@ -87,11 +90,10 @@ namespace Maes.Statistics {
                         var isSolid = tileCells[i] || tileCells[i+1];
                         explorationCells[i].CanBeCovered = !isSolid;
                         explorationCells[i+1].CanBeCovered = !isSolid;
+                        if (!isSolid) _coverableTiles++;
                     }
                 }
             }
-
-            _coverableTiles = openTiles;
         }
 
         public void CreateSnapShot() {
@@ -100,14 +102,14 @@ namespace Maes.Statistics {
         }
 
         private void UpdateCoverageStatus(MonaRobot robot) {
-            var robotPos = GetCoverageMapPosition(robot.transform.position);
-            if (_canBeCovered[robotPos.x, robotPos.y]) {
-                if (!_isCovered[robotPos.x, robotPos.y]) {
-                    // Not covered before
-                    _tilesCovered++;
-                    _isCovered[robotPos.x, robotPos.y] = true;    
-                }
+            var (triangle1, triangle2) = _explorationMap.GetMiniTileTrianglesByWorldCoordinates(robot.transform.position);
+            
+            if (triangle1.CanBeCovered) {
+                if (!triangle1.IsCovered) 
+                    _miniTilesCovered++; // This tile was not covered before, register as first coverage
                 
+                triangle1.RegisterCoverage(_currentTick);
+                triangle2.RegisterCoverage(_currentTick);
             }
         }
 
