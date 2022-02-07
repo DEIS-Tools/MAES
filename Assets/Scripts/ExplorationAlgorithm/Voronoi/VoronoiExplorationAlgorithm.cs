@@ -82,7 +82,7 @@ namespace Maes.ExplorationAlgorithm.Voronoi {
             _random = new Random(randomSeed);
             _constraints = constraints;
             _markExploredRangeInCoarseTiles = markExploredRangeInCoarseTiles;
-            _voronoiRegionMaxDistance = (int)constraints.SenseNearbyRobotRange;
+            _voronoiRegionMaxDistance = (int)constraints.SenseNearbyAgentsRange;
         }
         
         public void SetController(Robot2DController controller) {

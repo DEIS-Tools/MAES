@@ -474,7 +474,7 @@ namespace Maes.Map.MapGen {
 
             var collisionMap = CreateCaveMapWithMesh(caveConfig, wallHeight);
 
-            ResizePlaneToFitMap(caveConfig.bitMapHeight, caveConfig.bitMapWidth, caveConfig.scaling);
+            ResizePlaneToFitMap(caveConfig.bitMapHeight, caveConfig.bitMapWidth);
 
             MovePlaneAndWallRoofToFitWallHeight(wallHeight);
 
