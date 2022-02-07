@@ -75,13 +75,18 @@ namespace Maes.Statistics {
                 }
             }
             
-            // TODO Mandag: Find a way to initialize the is coverable value for all triangles
             for (int x = 0; x < collisionMap.WidthInTiles; x++) {
                 for (int y = 0; y < collisionMap.WidthInTiles; y++) {
-                    var tile = collisionMap.GetTileByLocalCoordinate(x, y);
+                    var tileCells = collisionMap.GetTileByLocalCoordinate(x, y).GetTriangles();
+                    var explorationCells = _explorationMap.GetTileByLocalCoordinate(x, y).GetTriangles();
 
                     for (int i = 0; i < 4; i++) {
-                        
+                        // If any of the two triangles forming the 'mini-tile' are solid,
+                        // then mark both triangles as non-coverable
+                        // (because the entire mini-tile will be considered as solid in the SLAM map used by the robots)
+                        var isSolid = tileCells[i] || tileCells[i+1];
+                        explorationCells[i].CanBeCovered = !isSolid;
+                        explorationCells[i+1].CanBeCovered = !isSolid;
                     }
                 }
             }
