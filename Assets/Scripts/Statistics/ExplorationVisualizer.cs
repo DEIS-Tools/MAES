@@ -133,7 +133,7 @@ namespace Maes.Statistics {
         }
 
         // Colors each triangle depending on its current state
-        public void SetExplored(List<int> triangles) {
+        public void AddExplored(List<int> triangles) {
             foreach (var index in triangles) {
                 var vertexIndex = index * 3;
                 _colors[vertexIndex] = _exploredColor;

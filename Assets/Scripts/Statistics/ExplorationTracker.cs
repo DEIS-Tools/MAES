@@ -18,6 +18,7 @@ namespace Maes.Statistics {
 
         private readonly int _totalExplorableTriangles;
         public int ExploredTriangles { get; private set; }
+        public int CoveredMiniTiles { get; private set; }
 
         [CanBeNull] private MonaRobot _selectedRobot;
 
@@ -26,12 +27,11 @@ namespace Maes.Statistics {
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
         // Coverage is measured in 'mini-tiles'. Each large map tile consists of 4 mini-tiles,
         // where each mini-tile is composed of two triangles
-        public float CoverageProportion => _miniTilesCovered / (float)_coverableTiles;
+        public float CoverageProportion => CoveredMiniTiles / (float) _coverableTiles;
         
         // private readonly bool[,] _isCovered;
         // private readonly bool[,] _canBeCovered;
         private readonly int _coverableTiles;
-        private int _miniTilesCovered = 0;
         private bool _isFirstTick = true;
         private RobotConstraints _constraints;
 
@@ -106,7 +106,7 @@ namespace Maes.Statistics {
             
             if (triangle1.CanBeCovered) {
                 if (!triangle1.IsCovered) 
-                    _miniTilesCovered++; // This tile was not covered before, register as first coverage
+                    CoveredMiniTiles++; // This tile was not covered before, register as first coverage
                 
                 triangle1.RegisterCoverage(_currentTick);
                 triangle2.RegisterCoverage(_currentTick);
@@ -123,7 +123,11 @@ namespace Maes.Statistics {
             var shouldUpdateSlamMap = _constraints.AutomaticallyUpdateSlam && 
                                       _currentTick % _constraints.SlamUpdateIntervalInTicks == 0; 
             PerformRayTracing(robots, shouldUpdateSlamMap);
-            
+
+            // In the first tick, the robot does not have a position in the slam map.
+            if (!_isFirstTick) foreach (var robot in robots) UpdateCoverageStatus(robot);
+            else _isFirstTick = false;
+
             if (_constraints.AutomaticallyUpdateSlam) {
                 // Always update estimated robot position and rotation
                 // regardless of whether the slam map was updated this tick
@@ -144,10 +148,6 @@ namespace Maes.Statistics {
 
             foreach (var robot in robots) {
                 SlamMap slamMap = null;
-
-                // In the first tick, the robot does not have a position in the slam map.
-                if (!_isFirstTick) UpdateCoverageStatus(robot);
-                else _isFirstTick = false;
 
                 if (shouldUpdateSlamMap) {
                     slamMap = robot.Controller.SlamMap;
@@ -181,8 +181,9 @@ namespace Maes.Statistics {
                 }
             }
 
+            // Show  When a robot is selected 
             if (_selectedRobot == null)
-                _explorationVisualizer.SetExplored(newlyExploredTriangles);
+                _explorationVisualizer.AddExplored(newlyExploredTriangles);
             else
                 _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, false);
 
