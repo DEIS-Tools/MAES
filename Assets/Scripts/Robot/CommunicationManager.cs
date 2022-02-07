@@ -252,7 +252,7 @@ namespace Maes.Robot {
         }
 
         public void DepositTag(EnvironmentTaggingMap.ITag tag, Vector2 position) {
-            var pos = position + _rayTracingMap._map.ScaledOffset;
+            var pos = position + _rayTracingMap._map._offset;
             var placedTag = _environmentTaggingMap.AddTag(pos, tag);
 
             if (GlobalSettings.ShowEnvironmentTags) {
@@ -261,7 +261,7 @@ namespace Maes.Robot {
         }
 
         public void RemoveTagAt(Vector2 position) {
-            var pos = position + _rayTracingMap._map.ScaledOffset;
+            var pos = position + _rayTracingMap._map._offset;
             _visualizer.RemoveEnvironmentTagAt(pos);
         }
 
