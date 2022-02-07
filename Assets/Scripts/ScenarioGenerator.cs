@@ -29,17 +29,17 @@ namespace Maes {
             var robotConstraintsLVD = new RobotConstraints(
                 broadcastRange: 0,
                 broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 20f,
-                senseNearbyRobotBlockedByWalls: true,
+                senseNearbyAgentsRange: 20f,
+                senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 20f,
+                slamRayTraceRange: 20f,
                 relativeMoveSpeed: 1f,
-                robotRelativeSize: 0.6f
+                agentRelativeSize: 0.6f
             );
             
             for (int i = 0; i < runs; i++) { 
@@ -58,8 +58,7 @@ namespace Maes {
                         45,
                         10,
                         10,
-                        1,
-                        1f);
+                        1);
                     var buildingConfig = new BuildingMapConfig(
                         width,
                         height,
@@ -115,22 +114,22 @@ namespace Maes {
             var width = 50;
             var height = 50;
             SimulationEndCriteriaDelegate hasFinishedFunc =
-                (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime);
+                (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime || simulation.ExplorationTracker.ExploredProportion > 0.995f);
 
             var robotConstraints = new RobotConstraints(
                 broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 7f,
-                senseNearbyRobotBlockedByWalls: true,
+                senseNearbyAgentsRange: 7f,
+                senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 4.0f,
-                lidarRange: 7.0f,
+                slamRayTraceRange: 7.0f,
                 relativeMoveSpeed: 10f,
-                robotRelativeSize: 0.6f
+                agentRelativeSize: 0.6f
             );
 
             for (int i = 0; i < 1; i++) {
@@ -145,8 +144,7 @@ namespace Maes {
                     45,
                     10,
                     10,
-                    1,
-                    1f);
+                    1);
                 var buildingConfig = new BuildingMapConfig(
                     width,
                     height,
@@ -223,65 +221,65 @@ namespace Maes {
             var robotConstraintsLVD = new RobotConstraints(
                 broadcastRange: 0,
                 broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 7f,
-                senseNearbyRobotBlockedByWalls: true,
+                senseNearbyAgentsRange: 7f,
+                senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f,
+                slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
-                robotRelativeSize: 0.6f
+                agentRelativeSize: 0.6f
             );
             
             var robotConstraintsTNF = new RobotConstraints(
                 broadcastRange: 15,
                 broadcastBlockedByWalls: true,
-                senseNearbyRobotRange: 12f,
-                senseNearbyRobotBlockedByWalls: true,
+                senseNearbyAgentsRange: 12f,
+                senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f,
+                slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
-                robotRelativeSize: 0.6f
+                agentRelativeSize: 0.6f
             );
             
             var robotConstraintsRBW = new RobotConstraints(
                 broadcastRange: 0,
                 broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 0,
-                senseNearbyRobotBlockedByWalls: false,
+                senseNearbyAgentsRange: 0,
+                senseNearbyAgentsBlockedByWalls: false,
                 automaticallyUpdateSlam: false,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: false,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f,
+                slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
-                robotRelativeSize: 0.6f
+                agentRelativeSize: 0.6f
             );
             
             var robotConstraintsSSB = new RobotConstraints(
                 broadcastRange: float.MaxValue,
                 broadcastBlockedByWalls: false,
-                senseNearbyRobotRange: 7.0f,
-                senseNearbyRobotBlockedByWalls: false,
+                senseNearbyAgentsRange: 7.0f,
+                senseNearbyAgentsBlockedByWalls: false,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f, 
                 distributeSlam: true,
                 environmentTagReadRange: 0f,
-                lidarRange: 7f,
+                slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
-                robotRelativeSize: 0.6f
+                agentRelativeSize: 0.6f
             ); 
 
             for (int i = 0; i < runs; i++) { 
@@ -303,8 +301,7 @@ namespace Maes {
                         45,
                         10,
                         10,
-                        1,
-                        1f);
+                        1);
                     var buildingConfig = new BuildingMapConfig(
                         width,
                         height,
@@ -368,8 +365,7 @@ namespace Maes {
                     0,
                     10,
                     1,
-                    1,
-                    1f);
+                    1);
 
                 var buildingConfig = new BuildingMapConfig(
                     50,
@@ -386,17 +382,17 @@ namespace Maes {
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: float.MaxValue,
                     broadcastBlockedByWalls: false,
-                    senseNearbyRobotRange: 10f,
-                    senseNearbyRobotBlockedByWalls: true,
+                    senseNearbyAgentsRange: 10f,
+                    senseNearbyAgentsBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.2f, 
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7f,
+                    slamRayTraceRange: 7f,
                     relativeMoveSpeed: 1f,
-                    robotRelativeSize: 0.6f
+                    agentRelativeSize: 0.6f
                 );
 
                 if (i % 2 != 0) {
@@ -451,8 +447,7 @@ namespace Maes {
                     0,
                     10,
                     1,
-                    1,
-                    1f);
+                    1);
 
                 var buildingConfig = new BuildingMapConfig(
                     30,
@@ -470,17 +465,17 @@ namespace Maes {
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
                     broadcastBlockedByWalls: true,
-                    senseNearbyRobotRange: 10f,
-                    senseNearbyRobotBlockedByWalls: true,
+                    senseNearbyAgentsRange: 10f,
+                    senseNearbyAgentsBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f,
+                    slamRayTraceRange: 7.0f,
                     relativeMoveSpeed: 1f,
-                    robotRelativeSize: 0.6f
+                    agentRelativeSize: 0.6f
                 );
 
                 if (i % 2 == 0) {
@@ -536,8 +531,7 @@ namespace Maes {
                     48,
                     10,
                     1,
-                    1,
-                    1f);
+                    1);
 
                 var buildingConfig = new BuildingMapConfig(
                     60,
@@ -554,17 +548,17 @@ namespace Maes {
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: 15.0f,
                     broadcastBlockedByWalls: true,
-                    senseNearbyRobotRange: 5f,
-                    senseNearbyRobotBlockedByWalls: true,
+                    senseNearbyAgentsRange: 5f,
+                    senseNearbyAgentsBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.5f,
                     distributeSlam: false,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f,
+                    slamRayTraceRange: 7.0f,
                     relativeMoveSpeed: 1f,
-                    robotRelativeSize: 0.6f
+                    agentRelativeSize: 0.6f
                 );
                 
                 /*scenarios.Enqueue(new SimulationScenario(
@@ -615,8 +609,7 @@ namespace Maes {
                     48,
                     10,
                     1,
-                    1,
-                    1f);
+                    1);
 
                 var buildingConfig = new BuildingMapConfig(
                     60,
@@ -633,17 +626,17 @@ namespace Maes {
                 var robotConstraints = new RobotConstraints(
                     broadcastRange: float.MaxValue,
                     broadcastBlockedByWalls: false,
-                    senseNearbyRobotRange: 5f,
-                    senseNearbyRobotBlockedByWalls: true,
+                    senseNearbyAgentsRange: 5f,
+                    senseNearbyAgentsBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
                     slamUpdateIntervalInTicks: 10,
                     slamSynchronizeIntervalInTicks: 10,
                     slamPositionInaccuracy: 0.2f,
                     distributeSlam: true,
                     environmentTagReadRange: 4.0f,
-                    lidarRange: 7.0f,
+                    slamRayTraceRange: 7.0f,
                     relativeMoveSpeed: 1f,
-                    robotRelativeSize: 0.6f
+                    agentRelativeSize: 0.6f
                 );
 
                 scenarios.Enqueue(new SimulationScenario(
@@ -680,8 +673,7 @@ namespace Maes {
                 48,
                 10,
                 1,
-                1,
-                1f);
+                1);
 
             var buildingConfig = new BuildingMapConfig(
                 200,
@@ -698,17 +690,17 @@ namespace Maes {
             var robotConstraints = new RobotConstraints(
                 broadcastRange: 15.0f,
                 broadcastBlockedByWalls: true,
-                senseNearbyRobotRange: 5f,
-                senseNearbyRobotBlockedByWalls: true,
+                senseNearbyAgentsRange: 5f,
+                senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 10,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f,
                 distributeSlam: false,
                 environmentTagReadRange: 4.0f,
-                lidarRange: 7f,
+                slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
-                robotRelativeSize: 0.6f
+                agentRelativeSize: 0.6f
             );
             
             scenarios.Enqueue(new SimulationScenario(

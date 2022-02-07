@@ -61,7 +61,7 @@ namespace Maes.Map
                 robots.Add(CreateRobot(
                     x: tile.x,
                     y: tile.y,
-                    relativeSize: RobotConstraints.RobotRelativeSize,
+                    relativeSize: RobotConstraints.AgentRelativeSize,
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
                     collisionMap: collisionMap,
@@ -152,7 +152,7 @@ namespace Maes.Map
                 var robot = CreateRobot(
                     x: spawnTile.x,
                     y: spawnTile.y,
-                    relativeSize: RobotConstraints.RobotRelativeSize,
+                    relativeSize: RobotConstraints.AgentRelativeSize,
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
                     collisionMap: collisionMap,
@@ -209,7 +209,7 @@ namespace Maes.Map
                 robots.Add(CreateRobot(
                     x: tile.x,
                     y: tile.y,
-                    relativeSize: RobotConstraints.RobotRelativeSize,
+                    relativeSize: RobotConstraints.AgentRelativeSize,
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
                     collisionMap: collisionMap,

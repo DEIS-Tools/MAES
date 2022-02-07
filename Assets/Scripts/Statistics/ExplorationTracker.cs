@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Maes.Map;
@@ -97,27 +98,32 @@ namespace Maes.Statistics {
         }
 
         private Vector2Int GetCoverageMapPosition(Vector2 robotPosition) {
-            robotPosition = robotPosition - _collisionMap._offset;
+            robotPosition -= _collisionMap._offset;
             return new Vector2Int((int)robotPosition.x, (int)robotPosition.y);
         }
         
         public void LogicUpdate(List<MonaRobot> robots) {
-            // Reduce ray traces to 5 / sec (Every 2 logic ticks)
-            if (_currentTick % 2 != 0) {
-                _currentTick++;
-                foreach (var robot in robots) {
-                    if (robot.Controller.Constraints.AutomaticallyUpdateSlam) {
-                        var slamMap = robot.Controller.SlamMap;
-                        slamMap.UpdateApproxPosition(robot.transform.position);
-                        slamMap.SetApproxRobotAngle(robot.Controller.GetForwardAngleRelativeToXAxis());
-                    }
-                }
-
-                return;
-            }
+            // The user can specify the tick interval at which the slam map is updated. 
+            var shouldUpdateSlamMap = _constraints.AutomaticallyUpdateSlam && 
+                                      _currentTick % _constraints.SlamUpdateIntervalInTicks == 0; 
+            PerformRayTracing(robots, shouldUpdateSlamMap);
             
+            if (_constraints.AutomaticallyUpdateSlam) {
+                // Always update estimated robot position and rotation
+                // regardless of whether the slam map was updated this tick
+                foreach (var robot in robots) {
+                    var slamMap = robot.Controller.SlamMap;
+                    slamMap.UpdateApproxPosition(robot.transform.position);
+                    slamMap.SetApproxRobotAngle(robot.Controller.GetForwardAngleRelativeToXAxis());
+                }
+            }
+
+            _currentTick++;
+        }
+
+        private void PerformRayTracing(List<MonaRobot> robots, bool shouldUpdateSlamMap) {
             List<int> newlyExploredTriangles = new List<int>();
-            float visibilityRange = _constraints.LidarRange;
+            float visibilityRange = _constraints.SlamRayTraceRange;
 
             foreach (var robot in robots) {
                 SlamMap slamMap = null;
@@ -126,17 +132,18 @@ namespace Maes.Statistics {
                 if (!_isFirstTick) UpdateCoverageStatus(robot);
                 else _isFirstTick = false;
 
-                if (robot.Controller.Constraints.AutomaticallyUpdateSlam) {
+                if (shouldUpdateSlamMap) {
                     slamMap = robot.Controller.SlamMap;
                     slamMap.ResetRobotVisibility();
-                    slamMap.UpdateApproxPosition(robot.transform.position);
-                    slamMap.SetApproxRobotAngle(robot.Controller.GetForwardAngleRelativeToXAxis());
                 }
-
-                int traces = 90;
-                float ratio = 360 / traces;
+                
+                // Use amount of traces specified by user, or calculate circumference and use trace at interval of 4
+                float tracesPerMeter = 2f;
+                int traces = _constraints.SlamRayTraceCount ?? (int) (Math.PI * 2f * _constraints.SlamRayTraceRange * tracesPerMeter);
+                float traceIntervalDegrees = 360f / traces;
+                //Debug.Log($"Trace count  {traces} vs {(int) (Math.PI * 2f * _constraints.SlamRayTraceRange)}");
                 for (int i = 0; i < traces; i++) {
-                    var angle = i * ratio;
+                    var angle = i * traceIntervalDegrees;
                     // Avoid ray casts that can be parallel to the lines of a triangle
                     if (angle % 45 == 0) angle += 0.5f;
 
@@ -146,12 +153,11 @@ namespace Maes.Statistics {
                             newlyExploredTriangles.Add(index);
                             ExploredTriangles++;
                         }
+                        
+                        // Update robot slam map if present (slam map only non-null if 'shouldUpdateSlamMap' is true)
+                        slamMap?.SetExploredByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
+                        slamMap?.SetCurrentlyVisibleByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
 
-                        if (robot.Controller.Constraints.AutomaticallyUpdateSlam) {
-                            slamMap.SetExploredByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
-                            slamMap.SetCurrentlyVisibleByTriangle(triangleIndex: index, isOpen: cell.isExplorable);
-                        } 
-                            
                         return cell.isExplorable;
                     });
                 }
@@ -162,7 +168,6 @@ namespace Maes.Statistics {
             else
                 _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, false);
 
-            _currentTick++;
         }
 
         public void SetVisualizedRobot([CanBeNull] MonaRobot robot) {
