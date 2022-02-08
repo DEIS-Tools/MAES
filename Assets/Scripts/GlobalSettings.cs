@@ -21,6 +21,7 @@ namespace Maes {
         // Statistics
         public static readonly bool ShouldWriteCSVResults = false;
         public static readonly int TicksPerStatsSnapShot = 10;
+        public static readonly bool PopulateAdjacencyAndComGroupsEveryTick = false;
 
         public static readonly string StatisticsOutPutPath =
             Environment.GetFolderPath(Environment.SpecialFolder.Desktop) 

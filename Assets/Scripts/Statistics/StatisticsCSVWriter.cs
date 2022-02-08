@@ -1,18 +1,25 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using UnityEngine;
+using static Maes.Statistics.ExplorationTracker;
 
 namespace Maes.Statistics {
     public class StatisticsCSVWriter {
         private readonly Simulation _simulation;
-        private readonly List<ExplorationTracker.SnapShot<float>> _coverSnapShots;
-        private readonly List<ExplorationTracker.SnapShot<float>> _exploreSnapshots;
+        private readonly List<SnapShot<float>> _coverSnapShots;
+        private readonly List<SnapShot<float>> _exploreSnapshots;
+        private readonly Dictionary<int, SnapShot<bool>> _allAgentsConnectedSnapShots;
+        public readonly Dictionary<int, SnapShot<float>> _biggestClusterPercentageSnapShots;
         private string path;
         
 
         public StatisticsCSVWriter(Simulation simulation, string fileNameWithoutExtension) {
             _coverSnapShots = simulation.ExplorationTracker._coverSnapshots;
             _exploreSnapshots = simulation.ExplorationTracker._exploreSnapshots;
+            _allAgentsConnectedSnapShots = simulation._communicationManager.CommunicationTracker.InterconnectionSnapShot;
+            _biggestClusterPercentageSnapShots = simulation._communicationManager.CommunicationTracker.BiggestClusterPercentageSnapshots;
+            
             _simulation = simulation;
             var resultForFileName =
                 $"e{(int)_exploreSnapshots[_exploreSnapshots.Count - 1].Value}-c{(int)_coverSnapShots[_coverSnapShots.Count - 1].Value}";
@@ -22,13 +29,24 @@ namespace Maes.Statistics {
 
         public void CreateCSVFile(string separator) {
             var csv = new StringBuilder();
-
-            csv.AppendLine("tick,covered,explored");
+            csv.AppendLine("Tick,Covered,Explored,Agents Interconnected, Biggest Cluster %");
             for (int i = 0; i < _coverSnapShots.Count; i++) {
-                var tick = "" + _coverSnapShots[i].Tick;
+                var tick = _coverSnapShots[i].Tick;
                 var coverage = "" + _coverSnapShots[i].Value;
                 var explore = "" +_exploreSnapshots[i].Value;
-                csv.AppendLine($"{tick}{separator}{coverage}{separator}{explore}");
+
+                StringBuilder line = new StringBuilder();
+                line.Append($"{"" + tick}{separator}{coverage}{separator}{explore}{separator}");
+                if (_allAgentsConnectedSnapShots.ContainsKey(tick)) {
+                    var allAgentsInterconnectedString = _allAgentsConnectedSnapShots[tick].Value ? "" + 1 : "" + 0;
+                    line.Append($"{allAgentsInterconnectedString}");
+                }
+                line.Append($"{separator}");
+                if (_biggestClusterPercentageSnapShots.ContainsKey(tick)) {
+                    line.Append($"{_biggestClusterPercentageSnapShots[tick].Value}");
+                }
+
+                csv.AppendLine(line.ToString());
             }
             
             File.WriteAllText(path, csv.ToString());

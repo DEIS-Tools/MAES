@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Maes.Map;
+using Maes.Statistics;
 using Maes.Utilities;
 using UnityEngine;
 using Vector2 = UnityEngine.Vector2;
@@ -29,7 +30,11 @@ namespace Maes.Robot {
         
         private Dictionary<(int, int), CommunicationInfo> _adjacencyMatrix = null;
 
+        private List<HashSet<int>> _communicationGroups = null; 
+
         private float _robotRelativeSize;
+
+        public CommunicationTracker CommunicationTracker;
 
         private readonly struct Message {
             public readonly object Contents;
@@ -43,7 +48,7 @@ namespace Maes.Robot {
             }
         }
 
-        private readonly struct CommunicationInfo {
+        public readonly struct CommunicationInfo {
             public readonly float Distance;
             public readonly float Angle;
             public readonly int WallsCellsPassedThrough;
@@ -79,6 +84,7 @@ namespace Maes.Robot {
             _visualizer = visualizer;
             _rayTracingMap = new RayTracingMap<bool>(collisionMap);
             _environmentTaggingMap = new EnvironmentTaggingMap(collisionMap);
+            CommunicationTracker = new CommunicationTracker(robotConstraints);
         }
 
         public void SetRobotRelativeSize(float robotRelativeSize) {
@@ -147,19 +153,33 @@ namespace Maes.Robot {
             _readableMessages.AddRange(_queuedMessages);
             _queuedMessages.Clear();
             _localTickCounter++;
+            
+            if (GlobalSettings.PopulateAdjacencyAndComGroupsEveryTick) {
+                PopulateAdjacencyMatrix();
+                _communicationGroups = GetCommunicationGroups();
+            }
+            
             if (_robotConstraints.AutomaticallyUpdateSlam // Are we using slam?
                 && _robotConstraints.DistributeSlam // Are we distributing slam?
                 && _localTickCounter % _robotConstraints.SlamSynchronizeIntervalInTicks == 0) {
                 SynchronizeSlamMaps();
             }
 
-            _adjacencyMatrix = null;
+            if (GlobalSettings.ShouldWriteCSVResults && _localTickCounter % GlobalSettings.TicksPerStatsSnapShot == 0) {
+                CommunicationTracker.AdjacencyMatrixRef = _adjacencyMatrix;
+                if (_communicationGroups == null) _communicationGroups = GetCommunicationGroups();
+                CommunicationTracker.CommunicationGroups = _communicationGroups;
+                CommunicationTracker.CreateSnapshot(_localTickCounter);
+            }
+
+            this._adjacencyMatrix = null;
+            this._communicationGroups = null;
         }
 
         private void SynchronizeSlamMaps() {
-            var slamGroups = GetCommunicationGroups();
+            this._communicationGroups = GetCommunicationGroups();
 
-            foreach (var group in slamGroups) {
+            foreach (var group in _communicationGroups) {
                 var slamMaps = group
                     .Select(id => _robots.Find(r => r.id == id))
                     .Select(r => r.Controller.SlamMap)
@@ -195,6 +215,7 @@ namespace Maes.Robot {
                         var r1Vector2 = new Vector2(r1Position.x, r1Position.y);
                         var r2Vector2 = new Vector2(r2Position.x, r2Position.y);
                         // TODO: This fails 2 / 40.000.000.000 times. We need unit tests to eliminate the problems.
+                        // TODO: Can't we improve performance by only going through half the matrix? - Philip
                         // They are caused by rays with angles of 45 or 90 degrees.
                         try {
                             _adjacencyMatrix[(r1.id, r2.id)] = RayTraceCommunication(r1Vector2, r2Vector2);
