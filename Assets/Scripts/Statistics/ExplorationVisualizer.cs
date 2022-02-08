@@ -25,6 +25,9 @@ namespace Maes.Statistics {
 
         private const int ResolutionMultiplier = 2;
         private SimulationMap<ExplorationCell> _map;
+        
+        public delegate Color32 CellToColor(ExplorationCell cell);
+        
 
         public void SetMap(SimulationMap<ExplorationCell> newMap, Vector3 offset) {
             _map = newMap;
@@ -132,19 +135,39 @@ namespace Maes.Statistics {
             }
         }
 
-        // Colors each triangle depending on its current state
-        public void AddExplored(List<int> triangles) {
-            foreach (var index in triangles) {
+        /// <summary>
+        /// Updates the color of ALL triangles based on the given map and color function. This is an expensive operation
+        /// and should be only called when it is necessary to replace all colors. To update a small subset of the
+        /// triangles use the <see cref="UpdateColors"/> function.
+        /// </summary>
+        public void SetAllColors(SimulationMap<ExplorationCell> map, CellToColor cellToColor) {
+            foreach (var (index, cell) in map) {
                 var vertexIndex = index * 3;
-                _colors[vertexIndex] = _exploredColor;
-                _colors[vertexIndex + 1] = _exploredColor;
-                _colors[vertexIndex + 2] = _exploredColor;
+                var color = cellToColor(cell);
+                _colors[vertexIndex] = color;
+                _colors[vertexIndex + 1] = color;
+                _colors[vertexIndex + 2] = color;
             }
 
             mesh.colors32 = _colors;
         }
 
-        // Colors each triangle depending on its current state
+        /// <summary>
+        /// Updates the colors of the triangles corresponding to the given list of exploration cells.
+        /// </summary>
+        public void UpdateColors(List<(int, ExplorationCell)> cellsWithIndices, CellToColor cellToColor) {
+            foreach (var (index, cell) in cellsWithIndices) {
+                var vertexIndex = index * 3;
+                var color = cellToColor(cell);
+                _colors[vertexIndex] = color;
+                _colors[vertexIndex + 1] = color;
+                _colors[vertexIndex + 2] = color;
+            }
+
+            mesh.colors32 = _colors;
+        }
+
+        // Colors every triangle depending on its current state
         public void SetExplored(SimulationMap<ExplorationCell> map) {
             foreach (var (index, cell) in map) {
                 var vertexIndex = index * 3;
@@ -159,8 +182,20 @@ namespace Maes.Statistics {
 
             mesh.colors32 = _colors;
         }
+        
+        // Updates the explored triangles to include the given triangles
+        public void AddExplored(List<int> triangles) {
+            foreach (var index in triangles) {
+                var vertexIndex = index * 3;
+                _colors[vertexIndex] = _exploredColor;
+                _colors[vertexIndex + 1] = _exploredColor;
+                _colors[vertexIndex + 2] = _exploredColor;
+            }
 
-        public void SetExplored(SlamMap map, bool onlyShowCurrentlyVisible = false) {
+            mesh.colors32 = _colors;
+        }
+
+        public void ShowSlamMap(SlamMap map, bool onlyShowCurrentlyVisible = false) {
             var triangleCount = _triangles.Count / 3;
             for (int i = 0; i < triangleCount; i += 2) {
                 var status = onlyShowCurrentlyVisible ? map.GetVisibleTileByTriangleIndex(i) : map.GetTileByTriangleIndex(i);

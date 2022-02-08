@@ -25,7 +25,7 @@ namespace Maes.Statistics {
         private int _currentTick = 0;
 
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
-        // Coverage is measured in 'mini-tiles'. Each large map tile consists of 4 mini-tiles,
+        // Coverage is measured in 'mini-tiles'. Each large map tile consists of 4 mini-tiles, // TODO: Is is actually measured in mini tiles?
         // where each mini-tile is composed of two triangles
         public float CoverageProportion => CoveredMiniTiles / (float) _coverableTiles;
         
@@ -185,7 +185,7 @@ namespace Maes.Statistics {
             if (_selectedRobot == null)
                 _explorationVisualizer.AddExplored(newlyExploredTriangles);
             else
-                _explorationVisualizer.SetExplored(_selectedRobot.Controller.SlamMap, false);
+                _explorationVisualizer.ShowSlamMap(_selectedRobot.Controller.SlamMap, false);
 
         }
 
@@ -194,7 +194,7 @@ namespace Maes.Statistics {
 
             if (robot != null) { 
                 // Update map to show slam map for given robot
-                _explorationVisualizer.SetExplored(robot.Controller.SlamMap, false);
+                _explorationVisualizer.ShowSlamMap(robot.Controller.SlamMap, false);
             } else {
                 // Update map to show exploration progress for all robots
                 _explorationVisualizer.SetExplored(_explorationMap);
