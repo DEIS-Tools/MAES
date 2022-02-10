@@ -10,10 +10,10 @@ namespace Maes.Statistics {
         public MeshFilter meshFilter;
         private Mesh mesh;
 
-        private readonly Color32 _solidColor = new Color32(0, 0, 0, 255);
-        private readonly Color32 _exploredColor = new Color32(32, 130, 57, 255);
-        private readonly Color32 _slamSeenColor = new Color32(50, 120, 180, 255);
-        private readonly Color32 _unexploredColor = new Color32(170, 170, 170, 255);
+        public static readonly Color32 SolidColor = new Color32(0, 0, 0, 255);
+        public static readonly Color32 ExploredColor = new Color32(32, 130, 57, 255);
+        public static readonly Color32 UnexploredColor = new Color32(170, 170, 170, 255);
+        public static readonly Color32 SlamSeenColor = new Color32(50, 120, 180, 255);
 
         private int _widthInTiles, _heightInTiles;
         private int _widthInVertices, _heightInVertices;
@@ -125,9 +125,9 @@ namespace Maes.Statistics {
             int count = 0;
             foreach (var (index, explorationCell) in newMap) {
                 var vertexIndex = index * 3;
-                var color = _solidColor;
+                var color = SolidColor;
                 if (explorationCell.IsExplorable)
-                    color = explorationCell.IsExplored ? _exploredColor : _unexploredColor;
+                    color = explorationCell.IsExplored ? ExploredColor : UnexploredColor;
                 _colors[vertexIndex] = color;
                 _colors[vertexIndex + 1] = color;
                 _colors[vertexIndex + 2] = color;
@@ -171,9 +171,9 @@ namespace Maes.Statistics {
         public void SetExplored(SimulationMap<ExplorationCell> map) {
             foreach (var (index, cell) in map) {
                 var vertexIndex = index * 3;
-                var color = _unexploredColor;
-                if (!cell.IsExplorable) color = _solidColor;
-                else if (cell.IsExplored) color = _exploredColor;
+                var color = UnexploredColor;
+                if (!cell.IsExplorable) color = SolidColor;
+                else if (cell.IsExplored) color = ExploredColor;
 
                 _colors[vertexIndex] = color;
                 _colors[vertexIndex + 1] = color;
@@ -187,9 +187,9 @@ namespace Maes.Statistics {
         public void AddExplored(List<int> triangles) {
             foreach (var index in triangles) {
                 var vertexIndex = index * 3;
-                _colors[vertexIndex] = _exploredColor;
-                _colors[vertexIndex + 1] = _exploredColor;
-                _colors[vertexIndex + 2] = _exploredColor;
+                _colors[vertexIndex] = ExploredColor;
+                _colors[vertexIndex + 1] = ExploredColor;
+                _colors[vertexIndex + 2] = ExploredColor;
             }
 
             mesh.colors32 = _colors;
@@ -200,9 +200,9 @@ namespace Maes.Statistics {
             for (int i = 0; i < triangleCount; i += 2) {
                 var status = onlyShowCurrentlyVisible ? map.GetVisibleTileByTriangleIndex(i) : map.GetTileByTriangleIndex(i);
                 Color32 color;
-                if (status == SlamMap.SlamTileStatus.Unseen) color = _unexploredColor;
-                else if (status == SlamMap.SlamTileStatus.Solid) color = _solidColor;
-                else color = _slamSeenColor;
+                if (status == SlamMap.SlamTileStatus.Unseen) color = UnexploredColor;
+                else if (status == SlamMap.SlamTileStatus.Solid) color = SolidColor;
+                else color = SlamSeenColor;
 
                 // Set the color of the next 2 triangles (as a single Slam tile covers 2 triangles)
                 var vertexIndex = i * 3;

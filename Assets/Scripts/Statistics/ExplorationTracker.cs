@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Maes.Map;
 using Maes.Robot;
 using UnityEngine;
+using static Maes.Statistics.ExplorationVisualizer;
 
 namespace Maes.Statistics {
     public class ExplorationTracker {
@@ -37,6 +38,32 @@ namespace Maes.Statistics {
 
         public List<SnapShot<float>> _coverSnapshots = new List<SnapShot<float>>();
         public List<SnapShot<float>> _exploreSnapshots = new List<SnapShot<float>>();
+
+        public class VisualizationMode {
+            public static VisualizationMode 
+                SelectedRobotCurrentlyVisibleArea = new VisualizationMode(1, tracker => ExplorationColor),
+                SelectedRobotSlamMap = new VisualizationMode(1, tracker => ),
+                AllRobotsExploration,
+                AllRobotsCoverage,
+                AllRobotsHeatMap;
+            
+            // The amount of ticks between each update
+            public int UpdateIntervalTicks;
+            
+            public delegate CellToColor ColorFunctionProvider(ExplorationTracker tracker);
+            // Function that returns a cell color function for use in the next update
+            public ColorFunctionProvider GetColorFunction;
+
+            public VisualizationMode(int updateIntervalTicks, ColorFunctionProvider getColorFunction) {
+                UpdateIntervalTicks = updateIntervalTicks;
+                GetColorFunction = getColorFunction;
+            }
+
+            private static Color32 ExplorationColor(ExplorationCell cell) {
+                if (!cell.IsExplorable) return ExplorationVisualizer.SolidColor;
+                return (cell.IsExplored) ? ExplorationVisualizer.ExploredColor : ExplorationVisualizer.UnexploredColor;
+            }
+        }
 
         public struct SnapShot<TValue> {
             public readonly int Tick;
