@@ -5,7 +5,6 @@ using Maes.Map;
 using Maes.Map.Visualization;
 using Maes.Robot;
 using UnityEngine;
-using static Maes.Statistics.ExplorationVisualizer;
 
 namespace Maes.Statistics {
     public class ExplorationTracker {
@@ -109,12 +108,14 @@ namespace Maes.Statistics {
         private void UpdateCoverageStatus(MonaRobot robot) {
             var (triangle1, triangle2) = _explorationMap.GetMiniTileTrianglesByWorldCoordinates(robot.transform.position);
             
-            if (triangle1.CanBeCovered) {
-                if (!triangle1.IsCovered) 
+            if (triangle1.Item2.CanBeCovered) {
+                if (!triangle1.Item2.IsCovered) {
                     CoveredMiniTiles++; // This tile was not covered before, register as first coverage
+                    _currentVisualizationMode.RegisterNewlyCoveredCells(robot, new List<(int, ExplorationCell)> {triangle1, triangle2});
+                }
                 
-                triangle1.RegisterCoverage(_currentTick);
-                triangle2.RegisterCoverage(_currentTick);
+                triangle1.Item2.RegisterCoverage(_currentTick);
+                triangle2.Item2.RegisterCoverage(_currentTick);
             }
         }
 
@@ -195,6 +196,24 @@ namespace Maes.Statistics {
         public void SetVisualizedRobot([CanBeNull] MonaRobot robot) {
             _selectedRobot = robot;
             // TODO: Change to visualization mode
+        }
+
+        public void ShowAllRobotExploration() {
+            _currentVisualizationMode = new AllRobotsExplorationVisualization(_explorationMap);
+            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer);
+        }
+
+        public void ShowAllRobotCoverage() {
+            _currentVisualizationMode = new AllRobotsCoverageVisualization(_explorationMap);
+            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer);
+        }
+
+        public void ShowAllRobotCoverageHeatMap() {
+            
+        }
+
+        public void ShowAllRobotExplorationMap() {
+            
         }
     }
 }

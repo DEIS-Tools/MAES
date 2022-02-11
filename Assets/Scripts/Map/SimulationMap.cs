@@ -49,15 +49,17 @@ namespace Maes.Map {
         
         /// <param name="worldCoordinate">A coordinate that is within the bounds of the mini-tile in world space</param>
         /// <returns> the pair of triangles that make up the 'mini-tile' at the given world location</returns>
-        public (TCell, TCell) GetMiniTileTrianglesByWorldCoordinates(Vector2 worldCoordinate) {
+        public ((int, TCell), (int, TCell)) GetMiniTileTrianglesByWorldCoordinates(Vector2 worldCoordinate) {
             var localCoordinate = ToLocalMapCoordinate(worldCoordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             var triangles = tile.GetTriangles();
             var mainTriangleIndex = tile.CoordinateDecimalsToTriangleIndex(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
+            // Calculate the number of triangles preceding this tile
+            int triangleOffset = ((int) localCoordinate.x) * 8 + ((int) localCoordinate.y) * WidthInTiles * 8;
             if (mainTriangleIndex % 2 == 0)
-                return (triangles[mainTriangleIndex], triangles[mainTriangleIndex + 1]);
+                return ((mainTriangleIndex + triangleOffset, triangles[mainTriangleIndex]), (mainTriangleIndex + 1 + triangleOffset, triangles[mainTriangleIndex + 1]));
             else
-                return (triangles[mainTriangleIndex - 1], triangles[mainTriangleIndex]);
+                return ((mainTriangleIndex - 1 + triangleOffset, triangles[mainTriangleIndex - 1]), (mainTriangleIndex + triangleOffset, triangles[mainTriangleIndex]));
         }
 
         // Returns the triangle cell at the given world position

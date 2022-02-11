@@ -4,29 +4,33 @@ using Maes.Statistics;
 using UnityEngine;
 
 namespace Maes.Map.Visualization {
-    public class AllRobotsExplorationVisualization : VisualizationMode {
-
+    public class AllRobotsCoverageVisualization : VisualizationMode {
+        
         private SimulationMap<ExplorationCell> _explorationMap;
-        private HashSet<(int, ExplorationCell)> _newlyExploredCells = new HashSet<(int, ExplorationCell)>();
+        private HashSet<(int, ExplorationCell)> _newlyCoveredCells = new HashSet<(int, ExplorationCell)>();
         private bool _hasBeenInitialized = false;
 
-        public AllRobotsExplorationVisualization(SimulationMap<ExplorationCell> explorationMap) {
+        public AllRobotsCoverageVisualization(SimulationMap<ExplorationCell> explorationMap) {
             _explorationMap = explorationMap;
         }
 
         public void RegisterNewlyExploredCells(MonaRobot robot, IEnumerable<(int, ExplorationCell)> exploredCells) {
-            foreach (var cellWithIndex in exploredCells)
-                _newlyExploredCells.Add(cellWithIndex);
+            /* Ignore exploration */
         }
 
         public void RegisterNewlyCoveredCells(MonaRobot robot, IEnumerable<(int, ExplorationCell)> coveredCells) {
-            /* Ignore coverage */
+            foreach (var cellWithIndex in coveredCells) {
+                _newlyCoveredCells.Add(cellWithIndex);
+                Debug.Log($"New coverage of cell {cellWithIndex.Item1}");
+            }
+
+            
         }
 
         public void UpdateVisualization(ExplorationVisualizer visualizer) {
             if (_hasBeenInitialized) {
-                visualizer.UpdateColors(_newlyExploredCells, ExplorationCellToColor);
-                _newlyExploredCells.Clear();
+                visualizer.UpdateColors(_newlyCoveredCells, ExplorationCellToColor);
+                _newlyCoveredCells.Clear();
             } else {
                 // In the first iteration of this visualizer overwrite all colors of previous visualization mode
                 visualizer.SetAllColors(_explorationMap, ExplorationCellToColor);
@@ -35,8 +39,8 @@ namespace Maes.Map.Visualization {
         }
         
         private static Color32 ExplorationCellToColor(ExplorationCell cell) {
-            if (!cell.IsExplorable) return ExplorationVisualizer.SolidColor;
-            return (cell.IsExplored) ? ExplorationVisualizer.ExploredColor : ExplorationVisualizer.StandardCellColor;
+            if (!cell.CanBeCovered) return ExplorationVisualizer.SolidColor;
+            return (cell.IsCovered) ? ExplorationVisualizer.CoveredColor : ExplorationVisualizer.StandardCellColor;
         }
     }
 }

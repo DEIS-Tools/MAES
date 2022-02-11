@@ -12,7 +12,7 @@ namespace Maes.Statistics {
 
         public static readonly Color32 SolidColor = new Color32(0, 0, 0, 255);
         public static readonly Color32 ExploredColor = new Color32(32, 130, 57, 255);
-        public static readonly Color32 UnexploredColor = new Color32(170, 170, 170, 255);
+        public static readonly Color32 StandardCellColor = new Color32(170, 170, 170, 255);
         public static readonly Color32 CoveredColor = new Color32(32, 80, 240, 255);
         public static readonly Color32 SlamSeenColor = new Color32(50, 120, 180, 255);
 
@@ -128,7 +128,7 @@ namespace Maes.Statistics {
                 var vertexIndex = index * 3;
                 var color = SolidColor;
                 if (explorationCell.IsExplorable)
-                    color = explorationCell.IsExplored ? ExploredColor : UnexploredColor;
+                    color = explorationCell.IsExplored ? ExploredColor : StandardCellColor;
                 _colors[vertexIndex] = color;
                 _colors[vertexIndex + 1] = color;
                 _colors[vertexIndex + 2] = color;
@@ -172,7 +172,7 @@ namespace Maes.Statistics {
         public void SetExplored(SimulationMap<ExplorationCell> map) {
             foreach (var (index, cell) in map) {
                 var vertexIndex = index * 3;
-                var color = UnexploredColor;
+                var color = StandardCellColor;
                 if (!cell.IsExplorable) color = SolidColor;
                 else if (cell.IsExplored) color = ExploredColor;
 
@@ -201,7 +201,7 @@ namespace Maes.Statistics {
             for (int i = 0; i < triangleCount; i += 2) {
                 var status = onlyShowCurrentlyVisible ? map.GetVisibleTileByTriangleIndex(i) : map.GetTileByTriangleIndex(i);
                 Color32 color;
-                if (status == SlamMap.SlamTileStatus.Unseen) color = UnexploredColor;
+                if (status == SlamMap.SlamTileStatus.Unseen) color = StandardCellColor;
                 else if (status == SlamMap.SlamTileStatus.Solid) color = SolidColor;
                 else color = SlamSeenColor;
 

@@ -20,7 +20,7 @@ namespace Maes {
         public SimulationInfoUIController simulationInfoUIController;
 
         private SimulationScenario _currentScenario;
-        private Simulation _currentSimulation;
+        public Simulation CurrentSimulation;
         private GameObject _simulationGameObject;
 
         public SimulationPlayState PlayState { get; }
@@ -92,14 +92,14 @@ namespace Maes {
         }
 
         private void CreateStatisticsFile() {
-            var csvWriter = new StatisticsCSVWriter(_currentSimulation,$"{_currentScenario.StatisticsFileName}");
+            var csvWriter = new StatisticsCSVWriter(CurrentSimulation,$"{_currentScenario.StatisticsFileName}");
             csvWriter.CreateCSVFile(",");
         }
 
         // Calls update on all children of SimulationContainer that are of type SimulationUnit
         private bool UpdateSimulation() {
-            if (_currentScenario != null && _currentScenario.HasFinishedSim(_currentSimulation)) {
-                if (GlobalSettings.ShouldWriteCSVResults && _currentScenario.HasFinishedSim(_currentSimulation))
+            if (_currentScenario != null && _currentScenario.HasFinishedSim(CurrentSimulation)) {
+                if (GlobalSettings.ShouldWriteCSVResults && _currentScenario.HasFinishedSim(CurrentSimulation))
                     CreateStatisticsFile();
                 RemoveCurrentSimulation();
             }
@@ -114,17 +114,17 @@ namespace Maes {
                 CreateSimulation(_scenarios.Dequeue());
             }
 
-            _currentSimulation.PhysicsUpdate();
+            CurrentSimulation.PhysicsUpdate();
             _physicsTicksSinceUpdate++;
             var shouldContinueSim = true;
             if (_physicsTicksSinceUpdate >= GlobalSettings.PhysicsTicksPerLogicUpdate) {
-                _currentSimulation.LogicUpdate();
+                CurrentSimulation.LogicUpdate();
                 _logicTicksCurrentSim++;
                 _physicsTicksSinceUpdate = 0;
                 if(GlobalSettings.ShouldWriteCSVResults 
                    && _logicTicksCurrentSim != 0 
                    && _logicTicksCurrentSim % GlobalSettings.TicksPerStatsSnapShot == 0) 
-                    _currentSimulation.ExplorationTracker.CreateSnapShot();
+                    CurrentSimulation.ExplorationTracker.CreateSnapShot();
                 UpdateStatisticsUI();
                 
                 
@@ -133,10 +133,10 @@ namespace Maes {
                     shouldContinueSim = false;
             }
 
-            var simulatedTimeSpan = TimeSpan.FromSeconds(_currentSimulation.SimulateTimeSeconds);
+            var simulatedTimeSpan = TimeSpan.FromSeconds(CurrentSimulation.SimulateTimeSeconds);
             var output = simulatedTimeSpan.ToString(@"hh\:mm\:ss");
-            SimulationStatusText.text = "Phys. ticks: " + _currentSimulation.SimulatedPhysicsTicks +
-                                        "\nLogic ticks: " + _currentSimulation.SimulatedLogicTicks +
+            SimulationStatusText.text = "Phys. ticks: " + CurrentSimulation.SimulatedPhysicsTicks +
+                                        "\nLogic ticks: " + CurrentSimulation.SimulatedLogicTicks +
                                         "\nSimulated: " + output;
             
             return shouldContinueSim;
@@ -145,29 +145,31 @@ namespace Maes {
         public void CreateSimulation(SimulationScenario scenario) {
             _currentScenario = scenario;
             _simulationGameObject = Instantiate(SimulationPrefab, transform);
-            _currentSimulation = _simulationGameObject.GetComponent<Simulation>();
-            _currentSimulation.SetScenario(scenario);
-            _currentSimulation.SimInfoUIController = simulationInfoUIController;
+            CurrentSimulation = _simulationGameObject.GetComponent<Simulation>();
+            CurrentSimulation.SetScenario(scenario);
+            CurrentSimulation.SimInfoUIController = simulationInfoUIController;
             _logicTicksCurrentSim = 0;
+
+            simulationInfoUIController.NotifyNewSimulation(CurrentSimulation);
         }
 
 
         private void UpdateStatisticsUI() {
-            simulationInfoUIController.UpdateStatistics(_currentSimulation);
-            if (_currentSimulation != null)
-                _currentSimulation.UpdateDebugInfo();
+            simulationInfoUIController.UpdateStatistics(CurrentSimulation);
+            if (CurrentSimulation != null)
+                CurrentSimulation.UpdateDebugInfo();
         }
 
         public void RemoveCurrentSimulation() {
             Destroy(_simulationGameObject);
             _currentScenario = null;
-            _currentSimulation = null;
+            CurrentSimulation = null;
             _simulationGameObject = null;
             _logicTicksCurrentSim = 0;
         }
 
         public Simulation GetCurrentSimulation() {
-            return _currentSimulation;
+            return CurrentSimulation;
         }
     }
 }

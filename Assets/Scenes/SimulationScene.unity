@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.43040666, g: 0.46535593, b: 0.4972127, a: 1}
+  m_IndirectSpecularColor: {r: 0.43040693, g: 0.4653563, b: 0.49721318, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -3548,6 +3548,11 @@ MonoBehaviour:
   ExplorationRateText: {fileID: 634102843}
   AlgorithmDebugText: {fileID: 1777978599}
   ControllerDebugText: {fileID: 1403450960}
+  AllExplorationButton: {fileID: 1653879697}
+  AllCoverageButton: {fileID: 331185320}
+  AllExplorationHeatMapButton: {fileID: 702142206}
+  AllCoverageHeatMapButton: {fileID: 1789417403}
+  simulator: {fileID: 1176058410}
 --- !u!1 &1285972636
 GameObject:
   m_ObjectHideFlags: 0
