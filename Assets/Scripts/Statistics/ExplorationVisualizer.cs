@@ -13,6 +13,7 @@ namespace Maes.Statistics {
         public static readonly Color32 SolidColor = new Color32(0, 0, 0, 255);
         public static readonly Color32 ExploredColor = new Color32(32, 130, 57, 255);
         public static readonly Color32 UnexploredColor = new Color32(170, 170, 170, 255);
+        public static readonly Color32 CoveredColor = new Color32(32, 80, 240, 255);
         public static readonly Color32 SlamSeenColor = new Color32(50, 120, 180, 255);
 
         private int _widthInTiles, _heightInTiles;
@@ -155,7 +156,7 @@ namespace Maes.Statistics {
         /// <summary>
         /// Updates the colors of the triangles corresponding to the given list of exploration cells.
         /// </summary>
-        public void UpdateColors(List<(int, ExplorationCell)> cellsWithIndices, CellToColor cellToColor) {
+        public void UpdateColors(IEnumerable<(int, ExplorationCell)> cellsWithIndices, CellToColor cellToColor) {
             foreach (var (index, cell) in cellsWithIndices) {
                 var vertexIndex = index * 3;
                 var color = cellToColor(cell);

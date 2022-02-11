@@ -10,6 +10,10 @@ namespace Maes.Map.Visualization {
         private HashSet<(int, ExplorationCell)> _newlyExploredCells = new HashSet<(int, ExplorationCell)>();
         private bool _hasBeenInitialized = false;
 
+        public AllRobotsExplorationVisualization(SimulationMap<ExplorationCell> explorationMap) {
+            _explorationMap = explorationMap;
+        }
+
         public void RegisterNewlyExploredCells(MonaRobot robot, IEnumerable<(int, ExplorationCell)> exploredCells) {
             foreach (var cellWithIndex in exploredCells)
                 _newlyExploredCells.Add(cellWithIndex);

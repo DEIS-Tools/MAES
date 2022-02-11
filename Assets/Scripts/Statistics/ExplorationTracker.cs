@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Maes.Map;
+using Maes.Map.Visualization;
 using Maes.Robot;
 using UnityEngine;
 using static Maes.Statistics.ExplorationVisualizer;
@@ -39,31 +40,7 @@ namespace Maes.Statistics {
         public List<SnapShot<float>> _coverSnapshots = new List<SnapShot<float>>();
         public List<SnapShot<float>> _exploreSnapshots = new List<SnapShot<float>>();
 
-        public class VisualizationMode {
-            public static VisualizationMode 
-                SelectedRobotCurrentlyVisibleArea = new VisualizationMode(1, tracker => ExplorationColor),
-                SelectedRobotSlamMap = new VisualizationMode(1, tracker => ),
-                AllRobotsExploration,
-                AllRobotsCoverage,
-                AllRobotsHeatMap;
-            
-            // The amount of ticks between each update
-            public int UpdateIntervalTicks;
-            
-            public delegate CellToColor ColorFunctionProvider(ExplorationTracker tracker);
-            // Function that returns a cell color function for use in the next update
-            public ColorFunctionProvider GetColorFunction;
-
-            public VisualizationMode(int updateIntervalTicks, ColorFunctionProvider getColorFunction) {
-                UpdateIntervalTicks = updateIntervalTicks;
-                GetColorFunction = getColorFunction;
-            }
-
-            private static Color32 ExplorationColor(ExplorationCell cell) {
-                if (!cell.IsExplorable) return ExplorationVisualizer.SolidColor;
-                return (cell.IsExplored) ? ExplorationVisualizer.ExploredColor : ExplorationVisualizer.UnexploredColor;
-            }
-        }
+        private VisualizationMode _currentVisualizationMode;
 
         public struct SnapShot<TValue> {
             public readonly int Tick;
@@ -85,6 +62,7 @@ namespace Maes.Statistics {
                     explorableTriangles++;
                 return new ExplorationCell(isExplorable: !isCellSolid);
             });
+            _currentVisualizationMode = new AllRobotsExplorationVisualization(_explorationMap);
             _totalExplorableTriangles = explorableTriangles;
             
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.ScaledOffset);
@@ -164,13 +142,14 @@ namespace Maes.Statistics {
                     slamMap.SetApproxRobotAngle(robot.Controller.GetForwardAngleRelativeToXAxis());
                 }
             }
-
+            
+            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer);
             _currentTick++;
         }
 
         // Updates both exploration tracker and robot slam maps
         private void PerformRayTracing(List<MonaRobot> robots, bool shouldUpdateSlamMap) {
-            List<int> newlyExploredTriangles = new List<int>();
+            List<(int, ExplorationCell)> newlyExploredTriangles = new List<(int, ExplorationCell)>();
             float visibilityRange = _constraints.SlamRayTraceRange;
 
             foreach (var robot in robots) {
@@ -195,7 +174,7 @@ namespace Maes.Statistics {
                             cell.IsExplored = true;
                             cell.LastExplorationTimeInTicks = _currentTick;
                             cell.ExplorationTimeInTicks += 1;
-                            newlyExploredTriangles.Add(index);
+                            newlyExploredTriangles.Add((index, cell));
                             ExploredTriangles++;
                         }
                         
@@ -206,26 +185,16 @@ namespace Maes.Statistics {
                         return cell.IsExplorable;
                     });
                 }
+                
+                // Register newly explored cells of this robot for visualization
+                _currentVisualizationMode.RegisterNewlyExploredCells(robot, newlyExploredTriangles);
+                newlyExploredTriangles.Clear();
             }
-
-            // Show  When a robot is selected 
-            if (_selectedRobot == null)
-                _explorationVisualizer.AddExplored(newlyExploredTriangles);
-            else
-                _explorationVisualizer.ShowSlamMap(_selectedRobot.Controller.SlamMap, false);
-
         }
 
         public void SetVisualizedRobot([CanBeNull] MonaRobot robot) {
             _selectedRobot = robot;
-
-            if (robot != null) { 
-                // Update map to show slam map for given robot
-                _explorationVisualizer.ShowSlamMap(robot.Controller.SlamMap, false);
-            } else {
-                // Update map to show exploration progress for all robots
-                _explorationVisualizer.SetExplored(_explorationMap);
-            }
+            // TODO: Change to visualization mode
         }
     }
 }
