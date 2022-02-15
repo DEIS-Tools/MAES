@@ -21,10 +21,7 @@ namespace Maes.Map.Visualization {
         public void RegisterNewlyCoveredCells(MonaRobot robot, IEnumerable<(int, ExplorationCell)> coveredCells) {
             foreach (var cellWithIndex in coveredCells) {
                 _newlyCoveredCells.Add(cellWithIndex);
-                Debug.Log($"New coverage of cell {cellWithIndex.Item1}");
             }
-
-            
         }
 
         public void UpdateVisualization(ExplorationVisualizer visualizer) {

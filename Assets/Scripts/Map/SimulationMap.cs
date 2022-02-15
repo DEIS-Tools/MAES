@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Maes.Map.MapGen;
 using Maes.Utilities;
 using UnityEngine;
@@ -44,6 +45,13 @@ namespace Maes.Map {
 
         public SimulationMapTile<TCell> GetTileByLocalCoordinate(int x, int y) {
             return _tiles[x, y];
+        }
+        
+        // Returns the cells of the tile at the given coordinate along with index of the first cell
+        public (int, List<TCell>) GetTileCellsByWorldCoordinate(Vector2 worldCoord) {
+            var localCoord = ToLocalMapCoordinate(worldCoord);
+            int triangleOffset = ((int) localCoord.x) * 8 + ((int) localCoord.y) * WidthInTiles * 8;
+            return (triangleOffset, _tiles[(int) localCoord.x, (int) localCoord.y].GetTriangles());
         }
         
         

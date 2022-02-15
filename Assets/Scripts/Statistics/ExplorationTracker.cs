@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Maes.Map;
 using Maes.Map.Visualization;
 using Maes.Robot;
+using Maes.Utilities;
 using UnityEngine;
 
 namespace Maes.Statistics {
@@ -87,7 +88,7 @@ namespace Maes.Statistics {
                     var tileCells = collisionMap.GetTileByLocalCoordinate(x, y).GetTriangles();
                     var explorationCells = _explorationMap.GetTileByLocalCoordinate(x, y).GetTriangles();
 
-                    for (int i = 0; i < 4; i++) {
+                    for (int i = 0; i < 8; i+=2) {
                         // If any of the two triangles forming the 'mini-tile' are solid,
                         // then mark both triangles as non-coverable
                         // (because the entire mini-tile will be considered as solid in the SLAM map used by the robots)
@@ -106,17 +107,64 @@ namespace Maes.Statistics {
         }
 
         private void UpdateCoverageStatus(MonaRobot robot) {
-            var (triangle1, triangle2) = _explorationMap.GetMiniTileTrianglesByWorldCoordinates(robot.transform.position);
-            
-            if (triangle1.Item2.CanBeCovered) {
-                if (!triangle1.Item2.IsCovered) {
-                    CoveredMiniTiles++; // This tile was not covered before, register as first coverage
-                    _currentVisualizationMode.RegisterNewlyCoveredCells(robot, new List<(int, ExplorationCell)> {triangle1, triangle2});
-                }
-                
-                triangle1.Item2.RegisterCoverage(_currentTick);
-                triangle2.Item2.RegisterCoverage(_currentTick);
+            // var (cellOffset, cells) = _explorationMap.GetTileCellsByWorldCoordinate(robot.transform.position);
+            // var newlyCoveredCells = new List<(int, ExplorationCell)> {};
+            // for (int i = 0; i < cells.Count; i++) {
+            //     var cell = cells[i];
+            //     if (!cell.CanBeCovered)
+            //         continue;
+            //
+            //     if (!cell.IsCovered) {
+            //         CoveredMiniTiles++;
+            //         newlyCoveredCells.Add((cellOffset + i, cell));
+            //     }
+            //     
+            //     cell.RegisterCoverage(_currentTick);
+            // }
+            //
+            // _currentVisualizationMode.RegisterNewlyCoveredCells(robot, newlyCoveredCells);
+
+            var newlyCoveredCells = new List<(int, ExplorationCell)> {};
+            var robotPos = robot.transform.position;
+            var coverageRadius = robot.Controller.Constraints.RobotRelativeSize / 4f;
+            // The maximum distance between the robot and the center of a tile
+            // that would cause that tile to be considered covered 
+            var centerCoverageRadius = coverageRadius + 0.25f;
+            // Loop through alle tiles currently near the robot
+            for (int x = -1; x <= 1; x++) {
+                for (int y = -1; y <= 1; y++) {
+                    var tilePosition = (Vector2) robotPos + new Vector2(x * 0.5f, y * 0.5f);
+                    var tileCenterX = Mathf.Floor(tilePosition.x) + 0.25f + Mathf.Round(x % 1.0f) * 0.5f;
+                    var tileCenterY = Mathf.Floor(tilePosition.y) + 0.25f + Mathf.Round(x % 1.0f) * 0.5f;
+                    Debug.Log($"Checking coverage for tile with coordinates ({tileCenterX}, {tileCenterY})");
+                    
+                    // Only consider this tiles
+                    if (Mathf.Max(Mathf.Abs(tileCenterX - robotPos.x), Mathf.Abs(tileCenterY - robotPos.y)) > centerCoverageRadius)
+                        continue;
+
+                    var (triangle1, triangle2) = 
+                    _explorationMap.GetMiniTileTrianglesByWorldCoordinates(tilePosition);
+                    if (!triangle1.Item2.IsCovered) {
+                        CoveredMiniTiles++; // This tile was not covered before, register as first coverage
+                        newlyCoveredCells.Add(triangle1);
+                        newlyCoveredCells.Add(triangle2);
+                    }
+                    
+                    triangle1.Item2.RegisterCoverage(_currentTick);
+                    triangle2.Item2.RegisterCoverage(_currentTick);
+                }   
             }
+            _currentVisualizationMode.RegisterNewlyCoveredCells(robot, newlyCoveredCells);
+            // var (triangle1, triangle2) = _explorationMap.GetMiniTileTrianglesByWorldCoordinates(robot.transform.position);
+            //  if (triangle1.Item2.CanBeCovered) {
+            //      if (!triangle1.Item2.IsCovered) {
+            //          CoveredMiniTiles++; // This tile was not covered before, register as first coverage
+            //          _currentVisualizationMode.RegisterNewlyCoveredCells(robot, new List<(int, ExplorationCell)> {triangle1, triangle2});
+            //      }
+            //      
+            //      triangle1.Item2.RegisterCoverage(_currentTick);
+            //      triangle2.Item2.RegisterCoverage(_currentTick);
+            //  }
         }
 
         private Vector2Int GetCoverageMapPosition(Vector2 robotPosition) {

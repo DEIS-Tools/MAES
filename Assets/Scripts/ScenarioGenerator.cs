@@ -110,10 +110,10 @@ namespace Maes {
          /// </summary>
         public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            var numberOfRobots = 2;
+            var numberOfRobots = 1;
             var maxRunTime = 60 * Minute;
-            var width = 50;
-            var height = 50;
+            var width = 100;
+            var height = 100;
             SimulationEndCriteriaDelegate hasFinishedFunc =
                 (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime);
 
@@ -129,7 +129,7 @@ namespace Maes {
                 distributeSlam: true,
                 environmentTagReadRange: 4.0f,
                 slamRayTraceRange: 7.0f,
-                relativeMoveSpeed: 10f,
+                relativeMoveSpeed: 1f,
                 robotRelativeSize: 0.6f
             );
 
@@ -168,6 +168,18 @@ namespace Maes {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: hasFinishedFunc,
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                            map, 
+                            randomSeed, 
+                            numberOfRobots,
+                            createAlgorithmDelegate),
+                        robotConstraints: robotConstraints,
+                        $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
+                    ));
+                    scenarios.Enqueue(new SimulationScenario(
+                        seed: randomSeed,
+                        hasFinishedSim: hasFinishedFunc,
                         mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
@@ -177,18 +189,6 @@ namespace Maes {
                             createAlgorithmDelegate),
                         robotConstraints: robotConstraints,
                         $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
-                    ));
-                    scenarios.Enqueue(new SimulationScenario(
-                        seed: randomSeed,
-                        hasFinishedSim: hasFinishedFunc,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
-                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
-                            map, 
-                            randomSeed, 
-                            numberOfRobots,
-                            createAlgorithmDelegate),
-                        robotConstraints: robotConstraints,
-                        $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
                     ));
                 }
             }

@@ -18,7 +18,7 @@ namespace Maes.ExplorationAlgorithm.RandomBallisticWalk {
         }
 
         public void UpdateLogic() {
-            _robotController.ReadNearbyTags();
+            //_robotController.ReadNearbyTags();
             var status = _robotController.GetStatus();
             if (status == RobotStatus.Idle) {
                 if (!_hasJustRotated) {
