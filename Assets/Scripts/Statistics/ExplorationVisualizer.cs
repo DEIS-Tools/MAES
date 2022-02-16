@@ -15,6 +15,8 @@ namespace Maes.Statistics {
         public static readonly Color32 StandardCellColor = new Color32(170, 170, 170, 255);
         public static readonly Color32 CoveredColor = new Color32(32, 80, 240, 255);
         public static readonly Color32 SlamSeenColor = new Color32(50, 120, 180, 255);
+        public static readonly Color32 WarmColor = new Color32(200, 60, 60, 255);
+        public static readonly Color32 ColdColor = new Color32(50, 120, 180, 255);
 
         private int _widthInTiles, _heightInTiles;
         private int _widthInVertices, _heightInVertices;

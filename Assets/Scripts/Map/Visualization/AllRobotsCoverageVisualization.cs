@@ -24,7 +24,7 @@ namespace Maes.Map.Visualization {
             }
         }
 
-        public void UpdateVisualization(ExplorationVisualizer visualizer) {
+        public void UpdateVisualization(ExplorationVisualizer visualizer, int currentTick) {
             if (_hasBeenInitialized) {
                 visualizer.UpdateColors(_newlyCoveredCells, ExplorationCellToColor);
                 _newlyCoveredCells.Clear();

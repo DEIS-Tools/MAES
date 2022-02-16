@@ -23,7 +23,7 @@ namespace Maes.Map.Visualization {
             /* Ignore coverage */
         }
 
-        public void UpdateVisualization(ExplorationVisualizer visualizer) {
+        public void UpdateVisualization(ExplorationVisualizer visualizer, int currentTick) {
             if (_hasBeenInitialized) {
                 visualizer.UpdateColors(_newlyExploredCells, ExplorationCellToColor);
                 _newlyExploredCells.Clear();

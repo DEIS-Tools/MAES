@@ -195,7 +195,7 @@ namespace Maes.Statistics {
                 }
             }
             
-            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer);
+            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);
             _currentTick++;
         }
 
@@ -222,12 +222,15 @@ namespace Maes.Statistics {
                     if (angle % 45 == 0) angle += 0.5f;
 
                     _rayTracingMap.Raytrace(robot.transform.position, angle, visibilityRange, (index, cell) => {
-                        if (cell.IsExplorable && !cell.IsExplored) {
-                            cell.IsExplored = true;
-                            cell.LastExplorationTimeInTicks = _currentTick;
-                            cell.ExplorationTimeInTicks += 1;
-                            newlyExploredTriangles.Add((index, cell));
-                            ExploredTriangles++;
+                        if (cell.IsExplorable ){
+                            if (!cell.IsExplored) {
+                                cell.IsExplored = true;
+                                cell.LastExplorationTimeInTicks = _currentTick;
+                                cell.ExplorationTimeInTicks += 1;
+                                newlyExploredTriangles.Add((index, cell));
+                                ExploredTriangles++;
+                            }
+                            cell.RegisterExploration(_currentTick);
                         }
                         
                         // Update robot slam map if present (slam map only non-null if 'shouldUpdateSlamMap' is true)
@@ -251,20 +254,21 @@ namespace Maes.Statistics {
 
         public void ShowAllRobotExploration() {
             _currentVisualizationMode = new AllRobotsExplorationVisualization(_explorationMap);
-            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer);
+            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);
         }
 
         public void ShowAllRobotCoverage() {
             _currentVisualizationMode = new AllRobotsCoverageVisualization(_explorationMap);
-            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer);
+            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);
         }
 
         public void ShowAllRobotCoverageHeatMap() {
             
         }
 
-        public void ShowAllRobotExplorationMap() {
-            
+        public void ShowAllRobotExplorationHeatMap() {
+            _currentVisualizationMode = new ExplorationHeatMapVisualization(_explorationMap);
+            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);
         }
     }
 }

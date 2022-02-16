@@ -8,7 +8,7 @@ namespace Maes.Map.Visualization {
         
         public void RegisterNewlyExploredCells(MonaRobot robot, IEnumerable<(int, ExplorationCell)> exploredCells);
         public void RegisterNewlyCoveredCells(MonaRobot robot, IEnumerable<(int, ExplorationCell)> coveredCells);
-        public void UpdateVisualization(ExplorationVisualizer visualizer);
+        public void UpdateVisualization(ExplorationVisualizer visualizer, int currentTick);
 
     }
 }
