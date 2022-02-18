@@ -126,23 +126,20 @@ namespace Maes.Statistics {
 
             var newlyCoveredCells = new List<(int, ExplorationCell)> {};
             var robotPos = robot.transform.position;
-            var coverageRadius = robot.Controller.Constraints.RobotRelativeSize / 4f;
+            var coverageRadius = robot.Controller.Constraints.RobotRelativeSize / 3f;
             // The maximum distance between the robot and the center of a tile
             // that would cause that tile to be considered covered 
             var centerCoverageRadius = coverageRadius + 0.25f;
+            var robotMiniTileCenterX = (float) Math.Truncate(robotPos.x) + Mathf.Round(robotPos.x - (float) Math.Truncate(robotPos.x)) * 0.5f + ((robotPos.x < 0) ? -0.25f : 0.25f);
+            var robotMiniTileCenterY = (float) Math.Truncate(robotPos.y) + Mathf.Round(robotPos.y - (float) Math.Truncate(robotPos.y)) * 0.5f + ((robotPos.y < 0) ? -0.25f : 0.25f);
+            var robotMiniTilePos = new Vector2(robotMiniTileCenterX, robotMiniTileCenterY); 
+            Debug.Log($"---------Current position {(Vector2) robotPos} corresponding to mini tile ({robotMiniTileCenterX}, {robotMiniTileCenterY})-----------");
             // Loop through alle tiles currently near the robot
-            Debug.Log($"---------Current position {(Vector2) robotPos}-----------");    
             for (int x = -1; x <= 1; x++) {
                 for (int y = -1; y <= 1; y++) {
-                    var tilePosition = (Vector2) robotPos + new Vector2(x * 0.5f, y * 0.5f);
-                    var centerOffsetX = tilePosition.x < 0 ? -0.25f : 0.25f;
-                    var centerOffsetY = tilePosition.y < 0 ? -0.25f : 0.25f;
-                    var tileCenterX = Mathf.Floor(tilePosition.x) + centerOffsetX + Mathf.Round(Mathf.Abs(tilePosition.x) % 1.0f) * 0.5f;
-                    var tileCenterY = Mathf.Floor(tilePosition.y) + centerOffsetY + Mathf.Round(Mathf.Abs(tilePosition.y) % 1.0f) * 0.5f;
-                    Debug.Log($"Checking coverage for tile with coordinates ({tileCenterX}, {tileCenterY})");
-                    
+                    var tilePosition = robotMiniTilePos + new Vector2(x * 0.5f, y * 0.5f);
                     // Only consider this tile if they are within coverage range in obth x- and y-axis
-                    if (Mathf.Max(Mathf.Abs(tileCenterX - robotPos.x), Mathf.Abs(tileCenterY - robotPos.y)) > centerCoverageRadius)
+                    if (Mathf.Max(Mathf.Abs(tilePosition.x - robotPos.x), Mathf.Abs(tilePosition.y - robotPos.y)) > centerCoverageRadius)
                         continue;
 
                     var (triangle1, triangle2) = 
