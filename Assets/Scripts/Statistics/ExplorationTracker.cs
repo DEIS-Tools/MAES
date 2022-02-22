@@ -132,8 +132,7 @@ namespace Maes.Statistics {
             var centerCoverageRadius = coverageRadius + 0.25f;
             var robotMiniTileCenterX = (float) Math.Truncate(robotPos.x) + Mathf.Round(robotPos.x - (float) Math.Truncate(robotPos.x)) * 0.5f + ((robotPos.x < 0) ? -0.25f : 0.25f);
             var robotMiniTileCenterY = (float) Math.Truncate(robotPos.y) + Mathf.Round(robotPos.y - (float) Math.Truncate(robotPos.y)) * 0.5f + ((robotPos.y < 0) ? -0.25f : 0.25f);
-            var robotMiniTilePos = new Vector2(robotMiniTileCenterX, robotMiniTileCenterY); 
-            Debug.Log($"---------Current position {(Vector2) robotPos} corresponding to mini tile ({robotMiniTileCenterX}, {robotMiniTileCenterY})-----------");
+            var robotMiniTilePos = new Vector2(robotMiniTileCenterX, robotMiniTileCenterY);
             // Loop through alle tiles currently near the robot
             for (int x = -1; x <= 1; x++) {
                 for (int y = -1; y <= 1; y++) {

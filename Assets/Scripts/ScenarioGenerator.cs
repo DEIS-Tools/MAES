@@ -110,7 +110,7 @@ namespace Maes {
          /// </summary>
         public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            var numberOfRobots = 1;
+            var numberOfRobots = 10;
             var maxRunTime = 60 * Minute;
             var width = 100;
             var height = 100;
@@ -160,8 +160,8 @@ namespace Maes {
                     1);
                 
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>() {
-                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
                     ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
+                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
                     ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
                 };
                 foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
