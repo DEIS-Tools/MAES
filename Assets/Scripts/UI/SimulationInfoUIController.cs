@@ -50,6 +50,7 @@ namespace Maes.UI {
             
             AllCoverageHeatMapButton.onClick.AddListener(() => {
                 SelectVisualizationButton(AllCoverageHeatMapButton);
+                ExecuteAndRememberMapVisualizationModification((sim) => sim?.ExplorationTracker.ShowAllRobotCoverageHeatMap());
             });
         }
 

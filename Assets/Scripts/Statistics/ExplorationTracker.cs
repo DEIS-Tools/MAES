@@ -259,7 +259,8 @@ namespace Maes.Statistics {
         }
 
         public void ShowAllRobotCoverageHeatMap() {
-            
+            _currentVisualizationMode = new CoverageHeatMapVisualization(_explorationMap);
+            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);
         }
 
         public void ShowAllRobotExplorationHeatMap() {
