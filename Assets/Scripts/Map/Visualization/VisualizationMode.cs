@@ -11,4 +11,12 @@ namespace Maes.Map.Visualization {
         public void UpdateVisualization(ExplorationVisualizer visualizer, int currentTick);
 
     }
+    
+    public readonly struct VisibleCell {
+    
+    }
+    
+    public readonly struct CoveredCell {
+    
+    }
 }

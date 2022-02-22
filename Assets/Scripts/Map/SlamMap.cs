@@ -15,6 +15,7 @@ namespace Maes.Map {
         
         private SlamTileStatus[,] _tiles;
         public Dictionary<Vector2Int, SlamTileStatus> _currentlyVisibleTiles;
+        public HashSet<int> _currentlyVisibleTriangles = new HashSet<int>();
         private SimulationMap<bool> _collisionMap;
         private IPathFinder _pathFinder;
 
@@ -98,11 +99,12 @@ namespace Maes.Map {
 
         public void ResetRobotVisibility() {
             _currentlyVisibleTiles = new Dictionary<Vector2Int, SlamTileStatus>();
+            _currentlyVisibleTriangles.Clear();
         }
 
         public void SetCurrentlyVisibleByTriangle(int triangleIndex, bool isOpen) {
             var localCoordinate = TriangleIndexToCoordinate(triangleIndex);
-
+            _currentlyVisibleTriangles.Add(triangleIndex);
             
             if (!_currentlyVisibleTiles.ContainsKey(localCoordinate)) {
                 var newStatus = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
