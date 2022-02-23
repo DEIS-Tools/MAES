@@ -27,7 +27,7 @@ namespace Maes {
         [CanBeNull] private MonaRobot _selectedRobot;
         public bool HasSelectedRobot() => _selectedRobot != null;
         public ExplorationTracker ExplorationTracker { get; private set; }
-        private CommunicationManager _communicationManager;
+        public CommunicationManager _communicationManager;
 
         // The debugging visualizer provides 
         private DebuggingVisualizer _debugVisualizer = new DebuggingVisualizer();
@@ -44,7 +44,7 @@ namespace Maes {
             RobotSpawner.RobotConstraints = scenario.RobotConstraints;
             
             _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
-            _communicationManager.SetRobotRelativeSize(scenario.RobotConstraints.RobotRelativeSize);
+            _communicationManager.SetRobotRelativeSize(scenario.RobotConstraints.AgentRelativeSize);
             foreach (var robot in _robots)
                 robot.OnRobotSelected = SetSelectedRobot;
             

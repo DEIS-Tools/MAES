@@ -32,10 +32,13 @@ namespace Maes {
             Physics.autoSimulation = false;
             Physics2D.simulationMode = SimulationMode2D.Script;
 
-            _scenarios = ScenarioGenerator.GenerateYoutubeVideoScenarios();
-            //_scenarios = ScenarioGenerator.GenerateSsbScenarios();
+            // _scenarios = ScenarioGenerator.GenerateYoutubeVideoScenarios();
+            _scenarios = ScenarioGenerator.GenerateSsbScenarios();
             // _scenarios = ScenarioGenerator.GenerateTnfScenarios();
             CreateSimulation(_scenarios.Dequeue());
+            if (Application.isBatchMode) {
+                AttemptSetPlayState(SimulationPlayState.FastAsPossible);
+            }
         }
 
         public SimulationPlayState AttemptSetPlayState(SimulationPlayState targetState) {
@@ -59,7 +62,12 @@ namespace Maes {
         // This method is responsible for executing simulation updates at an appropriate speed, to provide simulation in
         // real time (or whatever speed setting is chosen)
         private void FixedUpdate() {
-            if (_playState == SimulationPlayState.Paused) return;
+            if (_playState == SimulationPlayState.Paused) {
+                if (Application.isBatchMode) {
+                    Application.Quit(0);
+                }
+                return;
+            }
 
             long startTimeMillis = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             int millisPerFixedUpdate = (int) (1000f * Time.fixedDeltaTime);

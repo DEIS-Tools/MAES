@@ -18,9 +18,8 @@ namespace Maes.Map {
         public HashSet<int> _currentlyVisibleTriangles = new HashSet<int>();
         private SimulationMap<bool> _collisionMap;
         private IPathFinder _pathFinder;
-
-        private readonly float _scale;
-        private readonly Vector2 _scaledOffset;
+        
+        private readonly Vector2 _offset;
         private readonly RobotConstraints _robotConstraints;
         private float _lastInaccuracyX = 0f;
         private float _lastInaccuracyY = 0f;
@@ -43,16 +42,16 @@ namespace Maes.Map {
             _randomSeed = randomSeed;
             _widthInTiles = collisionMap.WidthInTiles * 2;
             _heightInTiles = collisionMap.HeightInTiles * 2;
-            _scaledOffset = collisionMap.ScaledOffset;
+            _offset = collisionMap._offset;
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
 
             _currentlyVisibleTiles = new Dictionary<Vector2Int, SlamTileStatus>();
             this.random = new Random(randomSeed);
             _pathFinder = new AStar();
             
-            CoarseMap = new CoarseGrainedMap(this, collisionMap.WidthInTiles, collisionMap.HeightInTiles, _scaledOffset);
+            CoarseMap = new CoarseGrainedMap(this, collisionMap.WidthInTiles, collisionMap.HeightInTiles, _offset);
             VisibleTilesCoarseMap = new VisibleTilesCoarseMap(this, collisionMap.WidthInTiles,
-                collisionMap.HeightInTiles, _scaledOffset);
+                collisionMap.HeightInTiles, _offset);
 
             for (int x = 0; x < _widthInTiles; x++)
                 for (int y = 0; y < _heightInTiles; y++)
@@ -91,8 +90,8 @@ namespace Maes.Map {
             var yFloat = Math.Round(currentPosition.y * 2, MidpointRounding.AwayFromZero) / 2;
             var x = Convert.ToInt32(xFloat * 2);
             var y = Convert.ToInt32(yFloat * 2);
-            var slamX = (x - ((int)_scaledOffset.x) * 2);
-            var slamY = (y - ((int)_scaledOffset.y) * 2);
+            var slamX = (x - ((int)_offset.x) * 2);
+            var slamY = (y - ((int)_offset.y) * 2);
 
             return new Vector2Int(slamX, slamY);
         }

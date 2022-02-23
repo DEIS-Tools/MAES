@@ -10,20 +10,22 @@ namespace Maes {
         // Amount of physics steps to calculate between each robot logic tick
         // Physics tick rate = LogicTickDelta / PhysicsTicksPerLogicUpdate
         public static readonly int PhysicsTicksPerLogicUpdate = 10;
-
-        public static readonly int PhysicsTickDeltaMillis = LogicTickDeltaMillis / PhysicsTicksPerLogicUpdate;
-        public static readonly float PhysicsTickDeltaSeconds = PhysicsTickDeltaMillis / 1000f;
-
+        
         // Debug visualizer
         public static readonly bool DrawCommunication = true;
         public static readonly bool ShowEnvironmentTags = true;
 
         // Statistics
         public static readonly bool ShouldWriteCSVResults = false;
-        public static readonly int TicksPerStatsSnapShot = 10;
-
         public static readonly string StatisticsOutPutPath =
             Environment.GetFolderPath(Environment.SpecialFolder.Desktop) 
             + Path.DirectorySeparatorChar + "MaesStatistics" + Path.DirectorySeparatorChar;
+        public static readonly int TicksPerStatsSnapShot = 10;
+        public static readonly bool PopulateAdjacencyAndComGroupsEveryTick = false;
+        
+        
+        // The below constants depend on the above constants. Do not change this individually!
+        public static readonly int PhysicsTickDeltaMillis = LogicTickDeltaMillis / PhysicsTicksPerLogicUpdate;
+        public static readonly float PhysicsTickDeltaSeconds = PhysicsTickDeltaMillis / 1000f;
     }
 }

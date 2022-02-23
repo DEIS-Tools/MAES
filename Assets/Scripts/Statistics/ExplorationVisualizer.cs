@@ -20,7 +20,7 @@ namespace Maes.Statistics {
 
         private int _widthInTiles, _heightInTiles;
         private int _widthInVertices, _heightInVertices;
-        private Vector3 _scaledOffset;
+        private Vector3 _offset;
 
         private List<Vector3> _vertices = new List<Vector3>();
         private List<int> _triangles = new List<int>();
@@ -37,7 +37,7 @@ namespace Maes.Statistics {
             _map = newMap;
             _widthInTiles = _map.WidthInTiles;
             _heightInTiles = _map.HeightInTiles;
-            _scaledOffset = offset;
+            _offset = offset;
             _widthInVertices = _widthInTiles * ResolutionMultiplier + 1;
             _heightInVertices = _heightInTiles * ResolutionMultiplier + 1;
 
@@ -61,9 +61,9 @@ namespace Maes.Statistics {
             _vertices.Clear();
             var vertexDistance = 1f / ResolutionMultiplier;
             for (int y = 0; y < _heightInTiles; y++) {
-                var translatedY = y + _scaledOffset.y;
+                var translatedY = y + _offset.y;
                 for (int x = 0; x < _widthInTiles; x++) {
-                    var translatedX = x + _scaledOffset.x;
+                    var translatedX = x + _offset.x;
                     AddTileTriangleVertices(translatedX, translatedY, vertexDistance);
                 }
             }

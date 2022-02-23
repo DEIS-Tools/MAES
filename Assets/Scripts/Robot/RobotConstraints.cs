@@ -9,6 +9,9 @@ namespace Maes.Robot {
         public readonly float SenseNearbyRobotRange;
         public readonly bool SenseNearbyRobotBlockedByWalls;
 
+        public readonly float SenseNearbyAgentsRange;
+        public readonly bool SenseNearbyAgentsBlockedByWalls;
+
         // SLAM
         public readonly bool AutomaticallyUpdateSlam;
         public readonly int SlamUpdateIntervalInTicks;
@@ -39,17 +42,21 @@ namespace Maes.Robot {
         public readonly float RobotRelativeSize;
 
         // TODO: Add robot size to constraints class
+        
+        public readonly float AgentRelativeSize;
 
 
-        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyRobotRange,
-            bool senseNearbyRobotBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks,
+        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyAgentsRange,
+            bool senseNearbyAgentsBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks,
             int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam,
-            float environmentTagReadRange, float slamRayTraceRange, float relativeMoveSpeed, float robotRelativeSize,
+            float environmentTagReadRange, float slamRayTraceRange, float relativeMoveSpeed, float agentRelativeSize,
             int? slamRayTraceCount = null) : this() {
             BroadcastRange = broadcastRange;
             BroadcastBlockedByWalls = broadcastBlockedByWalls;
-            SenseNearbyRobotRange = senseNearbyRobotRange;
-            SenseNearbyRobotBlockedByWalls = senseNearbyRobotBlockedByWalls;
+
+            // SLAM
+            SenseNearbyAgentsRange = senseNearbyAgentsRange;
+            SenseNearbyAgentsBlockedByWalls = senseNearbyAgentsBlockedByWalls;
 
             // SLAM
             AutomaticallyUpdateSlam = automaticallyUpdateSlam;
@@ -63,7 +70,7 @@ namespace Maes.Robot {
             // 
             EnvironmentTagReadRange = environmentTagReadRange;
             RelativeMoveSpeed = relativeMoveSpeed;
-            RobotRelativeSize = robotRelativeSize;
+            AgentRelativeSize = agentRelativeSize;
         }
     }
 }

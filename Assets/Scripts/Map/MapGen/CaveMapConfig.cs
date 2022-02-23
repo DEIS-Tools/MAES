@@ -29,14 +29,11 @@ namespace Maes.Map.MapGen {
         // Border size (Assured walls on the edges)
         public readonly int borderSize;
 
-        // This can be increased to enlarge the smallest corridors by enlarging the entire cave
-        public readonly float scaling;
-
         public readonly int neighbourWallsNeededToStayWall;
 
         public CaveMapConfig(int widthInTiles, int heightInTiles, int randomSeed, int smoothingRuns,
             int connectionPassagesWidth, int randomFillPercent, int wallThresholdSize, int roomThresholdSize,
-            int borderSize, float scaling, int neighbourWallsNeededToStayWall = 4) {
+            int borderSize, int neighbourWallsNeededToStayWall = 4) {
             // Only fill percent between and including 0 to 100 are allowed
             if (0 > randomFillPercent || randomFillPercent >= 100) {
                 throw new ArgumentOutOfRangeException("randomFillPercent must be between 0 and 100");
@@ -59,7 +56,6 @@ namespace Maes.Map.MapGen {
             this.wallThresholdSize = wallThresholdSize;
             this.roomThresholdSize = roomThresholdSize;
             this.borderSize = borderSize;
-            this.scaling = scaling;
             this.neighbourWallsNeededToStayWall = neighbourWallsNeededToStayWall;
         }
     }
