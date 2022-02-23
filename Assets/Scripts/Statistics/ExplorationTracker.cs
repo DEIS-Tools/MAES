@@ -170,7 +170,7 @@ namespace Maes.Statistics {
         }
 
         private Vector2Int GetCoverageMapPosition(Vector2 robotPosition) {
-            robotPosition -= _collisionMap._offset;
+            robotPosition -= _collisionMap.ScaledOffset;
             return new Vector2Int((int)robotPosition.x, (int)robotPosition.y);
         }
         

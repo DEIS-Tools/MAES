@@ -42,7 +42,7 @@ namespace Maes.Map {
             _randomSeed = randomSeed;
             _widthInTiles = collisionMap.WidthInTiles * 2;
             _heightInTiles = collisionMap.HeightInTiles * 2;
-            _offset = collisionMap._offset;
+            _offset = collisionMap.ScaledOffset;
             _tiles = new SlamTileStatus[_widthInTiles, _heightInTiles];
 
             _currentlyVisibleTiles = new Dictionary<Vector2Int, SlamTileStatus>();
