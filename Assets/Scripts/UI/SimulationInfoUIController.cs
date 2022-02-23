@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Maes.Map.Visualization;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +17,7 @@ namespace Maes.UI {
         public Button AllCoverageButton;
         public Button AllExplorationHeatMapButton;
         public Button AllCoverageHeatMapButton;
+        public Button SelectVisibleAreaButton;
 
         private List<Button> _mapVisualizationToggleGroup;
         private Color _mapVisualizationColor = Color.white;
@@ -29,28 +31,36 @@ namespace Maes.UI {
         private SimulationModification? _mostRecentMapVisualizationModification;
 
         private void Start() {
-            _mapVisualizationToggleGroup = new List<Button>() {AllExplorationButton, AllCoverageButton, AllExplorationHeatMapButton, AllCoverageHeatMapButton};
+            _mapVisualizationToggleGroup = new List<Button>() {
+                AllExplorationButton, AllCoverageButton, AllExplorationHeatMapButton, AllCoverageHeatMapButton,
+                SelectVisibleAreaButton
+            };
             SelectVisualizationButton(AllExplorationButton);
             
             // Set listeners for all map visualization buttons
             AllExplorationButton.onClick.AddListener(() => {
-                SelectVisualizationButton(AllExplorationButton);
                 ExecuteAndRememberMapVisualizationModification((sim) => sim?.ExplorationTracker.ShowAllRobotExploration());
             });
             
             AllCoverageButton.onClick.AddListener(() => {
-                SelectVisualizationButton(AllCoverageButton);
                 ExecuteAndRememberMapVisualizationModification((sim) => sim?.ExplorationTracker.ShowAllRobotCoverage());
             });
             
             AllExplorationHeatMapButton.onClick.AddListener(() => {
-                SelectVisualizationButton(AllExplorationHeatMapButton);
                 ExecuteAndRememberMapVisualizationModification((sim) => sim?.ExplorationTracker.ShowAllRobotExplorationHeatMap());
             });
             
             AllCoverageHeatMapButton.onClick.AddListener(() => {
-                SelectVisualizationButton(AllCoverageHeatMapButton);
                 ExecuteAndRememberMapVisualizationModification((sim) => sim?.ExplorationTracker.ShowAllRobotCoverageHeatMap());
+            });
+            
+            SelectVisibleAreaButton.onClick.AddListener(() => {
+                ExecuteAndRememberMapVisualizationModification((sim) => {
+                    if (sim != null) {
+                        if (!sim.HasSelectedRobot()) sim.SelectFirstRobot();
+                        sim.ExplorationTracker.ShowSelectedRobotVisibleArea();    
+                    }
+                });
             });
         }
 
@@ -102,7 +112,27 @@ namespace Maes.UI {
 
         // Called whenever the simulator instantiates a new simulation object 
         public void NotifyNewSimulation(Simulation? newSimulation) {
-            _mostRecentMapVisualizationModification?.Invoke(newSimulation);
+            if (newSimulation != null) {
+                newSimulation.ExplorationTracker.OnVisualizationModeChanged += OnMapVisualizationModeChanged;
+                _mostRecentMapVisualizationModification?.Invoke(newSimulation);
+            }
+        }
+
+        private void OnMapVisualizationModeChanged(VisualizationMode mode) {
+            if (mode is AllRobotsExplorationVisualization) {
+                SelectVisualizationButton(AllExplorationButton);
+            } else if (mode is AllRobotsCoverageVisualization) {
+                SelectVisualizationButton(AllCoverageButton);
+            } else if (mode is ExplorationHeatMapVisualization) {
+                SelectVisualizationButton(AllExplorationHeatMapButton);
+            } else if (mode is CoverageHeatMapVisualization) {
+                SelectVisualizationButton(AllCoverageHeatMapButton);
+            } else if (mode is CurrentlyVisibleAreaVisualization) {
+                SelectVisualizationButton(SelectVisibleAreaButton);
+            } else {
+                throw new Exception($"No registered button matches the Visualization mode {mode.GetType()}");
+            }
+            
         }
     }
 }

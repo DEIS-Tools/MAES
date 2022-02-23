@@ -18,6 +18,9 @@ namespace Maes.Statistics {
         private readonly int _explorationMapWidth;
         private readonly int _explorationMapHeight;
 
+        public delegate void VisualizationModeConsumer(VisualizationMode mode);
+        public event VisualizationModeConsumer OnVisualizationModeChanged = delegate(VisualizationMode mode) {  };
+
         private readonly int _totalExplorableTriangles;
         public int ExploredTriangles { get; private set; }
         public int CoveredMiniTiles { get; private set; }
@@ -245,27 +248,42 @@ namespace Maes.Statistics {
 
         public void SetVisualizedRobot([CanBeNull] MonaRobot robot) {
             _selectedRobot = robot;
-            // TODO: Change to visualization mode
+            if (_selectedRobot != null)
+                SetVisualizationMode(new CurrentlyVisibleAreaVisualization(_explorationMap, _selectedRobot.Controller));
+            else if (_currentVisualizationMode is CurrentlyVisibleAreaVisualization) 
+                // Revert to all robots exploration visualization when current robot is deselected
+                // while visualization mode is based on the selected robot
+                SetVisualizationMode(new AllRobotsExplorationVisualization(_explorationMap));
         }
 
         public void ShowAllRobotExploration() {
-            _currentVisualizationMode = new AllRobotsExplorationVisualization(_explorationMap);
-            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);
+            SetVisualizationMode(new AllRobotsExplorationVisualization(_explorationMap));
         }
 
         public void ShowAllRobotCoverage() {
-            _currentVisualizationMode = new AllRobotsCoverageVisualization(_explorationMap);
-            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);
+            SetVisualizationMode(new AllRobotsCoverageVisualization(_explorationMap));
         }
 
         public void ShowAllRobotCoverageHeatMap() {
-            _currentVisualizationMode = new CoverageHeatMapVisualization(_explorationMap);
-            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);
+            SetVisualizationMode(new CoverageHeatMapVisualization(_explorationMap));
         }
 
         public void ShowAllRobotExplorationHeatMap() {
-            _currentVisualizationMode = new ExplorationHeatMapVisualization(_explorationMap);
-            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);
+            SetVisualizationMode(new ExplorationHeatMapVisualization(_explorationMap));
         }
+        
+        public void ShowSelectedRobotVisibleArea() {
+            if (_selectedRobot == null)
+                throw new Exception("Cannot change to 'ShowSelectedRobotVisibleArea' visualization mode when no robot is selected");
+            SetVisualizationMode(new CurrentlyVisibleAreaVisualization(_explorationMap, _selectedRobot.Controller));
+        }
+
+        private void SetVisualizationMode(VisualizationMode newMode) {
+            _currentVisualizationMode = newMode;
+            _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);
+            OnVisualizationModeChanged(_currentVisualizationMode);
+        }
+
+
     }
 }

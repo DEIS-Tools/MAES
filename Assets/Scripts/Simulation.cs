@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
 using Maes.Map.MapGen;
+using Maes.Map.Visualization;
 using Maes.Robot;
 using Maes.Statistics;
 using Maes.UI;
@@ -24,6 +25,7 @@ namespace Maes {
         private List<MonaRobot> _robots;
 
         [CanBeNull] private MonaRobot _selectedRobot;
+        public bool HasSelectedRobot() => _selectedRobot != null;
         public ExplorationTracker ExplorationTracker { get; private set; }
         private CommunicationManager _communicationManager;
 
@@ -54,6 +56,12 @@ namespace Maes {
         public void SetSelectedRobot([CanBeNull] MonaRobot robot) {
             _selectedRobot = robot;
             ExplorationTracker.SetVisualizedRobot(robot);
+            UpdateDebugInfo();
+        }
+        
+        public void SelectFirstRobot() {
+            _selectedRobot = _robots[0];
+            ExplorationTracker.SetVisualizedRobot(_selectedRobot);
             UpdateDebugInfo();
         }
 
