@@ -236,6 +236,8 @@ namespace Maes.Map
                 0.495f * relativeSize
             );
 
+            robot.outLine.enabled = false;
+
             float
                 RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
             robot.transform.position = new Vector3(x + RTOffset + collisionMap.ScaledOffset.x,

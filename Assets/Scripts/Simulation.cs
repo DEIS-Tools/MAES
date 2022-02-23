@@ -53,16 +53,17 @@ namespace Maes {
             ExplorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer, scenario.RobotConstraints);
         }
 
-        public void SetSelectedRobot([CanBeNull] MonaRobot robot) {
-            _selectedRobot = robot;
-            ExplorationTracker.SetVisualizedRobot(robot);
+        public void SetSelectedRobot([CanBeNull] MonaRobot newSelectedRobot) {
+            // Disable outline on previously selected robot
+            if (_selectedRobot != null) _selectedRobot.outLine.enabled = false;
+            _selectedRobot = newSelectedRobot;
+            if (newSelectedRobot != null) newSelectedRobot.outLine.enabled = true;
+            ExplorationTracker.SetVisualizedRobot(newSelectedRobot);
             UpdateDebugInfo();
         }
         
         public void SelectFirstRobot() {
-            _selectedRobot = _robots[0];
-            ExplorationTracker.SetVisualizedRobot(_selectedRobot);
-            UpdateDebugInfo();
+            SetSelectedRobot(_robots[0]);
         }
 
         public void LogicUpdate() {
