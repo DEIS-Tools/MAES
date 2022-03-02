@@ -4,6 +4,7 @@ using System.Linq;
 using Maes.ExplorationAlgorithm;
 using Maes.Map.MapGen;
 using Maes.Robot;
+using ROS2;
 using UnityEngine;
 using static Maes.Utilities.Geometry;
 
@@ -249,6 +250,10 @@ namespace Maes.Map
             robot.Controller.SlamMap = new SlamMap(collisionMap, RobotConstraints, seed);
             robot.Controller.Constraints = RobotConstraints; 
             algorithm.SetController(robot.Controller);
+            
+            if (algorithm is Ros2Algorithm ros2Algorithm) {
+                ros2Algorithm.SetUnityComponent(robot.GetComponent<ROS2UnityComponent>());
+            }
 
             return robot;
         }

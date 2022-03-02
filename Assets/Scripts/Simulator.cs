@@ -33,7 +33,7 @@ namespace Maes {
             Physics2D.simulationMode = SimulationMode2D.Script;
 
             // _scenarios = ScenarioGenerator.GenerateYoutubeVideoScenarios();
-            _scenarios = ScenarioGenerator.GenerateSsbScenarios();
+            _scenarios = ScenarioGenerator.GenerateROS2Scenario();
             // _scenarios = ScenarioGenerator.GenerateTnfScenarios();
             CreateSimulation(_scenarios.Dequeue());
             if (Application.isBatchMode) {
