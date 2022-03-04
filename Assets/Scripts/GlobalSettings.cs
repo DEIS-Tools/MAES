@@ -27,5 +27,8 @@ namespace Maes {
         // The below constants depend on the above constants. Do not change this individually!
         public static readonly int PhysicsTickDeltaMillis = LogicTickDeltaMillis / PhysicsTicksPerLogicUpdate;
         public static readonly float PhysicsTickDeltaSeconds = PhysicsTickDeltaMillis / 1000f;
+        
+        public static readonly int TicksBeforeExplorationHeatMapCold = 10 * 60 * 4;
+        public static readonly int TicksBeforeCoverageHeatMapCold = 10 * 60 * 4;
     }
 }

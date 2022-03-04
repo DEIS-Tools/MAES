@@ -10,10 +10,13 @@ namespace Maes.Statistics {
         public MeshFilter meshFilter;
         private Mesh mesh;
 
-        private readonly Color32 _solidColor = new Color32(0, 0, 0, 255);
-        private readonly Color32 _exploredColor = new Color32(32, 130, 57, 255);
-        private readonly Color32 _slamSeenColor = new Color32(50, 120, 180, 255);
-        private readonly Color32 _unexploredColor = new Color32(170, 170, 170, 255);
+        public static readonly Color32 SolidColor = new Color32(0, 0, 0, 255);
+        public static readonly Color32 ExploredColor = new Color32(32, 130, 57, 255);
+        public static readonly Color32 StandardCellColor = new Color32(170, 170, 170, 255);
+        public static readonly Color32 CoveredColor = new Color32(32, 80, 240, 255);
+        public static readonly Color32 SlamSeenColor = new Color32(50, 120, 180, 255);
+        public static readonly Color32 WarmColor = new Color32(200, 60, 60, 255);
+        public static readonly Color32 ColdColor = new Color32(50, 120, 180, 255);
 
         private int _widthInTiles, _heightInTiles;
         private int _widthInVertices, _heightInVertices;
@@ -25,6 +28,10 @@ namespace Maes.Statistics {
 
         private const int ResolutionMultiplier = 2;
         private SimulationMap<ExplorationCell> _map;
+        
+        public delegate Color32 CellToColor(ExplorationCell cell);
+        public delegate Color32 CellIndexToColor(int cellIndex);
+        
 
         public void SetMap(SimulationMap<ExplorationCell> newMap, Vector3 offset) {
             _map = newMap;
@@ -122,36 +129,42 @@ namespace Maes.Statistics {
             int count = 0;
             foreach (var (index, explorationCell) in newMap) {
                 var vertexIndex = index * 3;
-                var color = _solidColor;
-                if (explorationCell.isExplorable)
-                    color = explorationCell.IsExplored ? _exploredColor : _unexploredColor;
+                var color = SolidColor;
+                if (explorationCell.IsExplorable)
+                    color = explorationCell.IsExplored ? ExploredColor : StandardCellColor;
                 _colors[vertexIndex] = color;
                 _colors[vertexIndex + 1] = color;
                 _colors[vertexIndex + 2] = color;
-                if (!explorationCell.isExplorable) count++;
+                if (!explorationCell.IsExplorable) count++;
             }
         }
 
-        // Colors each triangle depending on its current state
-        public void SetExplored(List<int> triangles) {
-            foreach (var index in triangles) {
-                var vertexIndex = index * 3;
-                _colors[vertexIndex] = _exploredColor;
-                _colors[vertexIndex + 1] = _exploredColor;
-                _colors[vertexIndex + 2] = _exploredColor;
-            }
-
-            mesh.colors32 = _colors;
-        }
-
-        // Colors each triangle depending on its current state
-        public void SetExplored(SimulationMap<ExplorationCell> map) {
+        /// <summary>
+        /// Updates the color of ALL triangles based on the given map and color function. This is an expensive operation
+        /// and should be only called when it is necessary to replace all colors. To update a small subset of the
+        /// triangles use the <see cref="UpdateColors"/> function.
+        /// </summary>
+        public void SetAllColors(SimulationMap<ExplorationCell> map, CellToColor cellToColor) {
             foreach (var (index, cell) in map) {
                 var vertexIndex = index * 3;
-                var color = _unexploredColor;
-                if (!cell.isExplorable) color = _solidColor;
-                else if (cell.IsExplored) color = _exploredColor;
+                var color = cellToColor(cell);
+                _colors[vertexIndex] = color;
+                _colors[vertexIndex + 1] = color;
+                _colors[vertexIndex + 2] = color;
+            }
 
+            mesh.colors32 = _colors;
+        }
+        
+        /// <summary>
+        /// Updates the color of ALL triangles based on the given map and color function. This is an expensive operation
+        /// and should be only called when it is necessary to replace all colors. To update a small subset of the
+        /// triangles use the <see cref="UpdateColors"/> function.
+        /// </summary>
+        public void SetAllColors(SimulationMap<ExplorationCell> map, CellIndexToColor cellToColor) {
+            foreach (var (index, cell) in map) {
+                var vertexIndex = index * 3;
+                var color = cellToColor(index);
                 _colors[vertexIndex] = color;
                 _colors[vertexIndex + 1] = color;
                 _colors[vertexIndex + 2] = color;
@@ -160,19 +173,16 @@ namespace Maes.Statistics {
             mesh.colors32 = _colors;
         }
 
-        public void SetExplored(SlamMap map, bool onlyShowCurrentlyVisible = false) {
-            var triangleCount = _triangles.Count / 3;
-            for (int i = 0; i < triangleCount; i += 2) {
-                var status = onlyShowCurrentlyVisible ? map.GetVisibleTileByTriangleIndex(i) : map.GetTileByTriangleIndex(i);
-                Color32 color;
-                if (status == SlamMap.SlamTileStatus.Unseen) color = _unexploredColor;
-                else if (status == SlamMap.SlamTileStatus.Solid) color = _solidColor;
-                else color = _slamSeenColor;
-
-                // Set the color of the next 2 triangles (as a single Slam tile covers 2 triangles)
-                var vertexIndex = i * 3;
-                for (int vertexOffset = 0; vertexOffset < 6; vertexOffset++)
-                    _colors[vertexIndex + vertexOffset] = color;
+        /// <summary>
+        /// Updates the colors of the triangles corresponding to the given list of exploration cells.
+        /// </summary>
+        public void UpdateColors(IEnumerable<(int, ExplorationCell)> cellsWithIndices, CellToColor cellToColor) {
+            foreach (var (index, cell) in cellsWithIndices) {
+                var vertexIndex = index * 3;
+                var color = cellToColor(cell);
+                _colors[vertexIndex] = color;
+                _colors[vertexIndex + 1] = color;
+                _colors[vertexIndex + 2] = color;
             }
 
             mesh.colors32 = _colors;

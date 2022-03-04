@@ -7,6 +7,7 @@ namespace Maes.Robot {
     public class MonaRobot : MonoBehaviour, ISimulationUnit {
         public Transform leftWheelTransform;
         public Transform rightWheelTransform;
+        public Outline outLine;
 
         public int id = -1;
 

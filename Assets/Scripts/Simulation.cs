@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
 using Maes.Map.MapGen;
+using Maes.Map.Visualization;
 using Maes.Robot;
 using Maes.Statistics;
 using Maes.UI;
@@ -24,7 +25,7 @@ namespace Maes {
         private List<MonaRobot> _robots;
 
         [CanBeNull] private MonaRobot _selectedRobot;
-
+        public bool HasSelectedRobot() => _selectedRobot != null;
         public ExplorationTracker ExplorationTracker { get; private set; }
         public CommunicationManager _communicationManager;
 
@@ -37,7 +38,6 @@ namespace Maes {
         public void SetScenario(SimulationScenario scenario) {
             _scenario = scenario;
             _collisionMap = scenario.MapSpawner(MapGenerator);
-
             
             _communicationManager = new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
             RobotSpawner.CommunicationManager = _communicationManager;
@@ -53,10 +53,17 @@ namespace Maes {
             ExplorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer, scenario.RobotConstraints);
         }
 
-        public void SetSelectedRobot([CanBeNull] MonaRobot robot) {
-            _selectedRobot = robot;
-            ExplorationTracker.SetVisualizedRobot(robot);
+        public void SetSelectedRobot([CanBeNull] MonaRobot newSelectedRobot) {
+            // Disable outline on previously selected robot
+            if (_selectedRobot != null) _selectedRobot.outLine.enabled = false;
+            _selectedRobot = newSelectedRobot;
+            if (newSelectedRobot != null) newSelectedRobot.outLine.enabled = true;
+            ExplorationTracker.SetVisualizedRobot(newSelectedRobot);
             UpdateDebugInfo();
+        }
+        
+        public void SelectFirstRobot() {
+            SetSelectedRobot(_robots[0]);
         }
 
         public void LogicUpdate() {

@@ -4,6 +4,7 @@ using System.Linq;
 using Maes.ExplorationAlgorithm;
 using Maes.Map.MapGen;
 using Maes.Robot;
+using ROS2;
 using UnityEngine;
 using static Maes.Utilities.Geometry;
 
@@ -101,8 +102,8 @@ namespace Maes.Map
             possibleSpawnTiles = possibleSpawnTiles.Except(edgeTiles).ToList();
             
             // Offset suggested starting point to map
-            suggestedStartingPoint = new Vector2Int(suggestedStartingPoint.Value.x - (int)collisionMap._offset.x,
-                suggestedStartingPoint.Value.y - (int)collisionMap._offset.y);
+            suggestedStartingPoint = new Vector2Int(suggestedStartingPoint.Value.x - (int)collisionMap.ScaledOffset.x,
+                suggestedStartingPoint.Value.y - (int)collisionMap.ScaledOffset.y);
             
             possibleSpawnTiles.Sort((c1, c2) => {
                 return ManhattanDistance(c1, suggestedStartingPoint.Value) -
@@ -236,10 +237,12 @@ namespace Maes.Map
                 0.495f * relativeSize
             );
 
+            robot.outLine.enabled = false;
+
             float
                 RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
-            robot.transform.position = new Vector3(x + RTOffset + collisionMap._offset.x,
-                y + RTOffset + collisionMap._offset.y);
+            robot.transform.position = new Vector3(x + RTOffset + collisionMap.ScaledOffset.x,
+                y + RTOffset + collisionMap.ScaledOffset.y);
 
             robot.id = robotID;
             robot.ExplorationAlgorithm = algorithm;
@@ -247,6 +250,10 @@ namespace Maes.Map
             robot.Controller.SlamMap = new SlamMap(collisionMap, RobotConstraints, seed);
             robot.Controller.Constraints = RobotConstraints; 
             algorithm.SetController(robot.Controller);
+            
+            if (algorithm is Ros2Algorithm ros2Algorithm) {
+                ros2Algorithm.SetUnityComponent(robot.GetComponent<ROS2UnityComponent>());
+            }
 
             return robot;
         }

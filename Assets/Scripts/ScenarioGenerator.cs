@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Maes.ExplorationAlgorithm;
 using Maes.ExplorationAlgorithm.BrickAndMortar;
 using Maes.ExplorationAlgorithm.RandomBallisticWalk;
 using Maes.ExplorationAlgorithm.SSB;
@@ -12,6 +14,56 @@ using static Maes.Map.RobotSpawner;
 namespace Maes {
     public class ScenarioGenerator {
          private const int Minute = 60;
+         
+         public static Queue<SimulationScenario> GenerateROS2Scenario() {
+             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
+             var numberOfRobots = 1;
+             
+             SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.ExplorationTracker
+                 .CoverageProportion > 0.995f);
+
+             var constraints = new RobotConstraints(
+                 broadcastRange: 0,
+                 broadcastBlockedByWalls: false,
+                 senseNearbyAgentsRange: 6f,
+                 senseNearbyAgentsBlockedByWalls: true,
+                 automaticallyUpdateSlam: true,
+                 slamUpdateIntervalInTicks: 10,
+                 slamSynchronizeIntervalInTicks: 10,
+                 slamPositionInaccuracy: 0.2f, 
+                 distributeSlam: false,
+                 environmentTagReadRange: 0f,
+                 slamRayTraceRange: 6f,
+                 relativeMoveSpeed: 1f,
+                 agentRelativeSize: 0.6f
+             );
+             
+             var caveConfig = new CaveMapConfig(
+                 50,
+                 50,
+                 0,
+                 4,
+                 4,
+                 0,
+                 10,
+                 10,
+                 1);
+             
+             scenarios.Enqueue(new SimulationScenario(
+                 seed: 0,
+                 hasFinishedSim: shouldEndSim,
+                 mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
+                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsInBiggestRoom(
+                     map, 
+                     0, 
+                     numberOfRobots,
+                     (seed) => new Ros2Algorithm()),
+                 robotConstraints: constraints,
+                 $"ROS2-{DateTime.Now.Millisecond}"
+             ));
+
+             return scenarios;
+         }
 
          /// <summary>
          /// Generates the scenarios used for the testing of LVD's long-range experiements.

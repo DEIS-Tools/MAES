@@ -126,7 +126,7 @@ namespace Maes.Robot {
             // to make the angle relative to the x axis. (Moving from oregon along the x axis is 0 degrees in out system)
             if (pos1.y > pos2.y) angle = 360f - angle;
 
-            if (distance > Math.Max(_robotConstraints.BroadcastRange, _robotConstraints.SenseNearbyAgentsRange))
+            if (distance > Math.Max(_robotConstraints.BroadcastRange, _robotConstraints.SenseNearbyRobotRange))
                 return new CommunicationInfo(distance, angle, -1);
 
             var angleMod = angle % 90f;
@@ -273,7 +273,7 @@ namespace Maes.Robot {
         }
 
         public void DepositTag(EnvironmentTaggingMap.ITag tag, Vector2 position) {
-            var pos = position + _rayTracingMap._map._offset;
+            var pos = position + _rayTracingMap._map.ScaledOffset;
             var placedTag = _environmentTaggingMap.AddTag(pos, tag);
 
             if (GlobalSettings.ShowEnvironmentTags) {
@@ -282,7 +282,7 @@ namespace Maes.Robot {
         }
 
         public void RemoveTagAt(Vector2 position) {
-            var pos = position + _rayTracingMap._map._offset;
+            var pos = position + _rayTracingMap._map.ScaledOffset;
             _visualizer.RemoveEnvironmentTagAt(pos);
         }
 
