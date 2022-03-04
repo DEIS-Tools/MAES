@@ -1,16 +1,16 @@
 using System;
 using Maes.Robot;
 using Maes.Robot.Task;
-using ROS2;
+using RosMessageTypes.MaesInterface;
+using Unity.Robotics.ROSTCPConnector;
 using UnityEngine;
 
 namespace Maes.ExplorationAlgorithm {
     public class Ros2Algorithm : IExplorationAlgorithm {
         private Robot2DController _controller;
-        private ROS2UnityComponent _ros2UnityComponent;
-        private ISubscription<geometry_msgs.msg.Twist> twist_sub;
-        private ROS2Node _ros2Node;
         private Movement? nextMove = null;
+        private ROSConnection _ros;
+        private string _topicName = "robot1/state";
 
 
         private enum Movement {
@@ -18,61 +18,30 @@ namespace Maes.ExplorationAlgorithm {
         }
 
         public void UpdateLogic() {
-            if (_controller.GetStatus() == RobotStatus.Idle) {
-                switch (nextMove)
-                {
-                    case Movement.FORWARD:
-                        _controller.Move(1);
-                        nextMove = null;
-                        break;
-                    case Movement.REVERSE:
-                        _controller.Move(1);
-                        nextMove = null;
-                        break;
-                    case Movement.RIGHT:
-                        _controller.Rotate(-90);
-                        nextMove = null;
-                        break;
-                    case Movement.LEFT:
-                        _controller.Rotate(90);
-                        nextMove = null;
-                        break;
-                    case null:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
+            var position = _controller.GetSlamMap().GetApproxPosition();
+            var state = new RobotStateMsg {
+                pos = new RobotPosMsg(position.x, position.y, _controller.GetGlobalAngle()),
+                brdcst_msgs = new[] { new RobotMsgMsg("From other robot", 1) },
+                env_tags = new[] { new EnvironmentTagMsg(10, 10, "Content of env tag") },
+                has_collided = _controller.HasCollidedSinceLastLogicTick(),
+                nearby_robots = new NearbyRobotMsg[]{new NearbyRobotMsg(10, 15, 1)},
+                new_slam_tiles = new[] { new SlamTileMsg(new Vector2DMsg(1, 1), false) },
+                status = _controller.GetStatus().ToString()
+            };
+            
+            _ros.Publish(_topicName, state);
+            
         }
 
-        public void SetUnityComponent(ROS2UnityComponent component) {
-            this._ros2UnityComponent = component;
-            this._ros2Node = _ros2UnityComponent.CreateNode($"Robot{_controller.GetRobotID()}");
-            twist_sub = _ros2Node.CreateSubscription<geometry_msgs.msg.Twist>(
-                "turtle1/cmd_vel", msg => QueueReaction(msg));
-        }
-        
-        
         public string GetDebugInfo() {
             return "";
         }
-
-        private void QueueReaction(geometry_msgs.msg.Twist twist) {
-            if (twist.Linear.X > 0) {
-                nextMove = Movement.FORWARD;
-            }
-            else if (twist.Linear.X > 0) {
-                nextMove = Movement.REVERSE;
-            }
-            else if (twist.Angular.Z != 0) {
-                nextMove = twist.Angular.Z > 0 ? Movement.LEFT : Movement.RIGHT;
-            }
-            
-            
-        }
-
+        
         public void SetController(Robot2DController controller) {
             this._controller = controller;
+            
+            _ros = ROSConnection.GetOrCreateInstance();
+            _ros.RegisterPublisher<RobotStateMsg>(_topicName);
         }
 
         public object SaveState() {
