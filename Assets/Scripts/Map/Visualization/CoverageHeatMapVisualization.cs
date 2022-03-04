@@ -8,7 +8,7 @@ namespace Maes.Map.Visualization {
     public class CoverageHeatMapVisualization : VisualizationMode {
 
         private SimulationMap<ExplorationCell> _explorationMap;
-        private int _logicTicksBeforeCold = 10 * 60 * 4;
+        private int _logicTicksBeforeCold = GlobalSettings.TicksBeforeCoverageHeatMapCold;
 
         public CoverageHeatMapVisualization(SimulationMap<ExplorationCell> explorationMap) {
             _explorationMap = explorationMap;
