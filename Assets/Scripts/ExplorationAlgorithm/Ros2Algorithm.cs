@@ -8,14 +8,10 @@ using UnityEngine;
 namespace Maes.ExplorationAlgorithm {
     public class Ros2Algorithm : IExplorationAlgorithm {
         private Robot2DController _controller;
-        private Movement? nextMove = null;
         private ROSConnection _ros;
-        private string _topicName = "robot1/state";
+        private string _topicName = "robot1/state_msg";
+        private string _serviceName = "robot1/broadcast_srv";
 
-
-        private enum Movement {
-            FORWARD, REVERSE, RIGHT, LEFT
-        }
 
         public void UpdateLogic() {
             var position = _controller.GetSlamMap().GetApproxPosition();
@@ -28,9 +24,7 @@ namespace Maes.ExplorationAlgorithm {
                 new_slam_tiles = new[] { new SlamTileMsg(new Vector2DMsg(1, 1), false) },
                 status = _controller.GetStatus().ToString()
             };
-            
             _ros.Publish(_topicName, state);
-            
         }
 
         public string GetDebugInfo() {
@@ -41,7 +35,18 @@ namespace Maes.ExplorationAlgorithm {
             this._controller = controller;
             
             _ros = ROSConnection.GetOrCreateInstance();
+            // Register publisher on normal topic
             _ros.RegisterPublisher<RobotStateMsg>(_topicName);
+            // Example of registering service with callback function
+            _ros.ImplementService<BroadcastRequest, BroadcastResponse>(_serviceName, BroadcastMessage);
+        }
+
+        private BroadcastResponse BroadcastMessage(BroadcastRequest request) {
+            _controller.Broadcast($"{request.msg}");
+            var response = new BroadcastResponse {
+                success_status = "Success"
+            };
+            return response;
         }
 
         public object SaveState() {
