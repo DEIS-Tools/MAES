@@ -153,7 +153,7 @@ public class LaserScanSensor : MonoBehaviour
             // Only record measurement if it's within the sensor's operating range
             if (foundValidMeasurement)
             {
-                ranges.Add(hit.distance);
+                ranges.Add(5.0f); // TODO CHANGED!!!
             }
             else
             {
