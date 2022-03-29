@@ -231,8 +231,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   plane: {fileID: 6267725987320665257}
-  innerWalls2D: {fileID: 0}
-  innerWalls3D: {fileID: 0}
+  innerWalls2D: {fileID: 8359066299930497329}
+  innerWalls3D: {fileID: 6267725987322426808}
   wallRoof: {fileID: 6267725986360238119}
   meshGenerator: {fileID: 6267725986478517705}
 --- !u!114 &6267725986478517705
@@ -247,8 +247,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ceea915d2f74452ca2449b05efafc33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  innerWalls3D: {fileID: 0}
-  innerWalls2D: {fileID: 0}
+  innerWalls3D: {fileID: 6267725987322426809}
+  innerWalls2D: {fileID: 7158191038681757733}
   wallRoof: {fileID: 6267725986360238117}
 --- !u!1 &6267725987320665256
 GameObject:
@@ -361,7 +361,7 @@ GameObject:
   - component: {fileID: 6267725987322426806}
   - component: {fileID: 7849658295250935469}
   m_Layer: 0
-  m_Name: InnerWalls
+  m_Name: InnerWalls3D
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
