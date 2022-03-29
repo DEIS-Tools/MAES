@@ -40,7 +40,7 @@ namespace Maes.Map.MapGen {
         private HashSet<int> checkedVertices2D = new HashSet<int>();
         private HashSet<int> checkedVertices3D = new HashSet<int>();
 
-        private bool include3DCollider = true;
+        public bool include3DCollider = true;
         
         private const int WALL_TYPE = 1, ROOM_TYPE = 0;
 

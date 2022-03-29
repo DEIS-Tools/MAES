@@ -183,6 +183,10 @@ PrefabInstance:
       propertyPath: innerWalls3D
       value: 
       objectReference: {fileID: 2784910510588487756}
+    - target: {fileID: 6267725986478517705, guid: 89bcf64a7e9cd4fcbab9ee3161c549a7, type: 3}
+      propertyPath: include3DCollider
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6267725986478517706, guid: 89bcf64a7e9cd4fcbab9ee3161c549a7, type: 3}
       propertyPath: m_Name
       value: MapGenerator
