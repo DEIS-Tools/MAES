@@ -8,43 +8,60 @@ namespace Maes.Map.MapGen {
 	 * Uses the marching squares algorithm to smooth out
 	 * the grid and create a continuous wall around the rooms 
 	 */
-        public SquareGrid squareGrid;
+        public SquareGrid squareGrid2D;
+        public SquareGrid squareGrid3D;
 
         // The inner walls, that the robots can collide with
-        public MeshFilter innerWalls;
+        public MeshFilter innerWalls3D;
+        public MeshFilter innerWalls2D;
 
         // The outer/upper parts of the closed off cave
         public MeshFilter wallRoof;
 
-        private List<Vector3> vertices = new List<Vector3>();
+        private List<Vector3> vertices2D = new List<Vector3>();
+        private List<Vector3> vertices3D = new List<Vector3>();
 
         // list of all vertices in triangles
         // This list tells unity in which order to read the vertices.
-        private List<int> triangles = new List<int>();
+        private List<int> triangles2D = new List<int>();
+        private List<int> triangles3D = new List<int>();
 
         // Map from vertex index to all triangles containing the vertex.
-        private Dictionary<int, List<Triangle>> triangleDictionary = new Dictionary<int, List<Triangle>>();
+        private Dictionary<int, List<Triangle>> triangleDictionary2D = new Dictionary<int, List<Triangle>>();
+        private Dictionary<int, List<Triangle>> triangleDictionary3D = new Dictionary<int, List<Triangle>>();
 
         // A list of all outlines containing lists of vertex indexes contained in the given outline.
         // An outline is a wall either around an island of walls inside a room
         // or the walls around a room.
-        private List<List<int>> outlines = new List<List<int>>();
+        private List<List<int>> outlines2D = new List<List<int>>();
+        private List<List<int>> outlines3D  = new List<List<int>>();
 
         // Used to avoid checking the same case twice
-        private HashSet<int> checkedVertices = new HashSet<int>();
+        private HashSet<int> checkedVertices2D = new HashSet<int>();
+        private HashSet<int> checkedVertices3D = new HashSet<int>();
 
+        private bool include3DCollider = true;
+        
         private const int WALL_TYPE = 1, ROOM_TYPE = 0;
 
         public void ClearMesh() {
-            squareGrid = null;
-            Destroy(innerWalls.gameObject.GetComponent<MeshCollider>());
-            innerWalls.mesh.Clear();
+            squareGrid2D = null;
+            squareGrid3D = null;
+            Destroy(innerWalls3D.gameObject.GetComponent<MeshCollider>());
+            innerWalls3D.mesh.Clear();
+            Destroy(innerWalls2D.gameObject.GetComponent<MeshCollider>());
+            innerWalls2D.mesh.Clear();
             wallRoof.mesh.Clear();
-            vertices.Clear();
-            triangles.Clear();
-            triangleDictionary.Clear();
-            outlines.Clear();
-            checkedVertices.Clear();
+            vertices2D.Clear();
+            vertices3D.Clear();
+            triangles2D.Clear();
+            triangles3D.Clear();
+            triangleDictionary2D.Clear();
+            triangleDictionary3D.Clear();
+            outlines2D.Clear();
+            outlines3D.Clear();
+            checkedVertices2D.Clear();
+            checkedVertices3D.Clear();
         }
 
         public SimulationMap<bool> GenerateMesh(int[,] map, float wallHeight,
@@ -52,35 +69,53 @@ namespace Maes.Map.MapGen {
 
             // Generate grid of squares containing control nodes and between nodes 
             // for the marching square algorithm
-            squareGrid = new SquareGrid(map);
+            squareGrid2D = new SquareGrid(map);
+            squareGrid3D = new SquareGrid(map);
 
-            vertices = new List<Vector3>();
-            triangles = new List<int>();
+            vertices2D = new List<Vector3>();
+            triangles2D = new List<int>();
+            vertices3D = new List<Vector3>();
+            triangles3D = new List<int>();
 
-            for (int x = 0; x < squareGrid.squares.GetLength(0); x++) {
-                for (int y = 0; y < squareGrid.squares.GetLength(1); y++) {
+            for (int x = 0; x < squareGrid2D.squares.GetLength(0); x++) {
+                for (int y = 0; y < squareGrid2D.squares.GetLength(1); y++) {
                     // Create triangles from all the points in the squares
                     // assigned to variables "vertices" and "triangles"
-                    TriangulateSquare(squareGrid.squares[x, y], removeRoundedCorners);
+                    TriangulateSquare(squareGrid2D.squares[x, y], false, removeRoundedCorners);
+                }
+            }
+
+            if (include3DCollider) {
+                for (int x = 0; x < squareGrid3D.squares.GetLength(0); x++) {
+                    for (int y = 0; y < squareGrid3D.squares.GetLength(1); y++) {
+                        // Create triangles from all the points in the squares
+                        // assigned to variables "vertices" and "triangles"
+                        TriangulateSquare(squareGrid3D.squares[x,y], true, removeRoundedCorners);
+                    }
                 }
             }
 
             // Create roof mesh
             Mesh wallRoofMesh = new Mesh();
 
-            wallRoofMesh.vertices = vertices.ToArray();
-            wallRoofMesh.triangles = triangles.ToArray();
+            wallRoofMesh.vertices = vertices2D.ToArray();
+            wallRoofMesh.triangles = triangles2D.ToArray();
             wallRoofMesh.RecalculateNormals();
 
             // Apply mesh to wall roof
             wallRoof.mesh = wallRoofMesh;
 
-            CreateWallMesh(wallHeight);
+            CreateWallMesh(wallHeight, false);
+
+            if (include3DCollider) {
+                CreateWallMesh(wallHeight, true);
+                innerWalls3D.transform.rotation = Quaternion.AngleAxis(-90, Vector3.right);
+            }
+
             Generate2DColliders();
             
-
-            return GenerateCollisionMap(squareGrid,
-                new Vector2(squareGrid.XOffset, squareGrid.YOffset), removeRoundedCorners, rooms);
+            return GenerateCollisionMap(squareGrid2D,
+                new Vector2(squareGrid2D.XOffset, squareGrid2D.YOffset), removeRoundedCorners, rooms);
         }
 
         private SimulationMap<bool> GenerateCollisionMap(SquareGrid squareGrid, Vector3 offset,
@@ -179,28 +214,30 @@ namespace Maes.Map.MapGen {
             // An outline is a wall either around an island of walls inside a room
             // or the walls around a room.
             // CalculateMeshOutlines();
-
-            foreach (List<int> outline in outlines) {
+            foreach(List<int> outline in outlines2D) {
                 EdgeCollider2D edgeCollider = gameObject.AddComponent<EdgeCollider2D>();
                 Vector2[] edgePoints = new Vector2[outline.Count];
 
                 for (int i = 0; i < outline.Count; i++) {
-                    edgePoints[i] = new Vector2(vertices[outline[i]].x, vertices[outline[i]].y);
+                    edgePoints[i] = new Vector2(vertices2D[outline[i]].x, vertices2D[outline[i]].y);
                 }
 
                 edgeCollider.points = edgePoints;
             }
         }
 
-        void CreateWallMesh(float wallHeight) {
+        void CreateWallMesh(float wallHeight, bool isMesh3D) {
             // Assigns outline vertices to list variable "outlines"
             // An outline is a wall either around an island of walls inside a room
             // or the walls around a room.
-            CalculateMeshOutlines();
+            CalculateMeshOutlines(isMesh3D);
 
             List<Vector3> wallVertices = new List<Vector3>();
             List<int> wallTriangles = new List<int>();
             Mesh innerWallsMesh = new Mesh();
+
+            var vertices = isMesh3D ? vertices3D : vertices2D;
+            var outlines = isMesh3D ? outlines3D : outlines2D;
 
             foreach (List<int> outline in outlines) {
                 for (int i = 0; i < outline.Count - 1; i++) {
@@ -211,9 +248,15 @@ namespace Maes.Map.MapGen {
                     wallVertices.Add(vertices[outline[i + 1]]); // top right (1)
 
                     // The wall stick out in different axes depending on 2D or 3D.
-                    wallVertices.Add(vertices[outline[i]] - Vector3.back * wallHeight); // bottom left (2)
-                    wallVertices.Add(vertices[outline[i + 1]] - Vector3.back * wallHeight); // bottom right (3)
-                    
+                    if (isMesh3D) {
+                        wallVertices.Add(vertices[outline[i]] - Vector3.up * wallHeight); // bottom left (2)
+                        wallVertices.Add(vertices[outline[i + 1]] - Vector3.up * wallHeight); // bottom right (3)
+                        
+                    }
+                    else {
+                        wallVertices.Add(vertices[outline[i]] - Vector3.back * wallHeight); // bottom left (2)
+                        wallVertices.Add(vertices[outline[i + 1]] - Vector3.back * wallHeight); // bottom right (3)
+                    }
 
                     // The "outside" of the mesh with the texture depends on the order
                     // Since the rotation is vertical for 2D, we have to invert the order
@@ -232,7 +275,15 @@ namespace Maes.Map.MapGen {
             // Unity cannot work with lists, so ToArray() is needed
             innerWallsMesh.vertices = wallVertices.ToArray();
             innerWallsMesh.triangles = wallTriangles.ToArray();
-            innerWalls.mesh = innerWallsMesh;
+
+            if (isMesh3D) {
+                MeshCollider wallCollider = innerWalls3D.gameObject.AddComponent<MeshCollider>();
+                wallCollider.sharedMesh = innerWallsMesh; 
+                innerWalls3D.mesh = innerWallsMesh;
+            }
+            else {
+                innerWalls2D.mesh = innerWallsMesh;
+            }
         }
 
         // According to the marching squares algorithm,
@@ -241,7 +292,7 @@ namespace Maes.Map.MapGen {
         // states.
         // Find the states in this image: http://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/#MathJax-Element-15-Frame
         // removeRoundedCorners simply ignores case 1, 2, 4, 7, 8, 11, 13, 14 by using a center point to square off the edges
-        void TriangulateSquare(Square square, bool removeRoundedCorners = false) {
+        void TriangulateSquare(Square square, bool isMesh3D, bool removeRoundedCorners = false) {
             switch (square.configuration) {
                 case 0:
                     break;
@@ -249,133 +300,152 @@ namespace Maes.Map.MapGen {
                 // 1 points:
                 case 1:
                     if (removeRoundedCorners)
-                        MeshFromPoints(square.center, square.centreBottom, square.bottomLeft, square.centreLeft);
+                        MeshFromPoints(isMesh3D, square.center, square.centreBottom, square.bottomLeft, square.centreLeft);
                     else
-                        MeshFromPoints(square.centreLeft, square.centreBottom, square.bottomLeft);
+                        MeshFromPoints(isMesh3D, square.centreLeft, square.centreBottom, square.bottomLeft);
                     break;
                 case 2:
                     if (removeRoundedCorners)
-                        MeshFromPoints(square.centreRight, square.bottomRight, square.centreBottom, square.center);
+                        MeshFromPoints(isMesh3D, square.centreRight, square.bottomRight, square.centreBottom, square.center);
                     else
-                        MeshFromPoints(square.bottomRight, square.centreBottom, square.centreRight);
+                        MeshFromPoints(isMesh3D, square.bottomRight, square.centreBottom, square.centreRight);
                     break;
                 case 4:
                     if (removeRoundedCorners)
-                        MeshFromPoints(square.topRight, square.centreRight, square.center, square.centreTop);
+                        MeshFromPoints(isMesh3D, square.topRight, square.centreRight, square.center, square.centreTop);
                     else
-                        MeshFromPoints(square.topRight, square.centreRight, square.centreTop);
+                        MeshFromPoints(isMesh3D, square.topRight, square.centreRight, square.centreTop);
                     break;
                 case 8:
                     if (removeRoundedCorners)
-                        MeshFromPoints(square.topLeft, square.centreTop, square.center, square.centreLeft);
+                        MeshFromPoints(isMesh3D, square.topLeft, square.centreTop, square.center, square.centreLeft);
                     else
-                        MeshFromPoints(square.topLeft, square.centreTop, square.centreLeft);
+                        MeshFromPoints(isMesh3D, square.topLeft, square.centreTop, square.centreLeft);
                     break;
 
                 // 2 points:
                 case 3:
-                    MeshFromPoints(square.centreRight, square.bottomRight, square.bottomLeft, square.centreLeft);
+                    MeshFromPoints(isMesh3D, square.centreRight, square.bottomRight, square.bottomLeft, square.centreLeft);
                     break;
                 case 6:
-                    MeshFromPoints(square.centreTop, square.topRight, square.bottomRight, square.centreBottom);
+                    MeshFromPoints(isMesh3D, square.centreTop, square.topRight, square.bottomRight, square.centreBottom);
                     break;
                 case 9:
-                    MeshFromPoints(square.topLeft, square.centreTop, square.centreBottom, square.bottomLeft);
+                    MeshFromPoints(isMesh3D, square.topLeft, square.centreTop, square.centreBottom, square.bottomLeft);
                     break;
                 case 12:
-                    MeshFromPoints(square.topLeft, square.topRight, square.centreRight, square.centreLeft);
+                    MeshFromPoints(isMesh3D, square.topLeft, square.topRight, square.centreRight, square.centreLeft);
                     break;
                 case 5:
-                    MeshFromPoints(square.centreTop, square.topRight, square.centreRight, square.centreBottom,
+                    MeshFromPoints(isMesh3D, square.centreTop, square.topRight, square.centreRight, square.centreBottom,
                         square.bottomLeft, square.centreLeft);
                     break;
                 case 10:
-                    MeshFromPoints(square.topLeft, square.centreTop, square.centreRight, square.bottomRight,
+                    MeshFromPoints(isMesh3D, square.topLeft, square.centreTop, square.centreRight, square.bottomRight,
                         square.centreBottom, square.centreLeft);
                     break;
 
                 // 3 point:
                 case 7:
                     if (removeRoundedCorners)
-                        MeshFromPoints(square.center, square.centreTop, square.topRight, square.bottomRight,
+                        MeshFromPoints(isMesh3D, square.center, square.centreTop, square.topRight, square.bottomRight,
                             square.bottomLeft, square.centreLeft);
                     else
-                        MeshFromPoints(square.centreTop, square.topRight, square.bottomRight, square.bottomLeft,
+                        MeshFromPoints(isMesh3D, square.centreTop, square.topRight, square.bottomRight, square.bottomLeft,
                             square.centreLeft);
                     break;
                 case 11:
                     if (removeRoundedCorners)
-                        MeshFromPoints(square.center, square.centreRight, square.bottomRight, square.bottomLeft,
+                        MeshFromPoints(isMesh3D, square.center, square.centreRight, square.bottomRight, square.bottomLeft,
                             square.topLeft, square.centreTop);
                     else
-                        MeshFromPoints(square.topLeft, square.centreTop, square.centreRight, square.bottomRight,
+                        MeshFromPoints(isMesh3D, square.topLeft, square.centreTop, square.centreRight, square.bottomRight,
                             square.bottomLeft);
                     break;
                 case 13:
                     if (removeRoundedCorners)
-                        MeshFromPoints(square.center, square.centreBottom, square.bottomLeft, square.topLeft,
+                        MeshFromPoints(isMesh3D, square.center, square.centreBottom, square.bottomLeft, square.topLeft,
                             square.topRight, square.centreRight);
                     else
-                        MeshFromPoints(square.topLeft, square.topRight, square.centreRight, square.centreBottom,
+                        MeshFromPoints(isMesh3D, square.topLeft, square.topRight, square.centreRight, square.centreBottom,
                             square.bottomLeft);
                     break;
                 case 14:
                     if (removeRoundedCorners)
-                        MeshFromPoints(square.center, square.centreLeft, square.topLeft, square.topRight,
+                        MeshFromPoints(isMesh3D, square.center, square.centreLeft, square.topLeft, square.topRight,
                             square.bottomRight, square.centreBottom);
                     else
-                        MeshFromPoints(square.topLeft, square.topRight, square.bottomRight, square.centreBottom,
+                        MeshFromPoints(isMesh3D, square.topLeft, square.topRight, square.bottomRight, square.centreBottom,
                             square.centreLeft);
                     break;
 
                 // 4 point:
                 case 15:
-                    MeshFromPoints(square.topLeft, square.topRight, square.bottomRight, square.bottomLeft);
+                    MeshFromPoints(isMesh3D, square.topLeft, square.topRight, square.bottomRight, square.bottomLeft);
                     // If all 4 are active walls, it cannot be an outline to a room, and should thus not be checked
-                    checkedVertices.Add(square.topLeft.vertexIndex);
-                    checkedVertices.Add(square.topRight.vertexIndex);
-                    checkedVertices.Add(square.bottomRight.vertexIndex);
-                    checkedVertices.Add(square.bottomLeft.vertexIndex);
+                    if (isMesh3D) {
+                        checkedVertices3D.Add(square.topLeft.vertexIndex);
+                        checkedVertices3D.Add(square.topRight.vertexIndex);
+                        checkedVertices3D.Add(square.bottomRight.vertexIndex);
+                        checkedVertices3D.Add(square.bottomLeft.vertexIndex);
+                    }
+                    else {
+                        checkedVertices2D.Add(square.topLeft.vertexIndex);
+                        checkedVertices2D.Add(square.topRight.vertexIndex);
+                        checkedVertices2D.Add(square.bottomRight.vertexIndex);
+                        checkedVertices2D.Add(square.bottomLeft.vertexIndex);
+                    }
+                    
                     break;
             }
         }
 
-        void MeshFromPoints(params Node[] points) {
-            AssignIndexesToVertices(points);
+        void MeshFromPoints(bool isMesh3D, params Node[] points) {
+            AssignIndexesToVertices(points, isMesh3D);
 
             if (points.Length >= 3)
-                CreateTriangle(points[0], points[1], points[2]);
+                CreateTriangle(points[0], points[1], points[2], isMesh3D);
             if (points.Length >= 4)
-                CreateTriangle(points[0], points[2], points[3]);
+                CreateTriangle(points[0], points[2], points[3], isMesh3D);
             if (points.Length >= 5)
-                CreateTriangle(points[0], points[3], points[4]);
+                CreateTriangle(points[0], points[3], points[4], isMesh3D);
             if (points.Length >= 6)
-                CreateTriangle(points[0], points[4], points[5]);
+                CreateTriangle(points[0], points[4], points[5], isMesh3D);
         }
 
-        void AssignIndexesToVertices(Node[] points) {
+        void AssignIndexesToVertices(Node[] points, bool isMesh3D) {
             for (int i = 0; i < points.Length; i++) {
                 if (points[i].vertexIndex == -1) {
-                    points[i].vertexIndex = vertices.Count;
-                    // The map is rotated in 2d mode
-                    var pos2D = new Vector3(points[i].position.x, points[i].position.z, points[i].position.y);
-                    vertices.Add(pos2D);
+                    points[i].vertexIndex = isMesh3D ? vertices3D.Count : vertices2D.Count;
+                    if (isMesh3D) {
+                        vertices3D.Add(points[i].position); 
+                    }
+                    else {
+                        // The map is rotated in 2d mode                                                             
+                        var pos2D = new Vector3(points[i].position.x, points[i].position.z, points[i].position.y);   
+                        vertices2D.Add(pos2D);  
+                    }
                 }
             }
         }
 
-        void CreateTriangle(Node a, Node b, Node c) {
+        void CreateTriangle(Node a, Node b, Node c, bool isMesh3D) {
+            var triangles = isMesh3D ? triangles3D : triangles2D;
+
             triangles.Add(a.vertexIndex);
             triangles.Add(b.vertexIndex);
             triangles.Add(c.vertexIndex);
 
+
             Triangle triangle = new Triangle(a.vertexIndex, b.vertexIndex, c.vertexIndex);
-            AddTriangleToDictionary(triangle.vertexIndexA, triangle);
-            AddTriangleToDictionary(triangle.vertexIndexB, triangle);
-            AddTriangleToDictionary(triangle.vertexIndexC, triangle);
+            AddTriangleToDictionary(triangle.vertexIndexA, triangle, isMesh3D);
+            AddTriangleToDictionary(triangle.vertexIndexB, triangle, isMesh3D);
+            AddTriangleToDictionary(triangle.vertexIndexC, triangle, isMesh3D);
         }
 
-        void AddTriangleToDictionary(int vertexIndexKey, Triangle triangle) {
+        void AddTriangleToDictionary(int vertexIndexKey, Triangle triangle, bool isMesh3D) {
+            var triangleDictionary = isMesh3D ? triangleDictionary3D : triangleDictionary2D;
+            
             if (triangleDictionary.ContainsKey(vertexIndexKey)) {
                 triangleDictionary[vertexIndexKey].Add(triangle);
             }
@@ -386,43 +456,61 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        void CalculateMeshOutlines() {
+        void CalculateMeshOutlines(bool isMesh3D) {
+            var vertices = isMesh3D ? vertices3D : vertices2D;
+            var outlines = isMesh3D ? outlines3D : outlines2D;
+            var checkedVertices = isMesh3D ? checkedVertices3D : checkedVertices2D;
+            
             for (int vertexIndex = 0; vertexIndex < vertices.Count; vertexIndex++) {
                 if (!checkedVertices.Contains(vertexIndex)) {
-                    int newOutlineVertex = GetConnectedOutlineVertex(vertexIndex);
+                    int newOutlineVertex = GetConnectedOutlineVertex(vertexIndex, isMesh3D);
                     if (newOutlineVertex != -1) {
                         checkedVertices.Add(vertexIndex);
 
                         List<int> newOutline = new List<int>();
                         newOutline.Add(vertexIndex);
                         outlines.Add(newOutline);
-                        FollowOutline(newOutlineVertex, outlines.Count - 1);
+                        FollowOutline(newOutlineVertex, outlines.Count - 1, isMesh3D);
                         outlines[outlines.Count - 1].Add(vertexIndex);
                     }
                 }
             }
         }
 
-        void FollowOutline(int vertexIndex, int outlineIndex) {
-            outlines[outlineIndex].Add(vertexIndex);
-            checkedVertices.Add(vertexIndex);
-            int nextVertexIndex = GetConnectedOutlineVertex(vertexIndex);
+        void FollowOutline(int vertexIndex, int outlineIndex, bool isMesh3D) {
+            if (isMesh3D) {
+                outlines3D[outlineIndex].Add(vertexIndex);
+                checkedVertices3D.Add(vertexIndex);
+                int nextVertexIndex = GetConnectedOutlineVertex(vertexIndex, isMesh3D);
 
-            if (nextVertexIndex != -1) {
-                FollowOutline(nextVertexIndex, outlineIndex);
+                if (nextVertexIndex != -1) {
+                    FollowOutline(nextVertexIndex, outlineIndex, isMesh3D);
+                }
             }
+            else 
+            {
+                outlines2D[outlineIndex].Add(vertexIndex);
+                checkedVertices2D.Add(vertexIndex);
+                int nextVertexIndex = GetConnectedOutlineVertex(vertexIndex, isMesh3D);
+
+                if (nextVertexIndex != -1) {
+                    FollowOutline(nextVertexIndex, outlineIndex, isMesh3D);
+                }  
+            }
+            
         }
 
-        int GetConnectedOutlineVertex(int vertexIndex) {
-            List<Triangle> trianglesContainingVertex = triangleDictionary[vertexIndex];
+        int GetConnectedOutlineVertex(int vertexIndex, bool isMesh3D) {
+            List<Triangle> trianglesContainingVertex = isMesh3D ? triangleDictionary3D[vertexIndex] : triangleDictionary2D[vertexIndex];
 
             for (int i = 0; i < trianglesContainingVertex.Count; i++) {
                 Triangle triangle = trianglesContainingVertex[i];
 
                 for (int j = 0; j < 3; j++) {
                     int vertexB = triangle[j];
-                    if (vertexB != vertexIndex && !checkedVertices.Contains(vertexB)) {
-                        if (IsOutlineEdge(vertexIndex, vertexB)) {
+                    bool isChecked = isMesh3D ? checkedVertices3D.Contains(vertexB) : checkedVertices2D.Contains(vertexB);
+                    if (vertexB != vertexIndex && !isChecked) {
+                        if (IsOutlineEdge(vertexIndex, vertexB, isMesh3D)) {
                             return vertexB;
                         }
                     }
@@ -432,10 +520,10 @@ namespace Maes.Map.MapGen {
             return -1;
         }
 
-        bool IsOutlineEdge(int vertexA, int vertexB) {
+        bool IsOutlineEdge(int vertexA, int vertexB, bool isMesh3D) {
             // The inner walls made up of triangles are recognized based on the
             // number of triangles shared between the two vertices. The outer ones only have 1 in common.
-            List<Triangle> trianglesContainingVertexA = triangleDictionary[vertexA];
+            List<Triangle> trianglesContainingVertexA = isMesh3D ? triangleDictionary3D[vertexA] :  triangleDictionary2D[vertexA];
             int sharedTriangleCount = 0;
 
             for (int i = 0; i < trianglesContainingVertexA.Count; i++) {

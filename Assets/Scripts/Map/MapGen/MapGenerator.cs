@@ -11,7 +11,8 @@ using Vector3 = UnityEngine.Vector3;
 namespace Maes.Map.MapGen {
     public class MapGenerator : MonoBehaviour {
         public Transform plane;
-        public Transform innerWalls;
+        public Transform innerWalls2D;
+        public Transform innerWalls3D;
         public Transform wallRoof;
 
         public MeshGenerator meshGenerator;
@@ -24,9 +25,13 @@ namespace Maes.Map.MapGen {
             newPosition.z = -wallHeight;
             wallRoof.position = newPosition;
 
-            newPosition = innerWalls.position;
+            newPosition = innerWalls2D.position;
             newPosition.z = -wallHeight;
-            innerWalls.position = newPosition;
+            innerWalls2D.position = newPosition;
+            
+            newPosition = innerWalls3D.position;
+            newPosition.z = -wallHeight;
+            innerWalls3D.position = newPosition;
         }
 
         private void ResizePlaneToFitMap(int bitMapHeight, int bitMapWidth, float padding = 0.1f) {

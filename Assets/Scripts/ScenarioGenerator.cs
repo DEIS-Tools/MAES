@@ -211,8 +211,8 @@ namespace Maes {
                 
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
                 {
-                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
                     ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
+                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
                     ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
                 };
 
