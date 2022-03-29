@@ -112,12 +112,17 @@ namespace Maes.Map.MapGen {
             CreateWallMesh(wallHeight, false);
 
             if (include3DCollider) {
-                CreateWallMesh(wallHeight, true);
+                // We must rotate and move the inner walls before creating the mesh, otherwise
+                // the mesh, and thus the collider, will be created with the wrong orientation
+                // Apparently, Unity does not update this, when the game object is rotated.
                 innerWalls3D.transform.rotation = Quaternion.AngleAxis(-90, Vector3.right);
+                var oldPosition = innerWalls3D.transform.position;
+                innerWalls3D.transform.position = new Vector3(oldPosition.x, oldPosition.y, -wallHeight);
+                CreateWallMesh(wallHeight, true);
             }
 
             Generate2DColliders();
-            
+
             return GenerateCollisionMap(squareGrid2D,
                 new Vector2(squareGrid2D.XOffset, squareGrid2D.YOffset), removeRoundedCorners, rooms);
         }

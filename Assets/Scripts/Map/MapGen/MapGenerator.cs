@@ -28,10 +28,6 @@ namespace Maes.Map.MapGen {
             newPosition = innerWalls2D.position;
             newPosition.z = -wallHeight;
             innerWalls2D.position = newPosition;
-            
-            newPosition = innerWalls3D.position;
-            newPosition.z = -wallHeight;
-            innerWalls3D.position = newPosition;
         }
 
         private void ResizePlaneToFitMap(int bitMapHeight, int bitMapWidth, float padding = 0.1f) {
