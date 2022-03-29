@@ -9,6 +9,8 @@ namespace Maes.Map.MapGen {
 	 * the grid and create a continuous wall around the rooms 
 	 */
         public SquareGrid squareGrid2D;
+        // Since the squares have an index and this index is depending on the 
+        // order of the vertices, we have to include an additional grid for 3D.
         public SquareGrid squareGrid3D;
 
         // The inner walls, that the robots can collide with
@@ -40,6 +42,8 @@ namespace Maes.Map.MapGen {
         private HashSet<int> checkedVertices2D = new HashSet<int>();
         private HashSet<int> checkedVertices3D = new HashSet<int>();
 
+        [Tooltip("Include an invisible 3D collider on the inner walls to allow for ray trace collisions. " +
+                 "Enabling this can impact performance of map generation by up to 2x")]
         public bool include3DCollider = true;
         
         private const int WALL_TYPE = 1, ROOM_TYPE = 0;
