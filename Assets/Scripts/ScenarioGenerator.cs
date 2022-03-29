@@ -53,10 +53,11 @@ namespace Maes {
                  seed: 0,
                  hasFinishedSim: shouldEndSim,
                  mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
-                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsInBiggestRoom(
+                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                      map, 
                      0, 
                      numberOfRobots,
+                     new Vector2Int(0,0),
                      (seed) => new Ros2Algorithm()),
                  robotConstraints: constraints,
                  $"ROS2-{DateTime.Now.Millisecond}"
