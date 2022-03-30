@@ -140,8 +140,8 @@ public class LaserScanSensor : MonoBehaviour
         if (measurementsSoFar > NumMeasurementsPerScan)
             measurementsSoFar = NumMeasurementsPerScan;
 
-        var yawBaseDegrees = 90; //transform.eulerAngles.z;
-        Debug.Log($"Trace base angle: {transform.eulerAngles}");
+        var yawBaseDegrees = transform.eulerAngles.z + 90; //transform.eulerAngles.z;
+        Debug.Log($"Trace base angle: {transform.eulerAngles.z + 90}");
         while (m_NumMeasurementsTaken < measurementsSoFar)
         {
             var t = m_NumMeasurementsTaken / (float)NumMeasurementsPerScan;
