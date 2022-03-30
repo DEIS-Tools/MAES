@@ -26,7 +26,6 @@ Transform:
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8671688526849193638}
   m_Father: {fileID: 9210634985821422330}
@@ -60,7 +59,6 @@ Transform:
   m_LocalRotation: {x: -0.7071072, y: 1.4210855e-14, z: 4.2632564e-14, w: 0.7071064}
   m_LocalPosition: {x: -0.89, y: 1.105, z: -0.26}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8671688526849193638}
   m_RootOrder: 3
@@ -84,7 +82,6 @@ MeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -144,7 +141,6 @@ Transform:
   m_LocalRotation: {x: -0.7071072, y: 1.4210855e-14, z: 4.2632564e-14, w: 0.7071064}
   m_LocalPosition: {x: -0, y: 0.825, z: 0.05}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8671688526849193638}
   m_RootOrder: 1
@@ -168,7 +164,6 @@ MeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -227,7 +222,6 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -1.291}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 9210634985821422330}
   m_RootOrder: 1
@@ -272,7 +266,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6914204824932582565}
-  - component: {fileID: 93163725700410473}
   m_Layer: 0
   m_Name: base_scan
   m_TagString: Untagged
@@ -290,34 +283,10 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.033, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8671688526849193638}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &93163725700410473
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4252694085193147738}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 36fe032a45d54f07ba83d71898f8729f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  topic: /scan
-  PublishPeriodSeconds: 0.1
-  RangeMetersMin: 0.12
-  RangeMetersMax: 100
-  ScanAngleStartDegrees: 0
-  ScanAngleEndDegrees: -359
-  ScanOffsetAfterPublish: 0
-  NumMeasurementsPerScan: 180
-  TimeBetweenMeasurementsSeconds: 0
-  LayerMaskName: TurtleBot3Manual
-  FrameId: base_scan
 --- !u!1 &5578715434109853517
 GameObject:
   m_ObjectHideFlags: 0
@@ -346,7 +315,6 @@ Transform:
   m_LocalRotation: {x: -0.7071072, y: 1.4210855e-14, z: 4.2632564e-14, w: 0.7071064}
   m_LocalPosition: {x: -0, y: 0.825, z: 0.05}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8671688526849193638}
   m_RootOrder: 0
@@ -370,7 +338,6 @@ MeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -429,7 +396,6 @@ Transform:
   m_LocalRotation: {x: -0.7071072, y: 1.4210855e-14, z: 4.2632564e-14, w: 0.7071064}
   m_LocalPosition: {x: 0.89, y: 1.105, z: -0.26}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8671688526849193638}
   m_RootOrder: 2
@@ -453,7 +419,6 @@ MeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -511,7 +476,6 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.291, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8671688526849193638}
   m_RootOrder: 5
@@ -542,7 +506,6 @@ Transform:
   m_LocalRotation: {x: 0, y: -0, z: 0, w: -1}
   m_LocalPosition: {x: -0.00018149981, y: -0.076277256, z: 0.6843219}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2587329196595825532}
   - {fileID: 2472888289384465308}
@@ -566,6 +529,7 @@ GameObject:
   - component: {fileID: 9210634985821422331}
   - component: {fileID: 9210634985821422329}
   - component: {fileID: 5156427515509347382}
+  - component: {fileID: 5478260830804215171}
   m_Layer: 0
   m_Name: MaesRobot2D
   m_TagString: Untagged
@@ -583,7 +547,6 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7351260818183478304}
   - {fileID: 9005463527228745035}
@@ -3664,3 +3627,26 @@ MonoBehaviour:
     - {x: 0.69540966, y: 0.6793566, z: 0.2342651}
     - {x: 0.7624647, y: 0.6462776, z: 0.031190768}
     - {x: -0.69540966, y: 0.6793566, z: 0.2342651}
+--- !u!114 &5478260830804215171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9210634985821422333}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36fe032a45d54f07ba83d71898f8729f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  topic: /scan
+  PublishPeriodSeconds: 0.1
+  RangeMetersMin: 0.12
+  RangeMetersMax: 100
+  ScanAngleStartDegrees: 0
+  ScanAngleEndDegrees: -359
+  ScanOffsetAfterPublish: 0
+  NumMeasurementsPerScan: 180
+  TimeBetweenMeasurementsSeconds: 0
+  LayerMaskName: TurtleBot3Manual
+  FrameId: base_scan

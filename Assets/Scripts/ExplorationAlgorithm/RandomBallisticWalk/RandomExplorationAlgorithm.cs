@@ -5,7 +5,7 @@ using Random = System.Random;
 namespace Maes.ExplorationAlgorithm.RandomBallisticWalk {
     public class RandomExplorationAlgorithm : IExplorationAlgorithm {
         private IRobotController _robotController;
-        private bool _hasJustRotated = false;
+        private bool _hasJustRotated = true;
         private readonly Random _random;
 
         public RandomExplorationAlgorithm(int randomSeed) {

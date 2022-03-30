@@ -140,7 +140,8 @@ public class LaserScanSensor : MonoBehaviour
         if (measurementsSoFar > NumMeasurementsPerScan)
             measurementsSoFar = NumMeasurementsPerScan;
 
-        var yawBaseDegrees = transform.rotation.eulerAngles.y;
+        var yawBaseDegrees = 90; //transform.eulerAngles.z;
+        Debug.Log($"Trace base angle: {transform.eulerAngles}");
         while (m_NumMeasurementsTaken < measurementsSoFar)
         {
             var t = m_NumMeasurementsTaken / (float)NumMeasurementsPerScan;
@@ -148,7 +149,7 @@ public class LaserScanSensor : MonoBehaviour
             var yawDegrees = yawBaseDegrees + yawSensorDegrees;
             var directionVector = Quaternion.Euler(0f, yawDegrees, 0f) * Vector3.forward;
             directionVector = new Vector3(directionVector.x, directionVector.z, directionVector.y);
-            var measurementStart = RangeMetersMin * directionVector + transform.position;
+            var measurementStart = RangeMetersMin * directionVector + transform.position + Vector3.back * 0.1f;
             var measurementRay = new Ray(measurementStart, directionVector);
             var foundValidMeasurement = Physics.Raycast(measurementRay, out var hit, RangeMetersMax);
             // Only record measurement if it's within the sensor's operating range
