@@ -238,8 +238,7 @@ namespace Maes.Map
 
             robot.outLine.enabled = false;
 
-            float
-                RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
+            float RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
             robot.transform.position = new Vector3(x + RTOffset + collisionMap.ScaledOffset.x,
                 y + RTOffset + collisionMap.ScaledOffset.y);
 

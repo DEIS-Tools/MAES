@@ -58,7 +58,7 @@ namespace Maes {
                      0, 
                      numberOfRobots,
                      new Vector2Int(0,0),
-                     (seed) => new RandomExplorationAlgorithm(seed)),
+                     (seed) => new Ros2Algorithm()),
                  robotConstraints: constraints,
                  $"ROS2-{DateTime.Now.Millisecond}"
              ));

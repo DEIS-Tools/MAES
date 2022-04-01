@@ -43,7 +43,6 @@ public class ROSTransformTreePublisher : MonoBehaviour
 
         m_ROS = ROSConnection.GetOrCreateInstance();
         m_TransformRoot = new TransformTreeNode(m_RootGameObject);
-        Debug.Log($"Children in node {m_TransformRoot.name} =  {m_TransformRoot.Children.Count}");
         m_ROS.RegisterPublisher<TFMessageMsg>(k_TfTopic);
         m_LastPublishTimeSeconds = Clock.time + PublishPeriodSeconds;
     }
@@ -135,7 +134,7 @@ public class ROSTransformTreePublisher : MonoBehaviour
         var robot_rotation = robotTransform.rotation.eulerAngles.z;
         
         var quat = Quaternion.Euler(0, 0, -robot_rotation);
-        Debug.Log($"Euler angles: {quat.eulerAngles} vs. robot {robotTransform.rotation.eulerAngles}");
+        // Debug.Log($"Euler angles: {quat.eulerAngles} vs. robot {robotTransform.rotation.eulerAngles}");
         var list = new List<TransformStampedMsg>() {
                 ToStampedTransformMsg("odom", "base_footprint",
                     new Vector3(robot_position.x, robot_position.y,0), 

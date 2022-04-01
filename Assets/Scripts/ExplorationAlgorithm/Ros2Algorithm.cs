@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Maes.Robot;
 using Maes.Robot.Task;
 using RosMessageTypes.BuiltinInterfaces;
+using RosMessageTypes.Geometry;
 using RosMessageTypes.MaesInterface;
 using RosMessageTypes.Rosgraph;
 using RosMessageTypes.Sensor;
@@ -25,8 +26,11 @@ namespace Maes.ExplorationAlgorithm {
         private string _rosRobotActionTopicName = "robot1/move_action/goal";
         private double _moveDistance = -1f;
 
-        private string _rayTraceTopic = "scan";
+        private string _rayTraceTopic = "/scan";
         private int _tick = 0;
+        
+        private float rosLinearSpeed = 0f;
+        private float rosRotationSpeed = 0f;
 
         public void UpdateLogic() {
             var position = _controller.GetSlamMap().GetApproxPosition();
@@ -39,24 +43,32 @@ namespace Maes.ExplorationAlgorithm {
                 new_slam_tiles = new[] { new SlamTileMsg(new Vector2DMsg(1, 1), false) },
                 status = _controller.GetStatus().ToString()
             };
-            // _ros.Publish(_stateTopicName, state);
 
-            if(_tick % 10 == 0 && _tick > 200)
-                _controller.Move(1);
-                // PostGarbageToScan();
-            // PublishGarbageClock();
-            
+            if (_controller.GetStatus() == RobotStatus.Idle) {
+                ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
+            }
+
             _tick++;
         }
 
-        private void PublishGarbageClock() {
-            var time = DateTime.Now;
-            var clockMsg = new TimeMsg
-            {
-                sec = (int)time.Second,
-                nanosec = (uint)(time.Millisecond * 1000000)
-            };
-            _ros.Publish("clock", clockMsg);
+        void ReactToCmdVel(float speed, float rotSpeed) {
+            // We prioritise rotation over movement
+            if (Math.Abs(rotSpeed) > 0.01) {
+                var degrees = 10 * rotSpeed;
+                Debug.Log($"Turning {degrees} degrees");
+                _controller.Rotate(-degrees);
+            }
+            else if (rosLinearSpeed > 0) {
+                var distanceInMeters = Mathf.Min(0.4f * speed, 0.2f);
+                Debug.Log($"Moving forward in meters {distanceInMeters}");
+                _controller.Move(distanceInMeters);
+            }
+        }
+
+        void ReceiveRosCmd(TwistMsg cmdVel) {
+            rosLinearSpeed = (float)cmdVel.linear.x;
+            rosRotationSpeed = (float)cmdVel.angular.z;
+            Debug.Log($"Received cmdVel twist: {cmdVel.ToString()}");
         }
 
 
@@ -113,30 +125,9 @@ namespace Maes.ExplorationAlgorithm {
             
             // _ros.RegisterPublisher<LaserScanMsg>(_rayTraceTopic);
             _ros.RegisterPublisher(_rayTraceTopic, LaserScanMsg.k_RosMessageName);
-            // _ros.RegisterPublisher<ClockMsg>("clock");
-            // _ros.RegisterPublisher<ClockMsg>("clock4");
-            // Example of action
-            // _ros.RegisterPublisher<MoveFeedback>(_rosRobotActionTopicName);
-            // MoveActionFeedback.Register();
-            // MoveActionGoal.Register();
-            // MoveActionResult.Register();
-            // _ros.RegisterPublisher(_rosRobotActionTopicName, MoveActionFeedback.k_RosMessageName);
-            // _ros.Subscribe<MoveActionGoal>(_rosRobotActionTopicName, ExecuteMoveAction);
+			_ros.Subscribe<TwistMsg>("cmd_vel", ReceiveRosCmd);
         }
-
-        private void ExecuteMoveAction(MoveActionGoal goal) {
-            _moveDistance = goal.goal.distance;
-            Debug.Log($"Received move goal {goal.ToString()}");
-        }
-
-        private Task<BroadcastResponse> BroadcastMessage(BroadcastRequest request) {
-            _controller.Broadcast($"{request.msg}");
-            var response = new BroadcastResponse {
-                success_status = "Success"
-            };
-            return Task.FromResult(response);
-        }
-
+        
         public object SaveState() {
             return null;
         }
