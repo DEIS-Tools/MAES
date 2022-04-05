@@ -1,0 +1,24 @@
+# Times per second that robot logic is updated
+LogicTickDeltaMillis: 100
+
+# Amount of physics steps to calculate between each robot logic tick
+# Physics tick rate = LogicTickDelta / PhysicsTicksPerLogicUpdate
+PhysicsTicksPerLogicUpdate: 10
+
+# The below constants depend on the above constants, and will be set automatically:
+# PhysicsTickDeltaMillis = LogicTickDeltaMillis / PhysicsTicksPerLogicUpdate;
+# PhysicsTickDeltaSeconds = PhysicsTickDeltaMillis / 1000f;
+
+# Debug visualizer
+DrawCommunication: true
+ShowEnvironmentTags: true
+
+# Statistics
+ShouldWriteCSVResults: false
+StatisticsOutPutPath: 'default' # defaults to 'Desktop/MaesStatistics/' if not overwritten here with a valid path.
+TicksPerStatsSnapShot: 10
+PopulateAdjacencyAndComGroupsEveryTick: false
+
+# Visualization
+TicksBeforeExplorationHeatMapCold: 2400 # 10 * 60 * 4
+TicksBeforeCoverageHeatMapCold: 2400 # 10 * 60 * 4

@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 9210634985821422331}
   - component: {fileID: 9210634985821422329}
   - component: {fileID: 5156427515509347382}
-  - component: {fileID: -1732696059501337663}
   m_Layer: 0
   m_Name: MaesRobot2D
   m_TagString: Untagged
@@ -3111,18 +3110,6 @@ MonoBehaviour:
     - {x: 0.69540966, y: 0.6793566, z: 0.2342651}
     - {x: 0.7624647, y: 0.6462776, z: 0.031190768}
     - {x: -0.69540966, y: 0.6793566, z: 0.2342651}
---- !u!114 &-1732696059501337663
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9210634985821422333}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: feab04ad06492965492b3edc6423aa53, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &9210634985911898445
 PrefabInstance:
   m_ObjectHideFlags: 0
