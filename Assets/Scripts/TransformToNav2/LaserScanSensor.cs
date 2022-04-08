@@ -10,7 +10,7 @@ using UnityEngine.Serialization;
 
 public class LaserScanSensor : MonoBehaviour
 {
-    public string topic;
+    public string ScanTopic = "/scan";
     [FormerlySerializedAs("TimeBetweenScansSeconds")]
     public double PublishPeriodSeconds = 0.1;
     public float RangeMetersMin = 0;
@@ -33,11 +33,15 @@ public class LaserScanSensor : MonoBehaviour
 
     bool isScanning = false;
     double m_TimeLastScanBeganSeconds = -1;
+    
+    [SerializeField]
+    GameObject m_WrapperObject;
 
-    protected virtual void Start()
-    {
+    protected virtual void Start() {
+        ScanTopic = m_WrapperObject.name + ScanTopic; // Prepend robot name as namespace
+        // FrameId = FrameId + "_" + m_WrapperObject.name;
         m_Ros = ROSConnection.GetOrCreateInstance();
-        m_Ros.RegisterPublisher<LaserScanMsg>(topic);
+        m_Ros.RegisterPublisher<LaserScanMsg>(ScanTopic);
 
         m_CurrentScanAngleStart = ScanAngleStartDegrees;
         m_CurrentScanAngleEnd = ScanAngleEndDegrees;
@@ -100,7 +104,7 @@ public class LaserScanSensor : MonoBehaviour
             ranges = ranges.ToArray(),
         };
         
-        m_Ros.Publish(topic, msg);
+        m_Ros.Publish(ScanTopic, msg);
 
         m_NumMeasurementsTaken = 0;
         ranges.Clear();

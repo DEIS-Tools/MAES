@@ -124,8 +124,8 @@ namespace Maes.ExplorationAlgorithm {
             
             
             // _ros.RegisterPublisher<LaserScanMsg>(_rayTraceTopic);
-            _ros.RegisterPublisher(_rayTraceTopic, LaserScanMsg.k_RosMessageName);
-			_ros.Subscribe<TwistMsg>("cmd_vel", ReceiveRosCmd);
+            //_ros.RegisterPublisher(_rayTraceTopic, LaserScanMsg.k_RosMessageName);
+			//_ros.Subscribe<TwistMsg>("cmd_vel", ReceiveRosCmd);
         }
         
         public object SaveState() {

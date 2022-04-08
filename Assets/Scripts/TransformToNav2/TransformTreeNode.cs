@@ -43,7 +43,7 @@ namespace Unity.Robotics.SlamExample
                     var childNode = new TransformTreeNode(childGO);
                     tfNode.Children.Add(childNode);
                 }
-                else if (!ignoredLinks.Contains(childGO.name)) {
+                else if (acceptedNames.Contains(childGO.name)) {
                     //else if(acceptedNames.Contains(childGO.name)){
                     var childNode = new TransformTreeNode(childGO);
                     tfNode.Children.Add(childNode);

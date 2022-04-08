@@ -6,6 +6,7 @@ using System.Text;
 using RosMessageTypes.Geometry;
 using RosMessageTypes.Std;
 using RosMessageTypes.Tf2;
+using RosMessageTypes.Geometry;
 using Unity.Robotics.Core;
 using Unity.Robotics.ROSTCPConnector;
 using Unity.Robotics.ROSTCPConnector.ROSGeometry;
@@ -19,9 +20,12 @@ public class ROSTransformTreePublisher : MonoBehaviour
     [SerializeField]
     double m_PublishRateHz = 20f;
     [SerializeField]
-    List<string> m_GlobalFrameIds = new List<string> { "map", "odom"};
+    List<string> m_GlobalFrameIds = new List<string> {"map", "odom"};
     [SerializeField]
     GameObject m_RootGameObject;
+    [SerializeField]
+    GameObject m_WrapperObject;
+    String m_NameSpace = "";
     
     double m_LastPublishTimeSeconds;
 
@@ -41,9 +45,12 @@ public class ROSTransformTreePublisher : MonoBehaviour
             m_RootGameObject = gameObject;
         }
 
+        m_NameSpace = m_WrapperObject.name;
+
         m_ROS = ROSConnection.GetOrCreateInstance();
         m_TransformRoot = new TransformTreeNode(m_RootGameObject);
-        m_ROS.RegisterPublisher<TFMessageMsg>(k_TfTopic);
+        m_ROS.RegisterPublisher<TFMessageMsg>(m_NameSpace + k_TfTopic);
+
         m_LastPublishTimeSeconds = Clock.time + PublishPeriodSeconds;
     }
 
@@ -62,12 +69,7 @@ public class ROSTransformTreePublisher : MonoBehaviour
         }
     }
 
-    void PublishMessageCustom() {
-        // Publish fake transform messages (copied from slam example project)
-        var tfMessage = new TFMessageMsg(GenerateTransformMessages().ToArray());
-        m_ROS.Publish(k_TfTopic, tfMessage);
-        m_LastPublishTimeSeconds = Clock.FrameStartTimeInSeconds;
-    }
+    
 
     void PublishMessage()
     {
@@ -80,9 +82,12 @@ public class ROSTransformTreePublisher : MonoBehaviour
                 m_TransformRoot.Transform.position.z);
             var qat = m_TransformRoot.Transform.rotation;
             
+            var robot_rotation = m_TransformRoot.Transform.rotation.eulerAngles.z;
+        
+            qat = Quaternion.Euler(0, 0, -robot_rotation);
+            
             Vector3 eulers = this.transform.rotation.eulerAngles;
-            // qat = Quaternion.Euler(new Vector3(-90, eulers.y, eulers.z));
-            var tra = new TransformMsg(new Vector3Msg(pos.x, pos.y, pos.y),
+            var tra = new TransformMsg(new Vector3Msg(pos.x, pos.y, pos.z),
                     new QuaternionMsg(qat.x, qat.y, qat.z, qat.w));
             
             
@@ -115,7 +120,16 @@ public class ROSTransformTreePublisher : MonoBehaviour
         PopulateTFList(tfMessageList, m_TransformRoot);
         
         var tfMessage = new TFMessageMsg(tfMessageList.ToArray());
-        m_ROS.Publish(k_TfTopic, tfMessage);
+        m_ROS.Publish(m_NameSpace + k_TfTopic, tfMessage);
+        m_LastPublishTimeSeconds = Clock.FrameStartTimeInSeconds;
+        
+        
+    }
+
+    void PublishMessageCustom() {
+        // Publish fake transform messages (copied from slam example project)
+        var tfMessage = new TFMessageMsg(GenerateTransformMessages().ToArray());
+        m_ROS.Publish(m_NameSpace + k_TfTopic, tfMessage);
         m_LastPublishTimeSeconds = Clock.FrameStartTimeInSeconds;
     }
 
@@ -126,6 +140,58 @@ public class ROSTransformTreePublisher : MonoBehaviour
             PublishMessageCustom();
         }
 
+    }
+
+    private List<TransformStampedMsg> GenerateTransformMultipleRobotsMessages() {
+        var robotTransform = transform;
+        var robot_position = robotTransform.position;
+        var robot_rotation = robotTransform.rotation.eulerAngles.z;
+        
+        var quat = Quaternion.Euler(0, 0, -robot_rotation);
+        // Debug.Log($"Euler angles: {quat.eulerAngles} vs. robot {robotTransform.rotation.eulerAngles}");
+        var list = new List<TransformStampedMsg>() {
+            ToStampedTransformMsg("map", "odom", 
+                new Vector3(0f,0, 0), new Quaternion(0f, 0f, 0f, 1f)
+            ),
+            ToStampedTransformMsg("map", "odom", 
+                new Vector3(0f,0, 0), new Quaternion(0f, 0f, 0f, 1f)
+            ),
+            
+            ToStampedTransformMsg("odom", "odom_robot0", 
+                new Vector3(0f,0, 0), new Quaternion(0f, 0f, 0f, 1f)
+            ),
+            ToStampedTransformMsg("odom", "odom_robot1", 
+                new Vector3(0f,0, 0), new Quaternion(0f, 0f, 0f, 1f)
+            ),
+            
+            // Robot 0
+            ToStampedTransformMsg("odom_robot0", "base_footprint_robot0",
+                new Vector3(robot_position.x, robot_position.y,0), 
+                quat),
+            ToStampedTransformMsg("base_footprint_robot0", "base_link_robot0", 
+                new Vector3(-1.1932570487260818e-09f,5.281606263451977e-10f, 0.009999998845160007f), 
+                new Quaternion(4.5811162863174104e-08f, -4.1443854570388794e-08f, 8.56289261719212e-09f, -1.0f)),
+            
+            ToStampedTransformMsg("base_link_robot0", "base_scan_robot0", 
+                new Vector3(-0.06399999558925629f,-5.218086407410283e-09f, 0.12200000882148743f), 
+                new Quaternion(-4.461279701217791e-08f, 2.9802322387695312e-08f, 1.517582859378308e-08f, -1.0f)),
+            
+            // Robot 1
+            ToStampedTransformMsg("odom_robot1", "base_footprint_robot1",
+                new Vector3(robot_position.x + 1, robot_position.y,0), 
+                quat),
+            ToStampedTransformMsg("base_footprint_robot1", "base_link_robot1", 
+                new Vector3(-1.1932570487260818e-09f,5.281606263451977e-10f, 0.009999998845160007f), 
+                new Quaternion(4.5811162863174104e-08f, -4.1443854570388794e-08f, 8.56289261719212e-09f, -1.0f)),
+            
+            ToStampedTransformMsg("base_link_robot1", "base_scan_robot1", 
+                new Vector3(-0.06399999558925629f,-5.218086407410283e-09f, 0.12200000882148743f), 
+                new Quaternion(-4.461279701217791e-08f, 2.9802322387695312e-08f, 1.517582859378308e-08f, -1.0f)),
+            
+        };
+
+        return list;
+        
     }
     
     private List<TransformStampedMsg> GenerateTransformMessages() {
@@ -166,12 +232,13 @@ public class ROSTransformTreePublisher : MonoBehaviour
 
             return list;
         }
-
-        private static TransformStampedMsg ToStampedTransformMsg(string parentFrame, string childFrame, Vector3 position, Quaternion quaternion) {
-            return new TransformStampedMsg(
-                new HeaderMsg(new TimeStamp(Clock.time), parentFrame),
-                childFrame,
-                new TransformMsg(new Vector3Msg(position.x, position.y, position.z), 
-                    new QuaternionMsg(quaternion.x, quaternion.y, quaternion.z, quaternion.w)));
-        }
+    
+    private static TransformStampedMsg ToStampedTransformMsg(string parentFrame, string childFrame, Vector3 position, Quaternion quaternion) {
+        return new TransformStampedMsg(
+            new HeaderMsg(new TimeStamp(Clock.time), parentFrame),
+            childFrame,
+            new TransformMsg(new Vector3Msg(position.x, position.y, position.z), 
+                new QuaternionMsg(quaternion.x, quaternion.y, quaternion.z, quaternion.w)));
+    
+    }
 }

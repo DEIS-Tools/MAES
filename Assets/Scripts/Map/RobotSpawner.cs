@@ -225,6 +225,7 @@ namespace Maes.Map
             IExplorationAlgorithm algorithm, SimulationMap<bool> collisionMap, int seed) {
             var robotID = robotId;
             var robotGameObject = Instantiate(robotPrefab, parent: transform);
+            robotGameObject.name = $"robot{robotId}";
             var robot = robotGameObject.GetComponent<MonaRobot>();
             // robotRelativeSize is a floating point value in ]0,1.0]. 1.0 = robot is the same size as a tile.
             if (0.001f > relativeSize && relativeSize > 1.0000001f)
