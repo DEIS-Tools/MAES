@@ -319,5 +319,9 @@ namespace Maes.Robot {
         public ISlamAlgorithm GetSlamMap() {
             return this.SlamMap;
         }
+
+        public bool IsRotating() {
+            return _currentTask is FiniteRotationTask || _currentTask is InfiniteRotationTasK;
+        }
     }
 }

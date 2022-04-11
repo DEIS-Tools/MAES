@@ -26,6 +26,7 @@ namespace Maes.ExplorationAlgorithm {
         private string _rosRobotActionTopicName = "robot1/move_action/goal";
         private double _moveDistance = -1f;
 
+        private string _cmdVelocityTopic = "/cmd_vel";
         private string _rayTraceTopic = "/scan";
         private int _tick = 0;
         
@@ -43,7 +44,7 @@ namespace Maes.ExplorationAlgorithm {
                 new_slam_tiles = new[] { new SlamTileMsg(new Vector2DMsg(1, 1), false) },
                 status = _controller.GetStatus().ToString()
             };
-
+            
             if (_controller.GetStatus() == RobotStatus.Idle) {
                 ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
             }
@@ -56,19 +57,51 @@ namespace Maes.ExplorationAlgorithm {
             if (Math.Abs(rotSpeed) > 0.01) {
                 var degrees = 10 * rotSpeed;
                 Debug.Log($"Turning {degrees} degrees");
-                _controller.Rotate(-degrees);
-            }
-            else if (rosLinearSpeed > 0) {
+                _controller.Rotate(degrees);
+            } else if (rosLinearSpeed > 0) {
                 var distanceInMeters = Mathf.Min(0.4f * speed, 0.2f);
                 Debug.Log($"Moving forward in meters {distanceInMeters}");
                 _controller.Move(distanceInMeters);
             }
-        }
+        }   
+        //     ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
+        //     
+        //
+        //     _tick++;
+        // }
+        //
+        // void ReactToCmdVel(float speedCommandValue, float rotationCommandValue) {
+        //     Debug.Log($"Command velocities: [{speedCommandValue}, {rotationCommandValue}]");
+        //     var robotStatus = _controller.GetStatus();
+        //     // We prioritise rotation over movement
+        //     if (Math.Abs(rotationCommandValue) > 0.01) {
+        //         if (robotStatus != RobotStatus.Idle && !_controller.IsRotating()) {
+        //             _controller.StopCurrentTask();
+        //         } else if (robotStatus == RobotStatus.Idle) {
+        //             _controller.StartRotating();
+        //         }
+        //         // var degrees = 10 * rotationCommandValue;
+        //         // Debug.Log($"Turning {degrees} degrees");
+        //         // _controller.Rotate(degrees);
+        //     } else if (rosLinearSpeed > 0) {
+        //         if (robotStatus != RobotStatus.Idle && _controller.IsRotating()) {
+        //             _controller.StopCurrentTask();
+        //         } else if (robotStatus == RobotStatus.Idle) {
+        //             _controller.StartMoving();
+        //         }
+        //         // var distanceInMeters = Mathf.Min(0.4f * speedCommandValue, 0.2f);
+        //         // Debug.Log($"Moving forward in meters {distanceInMeters}");
+        //         // _controller.StartMoving(); //.Move(distanceInMeters);
+        //     } else if (_controller.GetStatus() != RobotStatus.Idle){
+        //         Debug.Log("Stopping movement!");
+        //         _controller.StopCurrentTask();    
+        //     }
+        //     
+        // }
 
         void ReceiveRosCmd(TwistMsg cmdVel) {
             rosLinearSpeed = (float)cmdVel.linear.x;
             rosRotationSpeed = (float)cmdVel.angular.z;
-            Debug.Log($"Received cmdVel twist: {cmdVel.ToString()}");
         }
 
 
@@ -122,10 +155,9 @@ namespace Maes.ExplorationAlgorithm {
             // Example of registering service with callback function
             // _ros.ImplementService<BroadcastRequest, BroadcastResponse>(_broadcastServiceTopicName, BroadcastMessage);
             
-            
             // _ros.RegisterPublisher<LaserScanMsg>(_rayTraceTopic);
             _ros.RegisterPublisher(_rayTraceTopic, LaserScanMsg.k_RosMessageName);
-			_ros.Subscribe<TwistMsg>("cmd_vel", ReceiveRosCmd);
+			_ros.Subscribe<TwistMsg>(_cmdVelocityTopic, ReceiveRosCmd);
         }
         
         public object SaveState() {
