@@ -17,7 +17,7 @@ namespace Maes {
          
          public static Queue<SimulationScenario> GenerateROS2Scenario() {
              Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-             var numberOfRobots = 2;
+             var numberOfRobots = 1;
              
              SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.ExplorationTracker
                  .CoverageProportion > 0.995f);
@@ -58,7 +58,7 @@ namespace Maes {
                      0, 
                      numberOfRobots,
                      new Vector2Int(0,0),
-                     (seed) => new RandomExplorationAlgorithm(1)),
+                     (seed) => new Ros2Algorithm()),
                  robotConstraints: constraints,
                  $"ROS2-{DateTime.Now.Millisecond}"
              ));

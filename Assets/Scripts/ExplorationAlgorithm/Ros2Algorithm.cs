@@ -21,10 +21,6 @@ namespace Maes.ExplorationAlgorithm {
     public class Ros2Algorithm : IExplorationAlgorithm {
         private Robot2DController _controller;
         private ROSConnection _ros;
-        private string _stateTopicName = "robot1/state_msg";
-        private string _broadcastServiceTopicName = "robot1/broadcast_srv";
-        private string _rosRobotActionTopicName = "robot1/move_action/goal";
-        private double _moveDistance = -1f;
 
         private string _rayTraceTopic = "/scan";
         private int _tick = 0;
@@ -33,17 +29,6 @@ namespace Maes.ExplorationAlgorithm {
         private float rosRotationSpeed = 0f;
 
         public void UpdateLogic() {
-            var position = _controller.GetSlamMap().GetApproxPosition();
-            var state = new RobotStateMsg {
-                pos = new RobotPosMsg(position.x, position.y, _controller.GetGlobalAngle()),
-                brdcst_msgs = new[] { new RobotMsgMsg("From other robot", 1) },
-                env_tags = new[] { new EnvironmentTagMsg(10, 10, "Content of env tag") },
-                has_collided = _controller.HasCollidedSinceLastLogicTick(),
-                nearby_robots = new NearbyRobotMsg[]{new NearbyRobotMsg(10, 15, 1)},
-                new_slam_tiles = new[] { new SlamTileMsg(new Vector2DMsg(1, 1), false) },
-                status = _controller.GetStatus().ToString()
-            };
-
             if (_controller.GetStatus() == RobotStatus.Idle) {
                 ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
             }
@@ -125,7 +110,7 @@ namespace Maes.ExplorationAlgorithm {
             
             // _ros.RegisterPublisher<LaserScanMsg>(_rayTraceTopic);
             //_ros.RegisterPublisher(_rayTraceTopic, LaserScanMsg.k_RosMessageName);
-			//_ros.Subscribe<TwistMsg>("cmd_vel", ReceiveRosCmd);
+			_ros.Subscribe<TwistMsg>("cmd_vel", ReceiveRosCmd);
         }
         
         public object SaveState() {
