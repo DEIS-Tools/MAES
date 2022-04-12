@@ -3639,7 +3639,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36fe032a45d54f07ba83d71898f8729f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  topic: 
   ScanTopic: /scan
   PublishPeriodSeconds: 0.1
   RangeMetersMin: 0.12

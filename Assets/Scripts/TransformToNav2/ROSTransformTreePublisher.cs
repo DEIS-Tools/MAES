@@ -45,7 +45,7 @@ public class ROSTransformTreePublisher : MonoBehaviour
             m_RootGameObject = gameObject;
         }
 
-        m_NameSpace = m_WrapperObject.name;
+        m_NameSpace = "/" + m_WrapperObject.name;
 
         m_ROS = ROSConnection.GetOrCreateInstance();
         m_TransformRoot = new TransformTreeNode(m_RootGameObject);

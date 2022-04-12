@@ -38,7 +38,7 @@ public class LaserScanSensor : MonoBehaviour
     GameObject m_WrapperObject;
 
     protected virtual void Start() {
-        ScanTopic = m_WrapperObject.name + ScanTopic; // Prepend robot name as namespace
+        ScanTopic = "/" + m_WrapperObject.name + ScanTopic; // Prepend robot name as namespace
         // FrameId = FrameId + "_" + m_WrapperObject.name;
         m_Ros = ROSConnection.GetOrCreateInstance();
         m_Ros.RegisterPublisher<LaserScanMsg>(ScanTopic);

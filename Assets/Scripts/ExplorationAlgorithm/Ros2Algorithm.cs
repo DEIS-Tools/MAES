@@ -40,12 +40,12 @@ namespace Maes.ExplorationAlgorithm {
             // We prioritise rotation over movement
             if (Math.Abs(rotSpeed) > 0.01) {
                 var degrees = 10 * rotSpeed;
-                Debug.Log($"Turning {degrees} degrees");
+                // Debug.Log($"Turning {degrees} degrees");
                 _controller.Rotate(-degrees);
             }
             else if (rosLinearSpeed > 0) {
                 var distanceInMeters = Mathf.Min(0.4f * speed, 0.2f);
-                Debug.Log($"Moving forward in meters {distanceInMeters}");
+                // Debug.Log($"Moving forward in meters {distanceInMeters}");
                 _controller.Move(distanceInMeters);
             }
         }
@@ -53,7 +53,7 @@ namespace Maes.ExplorationAlgorithm {
         void ReceiveRosCmd(TwistMsg cmdVel) {
             rosLinearSpeed = (float)cmdVel.linear.x;
             rosRotationSpeed = (float)cmdVel.angular.z;
-            Debug.Log($"Received cmdVel twist: {cmdVel.ToString()}");
+            Debug.Log($"Robot {_controller.GetRobotID()}: Received cmdVel twist: {cmdVel.ToString()}");
         }
 
 
@@ -110,7 +110,9 @@ namespace Maes.ExplorationAlgorithm {
             
             // _ros.RegisterPublisher<LaserScanMsg>(_rayTraceTopic);
             //_ros.RegisterPublisher(_rayTraceTopic, LaserScanMsg.k_RosMessageName);
-			_ros.Subscribe<TwistMsg>("cmd_vel", ReceiveRosCmd);
+            var topic = $"/robot{_controller.GetRobotID()}/cmd_vel";
+            Debug.Log($"Subscribed to {topic}");
+			_ros.Subscribe<TwistMsg>(topic, ReceiveRosCmd);
         }
         
         public object SaveState() {
