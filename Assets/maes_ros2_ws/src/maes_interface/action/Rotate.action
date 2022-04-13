@@ -1,8 +1,0 @@
-# Request
-float32 degrees
----
-# Result
-bool done
----
-# Feedback
-float32 remaining

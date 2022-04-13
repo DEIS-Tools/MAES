@@ -20,6 +20,8 @@ public class ROSClockPublisher : MonoBehaviour
 
     ROSConnection m_ROS;
 
+    private string m_ClockTopic = "/clock";
+
     double PublishPeriodSeconds => 1.0f / m_PublishRateHz;
 
     bool ShouldPublishMessage => Clock.FrameStartTimeInSeconds - PublishPeriodSeconds > m_LastPublishTimeSeconds;
@@ -52,7 +54,7 @@ public class ROSClockPublisher : MonoBehaviour
     {
         SetClockMode(m_ClockMode);
         m_ROS = ROSConnection.GetOrCreateInstance();
-        m_ROS.RegisterPublisher<ClockMsg>("clock");
+        m_ROS.RegisterPublisher<ClockMsg>(m_ClockTopic);
     }
 
     void PublishMessage()
@@ -64,7 +66,7 @@ public class ROSClockPublisher : MonoBehaviour
             nanosec = (uint)((publishTime - Math.Floor(publishTime)) * Clock.k_NanoSecondsInSeconds)
         };
         m_LastPublishTimeSeconds = publishTime;
-        m_ROS.Publish("clock", clockMsg);
+        m_ROS.Publish(m_ClockTopic, clockMsg);
     }
 
     void Update()

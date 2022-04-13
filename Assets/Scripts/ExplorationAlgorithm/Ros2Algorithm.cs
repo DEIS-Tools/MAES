@@ -21,10 +21,6 @@ namespace Maes.ExplorationAlgorithm {
     public class Ros2Algorithm : IExplorationAlgorithm {
         private Robot2DController _controller;
         private ROSConnection _ros;
-        private string _stateTopicName = "robot1/state_msg";
-        private string _broadcastServiceTopicName = "robot1/broadcast_srv";
-        private string _rosRobotActionTopicName = "robot1/move_action/goal";
-        private double _moveDistance = -1f;
 
         private string _cmdVelocityTopic = "/cmd_vel";
         private string _rayTraceTopic = "/scan";
@@ -34,17 +30,6 @@ namespace Maes.ExplorationAlgorithm {
         private float rosRotationSpeed = 0f;
 
         public void UpdateLogic() {
-            var position = _controller.GetSlamMap().GetApproxPosition();
-            var state = new RobotStateMsg {
-                pos = new RobotPosMsg(position.x, position.y, _controller.GetGlobalAngle()),
-                brdcst_msgs = new[] { new RobotMsgMsg("From other robot", 1) },
-                env_tags = new[] { new EnvironmentTagMsg(10, 10, "Content of env tag") },
-                has_collided = _controller.HasCollidedSinceLastLogicTick(),
-                nearby_robots = new NearbyRobotMsg[]{new NearbyRobotMsg(10, 15, 1)},
-                new_slam_tiles = new[] { new SlamTileMsg(new Vector2DMsg(1, 1), false) },
-                status = _controller.GetStatus().ToString()
-            };
-            
             if (_controller.GetStatus() == RobotStatus.Idle) {
                 ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
             }
@@ -60,10 +45,16 @@ namespace Maes.ExplorationAlgorithm {
                 _controller.Rotate(degrees);
             } else if (rosLinearSpeed > 0) {
                 var distanceInMeters = Mathf.Min(0.4f * speed, 0.2f);
-                Debug.Log($"Moving forward in meters {distanceInMeters}");
+                // Debug.Log($"Moving forward in meters {distanceInMeters}");
                 _controller.Move(distanceInMeters);
             }
-        }   
+        }
+
+        void ReceiveRosCmd(TwistMsg cmdVel) {
+            rosLinearSpeed = (float)cmdVel.linear.x;
+            rosRotationSpeed = (float)cmdVel.angular.z;
+            Debug.Log($"Robot {_controller.GetRobotID()}: Received cmdVel twist: {cmdVel.ToString()}");
+        }
         //     ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
         //     
         //
@@ -98,12 +89,6 @@ namespace Maes.ExplorationAlgorithm {
         //     }
         //     
         // }
-
-        void ReceiveRosCmd(TwistMsg cmdVel) {
-            rosLinearSpeed = (float)cmdVel.linear.x;
-            rosRotationSpeed = (float)cmdVel.angular.z;
-        }
-
 
         private void PostGarbageToScan() {
             var timestamp = new TimeStamp(Clock.time);
@@ -145,19 +130,10 @@ namespace Maes.ExplorationAlgorithm {
         
         public void SetController(Robot2DController controller) {
             this._controller = controller;
-            
-            Debug.Log("Inside Set Controller");
-            
             _ros = ROSConnection.GetOrCreateInstance();
-            // Register publisher on normal topic
-            // _ros.RegisterPublisher<RobotStateMsg>(_stateTopicName);
-            
-            // Example of registering service with callback function
-            // _ros.ImplementService<BroadcastRequest, BroadcastResponse>(_broadcastServiceTopicName, BroadcastMessage);
-            
-            // _ros.RegisterPublisher<LaserScanMsg>(_rayTraceTopic);
-            _ros.RegisterPublisher(_rayTraceTopic, LaserScanMsg.k_RosMessageName);
-			_ros.Subscribe<TwistMsg>(_cmdVelocityTopic, ReceiveRosCmd);
+
+            var cmdVelTopic = $"/robot{_controller.GetRobotID()}/cmd_vel";
+            _ros.Subscribe<TwistMsg>(cmdVelTopic, ReceiveRosCmd);
         }
         
         public object SaveState() {
