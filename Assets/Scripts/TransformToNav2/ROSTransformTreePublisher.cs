@@ -133,17 +133,12 @@ public class ROSTransformTreePublisher : MonoBehaviour
         var robot_position = robotTransform.position;
         var robot_rotation = robotTransform.rotation.eulerAngles.z - 90f;
         
-        // 90
-        // 360 - 90 = 270
-        
-        // 45 
-        // 360 - 45 = 315
-        
+
         var quat = Quaternion.Euler(0, 0, robot_rotation);
         // Debug.Log($"Euler angles: {quat.eulerAngles} vs. robot {robotTransform.rotation.eulerAngles}");
         var list = new List<TransformStampedMsg>() {
                 ToStampedTransformMsg("odom", "base_footprint",
-                    new Vector3(robot_position.x, robot_position.y,0), 
+                    new Vector3(-robot_position.x, -robot_position.y,0), 
                     quat),
                 ToStampedTransformMsg("map", "odom", 
                     new Vector3(0f,0, 0), new Quaternion(0f, 0f, 0f, 1f)
