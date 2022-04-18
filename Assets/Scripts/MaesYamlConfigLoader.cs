@@ -140,6 +140,9 @@ namespace Maes.YamlConfig {
 
             public bool HasSuggestedStartingPoint => this. SuggestedStartingPointX != null && this.SuggestedStartingPointY != null;
 
+            public Vector2Int SuggestedStartingPointAsVector =>
+                new Vector2Int(SuggestedStartingPointX.Value, SuggestedStartingPointY.Value);
+            
             public override string ToString() {
                 return $"{nameof(SuggestedStartingPointX)}: {SuggestedStartingPointX}, {nameof(SuggestedStartingPointY)}: {SuggestedStartingPointY}, {nameof(HasSuggestedStartingPoint)}: {HasSuggestedStartingPoint}";
             }
@@ -168,11 +171,12 @@ namespace Maes.YamlConfig {
         }
 
         public class BuildingConfigType {
-            public int MaxHallInPercent { get; set; } = 20;
+            public float MaxHallInPercent { get; set; } = 20;
+            public int HallWidth { get; set; } = 4;
             public int MinRoomSideLength { get; set; } = 6;
-            public int DoorWidth { get; set; } = 2;
+            public uint DoorWidth { get; set; } = 2;
             public int DoorPadding { get; set; } = 2;
-            public int RoomSplitChance { get; set; } = 85;
+            public uint RoomSplitChance { get; set; } = 85;
 
             public override string ToString() {
                 return $"{nameof(MaxHallInPercent)}: {MaxHallInPercent}, {nameof(MinRoomSideLength)}: {MinRoomSideLength}, {nameof(DoorWidth)}: {DoorWidth}, {nameof(DoorPadding)}: {DoorPadding}, {nameof(RoomSplitChance)}: {RoomSplitChance}";

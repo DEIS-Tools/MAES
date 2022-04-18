@@ -99,11 +99,13 @@ namespace Maes.Map
             // Remove the edges to make sure the robots are not in a solid coarse tile
             var edgeTiles = FindEdgeTiles(possibleSpawnTiles, true);
             possibleSpawnTiles = possibleSpawnTiles.Except(edgeTiles).ToList();
-            
+
+            // If no suggestions made, simply spawn around 0,0
+            if (suggestedStartingPoint == null) suggestedStartingPoint = new Vector2Int(0, 0);
             // Offset suggested starting point to map
             suggestedStartingPoint = new Vector2Int(suggestedStartingPoint.Value.x - (int)collisionMap.ScaledOffset.x,
-                suggestedStartingPoint.Value.y - (int)collisionMap.ScaledOffset.y);
-            
+                    suggestedStartingPoint.Value.y - (int)collisionMap.ScaledOffset.y);
+
             possibleSpawnTiles.Sort((c1, c2) => {
                 return ManhattanDistance(c1, suggestedStartingPoint.Value) -
                        ManhattanDistance(c2, suggestedStartingPoint.Value);

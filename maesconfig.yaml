@@ -1,4 +1,5 @@
 random_seeds: [0]
+number_of_robots: 3
 global_settings:
   logic_ticks_delta_millis: 100
   physics_ticks_per_logic_update: 10
@@ -10,7 +11,6 @@ global_settings:
   populate_adjacency_and_comm_groups_every_tick: false
   ticks_before_exploration_heatmap_cold: 2400 # 10 * 60 * 4
   ticks_before_coverage_heatmap_cold: 2400 # 10 * 60 * 4
-number_of_robots: 2
 robot_constraints:
   broadcast_range: 0
   broadcast_blocked_by_walls: false
@@ -37,7 +37,7 @@ robot_spawn_config:
 map:
   # Include either cave_config or building_config
   wall_height: 2.0 # Must be bigger greater than 2. Otherwise, just cosmetic
-  width_in_tiles: 50
+  width_in_tiles: 70
   height_in_tiles: 50
   border_size: 1 # Border around map. Only cosmetic. Must be at least 1
   cave_config:
@@ -47,6 +47,7 @@ map:
     wall_threshold_size: 10 # Smallest group of isolated wall tiles allowed to remain in the map
     room_threshold_size: 10 # Smallest room allowed to remain in the map
   # building_config:
+  #   hall_width: 4
   #   max_hall_in_percent: 20 # How much of the map should consist of hallways?
   #   min_room_side_length: 6 # The shortest allowed wall length of a room
   #   door_width: 2 # Width of the doors interconnecting the rooms
