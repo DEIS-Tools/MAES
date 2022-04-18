@@ -11,6 +11,15 @@ from launch_ros.actions import Node, PushRosNamespace
 from launch.substitutions import LaunchConfiguration, TextSubstitution
 from nav2_common import launch
 from rclpy.parameter import Parameter
+import yaml
+
+def get_maes_config_from_yaml(package_name):
+    package_dir = get_package_share_directory(package_name)
+    config_file_path = os.path.join(package_dir, "maes_parameters.yaml")
+    with open(config_file_path, 'r') as file:
+        maes_config = yaml.safe_load(file)
+
+        return maes_config
 
 
 def include_swarm_launch_descriptions(context):
@@ -19,7 +28,9 @@ def include_swarm_launch_descriptions(context):
     rviz_config_file = context.launch_configurations['rviz_config']
     default_bt_xml_filename = context.launch_configurations["default_bt_xml_filename"]
 
-    number_of_robots = int(context.launch_configurations['num_of_robots'])
+    maes_config = get_maes_config_from_yaml(package_name)
+
+    number_of_robots = maes_config['number_of_robots']
 
     swarm_descriptions = []
     for n in range(number_of_robots):
@@ -43,6 +54,12 @@ def include_swarm_launch_descriptions(context):
                     "params_file":  os.path.join(package_dir, 'maes_nav2_multirobot_params_robotn.yaml'),
                     "default_bt_xml_filename": default_bt_xml_filename,
                     "autostart": 'True',
+                    "raytrace_range": str(maes_config['robot_constraints']['slam_raytrace_range']),
+                    "robot_radius": str(maes_config['robot_constraints']['agent_relative_size']),
+                    "global_costmap_width": str(maes_config['map']['width_in_tiles']),
+                    "global_costmap_height": str(maes_config['map']['height_in_tiles']),
+                    "global_costmap_origin_x": str(-float(maes_config['map']['width_in_tiles'] / 2)),
+                    "global_costmap_origin_y": str(-float(maes_config['map']['height_in_tiles'] / 2))
                 }.items())
         ])
         swarm_descriptions += [robot_n_description]
@@ -75,11 +92,11 @@ def generate_launch_description():
         description="Full path to the behavior tree xml file to use",
     )
 
-    declare_number_of_robots_cmd = DeclareLaunchArgument(
-        "num_of_robots",
-        default_value='1',
-        description="Number of robot instances to spawn. Including Nav2 stack and rviz",
-    )
+    #declare_number_of_robots_cmd = DeclareLaunchArgument(
+    #    "num_of_robots",
+    #    default_value='1',
+    #    description="Number of robot instances to spawn. Including Nav2 stack and rviz",
+    #)
 
     ros_tcp_endpoint_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -93,7 +110,7 @@ def generate_launch_description():
     launch_description.add_action(declare_rviz_config_file_cmd)
     launch_description.add_action(declare_use_rviz_cmd)
     launch_description.add_action(declare_bt_xml_cmd)
-    launch_description.add_action(declare_number_of_robots_cmd)
+    # launch_description.add_action(declare_number_of_robots_cmd)
 
     launch_description.add_action(OpaqueFunction(function=include_swarm_launch_descriptions))
 

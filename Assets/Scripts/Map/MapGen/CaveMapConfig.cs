@@ -1,4 +1,5 @@
 using System;
+using Maes.YamlConfig;
 
 namespace Maes.Map.MapGen {
     public struct CaveMapConfig {
@@ -31,6 +32,18 @@ namespace Maes.Map.MapGen {
 
         public readonly int neighbourWallsNeededToStayWall;
 
+        public CaveMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
+            widthInTiles: config.Map.WidthInTiles,
+            heightInTiles: config.Map.HeightInTiles,
+            randomSeed: seed,
+            smoothingRuns: config.Map.CaveConfig.SmoothingRuns,
+            connectionPassagesWidth: config.Map.CaveConfig.ConnectionPassageWidth,
+            randomFillPercent: config.Map.CaveConfig.RandomFillPercent,
+            wallThresholdSize: config.Map.CaveConfig.WallThresholdSize,
+            roomThresholdSize: config.Map.CaveConfig.RoomThresholdSize,
+            borderSize: config.Map.BorderSize) {
+        }
+        
         public CaveMapConfig(int widthInTiles, int heightInTiles, int randomSeed, int smoothingRuns,
             int connectionPassagesWidth, int randomFillPercent, int wallThresholdSize, int roomThresholdSize,
             int borderSize, int neighbourWallsNeededToStayWall = 4) {
