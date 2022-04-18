@@ -227,6 +227,7 @@ namespace Maes.Map
             IExplorationAlgorithm algorithm, SimulationMap<bool> collisionMap, int seed) {
             var robotID = robotId;
             var robotGameObject = Instantiate(robotPrefab, parent: transform);
+            robotGameObject.name = $"robot{robotId}";
             var robot = robotGameObject.GetComponent<MonaRobot>();
             // robotRelativeSize is a floating point value in ]0,1.0]. 1.0 = robot is the same size as a tile.
             if (0.001f > relativeSize && relativeSize > 1.0000001f)
@@ -240,8 +241,7 @@ namespace Maes.Map
 
             robot.outLine.enabled = false;
 
-            float
-                RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
+            float RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
             robot.transform.position = new Vector3(x + RTOffset + collisionMap.ScaledOffset.x,
                 y + RTOffset + collisionMap.ScaledOffset.y);
 
@@ -252,10 +252,6 @@ namespace Maes.Map
             robot.Controller.Constraints = RobotConstraints; 
             algorithm.SetController(robot.Controller);
             
-            // if (algorithm is Ros2Algorithm ros2Algorithm) {
-            //     ros2Algorithm.SetUnityComponent(robot.GetComponent<ROS2UnityComponent>());
-            // }
-
             return robot;
         }
         
