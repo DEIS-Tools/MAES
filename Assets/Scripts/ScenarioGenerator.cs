@@ -17,7 +17,7 @@ namespace Maes {
          
          public static Queue<SimulationScenario> GenerateROS2Scenario() {
              Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-             var numberOfRobots = 1;
+             var numberOfRobots = 2;
              
              SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.ExplorationTracker
                  .CoverageProportion > 0.995f);
