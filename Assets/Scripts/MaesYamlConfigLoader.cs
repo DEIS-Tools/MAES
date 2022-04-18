@@ -10,7 +10,11 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace Maes.YamlConfig {
     public static class MaesYamlConfigLoader {
 
-        public static MaesConfigType LoadConfig(string Path) {
+        private static MaesConfigType PreloadedConfig = null;
+        
+        public static MaesConfigType LoadConfig() {
+            if (PreloadedConfig != null) return PreloadedConfig;
+            
             string ConfigFileName;
             try {
                 var yFile = new DirectoryInfo(Directory.GetCurrentDirectory())
@@ -46,8 +50,8 @@ namespace Maes.YamlConfig {
                 Debug.Log($"Caught exception: {e.Message}");
                 return null;
             }
-            
-            Debug.Log($"Using config: \n{config}");
+
+            PreloadedConfig = config; // Cache for later use
             return config;
         }
         
@@ -55,17 +59,16 @@ namespace Maes.YamlConfig {
             
         [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
         public class MaesConfigType {
-            public int[] random_seeds { get; set; }
-            
-            public int number_of_robots { get; set; }
-            public GlobalSettingsType global_settings { get; set; }
-            public RobotConstraintsType robot_constraints { get; set; }
-            public EndCriteriaType end_criteria { get; set; }
-            public RobotSpawnConfigType robot_spawn_config { get; set; }
-            public MapType map { get; set; }
+            public int[] RandomSeeds { get; set; }
+            public int NumberOfRobots { get; set; }
+            public GlobalSettingsType GlobalSettings { get; set; }
+            public RobotConstraintsType RobotConstraints { get; set; }
+            public EndCriteriaType EndCriteria { get; set; }
+            public RobotSpawnConfigType RobotSpawnConfig { get; set; }
+            public MapType Map { get; set; }
 
             public override string ToString() {
-                return $"{nameof(random_seeds)}: {random_seeds}, {nameof(number_of_robots)}: {number_of_robots}, {nameof(global_settings)}: {global_settings}, {nameof(robot_constraints)}: {robot_constraints}, {nameof(end_criteria)}: {end_criteria}, {nameof(robot_spawn_config)}: {robot_spawn_config}, {nameof(map)}: {map}";
+                return $"{nameof(RandomSeeds)}: {RandomSeeds}, {nameof(NumberOfRobots)}: {NumberOfRobots}, {nameof(GlobalSettings)}: {GlobalSettings}, {nameof(RobotConstraints)}: {RobotConstraints}, {nameof(EndCriteria)}: {EndCriteria}, {nameof(RobotSpawnConfig)}: {RobotSpawnConfig}, {nameof(Map)}: {Map}";
             }
         }    
         
@@ -76,116 +79,116 @@ namespace Maes.YamlConfig {
         [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
         public class GlobalSettingsType {
             // Times per second that robot logic is updated
-            public int logic_ticks_delta_millis { get; set; } = 100;
+            public int LogicTicksDeltaMillis { get; set; } = 100;
 
             // Amount of physics steps to calculate between each robot logic tick
             // Physics tick rate = LogicTickDelta / PhysicsTicksPerLogicUpdate
-            public int physics_ticks_per_logic_update { get; set; } = 10;
+            public int PhysicsTicksPerLogicUpdate { get; set; } = 10;
 
             // Debug visualizer
-            public bool draw_communication { get; set; } = true;
-            public bool show_environment_tags { get; set; } = true;
+            public bool DrawCommunication { get; set; } = true;
+            public bool ShowEnvironmentTags { get; set; } = true;
 
             // Statistics
-            public bool should_write_csv_results { get; set; } = false;
+            public bool ShouldWriteCsvResults { get; set; } = false;
             
-            public string statistics_result_path { get; set; } = "Default";
-            public int ticks_per_stats_snapshot { get; set; } = 10;
-            public bool populate_adjacency_and_comm_groups_every_tick { get; set; } = false;
-            public int ticks_before_exploration_heatmap_cold { get; set; } = 2400; // 10*60*4
-            public int ticks_before_coverage_heatmap_cold { get; set; } = 2400;    // 10*60*4
+            public string StatisticsResultPath { get; set; } = "Default";
+            public int TicksPerStatsSnapshot { get; set; } = 10;
+            public bool PopulateAdjacencyAndCommGroupsEveryTick { get; set; } = false;
+            public int TicksBeforeExplorationHeatmapCold { get; set; } = 2400; // 10*60*4
+            public int TicksBeforeCoverageHeatmapCold { get; set; } = 2400;    // 10*60*4
 
             public override string ToString() {
-                return $"{nameof(logic_ticks_delta_millis)}: {logic_ticks_delta_millis}, {nameof(physics_ticks_per_logic_update)}: {physics_ticks_per_logic_update}, {nameof(draw_communication)}: {draw_communication}, {nameof(show_environment_tags)}: {show_environment_tags}, {nameof(should_write_csv_results)}: {should_write_csv_results}, {nameof(statistics_result_path)}: {statistics_result_path}, {nameof(ticks_per_stats_snapshot)}: {ticks_per_stats_snapshot}, {nameof(populate_adjacency_and_comm_groups_every_tick)}: {populate_adjacency_and_comm_groups_every_tick}, {nameof(ticks_before_exploration_heatmap_cold)}: {ticks_before_exploration_heatmap_cold}, {nameof(ticks_before_coverage_heatmap_cold)}: {ticks_before_coverage_heatmap_cold}";
+                return $"{nameof(LogicTicksDeltaMillis)}: {LogicTicksDeltaMillis}, {nameof(PhysicsTicksPerLogicUpdate)}: {PhysicsTicksPerLogicUpdate}, {nameof(DrawCommunication)}: {DrawCommunication}, {nameof(ShowEnvironmentTags)}: {ShowEnvironmentTags}, {nameof(ShouldWriteCsvResults)}: {ShouldWriteCsvResults}, {nameof(StatisticsResultPath)}: {StatisticsResultPath}, {nameof(TicksPerStatsSnapshot)}: {TicksPerStatsSnapshot}, {nameof(PopulateAdjacencyAndCommGroupsEveryTick)}: {PopulateAdjacencyAndCommGroupsEveryTick}, {nameof(TicksBeforeExplorationHeatmapCold)}: {TicksBeforeExplorationHeatmapCold}, {nameof(TicksBeforeCoverageHeatmapCold)}: {TicksBeforeCoverageHeatmapCold}";
             }
         }
             
             
         [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
         public class RobotConstraintsType {
-            public float broadcast_range { get; set; }
-            public bool broadcast_blocked_by_walls { get; set; }
-            public float sense_nearby_agents_range { get; set; }
-            public bool sense_nearby_agents_blocked_by_walls { get; set; }
-            public bool automatically_update_slam { get; set; }
-            public int slam_update_interval_in_ticks { get; set; }
-            public int slam_sync_interval_in_ticks { get; set; }
-            public float slam_position_inaccuracy { get; set; }
-            public bool distribute_slam { get; set; }
-            public float environment_tag_read_range { get; set; }
-            public float slam_raytrace_range { get; set; }
-            public float relative_move_speed { get; set; }
-            public float agent_relative_size { get; set; }
+            public float BroadcastRange { get; set; }
+            public bool BroadcastBlockedByWalls { get; set; }
+            public float SenseNearbyAgentsRange { get; set; }
+            public bool SenseNearbyAgentsBlockedByWalls { get; set; }
+            public bool AutomaticallyUpdateSlam { get; set; }
+            public int SlamUpdateIntervalInTicks { get; set; }
+            public int SlamSyncIntervalInTicks { get; set; }
+            public float SlamPositionInaccuracy { get; set; }
+            public bool DistributeSlam { get; set; }
+            public float EnvironmentTagReadRange { get; set; }
+            public float SlamRaytraceRange { get; set; }
+            public float RelativeMoveSpeed { get; set; }
+            public float AgentRelativeSize { get; set; }
 
             public override string ToString() {
-                return $"{nameof(broadcast_range)}: {broadcast_range}, {nameof(broadcast_blocked_by_walls)}: {broadcast_blocked_by_walls}, {nameof(sense_nearby_agents_range)}: {sense_nearby_agents_range}, {nameof(sense_nearby_agents_blocked_by_walls)}: {sense_nearby_agents_blocked_by_walls}, {nameof(automatically_update_slam)}: {automatically_update_slam}, {nameof(slam_update_interval_in_ticks)}: {slam_update_interval_in_ticks}, {nameof(slam_sync_interval_in_ticks)}: {slam_sync_interval_in_ticks}, {nameof(slam_position_inaccuracy)}: {slam_position_inaccuracy}, {nameof(distribute_slam)}: {distribute_slam}, {nameof(environment_tag_read_range)}: {environment_tag_read_range}, {nameof(slam_raytrace_range)}: {slam_raytrace_range}, {nameof(relative_move_speed)}: {relative_move_speed}, {nameof(agent_relative_size)}: {agent_relative_size}";
+                return $"{nameof(BroadcastRange)}: {BroadcastRange}, {nameof(BroadcastBlockedByWalls)}: {BroadcastBlockedByWalls}, {nameof(SenseNearbyAgentsRange)}: {SenseNearbyAgentsRange}, {nameof(SenseNearbyAgentsBlockedByWalls)}: {SenseNearbyAgentsBlockedByWalls}, {nameof(AutomaticallyUpdateSlam)}: {AutomaticallyUpdateSlam}, {nameof(SlamUpdateIntervalInTicks)}: {SlamUpdateIntervalInTicks}, {nameof(SlamSyncIntervalInTicks)}: {SlamSyncIntervalInTicks}, {nameof(SlamPositionInaccuracy)}: {SlamPositionInaccuracy}, {nameof(DistributeSlam)}: {DistributeSlam}, {nameof(EnvironmentTagReadRange)}: {EnvironmentTagReadRange}, {nameof(SlamRaytraceRange)}: {SlamRaytraceRange}, {nameof(RelativeMoveSpeed)}: {RelativeMoveSpeed}, {nameof(AgentRelativeSize)}: {AgentRelativeSize}";
             }
         }
 
         public class EndCriteriaType {
-            public float? coverage_percent { get; set; } = null;
-            public float? exploration_percent { get; set; } = null;
+            public float? CoveragePercent { get; set; } = null;
+            public float? ExplorationPercent { get; set; } = null;
 
             public override string ToString() {
-                return $"{nameof(coverage_percent)}: {coverage_percent}, {nameof(exploration_percent)}: {exploration_percent}";
+                return $"{nameof(CoveragePercent)}: {CoveragePercent}, {nameof(ExplorationPercent)}: {ExplorationPercent}";
             }
         }
 
         public class SpawnTogetherType {
-            public int? suggested_starting_point_x { get; set; } = null;
-            public int? suggested_starting_point_y { get; set; } = null;
+            public int? SuggestedStartingPointX { get; set; } = null;
+            public int? SuggestedStartingPointY { get; set; } = null;
 
-            public bool HasSuggestedStartingPoint => this. suggested_starting_point_x != null && this.suggested_starting_point_y != null;
+            public bool HasSuggestedStartingPoint => this. SuggestedStartingPointX != null && this.SuggestedStartingPointY != null;
 
             public override string ToString() {
-                return $"{nameof(suggested_starting_point_x)}: {suggested_starting_point_x}, {nameof(suggested_starting_point_y)}: {suggested_starting_point_y}, {nameof(HasSuggestedStartingPoint)}: {HasSuggestedStartingPoint}";
+                return $"{nameof(SuggestedStartingPointX)}: {SuggestedStartingPointX}, {nameof(SuggestedStartingPointY)}: {SuggestedStartingPointY}, {nameof(HasSuggestedStartingPoint)}: {HasSuggestedStartingPoint}";
             }
         }
 
         public class RobotSpawnConfigType {
-            public bool? biggest_room { get; set; } = null;
-            public SpawnTogetherType spawn_together { get; set; } = null;
-            public bool? spawn_at_hallway_ends { get; set; } = null;
+            public bool? BiggestRoom { get; set; } = null;
+            public SpawnTogetherType SpawnTogether { get; set; } = null;
+            public bool? SpawnAtHallwayEnds { get; set; } = null;
 
             public override string ToString() {
-                return $"{nameof(biggest_room)}: {biggest_room}, {nameof(spawn_together)}: {spawn_together}, {nameof(spawn_at_hallway_ends)}: {spawn_at_hallway_ends}";
+                return $"{nameof(BiggestRoom)}: {BiggestRoom}, {nameof(SpawnTogether)}: {SpawnTogether}, {nameof(SpawnAtHallwayEnds)}: {SpawnAtHallwayEnds}";
             }
         }
 
         public class CaveConfigType {
-            public int smoothing_runs { get; set; } = 4;
-            public int connection_passage_width { get; set; } = 4;
-            public int random_fill_percent { get; set; } = 40;
-            public int wall_threshold_size { get; set; } = 10;
-            public int room_threshold_size { get; set; } = 10;
+            public int SmoothingRuns { get; set; } = 4;
+            public int ConnectionPassageWidth { get; set; } = 4;
+            public int RandomFillPercent { get; set; } = 40;
+            public int WallThresholdSize { get; set; } = 10;
+            public int RoomThresholdSize { get; set; } = 10;
 
             public override string ToString() {
-                return $"{nameof(smoothing_runs)}: {smoothing_runs}, {nameof(connection_passage_width)}: {connection_passage_width}, {nameof(random_fill_percent)}: {random_fill_percent}, {nameof(wall_threshold_size)}: {wall_threshold_size}, {nameof(room_threshold_size)}: {room_threshold_size}";
+                return $"{nameof(SmoothingRuns)}: {SmoothingRuns}, {nameof(ConnectionPassageWidth)}: {ConnectionPassageWidth}, {nameof(RandomFillPercent)}: {RandomFillPercent}, {nameof(WallThresholdSize)}: {WallThresholdSize}, {nameof(RoomThresholdSize)}: {RoomThresholdSize}";
             }
         }
 
         public class BuildingConfigType {
-            public int max_hall_in_percent { get; set; } = 20;
-            public int min_room_side_length { get; set; } = 6;
-            public int door_width { get; set; } = 2;
-            public int door_padding { get; set; } = 2;
-            public int room_split_chance { get; set; } = 85;
+            public int MaxHallInPercent { get; set; } = 20;
+            public int MinRoomSideLength { get; set; } = 6;
+            public int DoorWidth { get; set; } = 2;
+            public int DoorPadding { get; set; } = 2;
+            public int RoomSplitChance { get; set; } = 85;
 
             public override string ToString() {
-                return $"{nameof(max_hall_in_percent)}: {max_hall_in_percent}, {nameof(min_room_side_length)}: {min_room_side_length}, {nameof(door_width)}: {door_width}, {nameof(door_padding)}: {door_padding}, {nameof(room_split_chance)}: {room_split_chance}";
+                return $"{nameof(MaxHallInPercent)}: {MaxHallInPercent}, {nameof(MinRoomSideLength)}: {MinRoomSideLength}, {nameof(DoorWidth)}: {DoorWidth}, {nameof(DoorPadding)}: {DoorPadding}, {nameof(RoomSplitChance)}: {RoomSplitChance}";
             }
         }
 
         public class MapType {
-            public float wall_height { get; set; }
-            public int width_in_tiles { get; set; }
-            public int height_in_tiles { get; set; }
-            public int border_size { get; set; } = 1;
-            public BuildingConfigType building_config { get; set; } = null;
-            public CaveConfigType cave_config { get; set; } = null;
+            public float WallHeight { get; set; }
+            public int WidthInTiles { get; set; }
+            public int HeightInTiles { get; set; }
+            public int BorderSize { get; set; } = 1;
+            public BuildingConfigType BuildingConfig { get; set; } = null;
+            public CaveConfigType CaveConfig { get; set; } = null;
 
             public override string ToString() {
-                return $"{nameof(wall_height)}: {wall_height}, {nameof(width_in_tiles)}: {width_in_tiles}, {nameof(height_in_tiles)}: {height_in_tiles}, {nameof(border_size)}: {border_size}, {nameof(building_config)}: {building_config}, {nameof(cave_config)}: {cave_config}";
+                return $"{nameof(WallHeight)}: {WallHeight}, {nameof(WidthInTiles)}: {WidthInTiles}, {nameof(HeightInTiles)}: {HeightInTiles}, {nameof(BorderSize)}: {BorderSize}, {nameof(BuildingConfig)}: {BuildingConfig}, {nameof(CaveConfig)}: {CaveConfig}";
             }
         }
         

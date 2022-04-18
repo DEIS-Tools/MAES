@@ -45,31 +45,32 @@ namespace Maes {
         public static readonly int TicksBeforeCoverageHeatMapCold = 10 * 60 * 4;
 
         static GlobalSettings() {
+            // If not using config files or the file has already been loaded and parameters set.
             if (IgnoreConfigFiles) {
                 return;
             }
 
-            var config = MaesYamlConfigLoader.LoadConfig("");
+            var config = MaesYamlConfigLoader.LoadConfig();
 
             // Populating static GlobalSettings class.
-            LogicTickDeltaMillis = config.global_settings.logic_ticks_delta_millis;
-            PhysicsTickDeltaMillis = config.global_settings.physics_ticks_per_logic_update;
-            DrawCommunication = config.global_settings.draw_communication;
-            ShowEnvironmentTags = config.global_settings.show_environment_tags;
-            ShouldWriteCSVResults = config.global_settings.should_write_csv_results;
-            if (config.global_settings.statistics_result_path.Length > 0 && config.global_settings.statistics_result_path.ToLower() != "default") {
-                var dir = new DirectoryInfo(config.global_settings.statistics_result_path);
+            LogicTickDeltaMillis = config.GlobalSettings.LogicTicksDeltaMillis;
+            PhysicsTickDeltaMillis = config.GlobalSettings.PhysicsTicksPerLogicUpdate;
+            DrawCommunication = config.GlobalSettings.DrawCommunication;
+            ShowEnvironmentTags = config.GlobalSettings.ShowEnvironmentTags;
+            ShouldWriteCSVResults = config.GlobalSettings.ShouldWriteCsvResults;
+            if (config.GlobalSettings.StatisticsResultPath.Length > 0 && config.GlobalSettings.StatisticsResultPath.ToLower() != "default") {
+                var dir = new DirectoryInfo(config.GlobalSettings.StatisticsResultPath);
                 if (dir.Exists) {
-                    StatisticsOutPutPath = config.global_settings.statistics_result_path;
+                    StatisticsOutPutPath = config.GlobalSettings.StatisticsResultPath;
                 }
                 else {
-                    Debug.Log($"Directory {config.global_settings.statistics_result_path} not found. Defaulting to 'Desktop/MaesStatistics");
+                    Debug.Log($"Directory {config.GlobalSettings.StatisticsResultPath} not found. Defaulting to 'Desktop/MaesStatistics");
                 }
             }
-            TicksPerStatsSnapShot = config.global_settings.ticks_per_stats_snapshot;
-            PopulateAdjacencyAndComGroupsEveryTick = config.global_settings.populate_adjacency_and_comm_groups_every_tick;
-            TicksBeforeExplorationHeatMapCold = config.global_settings.ticks_before_exploration_heatmap_cold;
-            TicksBeforeCoverageHeatMapCold = config.global_settings.ticks_before_coverage_heatmap_cold;
+            TicksPerStatsSnapShot = config.GlobalSettings.TicksPerStatsSnapshot;
+            PopulateAdjacencyAndComGroupsEveryTick = config.GlobalSettings.PopulateAdjacencyAndCommGroupsEveryTick;
+            TicksBeforeExplorationHeatMapCold = config.GlobalSettings.TicksBeforeExplorationHeatmapCold;
+            TicksBeforeCoverageHeatMapCold = config.GlobalSettings.TicksBeforeCoverageHeatmapCold;
 
             // Ignore further changes to config file to avoid confusion.
             IgnoreConfigFiles = true;

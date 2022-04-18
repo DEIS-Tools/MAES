@@ -8,6 +8,7 @@ using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.ExplorationAlgorithm.Voronoi;
 using Maes.Map.MapGen;
 using Maes.Robot;
+using Maes.YamlConfig;
 using UnityEngine;
 using static Maes.Map.RobotSpawner;
 
@@ -17,6 +18,8 @@ namespace Maes {
          
          public static Queue<SimulationScenario> GenerateROS2Scenario() {
              Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
+             var config = MaesYamlConfigLoader.LoadConfig();
+             
              var numberOfRobots = 2;
              
              SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.ExplorationTracker
