@@ -12,7 +12,7 @@ COPY ./Docker/source_ros.sh /home/dev_ws/source_ros.sh
 COPY ./Docker/welcome_message /root/.welcome
 
 # Copy ROS2 packages into workspace
-COPY ./Assets/maes-ros-slam-ws/ /home/dev_ws/code
+# COPY ./Assets/maes-ros-slam-ws/ /home/dev_ws/code
 
 # Change to workspace on sign-in
 RUN echo "cd home/dev_ws/code" >> ~/.bashrc
