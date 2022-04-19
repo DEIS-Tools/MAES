@@ -131,6 +131,59 @@ Headless runs will start simulating immediately on the "**Fast as possible**" sp
 
 When in batch mode, the application will quit automatically when the scenario queue is empty. 
 
+## Docker Support for ROS2
+This repository contains the files needed to build a docker image which can be used to launch ROS2 services.
+
+### Building the Image
+The image is currently not to be found on any image-repositories, and should therefore be build locally.
+We suggest you build with the command (from the root MAES directory):
+```bash
+$ docker build --force-rm -t ros4maes -f Docker/Dockerfile .
+```
+This will build an image, name it `ros4maes`, and remove any intermediate files made during the build.
+The process might take a few minutes the first time.
+You can confirm the build has been executed correctly with the command:
+```bash
+$ docker images
+```
+which should then list the `ros4maes` image.
+
+### Spinning up a Container
+The image can be started with the following command:
+```bash
+$ docker run --rm -it \
+    -p 10000:10000 \
+    -p 10022:22 \
+    -v $(pwd)/Assets/maes-ros-slam-ws:/home/dev_ws/code \
+    --name ros4maes \
+    ros4maes
+```
+This will spin up a container based on the previously built image.
+- The `--rm` option makes the container remove itself once it is powered down.
+- The `-it` option makes the container attachable/detachable, useful if you need more than one terminal window into the container.
+- The `-p 10000:10000` maps port 10000 from localhost into the container, and the container will listen/wait for the connection from the `ROS-TCP-Endpoint` in Unity on its internal port 10000.
+- The container boots up with an SSH server running, and the `-p 10022:22` option makes it possible to login via SSH (`ssh root@localhost -p 10022 #pw:root`).
+- The `-v` option maps a folder from the OS into the container, and changes made here will then persist after the container has been powered down.
+
+### Spinning up a Container with GUI Compatability
+If you are on Linux, you can pass along your xsession to allow the container to execute programs that include some sort of GUI, such as RVIZ.
+This is a bit more advanced, and currently only work correctly on Ubuntu >=20.04 LTS.
+
+```bash
+$ xhost +local:docker
+$ docker run --rm -it \
+    -p 10000:10000 \
+    -v $(pwd)/Assets/maes-ros-slam-ws:/home/dev_ws/code \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    --env=DISPLAY \
+    --name ros4maes \
+    ros4maes
+```
+Once the container is up and running, you can test to see if a GUI will render by executing a program with a GUI. `rviz2` for instance.
+If the configuration has worked correctly, a program window should appear.
+
+On OS' other than Ubuntu it will be necessary to research how to allow a docker container to render GUI on its host system.
+
 # Contributors
 
 Philip Irming Holler - [philipholler94@gmail.com](mailto:philipholler94@gmail.com?subject=Regarding%20the%20MAES%20Project)
