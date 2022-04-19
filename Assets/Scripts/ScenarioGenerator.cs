@@ -65,7 +65,7 @@ namespace Maes {
                          collisionMap: map,
                          seed: seed,
                          numberOfRobots: numberOfRobots,
-                         (seed) => new RandomExplorationAlgorithm(seed));
+                         (seed) => new Ros2Algorithm());
                  } else if (yamlConfig.RobotSpawnConfig.SpawnTogether != null) {
                      Vector2Int? suggestedStartingPoint = yamlConfig.RobotSpawnConfig.SpawnTogether.HasSuggestedStartingPoint 
                          ? yamlConfig.RobotSpawnConfig.SpawnTogether.SuggestedStartingPointAsVector 

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Maes.Map;
 using Maes.Robot;
 using Maes.Robot.Task;
+using Maes.YamlConfig;
 using RosMessageTypes.BuiltinInterfaces;
 using RosMessageTypes.Geometry;
 using RosMessageTypes.Maes;
@@ -27,6 +28,7 @@ namespace Maes.ExplorationAlgorithm {
         private string _broadcastTopic = "/maes_broadcast";
         private string _depositTagTopic = "/maes_deposit_tag";
         private string _cmdVelTopic = "/cmd_vel";
+        private Transform _worldPosition; // Used for finding position of relative objects and sending it to ROS
 
         private int _tick = 0;
         
@@ -45,6 +47,11 @@ namespace Maes.ExplorationAlgorithm {
 
         private void PublishState() {
             var state = new StateMsg();
+            var robotPosition = new Vector2(_worldPosition.position.x, _worldPosition.position.y);
+            var robot_rotation = _worldPosition.rotation.eulerAngles.z - 90f;
+            // Flip signs like also done in TransformTreePublisher 
+            // TODO: Maybe create utility function for this purpose? - Philip
+            robotPosition = new Vector2(-robotPosition.x, -robotPosition.y);
             // ---- Status ---- //
             state.status = Enum.GetName(typeof(RobotStatus), _controller.GetStatus());
             
@@ -60,21 +67,22 @@ namespace Maes.ExplorationAlgorithm {
             // ---- Nearby Robots ---- //
             var nearbyRobots = _controller.SenseNearbyRobots();
             var globalAngle = _controller.GetGlobalAngle();
-            var robotPosition = _controller.SlamMap.CoarseMap.GetApproximatePosition();
             // Map to relative positions of other robots
-            var otherRobots = nearbyRobots.Select(e => (e.item, e.GetRelativePosition(robotPosition, globalAngle)));
+            var otherRobots = nearbyRobots.Select(e => (e.item, e.GetRelativePosition(robotPosition, robot_rotation)));
             // Convert to ros messages
             var nearbyRobotMsgs = otherRobots.Select(e =>
                 new NearbyRobotMsg(e.item.ToString(), new Vector2DMsg(e.Item2.x, e.Item2.y)));
             state.nearby_robots = nearbyRobotMsgs.ToArray();
-            
+
             // ---- Nearby environment tags ---- //
             var tags = _controller.ReadNearbyTags();
             var rosTags = tags.Cast<RelativeObject<RosTag>>();
-            var rosTagsWithPos = rosTags.Select(e => (e.Item.msg, GetRelativePosition(robotPosition, globalAngle, e)));
+            var rosTagsWithPos = rosTags.Select(e => (e.Item.msg, GetRelativePosition(robotPosition, robot_rotation, e)));
             var rosTagAsMsgs =
                 rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.msg, new Vector2DMsg(e.Item2.x, e.Item2.y)));
             state.tags_nearby = rosTagAsMsgs.ToArray();
+            
+            _ros.Publish(_topicPrefix + _stateTopic, state);
         }
         
         
@@ -141,11 +149,13 @@ namespace Maes.ExplorationAlgorithm {
             this._ros = ROSConnection.GetOrCreateInstance();
             this._topicPrefix = $"/robot{_controller.GetRobotID()}";
             
+            this._worldPosition = GameObject.Find($"robot{_controller.GetRobotID()}").transform;
+
             // Register state publisher
             this._ros.RegisterPublisher<StateMsg>(_topicPrefix + _stateTopic);
             
             // Register broadcast and deposit tag services
-            this._ros.ImplementService<BroadcastRequest, BroadcastResponse>(_topicPrefix + _broadcastTopic, BroadcastMessage);
+            this._ros.ImplementService<BroadcastToAllRequest, BroadcastToAllResponse>(_topicPrefix + _broadcastTopic, BroadcastMessage);
             this._ros.ImplementService<DepositTagRequest, DepositTagResponse>(_topicPrefix + _depositTagTopic, DepositTag);
             
             // Subscribe to cmdVel from Nav2
@@ -157,9 +167,9 @@ namespace Maes.ExplorationAlgorithm {
             return new DepositTagResponse(true);
         }
 
-        private BroadcastResponse BroadcastMessage(BroadcastRequest req) {
+        private BroadcastToAllResponse BroadcastMessage(BroadcastToAllRequest req) {
             _controller.Broadcast(req.msg);
-            return new BroadcastResponse(true);
+            return new BroadcastToAllResponse(true);
         }
 
         private class RosBroadcastMsg {

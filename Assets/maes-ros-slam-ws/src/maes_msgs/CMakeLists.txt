@@ -13,7 +13,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/NearbyRobot.msg"
   "msg/State.msg"
   "msg/Vector2D.msg"
-  "srv/Broadcast.srv"
+  "srv/BroadcastToAll.srv"
   "srv/DepositTag.srv"
   DEPENDENCIES geometry_msgs
 )
