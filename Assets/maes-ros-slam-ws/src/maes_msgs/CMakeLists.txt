@@ -8,10 +8,11 @@ endif()
 find_package(geometry_msgs)
 find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/BroadcastMsg.msg"
+  "msg/Broadcast.msg"
   "msg/EnvironmentTag.msg"
   "msg/NearbyRobot.msg"
   "msg/State.msg"
+  "msg/Vector2D.msg"
   "srv/Broadcast.srv"
   "srv/DepositTag.srv"
   DEPENDENCIES geometry_msgs

@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Maes.Map;
 using Maes.Robot;
 using Maes.Robot.Task;
 using RosMessageTypes.BuiltinInterfaces;
 using RosMessageTypes.Geometry;
+using RosMessageTypes.Maes;
 using RosMessageTypes.Rosgraph;
 using RosMessageTypes.Sensor;
 using RosMessageTypes.Std;
@@ -20,9 +22,12 @@ namespace Maes.ExplorationAlgorithm {
     public class Ros2Algorithm : IExplorationAlgorithm {
         private Robot2DController _controller;
         private ROSConnection _ros;
+        private string _topicPrefix; // Is set in SetController method, e.g. /robot0
+        private string _stateTopic = "/maes_state";
+        private string _broadcastTopic = "/maes_broadcast";
+        private string _depositTagTopic = "/maes_deposit_tag";
+        private string _cmdVelTopic = "/cmd_vel";
 
-        private string _cmdVelocityTopic = "/cmd_vel";
-        private string _rayTraceTopic = "/scan";
         private int _tick = 0;
         
         private float rosLinearSpeed = 0f;
@@ -32,9 +37,47 @@ namespace Maes.ExplorationAlgorithm {
             if (_controller.GetStatus() == RobotStatus.Idle) {
                 ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
             }
+            PublishState();
+            
 
             _tick++;
         }
+
+        private void PublishState() {
+            var state = new StateMsg();
+            // ---- Status ---- //
+            state.status = Enum.GetName(typeof(RobotStatus), _controller.GetStatus());
+            
+            // ---- Collision ---- //
+            state.colliding = _controller.IsCurrentlyColliding();
+            
+            // ---- Incoming broadcast messages ---- //
+            var objectsReceived = _controller.ReceiveBroadcast();
+            var msgsReceived = objectsReceived.Cast<RosBroadcastMsg>().ToList();
+            var broadcastMsgs = msgsReceived.Select(e => new BroadcastMsg(e.msg, e.sender));
+            state.incoming_broadcast_msgs = broadcastMsgs.ToArray();
+            
+            // ---- Nearby Robots ---- //
+            var nearbyRobots = _controller.SenseNearbyRobots();
+            var globalAngle = _controller.GetGlobalAngle();
+            var robotPosition = _controller.SlamMap.CoarseMap.GetApproximatePosition();
+            // Map to relative positions of other robots
+            var otherRobots = nearbyRobots.Select(e => (e.item, e.GetRelativePosition(robotPosition, globalAngle)));
+            // Convert to ros messages
+            var nearbyRobotMsgs = otherRobots.Select(e =>
+                new NearbyRobotMsg(e.item.ToString(), new Vector2DMsg(e.Item2.x, e.Item2.y)));
+            state.nearby_robots = nearbyRobotMsgs.ToArray();
+            
+            // ---- Nearby environment tags ---- //
+            var tags = _controller.ReadNearbyTags();
+            var rosTags = tags.Cast<RelativeObject<RosTag>>();
+            var rosTagsWithPos = rosTags.Select(e => (e.Item.msg, GetRelativePosition(robotPosition, globalAngle, e)));
+            var rosTagAsMsgs =
+                rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.msg, new Vector2DMsg(e.Item2.x, e.Item2.y)));
+            state.tags_nearby = rosTagAsMsgs.ToArray();
+        }
+        
+        
 
         void ReactToCmdVel(float speed, float rotSpeed) {
             // We prioritise rotation over movement
@@ -89,52 +132,62 @@ namespace Maes.ExplorationAlgorithm {
         //     
         // }
 
-        private void PostGarbageToScan() {
-            var timestamp = new TimeStamp(Clock.time);
-
-           var ranges = new List<float>();
-
-           for (int i = 0; i < 180; i++) {
-               ranges.Add((float) i);
-           }
-            
-            var msg = new LaserScanMsg
-            {
-                header = new HeaderMsg
-                {
-                    frame_id = "base_scan",
-                    stamp = new TimeMsg
-                    {
-                        sec = timestamp.Seconds,
-                        nanosec = timestamp.NanoSeconds,
-                    }
-                },
-                range_min = 0.12f,
-                range_max = 100f,
-                angle_min = 0,
-                angle_max = Mathf.PI * 2,
-                angle_increment = Mathf.Deg2Rad * 2f,
-                time_increment = 0f,
-                scan_time = 0.1f,
-                intensities = new float[ranges.Count],
-                ranges = ranges.ToArray(),
-            };
-        
-            _ros.Publish(_rayTraceTopic, msg);
-        }
-
         public string GetDebugInfo() {
             return "";
         }
         
         public void SetController(Robot2DController controller) {
             this._controller = controller;
-            _ros = ROSConnection.GetOrCreateInstance();
+            this._ros = ROSConnection.GetOrCreateInstance();
+            this._topicPrefix = $"/robot{_controller.GetRobotID()}";
+            
+            // Register state publisher
+            this._ros.RegisterPublisher<StateMsg>(_topicPrefix + _stateTopic);
+            
+            // Register broadcast and deposit tag services
+            this._ros.ImplementService<BroadcastRequest, BroadcastResponse>(_topicPrefix + _broadcastTopic, BroadcastMessage);
+            this._ros.ImplementService<DepositTagRequest, DepositTagResponse>(_topicPrefix + _depositTagTopic, DepositTag);
+            
+            // Subscribe to cmdVel from Nav2
+            this._ros.Subscribe<TwistMsg>(_topicPrefix + _cmdVelTopic, ReceiveRosCmd);
+        }
 
-            var cmdVelTopic = $"/robot{_controller.GetRobotID()}/cmd_vel";
-            _ros.Subscribe<TwistMsg>(cmdVelTopic, ReceiveRosCmd);
+        private DepositTagResponse DepositTag(DepositTagRequest req) {
+            _controller.DepositTag(new RosTag(req.msg));
+            return new DepositTagResponse(true);
+        }
+
+        private BroadcastResponse BroadcastMessage(BroadcastRequest req) {
+            _controller.Broadcast(req.msg);
+            return new BroadcastResponse(true);
+        }
+
+        private class RosBroadcastMsg {
+            public string msg;
+            public string sender;
         }
         
+        private Vector2 GetRelativePosition<T>(Vector2 myPosition, float globalAngle, RelativeObject<T> o) {
+            var x = myPosition.x + (o.Distance * Mathf.Cos(Mathf.Deg2Rad * ((o.RelativeAngle + globalAngle) % 360)));
+            var y = myPosition.y + (o.Distance * Mathf.Sin(Mathf.Deg2Rad * ((o.RelativeAngle + globalAngle) % 360)));
+            return new Vector2(x, y);
+        }
+
+        private class RosTag : EnvironmentTaggingMap.ITag {
+            public string msg;
+
+            public RosTag(string msg) {
+                this.msg = msg;
+            }
+            
+            private const float TagSquareSize = 0.3f;
+            private readonly Vector3 _tagCubeSize = new Vector3(TagSquareSize, TagSquareSize, TagSquareSize);
+            public void DrawGizmos(Vector3 position) {
+                Gizmos.color = Color.magenta;
+                Gizmos.DrawCube(new Vector3(position.x, position.y, -_tagCubeSize.z / 2f), _tagCubeSize);
+            }
+        }
+
         public object SaveState() {
             return null;
         }

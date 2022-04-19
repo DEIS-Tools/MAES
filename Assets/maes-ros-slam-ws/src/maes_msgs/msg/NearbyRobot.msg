@@ -1,2 +1,2 @@
 string id
-geometry_msgs/Pose2D pos
+Vector2D pos
