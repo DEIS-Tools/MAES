@@ -6,7 +6,6 @@ using Maes.Robot;
 using Maes.Robot.Task;
 using RosMessageTypes.BuiltinInterfaces;
 using RosMessageTypes.Geometry;
-using RosMessageTypes.MaesInterface;
 using RosMessageTypes.Rosgraph;
 using RosMessageTypes.Sensor;
 using RosMessageTypes.Std;
