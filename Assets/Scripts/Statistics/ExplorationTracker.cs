@@ -73,7 +73,7 @@ namespace Maes.Statistics {
             
             // Register all coverable tiles
             for (int x = 0; x < collisionMap.WidthInTiles; x++) {
-                for (int y = 0; y < collisionMap.WidthInTiles; y++) {
+                for (int y = 0; y < collisionMap.HeightInTiles; y++) {
                     var tileCells = collisionMap.GetTileByLocalCoordinate(x, y).GetTriangles();
                     var explorationCells = _explorationMap.GetTileByLocalCoordinate(x, y).GetTriangles();
 

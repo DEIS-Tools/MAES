@@ -133,7 +133,7 @@ controller_server:
     FollowPath:
       plugin: "nav2_rotation_shim_controller::RotationShimController"
       primary_controller: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
-      angular_dist_threshold: 0.1
+      angular_dist_threshold: 0.02
       forward_sampling_distance: 0.5
       rotate_to_heading_angular_vel: 1.8
       max_angular_accel: 3.2
@@ -156,7 +156,7 @@ local_costmap:
       width: 6
       height: 6
       resolution: 0.05
-      robot_radius: 0.22
+      robot_radius: <robot_radius>
       plugins: ["inflation_layer", "obstacle_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -171,9 +171,9 @@ local_costmap:
         combination_method: 1
         scan:
           topic: /<robot_namespace>/scan
-          obstacle_max_range: 5.0
+          obstacle_max_range: <raytrace_range>
           obstacle_min_range: 0.0
-          raytrace_max_range: 5.0
+          raytrace_max_range: <raytrace_range>
           raytrace_min_range: 0.0
           max_obstacle_height: 2.0
           min_obstacle_height: 0.0
@@ -198,12 +198,12 @@ global_costmap:
       map_topic: /<robot_namespace>/map
       robot_base_frame: base_link
       use_sim_time: True
-      robot_radius: 0.36
+      robot_radius: <robot_radius>
       resolution: 0.05
-      origin_x: -50.0
-      origin_y: -50.0
-      width: 100
-      height: 100
+      origin_x: <global_costmap_origin_x>
+      origin_y: <global_costmap_origin_y>
+      width: <global_costmap_width>
+      height: <global_costmap_height>
       rolling_window: false
       # static_map: true
       track_unknown_space: true
@@ -216,7 +216,7 @@ global_costmap:
         scan:
           topic: /<robot_namespace>/scan
           max_obstacle_height: 2.0
-          raytrace_max_range: 5.0
+          raytrace_max_range: <raytrace_range>
           clearing: True
           marking: True
           data_type: "LaserScan"
