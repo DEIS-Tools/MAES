@@ -17,5 +17,9 @@ namespace Maes.Robot {
         public RelativeObject<V> Map<V>(Func<T, V> transformer) {
             return new RelativeObject<V>(Distance, RelativeAngle, transformer(Item));
         }
+
+        public override string ToString() {
+            return $"Relative Object {nameof(Distance)}: {Distance}, {nameof(RelativeAngle)}: {RelativeAngle}, {nameof(Item)}: {Item}";
+        }
     }
 }

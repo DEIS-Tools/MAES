@@ -23,6 +23,7 @@ namespace Maes.ExplorationAlgorithm {
     public class Ros2Algorithm : IExplorationAlgorithm {
         private Robot2DController _controller;
         private ROSConnection _ros;
+        private string _robotRosId; // e.g. robot0
         private string _topicPrefix; // Is set in SetController method, e.g. /robot0
         private string _stateTopic = "/maes_state";
         private string _broadcastTopic = "/maes_broadcast";
@@ -32,17 +33,41 @@ namespace Maes.ExplorationAlgorithm {
 
         private int _tick = 0;
         
+        // Used to react to cmlVel from ROS
         private float rosLinearSpeed = 0f;
         private float rosRotationSpeed = 0f;
+
+        // Service calls from ROS uses a callback function. We need to store the results 
+        // and act on them in the next logic tick
+        private List<string> msgsToBroadcast = new List<string>();
+        private List<string> envTagsToDeposit = new List<string>();
 
         public void UpdateLogic() {
             if (_controller.GetStatus() == RobotStatus.Idle) {
                 ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
             }
-            PublishState();
             
+            if(envTagsToDeposit.Count != 0)
+                ReactToBroadcastRequests();
+            if(msgsToBroadcast.Count != 0)
+                ReactToDepositTagRequests();
 
+            PublishState();
             _tick++;
+        }
+
+        private void ReactToDepositTagRequests() {
+            foreach (var tagMsg in envTagsToDeposit) {
+                _controller.DepositTag(new RosTag(tagMsg));
+            }
+            envTagsToDeposit.Clear();
+        }
+
+        private void ReactToBroadcastRequests() {
+            foreach (var msg in msgsToBroadcast) {
+                _controller.Broadcast(new RosBroadcastMsg(msg, _robotRosId));
+            }
+            msgsToBroadcast.Clear();
         }
 
         private void PublishState() {
@@ -50,7 +75,7 @@ namespace Maes.ExplorationAlgorithm {
             var robotPosition = new Vector2(_worldPosition.position.x, _worldPosition.position.y);
             var robot_rotation = _worldPosition.rotation.eulerAngles.z - 90f;
             // Flip signs like also done in TransformTreePublisher 
-            // TODO: Maybe create utility function for this purpose? - Philip
+            // TODO: Maybe create utility function for transforming coordinates between ROS and Maes ? - Philip
             robotPosition = new Vector2(-robotPosition.x, -robotPosition.y);
             // ---- Status ---- //
             state.status = Enum.GetName(typeof(RobotStatus), _controller.GetStatus());
@@ -76,12 +101,13 @@ namespace Maes.ExplorationAlgorithm {
 
             // ---- Nearby environment tags ---- //
             var tags = _controller.ReadNearbyTags();
-            var rosTags = tags.Cast<RelativeObject<RosTag>>();
-            var rosTagsWithPos = rosTags.Select(e => (e.Item.msg, GetRelativePosition(robotPosition, robot_rotation, e)));
+            var rosTagsWithPos = tags.Select(e => (((RosTag)e.Item).msg, GetRelativePosition(robotPosition, robot_rotation, e)));
             var rosTagAsMsgs =
-                rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.msg, new Vector2DMsg(e.Item2.x, e.Item2.y)));
+                    rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.msg, new Vector2DMsg(e.Item2.x, e.Item2.y)));
             state.tags_nearby = rosTagAsMsgs.ToArray();
             
+            
+            // ---- Publish to ROS ---- //
             _ros.Publish(_topicPrefix + _stateTopic, state);
         }
         
@@ -148,6 +174,7 @@ namespace Maes.ExplorationAlgorithm {
             this._controller = controller;
             this._ros = ROSConnection.GetOrCreateInstance();
             this._topicPrefix = $"/robot{_controller.GetRobotID()}";
+            this._robotRosId = $"robot{_controller.GetRobotID()}";
             
             this._worldPosition = GameObject.Find($"robot{_controller.GetRobotID()}").transform;
 
@@ -168,13 +195,18 @@ namespace Maes.ExplorationAlgorithm {
         }
 
         private BroadcastToAllResponse BroadcastMessage(BroadcastToAllRequest req) {
-            _controller.Broadcast(req.msg);
+            _controller.Broadcast(new RosBroadcastMsg(req.msg, _robotRosId));
             return new BroadcastToAllResponse(true);
         }
 
         private class RosBroadcastMsg {
             public string msg;
             public string sender;
+
+            public RosBroadcastMsg(string msg, string sender) {
+                this.msg = msg;
+                this.sender = sender;
+            }
         }
         
         private Vector2 GetRelativePosition<T>(Vector2 myPosition, float globalAngle, RelativeObject<T> o) {
@@ -195,6 +227,10 @@ namespace Maes.ExplorationAlgorithm {
             public void DrawGizmos(Vector3 position) {
                 Gizmos.color = Color.magenta;
                 Gizmos.DrawCube(new Vector3(position.x, position.y, -_tagCubeSize.z / 2f), _tagCubeSize);
+            }
+
+            public override string ToString() {
+                return $"Rostag - {nameof(msg)}: {msg}";
             }
         }
 
