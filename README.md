@@ -136,7 +136,7 @@ This repository contains the files needed to build a docker image which can be u
 
 ### Building the Image
 The image is currently not to be found on any image-repositories, and should therefore be build locally.
-We suggest you build with the command (from the root MAES directory):
+Assuming you already have [docker](https://docs.docker.com/get-docker/) installed and running correctly, we suggest you build with the command (from the root MAES directory):
 ```bash
 $ docker build --force-rm -t ros4maes -f Docker/Dockerfile .
 ```
@@ -163,9 +163,9 @@ This will spin up a container based on the previously built image.
 - The `-it` option makes the container attachable/detachable, useful if you need more than one terminal window into the container.
 - The `-p 10000:10000` maps port 10000 from localhost into the container, and the container will listen/wait for the connection from the `ROS-TCP-Endpoint` in Unity on its internal port 10000.
 - The container boots up with an SSH server running, and the `-p 10022:22` option makes it possible to login via SSH (`ssh root@localhost -p 10022 #pw:root`).
-- The `-v` option maps a folder from the OS into the container, and changes made here will then persist after the container has been powered down.
+- The `-v` option maps a folder from the OS into the container, and changes made here will then persist after the container has been powered down. You can change the path of the folder to be mapped, if you have placed it elsewere than the default.
 
-### Spinning up a Container with GUI Compatability
+### Spinning up a Container with GUI Compatability (Linux)
 If you are on Linux, you can pass along your xsession to allow the container to execute programs that include some sort of GUI, such as RVIZ.
 This is a bit more advanced, and currently only work correctly on Ubuntu >=20.04 LTS.
 
@@ -173,6 +173,7 @@ This is a bit more advanced, and currently only work correctly on Ubuntu >=20.04
 $ xhost +local:docker
 $ docker run --rm -it \
     -p 10000:10000 \
+    -p 10022:22 \
     -v $(pwd)/Assets/maes-ros-slam-ws:/home/dev_ws/code \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     --env=DISPLAY \
