@@ -37,8 +37,8 @@ namespace Maes.ExplorationAlgorithm {
                 if (robotStatus != RobotStatus.Idle && !_controller.IsRotatingIndefinitely()) {
                     // The robot is currently performing another task - Stop that task and continue
                     _controller.StopCurrentTask();
-                } else if (robotStatus == RobotStatus.Idle) {
-                    _controller.RotateAtRate(-rotationCommandValue * 0.2f);
+                } else {
+                    _controller.RotateAtRate(-rotationCommandValue * 0.5f);
                 }
                 // var degrees = 10 * rotationCommandValue;
                 // Debug.Log($"Turning {degrees} degrees");

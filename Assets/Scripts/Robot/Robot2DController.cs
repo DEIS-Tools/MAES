@@ -335,7 +335,7 @@ namespace Maes.Robot {
 
             if (_currentTask is InfiniteRotationTasK currentRotationTask) {
                 // Adjust existing rotation task
-                currentRotationTask.ForceMultiplier = forceMultiplier;
+                currentRotationTask.ForceMultiplier = Constraints.RelativeMoveSpeed * forceMultiplier;
             } else {
                 // Create new rotation task
                 AssertRobotIsInIdleState("infinite rotation");
@@ -352,7 +352,7 @@ namespace Maes.Robot {
 
             if (_currentTask is MovementTask currentMovementTask) {
                 // Adjust existing movement task
-                currentMovementTask.ForceMultiplier = forceMultiplier;
+                currentMovementTask.ForceMultiplier = Constraints.RelativeMoveSpeed * forceMultiplier;
             } else {
                 // Create new movement task
                 AssertRobotIsInIdleState("Inifinite movement");
