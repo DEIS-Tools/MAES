@@ -203,17 +203,15 @@ namespace Maes.Robot {
                 StopCurrentTask();
                 return;
             }
-
-            var currentStatus = GetStatus();
+            
             AssertRobotIsInIdleState("rotation");
-
-            _currentTask = new InfiniteRotationTasK(counterClockwise, Constraints.RelativeMoveSpeed);
+            _currentTask = new InfiniteRotationTasK(Constraints.RelativeMoveSpeed * (counterClockwise ? -1 : 1));
         }
 
 
         public void StartMoving(bool reverse = false) {
             AssertRobotIsInIdleState("Moving Forwards");
-            _currentTask = new MovementTask(Constraints.RelativeMoveSpeed, reverse);
+            _currentTask = new MovementTask(Constraints.RelativeMoveSpeed * (reverse ? -1 : 1));
         }
 
         // Asserts that the current status is idle, and throws an exception if not
@@ -322,6 +320,44 @@ namespace Maes.Robot {
 
         public bool IsRotating() {
             return _currentTask is FiniteRotationTask || _currentTask is InfiniteRotationTasK;
+        }
+        
+        public bool IsRotatingIndefinitely() {
+            return _currentTask is InfiniteRotationTasK;
+        }
+        
+        // This method requires the robot to currently be idle or already be performing an infinite rotation 
+        public void RotateAtRate(float forceMultiplier) {
+            if (forceMultiplier < -1.0f || forceMultiplier > 1.0f) {
+                throw new ArgumentException($"Force multiplier must be in range [-1.0, 1.0]. " +
+                                            $"Given value: {forceMultiplier}");
+            }
+
+            if (_currentTask is InfiniteRotationTasK currentRotationTask) {
+                // Adjust existing rotation task
+                currentRotationTask.ForceMultiplier = forceMultiplier;
+            } else {
+                // Create new rotation task
+                AssertRobotIsInIdleState("infinite rotation");
+                _currentTask = new InfiniteRotationTasK(Constraints.RelativeMoveSpeed * forceMultiplier);
+            }
+        }
+
+        // This method requires the robot to either be idle or already be performing an infinite movement
+        public void MoveAtRate(float forceMultiplier) {
+            if (forceMultiplier < -1.0f || forceMultiplier > 1.0f) {
+                throw new ArgumentException($"Force multiplier must be in range [-1.0, 1.0]. " +
+                                            $"Given value: {forceMultiplier}");
+            }
+
+            if (_currentTask is MovementTask currentMovementTask) {
+                // Adjust existing movement task
+                currentMovementTask.ForceMultiplier = forceMultiplier;
+            } else {
+                // Create new movement task
+                AssertRobotIsInIdleState("Inifinite movement");
+                _currentTask = new MovementTask(Constraints.RelativeMoveSpeed * forceMultiplier);
+            }
         }
     }
 }

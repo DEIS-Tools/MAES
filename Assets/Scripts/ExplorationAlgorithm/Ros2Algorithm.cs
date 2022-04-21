@@ -6,16 +6,11 @@ using Maes.Robot;
 using Maes.Robot.Task;
 using RosMessageTypes.BuiltinInterfaces;
 using RosMessageTypes.Geometry;
-using RosMessageTypes.MaesInterface;
-using RosMessageTypes.Rosgraph;
 using RosMessageTypes.Sensor;
 using RosMessageTypes.Std;
 using Unity.Robotics.Core;
 using Unity.Robotics.ROSTCPConnector;
-using Unity.Robotics.ROSTCPConnector.MessageGeneration;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
-using UnityEngine.UIElements;
 
 namespace Maes.ExplorationAlgorithm {
     public class Ros2Algorithm : IExplorationAlgorithm {
@@ -30,23 +25,38 @@ namespace Maes.ExplorationAlgorithm {
         private float rosRotationSpeed = 0f;
 
         public void UpdateLogic() {
-            if (_controller.GetStatus() == RobotStatus.Idle) {
-                ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
-            }
-
+            ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
             _tick++;
         }
-
-        void ReactToCmdVel(float speed, float rotSpeed) {
-            // We prioritise rotation over movement
-            if (Math.Abs(rotSpeed) > 0.01) {
-                var degrees = 10 * rotSpeed;
-                Debug.Log($"Turning {degrees} degrees");
-                _controller.Rotate(degrees);
+        
+        void ReactToCmdVel(float speedCommandValue, float rotationCommandValue) {
+            Debug.Log($"Command velocities: [{speedCommandValue}, {rotationCommandValue}]");
+            var robotStatus = _controller.GetStatus();
+            // We prioritise rotation over movement - However if desired rotation is very small (<0.1) we ignore it
+            if (Math.Abs(rotationCommandValue) > 0.1) {
+                if (robotStatus != RobotStatus.Idle && !_controller.IsRotatingIndefinitely()) {
+                    // The robot is currently performing another task - Stop that task and continue
+                    _controller.StopCurrentTask();
+                } else if (robotStatus == RobotStatus.Idle) {
+                    _controller.RotateAtRate(-rotationCommandValue * 0.2f);
+                }
+                // var degrees = 10 * rotationCommandValue;
+                // Debug.Log($"Turning {degrees} degrees");
+                // _controller.Rotate(degrees);
             } else if (rosLinearSpeed > 0) {
-                var distanceInMeters = Mathf.Min(0.4f * speed, 0.2f);
+                if (robotStatus != RobotStatus.Idle && _controller.IsRotating()) {
+                    // The robot must stop rotation task before starting the desired movement task
+                    _controller.StopCurrentTask();
+                } else if (robotStatus == RobotStatus.Idle) {
+                    _controller.MoveAtRate(speedCommandValue);
+                }
+                // var distanceInMeters = Mathf.Min(0.4f * speedCommandValue, 0.2f);
                 // Debug.Log($"Moving forward in meters {distanceInMeters}");
-                _controller.Move(distanceInMeters);
+                // _controller.StartMoving(); //.Move(distanceInMeters);
+            } else if (_controller.GetStatus() != RobotStatus.Idle){
+                // If cmd_vel does not indicate any desired movement - then stop robot if currently moving 
+                Debug.Log("Stopping movement!");
+                _controller.StopCurrentTask();    
             }
         }
 
@@ -55,40 +65,6 @@ namespace Maes.ExplorationAlgorithm {
             rosRotationSpeed = (float)cmdVel.angular.z;
             Debug.Log($"Robot {_controller.GetRobotID()}: Received cmdVel twist: {cmdVel.ToString()}");
         }
-        //     ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
-        //     
-        //
-        //     _tick++;
-        // }
-        //
-        // void ReactToCmdVel(float speedCommandValue, float rotationCommandValue) {
-        //     Debug.Log($"Command velocities: [{speedCommandValue}, {rotationCommandValue}]");
-        //     var robotStatus = _controller.GetStatus();
-        //     // We prioritise rotation over movement
-        //     if (Math.Abs(rotationCommandValue) > 0.01) {
-        //         if (robotStatus != RobotStatus.Idle && !_controller.IsRotating()) {
-        //             _controller.StopCurrentTask();
-        //         } else if (robotStatus == RobotStatus.Idle) {
-        //             _controller.StartRotating();
-        //         }
-        //         // var degrees = 10 * rotationCommandValue;
-        //         // Debug.Log($"Turning {degrees} degrees");
-        //         // _controller.Rotate(degrees);
-        //     } else if (rosLinearSpeed > 0) {
-        //         if (robotStatus != RobotStatus.Idle && _controller.IsRotating()) {
-        //             _controller.StopCurrentTask();
-        //         } else if (robotStatus == RobotStatus.Idle) {
-        //             _controller.StartMoving();
-        //         }
-        //         // var distanceInMeters = Mathf.Min(0.4f * speedCommandValue, 0.2f);
-        //         // Debug.Log($"Moving forward in meters {distanceInMeters}");
-        //         // _controller.StartMoving(); //.Move(distanceInMeters);
-        //     } else if (_controller.GetStatus() != RobotStatus.Idle){
-        //         Debug.Log("Stopping movement!");
-        //         _controller.StopCurrentTask();    
-        //     }
-        //     
-        // }
 
         private void PostGarbageToScan() {
             var timestamp = new TimeStamp(Clock.time);
