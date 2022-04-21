@@ -158,7 +158,8 @@ public class LaserScanSensor : MonoBehaviour
             // Only record measurement if it's within the sensor's operating range
             if (foundValidMeasurement)
             {
-                Debug.DrawRay(measurementStart, directionVector * hit.distance, Color.red, 1, true);
+                // Visualise raytracing by uncommenting this part
+                // Debug.DrawRay(measurementStart, directionVector * hit.distance, Color.red, 1, true);
                 ranges.Add(hit.distance);
             }
             else

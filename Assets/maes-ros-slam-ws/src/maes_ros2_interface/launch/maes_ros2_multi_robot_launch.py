@@ -15,7 +15,7 @@ import yaml
 
 def get_maes_config_from_yaml(package_name):
     package_dir = get_package_share_directory(package_name)
-    config_file_path = os.path.join(package_dir, "maes_parameters.yaml")
+    config_file_path = os.path.join(package_dir, "maes_config.yaml")
     with open(config_file_path, 'r') as file:
         maes_config = yaml.safe_load(file)
 

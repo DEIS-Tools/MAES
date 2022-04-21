@@ -22,7 +22,7 @@ namespace Unity.Robotics.SlamExample
             Children = new List<TransformTreeNode>();
             PopulateChildNodes(this);
 
-            Debug.Log($"TransformTreeNode with name={name} has children={sceneObject.transform.childCount}");
+            // Debug.Log($"TransformTreeNode with name={name} has children={sceneObject.transform.childCount}");
         }
 
         public static TransformStampedMsg ToTransformStamped(TransformTreeNode node)

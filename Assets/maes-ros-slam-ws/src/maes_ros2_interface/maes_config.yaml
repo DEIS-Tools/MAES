@@ -12,8 +12,8 @@ global_settings:
   ticks_before_exploration_heatmap_cold: 2400 # 10 * 60 * 4
   ticks_before_coverage_heatmap_cold: 2400 # 10 * 60 * 4
 robot_constraints:
-  broadcast_range: 0
-  broadcast_blocked_by_walls: false
+  broadcast_range: 20
+  broadcast_blocked_by_walls: true
   sense_nearby_agents_range: 6.0
   sense_nearby_agents_blocked_by_walls: true
   automatically_update_slam: true
@@ -21,7 +21,7 @@ robot_constraints:
   slam_sync_interval_in_ticks: 10 # Map not shared in ros2 yet
   slam_position_inaccuracy: 0.2 # /tf messages from maes do not yet use inaccuracy
   distribute_slam: false # Not distributed in ros2, only in maes locally
-  environment_tag_read_range: 0.0
+  environment_tag_read_range: 10.0
   slam_raytrace_range: 10.0
   relative_move_speed: 1.0
   agent_relative_size: 0.6 # Value in ]0.0-1.0] relative to a tile in the maes generated maps
