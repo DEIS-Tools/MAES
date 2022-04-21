@@ -19,7 +19,7 @@ setup(
             'launch/maes_bringup_launch.py',
             'launch/maes_slam_launch.py',
             'params/maes_nav2_multirobot_params_robotn.yaml',
-            'maes_parameters.yaml'
+            'maes_config.yaml'
         ])
     ],
     install_requires=['setuptools'],
