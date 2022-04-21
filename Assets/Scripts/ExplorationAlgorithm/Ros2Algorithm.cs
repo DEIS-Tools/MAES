@@ -77,6 +77,8 @@ namespace Maes.ExplorationAlgorithm {
             // Flip signs like also done in TransformTreePublisher 
             // TODO: Maybe create utility function for transforming coordinates between ROS and Maes ? - Philip
             robotPosition = new Vector2(-robotPosition.x, -robotPosition.y);
+            // ---- tick ---- //
+            state.tick = _tick;
             // ---- Status ---- //
             state.status = Enum.GetName(typeof(RobotStatus), _controller.GetStatus());
             
