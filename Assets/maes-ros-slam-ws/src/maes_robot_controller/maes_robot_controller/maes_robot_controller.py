@@ -5,10 +5,13 @@ from maes_msgs.srv import BroadcastToAll, DepositTag
 import time
 
 from action_msgs.msg import GoalStatus
-from geometry_msgs.msg import Pose, PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped, TransformStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import NavigateThroughPoses, NavigateToPose
+from nav2_msgs.msg import *
+from nav_msgs.msg import OccupancyGrid
+from tf2_msgs.msg import TFMessage
 
 import rclpy
 
@@ -24,15 +27,16 @@ class RobotController(Node):
         # The name and namespace is usually overridden be the launch file
         super().__init__(node_name="maes_robot_controller")
 
-        robot_id = self.get_namespace()[1:]  # Remove '/' prefix from namespace
+        self.topic_namespace_prefix = self.get_namespace() # All topics have prefixed with the namespace of the node e.g. /robot0
 
-        # Define topics
-        self.topic_prefix = self.get_namespace() # All topics have prefixed with the namespace of the node
-        self.state_topic = "{0}/maes_state".format(self.topic_prefix)
-        self.broadcast_srv_topic = "{0}/maes_broadcast".format(self.topic_prefix)
-        self.deposit_env_tag_srv_topic = "{0}/maes_deposit_tag".format(self.topic_prefix)
-        self.goal_pose2D_topic = "{0}/goal_pose".format(self.topic_prefix)
-        self.nav_to_pose_topic = "{0}/navigate_to_pose".format(self.topic_prefix)
+        # Declare topics
+        self.state_topic = self.topic_namespace_prefix + "/maes_state"
+        self.broadcast_srv_topic = self.topic_namespace_prefix + "/maes_broadcast"
+        self.deposit_env_tag_srv_topic = self.topic_namespace_prefix + "/maes_deposit_tag"
+        self.goal_pose2D_topic = self.topic_namespace_prefix + "/goal_pose"
+        self.nav_to_pose_topic = self.topic_namespace_prefix + "/navigate_to_pose"
+        self.global_costmap_2d_topic = self.topic_namespace_prefix + "/global_costmap/costmap"
+        self.tf2_topic = self.topic_namespace_prefix + "/tf"
 
         # Quality of service profile for subscriptions
         qos_profile = QoSProfile(
@@ -46,6 +50,15 @@ class RobotController(Node):
                                                          topic=self.state_topic,
                                                          callback=self.logic_loop,
                                                          qos_profile=qos_profile)
+        self.global_costmap_sub = self.create_subscription(msg_type=OccupancyGrid,
+                                                           topic=self.global_costmap_2d_topic,
+                                                           callback=self.save_costmap,
+                                                           qos_profile=qos_profile)
+        self.tf_sub = self.create_subscription(msg_type=TFMessage,
+                                               topic=self.tf2_topic,
+                                               callback=self.save_robot_position,
+                                               qos_profile=qos_profile)
+
         # Register service clients
         self.broadcast_srv = self.create_client(srv_type=BroadcastToAll, srv_name=self.broadcast_srv_topic)
         self.deposit_env_tag_srv = self.create_client(srv_type=DepositTag, srv_name=self.deposit_env_tag_srv_topic)
@@ -55,11 +68,16 @@ class RobotController(Node):
         self.result_future = None
         self.feedback = None
         self.status = None
+        # The map data, in row-major order, starting with (0, 0).  Occupancy
+        # probabilities are in the range [0,100].  Unknown is -1.
+        self.costmap: OccupancyGrid = None
+        self.robot_position: TransformStamped = None
 
-        self.nav_to_pose_client = ActionClient(self, NavigateToPose, self.topic_prefix + '/navigate_to_pose')
+        # Create navigation action client
+        self.nav_to_pose_client = ActionClient(self, NavigateToPose, self.topic_namespace_prefix + '/navigate_to_pose')
 
 
-    def logic_loop(self, msg: State):
+    def logic_loop(self, state: State):
         '''
         This function is called every time the robot receives a new state msg from MAES
         Use this function to express the logic that makes the robot move.
@@ -77,21 +95,57 @@ class RobotController(Node):
         self.cancel_nav()
         self.is_nav_complete()
         self.get_feedback()
+
+
         '''
 
         # self.get_logger().info('Robot0 heard: "%s"' % msg)
         # self.broadcast_msg(msg="Testing broadcasting")
         # self.deposit_tag(tag_msg="Content of env_tag")
-        if(msg.tick == 1):
-            goal_pose = self.create_goal_pose(pose_x=10.0, pose_y=2.0, pose_z=0.0,
-                                              ori_x=0.0, ori_y=0.0, ori_z=0.0, ori_w=1.0)
+        # if state.tick == 1:
+        #     goal_pose = self.create_goal_pose(pose_x=10.0, pose_y=2.0, pose_z=0.0,
+        #                                       ori_x=0.0, ori_y=0.0, ori_z=0.0, ori_w=1.0)
 
-            self.go_to_pose(goal_pose)
-        if(msg.tick == 100):
-            self.cancel_nav()
+            # self.go_to_pose(goal_pose)
+        # if state.tick == 100:
+        #    self.cancel_nav()
 
-        self.info(str(self.is_nav_complete()) + " " + str(self.get_feedback()))
+        self.info("Robot position: {0}".format(self.robot_position.transform))
+        pos = self.robot_position.transform.translation
+        x, y = self.coord_to_costmap_tile(32.479, 0.0126)
+        self.info("Value of robot position at ({0},{1}): {2}".format(x, y, self.get_costmap_coord_status(x, y)))
+        self.info("Origin ({0},{1})".format(self.costmap.info.origin.position.x, self.costmap.info.origin.position.y))
+        # self.info(str(self.is_nav_complete()) + " " + str(self.get_feedback()))
 
+        # Find next unknown tile (Tile value -1)
+        # Move until 0.1 > tile_value || tile_value > 0.9
+            # Cancel move and start over
+
+    def cost_map_tiles_to_pos(self, x_tile: int, y_tile: int) -> (float, float):
+        x = x_tile * self.costmap.info.resolution
+        y = y_tile * self.costmap.info.resolution
+        return x, y
+
+    def coord_to_costmap_index(self, x: float, y: float) -> int:
+        x_tile, y_tile = self.coord_to_costmap_tile(x, y)
+        return y_tile * self.costmap.info.width + x_tile
+
+    def coord_to_costmap_tile(self, x: float, y: float) -> (int, int):
+        x_tile = int((x - self.costmap.info.origin.position.x) / self.costmap.info.resolution)
+        y_tile = int((y - self.costmap.info.origin.position.y) / self.costmap.info.resolution)
+        return x_tile, y_tile
+
+    def get_costmap_coord_status(self, x: int, y: int) -> float:
+        index = y * self.costmap.info.width + x
+        return self.costmap.data[index]
+
+    def save_robot_position(self, msg: TFMessage):
+        odom = list(filter(lambda e: e.header.frame_id == "odom", msg.transforms))
+        if len(odom) == 1:
+            self.robot_position = odom[0]
+
+    def save_costmap(self, occ_map: OccupancyGrid):
+        self.costmap = occ_map
 
     def create_goal_pose(self, pose_x: float, pose_y: float, pose_z: float, ori_x: float, ori_y: float, ori_z: float, ori_w: float) -> PoseStamped:
         goal_pose = PoseStamped()
@@ -173,7 +227,7 @@ class RobotController(Node):
         return self.status
 
     def wait_until_nav2_active(self):
-        self._wait_for_node_to_activate(self.topic_prefix + 'bt_navigator')
+        self._wait_for_node_to_activate(self.topic_namespace_prefix + 'bt_navigator')
         self.info('Nav2 is ready for use!')
         return
 
