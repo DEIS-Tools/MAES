@@ -107,8 +107,7 @@ namespace Maes.ExplorationAlgorithm {
             var rosTagAsMsgs =
                     rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.msg, new Vector2DMsg(e.Item2.x, e.Item2.y)));
             state.tags_nearby = rosTagAsMsgs.ToArray();
-            
-            
+
             // ---- Publish to ROS ---- //
             _ros.Publish(_topicPrefix + _stateTopic, state);
         }

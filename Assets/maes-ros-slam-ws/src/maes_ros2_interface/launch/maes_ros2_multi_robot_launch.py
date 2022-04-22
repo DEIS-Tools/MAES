@@ -60,7 +60,21 @@ def include_swarm_launch_descriptions(context):
                     "global_costmap_height": str(maes_config['map']['height_in_tiles']),
                     "global_costmap_origin_x": str(-float(maes_config['map']['width_in_tiles'] / 2)),
                     "global_costmap_origin_y": str(-float(maes_config['map']['height_in_tiles'] / 2))
-                }.items())
+                }.items()),
+            LaunchDescription([
+                Node(
+                    package='maes_robot_controller',
+                    executable='controller',
+                    name='maes_robot_controller',
+                    output='screen',
+                    namespace=robot_name,
+                    emulate_tty=True,
+                    parameters=[
+                        {'robot_id': robot_name}
+                    ]
+                )
+            ])
+
         ])
         swarm_descriptions += [robot_n_description]
 

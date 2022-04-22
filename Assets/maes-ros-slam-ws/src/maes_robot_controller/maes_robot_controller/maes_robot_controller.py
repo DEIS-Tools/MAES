@@ -20,10 +20,14 @@ from rclpy.qos import QoSProfile
 
 class RobotController(Node):
 
-    def __init__(self, robot_id):
-        super().__init__(robot_id)
+    def __init__(self):
+        # The name and namespace is usually overridden be the launch file
+        super().__init__(node_name="maes_robot_controller")
+
+        robot_id = self.get_namespace()[1:]  # Remove '/' prefix from namespace
+
         # Define topics
-        self.topic_prefix = "/{0}".format(robot_id)
+        self.topic_prefix = self.get_namespace() # All topics have prefixed with the namespace of the node
         self.state_topic = "{0}/maes_state".format(self.topic_prefix)
         self.broadcast_srv_topic = "{0}/maes_broadcast".format(self.topic_prefix)
         self.deposit_env_tag_srv_topic = "{0}/maes_deposit_tag".format(self.topic_prefix)
@@ -46,31 +50,62 @@ class RobotController(Node):
         self.broadcast_srv = self.create_client(srv_type=BroadcastToAll, srv_name=self.broadcast_srv_topic)
         self.deposit_env_tag_srv = self.create_client(srv_type=DepositTag, srv_name=self.deposit_env_tag_srv_topic)
 
-        # Register nav2 navigator
-        self.navigator = BasicNavigator(topic_prefix=self.topic_prefix)
+        # Register fields for navigation
+        self.goal_handle = None
+        self.result_future = None
+        self.feedback = None
+        self.status = None
+
+        self.nav_to_pose_client = ActionClient(self, NavigateToPose, self.topic_prefix + '/navigate_to_pose')
 
 
     def logic_loop(self, msg: State):
+        '''
+        This function is called every time the robot receives a new state msg from MAES
+        Use this function to express the logic that makes the robot move.
+
+        Examples of using services:
+        self.broadcast_msg(msg="Testing broadcasting")
+        self.deposit_tag(tag_msg="Content of env_tag")
+
+        Example of moving:
+        goal_pose = self.create_goal_pose(pose_x=10.0, pose_y=2.0, pose_z=0.0,
+                                          ori_x=0.0, ori_y=0.0, ori_z=0.0, ori_w=1.0)
+        self.go_to_pose(goal_pose)
+
+        The navigator can also to used to cancel moves and/or check status of the current goal e.g.
+        self.cancel_nav()
+        self.is_nav_complete()
+        self.get_feedback()
+        '''
+
         # self.get_logger().info('Robot0 heard: "%s"' % msg)
         # self.broadcast_msg(msg="Testing broadcasting")
         # self.deposit_tag(tag_msg="Content of env_tag")
         if(msg.tick == 1):
-            goal_pose = PoseStamped()
-            goal_pose.header.frame_id = 'map'
-            goal_pose.header.stamp = self.navigator.get_clock().now().to_msg()
-            goal_pose.pose.position.x = 10.0
-            goal_pose.pose.position.y = -2.0
-            goal_pose.pose.position.z = 0.0
-            goal_pose.pose.orientation.x = 0.0
-            goal_pose.pose.orientation.y = 0.0
-            goal_pose.pose.orientation.z = 0.0
-            goal_pose.pose.orientation.w = 1.0
+            goal_pose = self.create_goal_pose(pose_x=10.0, pose_y=2.0, pose_z=0.0,
+                                              ori_x=0.0, ori_y=0.0, ori_z=0.0, ori_w=1.0)
 
-            self.navigator.go_to_pose(goal_pose)
+            self.go_to_pose(goal_pose)
         if(msg.tick == 100):
-            self.navigator.cancel_nav()
+            self.cancel_nav()
 
-        self.info(str(self.navigator.is_nav_complete()) + " " + str(self.navigator.get_feedback()))
+        self.info(str(self.is_nav_complete()) + " " + str(self.get_feedback()))
+
+
+    def create_goal_pose(self, pose_x: float, pose_y: float, pose_z: float, ori_x: float, ori_y: float, ori_z: float, ori_w: float) -> PoseStamped:
+        goal_pose = PoseStamped()
+        goal_pose.header.frame_id = 'map'
+        goal_pose.header.stamp = self.get_clock().now().to_msg()
+        goal_pose.pose.position.x = pose_x
+        goal_pose.pose.position.y = pose_y
+        goal_pose.pose.position.z = pose_z
+        goal_pose.pose.orientation.x = ori_x
+        goal_pose.pose.orientation.y = ori_y
+        goal_pose.pose.orientation.z = ori_z
+        goal_pose.pose.orientation.w = ori_w
+
+        return goal_pose
 
 
     def deposit_tag(self, tag_msg):
@@ -82,54 +117,6 @@ class RobotController(Node):
         request = BroadcastToAll.Request()
         request.msg = msg
         self.broadcast_srv.call_async(request=request)
-
-
-    def info(self, msg):
-        self.get_logger().info(msg)
-        return
-
-    def warn(self, msg):
-        self.get_logger().warn(msg)
-        return
-
-    def error(self, msg):
-        self.get_logger().error(msg)
-        return
-
-    def debug(self, msg):
-        self.get_logger().debug(msg)
-        return
-
-
-def main(args=None):
-    rclpy.init(args=args)
-
-    controller = RobotController('robot0')
-
-    rclpy.spin(controller)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    controller.destroy_node()
-    rclpy.shutdown()
-
-
-if __name__ == '__main__':
-    main()
-
-
-class BasicNavigator(Node):
-    def __init__(self, topic_prefix: str):
-        super().__init__(node_name=topic_prefix[1:] + '_basic_navigator')
-        self.goal_handle = None
-        self.result_future = None
-        self.feedback = None
-        self.status = None
-        self.topic_prefix = topic_prefix
-
-        self.initial_pose_received = False
-        self.nav_to_pose_client = ActionClient(self, NavigateToPose, topic_prefix + '/navigate_to_pose')
 
     def go_to_pose(self, pose: PoseStamped):
         # Sends a `NavToPose` action request and waits for completion
@@ -231,3 +218,21 @@ class BasicNavigator(Node):
     def debug(self, msg):
         self.get_logger().debug(msg)
         return
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    controller = RobotController()
+
+    rclpy.spin(controller)
+
+    # Destroy the node explicitly
+    # (optional - otherwise it will be done automatically
+    # when the garbage collector destroys the node object)
+    controller.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
