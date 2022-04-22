@@ -33,12 +33,13 @@ namespace Maes.ExplorationAlgorithm {
             Debug.Log($"Command velocities: [{speedCommandValue}, {rotationCommandValue}]");
             var robotStatus = _controller.GetStatus();
             // We prioritise rotation over movement - However if desired rotation is very small (<0.1) we ignore it
-            if (Math.Abs(rotationCommandValue) > 0.1) {
+            if (Math.Abs(rotationCommandValue) > 0.08) {
                 if (robotStatus != RobotStatus.Idle && !_controller.IsRotatingIndefinitely()) {
                     // The robot is currently performing another task - Stop that task and continue
                     _controller.StopCurrentTask();
                 } else {
-                    _controller.RotateAtRate(-rotationCommandValue * 0.5f);
+                    var sign = rotationCommandValue > 0 ? -1 : 1;
+                    _controller.RotateAtRate(sign * Mathf.Pow(Math.Abs(rotationCommandValue), 1.8f));
                 }
                 // var degrees = 10 * rotationCommandValue;
                 // Debug.Log($"Turning {degrees} degrees");
