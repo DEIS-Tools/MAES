@@ -77,6 +77,63 @@ namespace Maes.ExplorationAlgorithm {
             // Flip signs like also done in TransformTreePublisher 
             // TODO: Maybe create utility function for transforming coordinates between ROS and Maes ? - Philip
             robotPosition = new Vector2(-robotPosition.x, -robotPosition.y);
+            // ---- Status ---- //
+            state.status = Enum.GetName(typeof(RobotStatus), _controller.GetStatus());
+            
+            // ---- Collision ---- //
+            state.colliding = _controller.IsCurrentlyColliding();
+            
+            // ---- Incoming broadcast messages ---- //
+            var objectsReceived = _controller.ReceiveBroadcast();
+            var msgsReceived = objectsReceived.Cast<RosBroadcastMsg>().ToList();
+            var broadcastMsgs = msgsReceived.Select(e => new BroadcastMsg(e.msg, e.sender));
+            state.incoming_broadcast_msgs = broadcastMsgs.ToArray();
+            
+            // ---- Nearby Robots ---- //
+            var nearbyRobots = _controller.SenseNearbyRobots();
+            var globalAngle = _controller.GetGlobalAngle();
+            // Map to relative positions of other robots
+            var otherRobots = nearbyRobots.Select(e => (e.item, e.GetRelativePosition(robotPosition, robot_rotation)));
+            // Convert to ros messages
+            var nearbyRobotMsgs = otherRobots.Select(e =>
+                new NearbyRobotMsg(e.item.ToString(), new Vector2DMsg(e.Item2.x, e.Item2.y)));
+            state.nearby_robots = nearbyRobotMsgs.ToArray();
+
+            // ---- Nearby environment tags ---- //
+            var tags = _controller.ReadNearbyTags();
+            var rosTagsWithPos = tags.Select(e => (((RosTag)e.Item).msg, GetRelativePosition(robotPosition, robot_rotation, e)));
+            var rosTagAsMsgs =
+                    rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.msg, new Vector2DMsg(e.Item2.x, e.Item2.y)));
+            state.tags_nearby = rosTagAsMsgs.ToArray();
+            
+            
+            // ---- Publish to ROS ---- //
+            _ros.Publish(_topicPrefix + _stateTopic, state);
+        }
+        
+        
+
+        private void ReactToDepositTagRequests() {
+            foreach (var tagMsg in envTagsToDeposit) {
+                _controller.DepositTag(new RosTag(tagMsg));
+            }
+            envTagsToDeposit.Clear();
+        }
+
+        private void ReactToBroadcastRequests() {
+            foreach (var msg in msgsToBroadcast) {
+                _controller.Broadcast(new RosBroadcastMsg(msg, _robotRosId));
+            }
+            msgsToBroadcast.Clear();
+        }
+
+        private void PublishState() {
+            var state = new StateMsg();
+            var robotPosition = new Vector2(_worldPosition.position.x, _worldPosition.position.y);
+            var robot_rotation = _worldPosition.rotation.eulerAngles.z - 90f;
+            // Flip signs like also done in TransformTreePublisher 
+            // TODO: Maybe create utility function for transforming coordinates between ROS and Maes ? - Philip
+            robotPosition = new Vector2(-robotPosition.x, -robotPosition.y);
             // ---- tick ---- //
             state.tick = _tick;
             // ---- Status ---- //
