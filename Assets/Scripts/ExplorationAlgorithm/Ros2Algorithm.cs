@@ -15,6 +15,8 @@ using RosMessageTypes.Std;
 using Unity.Robotics.Core;
 using Unity.Robotics.ROSTCPConnector;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
+using UnityEngine.UIElements;
 
 namespace Maes.ExplorationAlgorithm {
     public class Ros2Algorithm : IExplorationAlgorithm {
@@ -111,7 +113,7 @@ namespace Maes.ExplorationAlgorithm {
             Debug.Log($"Command velocities: [{speedCommandValue}, {rotationCommandValue}]");
             var robotStatus = _controller.GetStatus();
             // We prioritise rotation over movement - However if desired rotation is very small (<0.1) we ignore it
-            if (Math.Abs(rotationCommandValue) > 0.08) {
+            if (Math.Abs(rotationCommandValue) > 0.04) {
                 if (robotStatus != RobotStatus.Idle && !_controller.IsRotatingIndefinitely()) {
                     // The robot is currently performing another task - Stop that task and continue
                     _controller.StopCurrentTask();
