@@ -1,17 +1,3 @@
-# Copyright (c) 2018 Intel Corporation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -39,6 +25,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     params_file = LaunchConfiguration('params_file')
     autostart = LaunchConfiguration('autostart')
+    default_bt_xml_filename = LaunchConfiguration('default_bt_xml_filename')
     # Maes params
     raytrace_range = LaunchConfiguration('raytrace_range')
     robot_radius = LaunchConfiguration('robot_radius')
@@ -83,6 +70,13 @@ def generate_launch_description():
         description='Offsets the map in the y direction to ensure availability until map border')
 
     # ROS launch arguments
+    declare_bt_xml_cmd = DeclareLaunchArgument(
+        "default_bt_xml_filename",
+        default_value=os.path.join(
+            get_package_share_directory("nav2_bt_navigator"), "behavior_trees", "navigate_w_replanning_time.xml"
+        ),
+        description="Full path to the behavior tree xml file to use",
+    )
     declare_namespace_cmd = DeclareLaunchArgument(
         'namespace',
         default_value='',
@@ -134,7 +128,8 @@ def generate_launch_description():
                               'autostart': autostart,
                               'params_file': maes_injected_params_file,
                               'use_lifecycle_mgr': 'false',
-                              'map_subscribe_transient_local': 'true'}.items()),
+                              'map_subscribe_transient_local': 'true',
+                              'default_bt_xml_filename': default_bt_xml_filename}.items()),
     ])
 
     # Create the launch description and populate
@@ -150,6 +145,7 @@ def generate_launch_description():
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_params_file_cmd)
     ld.add_action(declare_autostart_cmd)
+    ld.add_action(declare_bt_xml_cmd)
     # Declare maes launch options
     ld.add_action(declare_raytrace_range_cmd)
     ld.add_action(declare_robot_radius_cmd)

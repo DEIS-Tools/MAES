@@ -52,10 +52,10 @@ def include_swarm_launch_descriptions(context):
                     "slam": 'True',
                     "use_sim_time": 'True',
                     "params_file":  os.path.join(package_dir, 'maes_nav2_multirobot_params_robotn.yaml'),
-                    "default_bt_xml_filename": default_bt_xml_filename,
+                    # "default_bt_xml_filename": default_bt_xml_filename,
                     "autostart": 'True',
                     "raytrace_range": str(maes_config['robot_constraints']['slam_raytrace_range']),
-                    "robot_radius": str(maes_config['robot_constraints']['agent_relative_size']),
+                    "robot_radius": str(float(maes_config['robot_constraints']['agent_relative_size']) / 2),
                     "global_costmap_width": str(maes_config['map']['width_in_tiles']),
                     "global_costmap_height": str(maes_config['map']['height_in_tiles']),
                     "global_costmap_origin_x": str(-float(maes_config['map']['width_in_tiles'] / 2)),
@@ -64,7 +64,7 @@ def include_swarm_launch_descriptions(context):
             LaunchDescription([
                 Node(
                     package='maes_robot_controller',
-                    executable='controller',
+                    executable='maes_controller',
                     name='maes_robot_controller',
                     output='screen',
                     namespace=robot_name,
@@ -101,16 +101,10 @@ def generate_launch_description():
     declare_bt_xml_cmd = DeclareLaunchArgument(
         "default_bt_xml_filename",
         default_value=os.path.join(
-            get_package_share_directory("nav2_bt_navigator"), "behavior_trees", "navigate_w_replanning_and_recovery.xml"
+            get_package_share_directory("nav2_bt_navigator"), "behavior_trees", "navigate_w_replanning_time.xml"
         ),
         description="Full path to the behavior tree xml file to use",
     )
-
-    #declare_number_of_robots_cmd = DeclareLaunchArgument(
-    #    "num_of_robots",
-    #    default_value='1',
-    #    description="Number of robot instances to spawn. Including Nav2 stack and rviz",
-    #)
 
     ros_tcp_endpoint_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(

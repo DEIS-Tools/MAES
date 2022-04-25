@@ -108,7 +108,7 @@ controller_server:
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.3
+    failure_tolerance: 30.0
     progress_checker_plugin: "progress_checker"
     goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
     controller_plugins: ["FollowPath"]
@@ -155,24 +155,25 @@ local_costmap:
       update_frequency: 5.0
       publish_frequency: 2.0
       global_frame: odom
-      robot_base_frame: base_link
+      robot_base_frame: base_footprint
+      footprint_padding: 0.05
       use_sim_time: True
       rolling_window: true
       track_unknown_space: true
-      width: 6
-      height: 6
+      width: 8
+      height: 8
       resolution: 0.05
       robot_radius: <robot_radius>
       plugins: ["inflation_layer", "obstacle_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.01
+        cost_scaling_factor: 20.0
+        inflation_radius: 2.5
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
         observation_sources: scan
-        footprint_clearing_enabled: true
+        footprint_clearing_enabled: false
         max_obstacle_height: 2.0
         combination_method: 1
         scan:
@@ -199,10 +200,11 @@ global_costmap:
   global_costmap:
     ros__parameters:
       update_frequency: 5.0
-      publish_frequency: 5.0
+      publish_frequency: 2.0
       global_frame: map
       map_topic: /<robot_namespace>/map
-      robot_base_frame: base_link
+      robot_base_frame: base_footprint
+      footprint_padding: 0.3
       use_sim_time: True
       robot_radius: <robot_radius>
       resolution: 0.05
@@ -219,16 +221,25 @@ global_costmap:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
         observation_sources: scan
+        footprint_clearing_enabled: false
+        max_obstacle_height: 2.0
+        combination_method: 1
         scan:
           topic: /<robot_namespace>/scan
-          max_obstacle_height: 2.0
+          obstacle_max_range: <raytrace_range>
+          obstacle_min_range: 0.0
           raytrace_max_range: <raytrace_range>
+          raytrace_min_range: 0.0
+          max_obstacle_height: 2.0
+          min_obstacle_height: 0.0
           clearing: True
           marking: True
           data_type: "LaserScan"
+          inf_is_valid: false
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        inflation_radius: 0.01
+        inflation_radius: 2.5
+        cost_scaling_factor: 20.0
   global_costmap_client:
     ros__parameters:
       use_sim_time: True
@@ -250,14 +261,16 @@ map_saver:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 20.0
+    # expected_planner_frequency: 20.0
     use_sim_time: True
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
-      tolerance: 0.5
-      use_astar: false
+      tolerance: 1.0
+      use_astar: true
+      use_grid_path: false
       allow_unknown: true
+
 
 planner_server_rclcpp_node:
   ros__parameters:
