@@ -44,9 +44,6 @@ namespace Maes.ExplorationAlgorithm {
                     force = sign * force; // Apply direction / sign +-
                     _controller.RotateAtRate(force);
                 }
-                // var degrees = 10 * rotationCommandValue;
-                // Debug.Log($"Turning {degrees} degrees");
-                // _controller.Rotate(degrees);
             } else if (rosLinearSpeed > 0) {
                 if (robotStatus != RobotStatus.Idle && _controller.IsRotating()) {
                     // The robot must stop rotation task before starting the desired movement task
@@ -54,9 +51,6 @@ namespace Maes.ExplorationAlgorithm {
                 } else if (robotStatus == RobotStatus.Idle) {
                     _controller.MoveAtRate(speedCommandValue);
                 }
-                // var distanceInMeters = Mathf.Min(0.4f * speedCommandValue, 0.2f);
-                // Debug.Log($"Moving forward in meters {distanceInMeters}");
-                // _controller.StartMoving(); //.Move(distanceInMeters);
             } else if (_controller.GetStatus() != RobotStatus.Idle){
                 // If cmd_vel does not indicate any desired movement - then stop robot if currently moving 
                 Debug.Log("Stopping movement!");

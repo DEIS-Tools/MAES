@@ -133,11 +133,17 @@ controller_server:
     FollowPath:
       plugin: "nav2_rotation_shim_controller::RotationShimController"
       primary_controller: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
-      angular_dist_threshold: 0.2
+      # Rotational parameters
+      angular_dist_threshold: 0.1
       forward_sampling_distance: 0.5
       rotate_to_heading_angular_vel: 0.4 # 1.8
       max_angular_accel: 1.8 # 3.2
       simulate_ahead_time: 1.0
+      # Straight line movement parameters
+      desired_linear_vel: 0.5
+      max_linear_decel: 0.2
+      min_approach_linear_velocity: 0.05
+      use_approach_linear_velocity_scaling: true
 
 controller_server_rclcpp_node:
   ros__parameters:
