@@ -8,6 +8,7 @@ using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.ExplorationAlgorithm.Voronoi;
 using Maes.Map.MapGen;
 using Maes.Robot;
+using Maes.YamlConfig;
 using UnityEngine;
 using static Maes.Map.RobotSpawner;
 
@@ -17,51 +18,84 @@ namespace Maes {
          
          public static Queue<SimulationScenario> GenerateROS2Scenario() {
              Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-             var numberOfRobots = 1;
+             var yamlConfig = MaesYamlConfigLoader.LoadConfig();
              
-             SimulationEndCriteriaDelegate shouldEndSim = (simulation) => (simulation.ExplorationTracker
-                 .CoverageProportion > 0.995f);
+             // Number of robots
+             var numberOfRobots = yamlConfig.NumberOfRobots;
+             
+             // End criteria
+             SimulationEndCriteriaDelegate shouldEndSim = yamlConfig.EndCriteria.CoveragePercent == null
+                 ? (simulation) => (simulation.ExplorationTracker
+                     .ExploredProportion > yamlConfig.EndCriteria.ExplorationPercent)
+                 : (simulation) => (simulation.ExplorationTracker
+                     .CoverageProportion > yamlConfig.EndCriteria.CoveragePercent);
 
              var constraints = new RobotConstraints(
-                 broadcastRange: 0,
-                 broadcastBlockedByWalls: false,
-                 senseNearbyAgentsRange: 6f,
-                 senseNearbyAgentsBlockedByWalls: true,
-                 automaticallyUpdateSlam: true,
-                 slamUpdateIntervalInTicks: 10,
-                 slamSynchronizeIntervalInTicks: 10,
-                 slamPositionInaccuracy: 0.2f, 
-                 distributeSlam: false,
-                 environmentTagReadRange: 0f,
-                 slamRayTraceRange: 6f,
-                 relativeMoveSpeed: 1f,
-                 agentRelativeSize: 0.6f
+                 broadcastRange: yamlConfig.RobotConstraints.BroadcastRange,
+                 broadcastBlockedByWalls: yamlConfig.RobotConstraints.BroadcastBlockedByWalls,
+                 senseNearbyAgentsRange: yamlConfig.RobotConstraints.SenseNearbyAgentsRange,
+                 senseNearbyAgentsBlockedByWalls: yamlConfig.RobotConstraints.SenseNearbyAgentsBlockedByWalls,
+                 automaticallyUpdateSlam: yamlConfig.RobotConstraints.AutomaticallyUpdateSlam,
+                 slamUpdateIntervalInTicks: yamlConfig.RobotConstraints.SlamUpdateIntervalInTicks,
+                 slamSynchronizeIntervalInTicks: yamlConfig.RobotConstraints.SlamSyncIntervalInTicks,
+                 slamPositionInaccuracy: yamlConfig.RobotConstraints.SlamPositionInaccuracy, 
+                 distributeSlam: yamlConfig.RobotConstraints.DistributeSlam,
+                 environmentTagReadRange: yamlConfig.RobotConstraints.EnvironmentTagReadRange,
+                 slamRayTraceRange: yamlConfig.RobotConstraints.SlamRaytraceRange,
+                 relativeMoveSpeed: yamlConfig.RobotConstraints.RelativeMoveSpeed,
+                 agentRelativeSize: yamlConfig.RobotConstraints.AgentRelativeSize
              );
-             
-             var caveConfig = new CaveMapConfig(
-                 50,
-                 50,
-                 0,
-                 4,
-                 4,
-                 35,
-                 10,
-                 10,
-                 1);
-             
-             scenarios.Enqueue(new SimulationScenario(
-                 seed: 0,
-                 hasFinishedSim: shouldEndSim,
-                 mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
-                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                     map, 
-                     0, 
-                     numberOfRobots,
-                     new Vector2Int(0,0),
-                     (seed) => new Ros2Algorithm()),
-                 robotConstraints: constraints,
-                 $"ROS2-{DateTime.Now.Millisecond}"
-             ));
+
+             foreach (var seed in yamlConfig.RandomSeeds) {
+                 MapFactory mapSpawner = null;
+                 if (yamlConfig.Map.CaveConfig != null) {
+                     var caveConfig = new CaveMapConfig(yamlConfig, seed);
+                     mapSpawner = (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, yamlConfig.Map.WallHeight);
+                 }
+                 // Building type
+                 else {
+                     var buildingConfig = new BuildingMapConfig(yamlConfig, seed);
+                     mapSpawner = (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, yamlConfig.Map.WallHeight);
+                 }
+
+
+                 RobotFactory robotSpawner = null;
+                 if (yamlConfig.RobotSpawnConfig.BiggestRoom != null) {
+                     robotSpawner = (map, robotSpawner) => robotSpawner.SpawnRobotsInBiggestRoom(
+                         collisionMap: map,
+                         seed: seed,
+                         numberOfRobots: numberOfRobots,
+                         (seed) => new Ros2Algorithm());
+                 } else if (yamlConfig.RobotSpawnConfig.SpawnTogether != null) {
+                     Vector2Int? suggestedStartingPoint = yamlConfig.RobotSpawnConfig.SpawnTogether.HasSuggestedStartingPoint 
+                         ? yamlConfig.RobotSpawnConfig.SpawnTogether.SuggestedStartingPointAsVector 
+                         : null;
+                     robotSpawner = (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                         collisionMap: map,
+                         seed: seed,
+                         numberOfRobots: numberOfRobots,
+                         suggestedStartingPoint: suggestedStartingPoint,
+                         createAlgorithmDelegate: (seed) => new Ros2Algorithm()
+                     );
+                 }
+                 else { // Spawn_at_hallway_ends
+                     robotSpawner = (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                         collisionMap: map,
+                         seed: seed,
+                         numberOfRobots: numberOfRobots,
+                         createAlgorithmDelegate: (seed) => new Ros2Algorithm()
+                     );
+                 }
+
+                 scenarios.Enqueue(new SimulationScenario(
+                     seed: 0,
+                     hasFinishedSim: shouldEndSim,
+                     mapSpawner: mapSpawner,
+                     robotSpawner: robotSpawner,
+                     robotConstraints: constraints,
+                     $"{yamlConfig.GlobalSettings.StatisticsResultPath}-{DateTime.Now.Millisecond}"
+                 ));
+             }
 
              return scenarios;
          }
@@ -212,8 +246,8 @@ namespace Maes {
                 
                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
                 {
-                    ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
                     ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
+                    ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
                     ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
                 };
 

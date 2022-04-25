@@ -85,10 +85,19 @@ MAES contains several settings that influences the behaviour of the simulation. 
 | Statistics Output Path                       | string | The directory where the CSV results are saved upon completing a simulation. Remember to end string with Path.DirectorySeparatorChar                                                                                                                                                                                                                                                                                                                                 |
 | Ticks Per Stats Snapshot                     | Int    | The frequency of data collection from the simulation. If this value is 1 the state of the simulation is measured and saved at every logic tick                                                                                                                                                                                                                                                                                                                      |
 | Populate Adjacency And Com Groups Every Tick | Bool   | The adjacency matrix used inside the [CommunicationManager.cs](Assets/Scripts/Robot/CommunicationManager.cs) is populated lazily. Enabling this setting will make it eager. This can be useful for gathering statistics regarding communication ranges to test if agents are at any time outside communication range, as opposed to testing only when communication actually occurs. Enabling this does, however, decrease performance - sometimes significantly so |
-| TicksBeforeExplorationHeatMapCold            | Int    | The amount of ticks that need to pass without exploration before the exploration heat map will show that cell as completely cold.                                                                                                                                                                                                                                                                                                                                   |
-| TicksBeforeCoverageHeatMapCold               | Int    | The amount of ticks that need to pass without coverage before the coverage heat map will show that cell as completely cold.                                                                                                                                                                                                                                                                                                                                         |
+| Ticks Before Exploration Heat Map Cold       | Int    | The amount of ticks that need to pass without exploration before the exploration heat map will show that cell as completely cold.                                                                                                                                                                                                                                                                                                                                   |
+| Ticks Before Coverage Heat Map Cold          | Int    | The amount of ticks that need to pass without coverage before the coverage heat map will show that cell as completely cold.                                                                                                                                                                                                                                                                                                                                         |
 
+### Configuring MAES Global Settings with YAML
+MAES will look for a config-file in the same directory MAES is running in.
+The file must have the string "config" within its name, and must have a ".yml/.yaml" extension.
+- If more than one valid file is found, MAES will use the latest file, based on the file's last-modified-on attribute.
+- If no valid file is found, MAES will use the default values from [GlobalSettings.cs](Assets/Scripts/GlobalSettings.cs) as they were at the time of compilation.
 
+The content of an example yml/yaml-file (populated with the default values) can se seen in [maesconfig.yaml](maesconfig.yaml).
+The settings' names must be written in [PascalCase](https://techterms.com/definition/pascalcase).
+
+MAES will keep the default-values for any settings not mentioned in the config-file.
 
 ## Creating your own algorithm
 In order to implement your own algorithm, you must create a class that implements the [IExplorationAlgorithm.cs](Assets/Scripts/ExplorationAlgorithm/IExplorationAlgorithm.cs) interface.
@@ -121,6 +130,60 @@ A headless run is invoked by adding the command line argument `-batchmode` when 
 Headless runs will start simulating immediately on the "**Fast as possible**" speed setting (<img style="height:1em;" src="Assets/UI/fast_as_possible_button.png"/>), until the scenario queue is empty.
 
 When in batch mode, the application will quit automatically when the scenario queue is empty. 
+
+## Docker Support for ROS2
+This repository contains the files needed to build a docker image which can be used to launch ROS2 services.
+
+### Building the Image
+The image is currently not to be found on any image-repositories, and should therefore be build locally.
+Assuming you already have [docker](https://docs.docker.com/get-docker/) installed and running correctly, we suggest you build with the command (from the root MAES directory):
+```bash
+$ docker build --force-rm -t ros4maes -f Docker/Dockerfile .
+```
+This will build an image, name it `ros4maes`, and remove any intermediate files made during the build.
+The process might take a few minutes the first time.
+You can confirm the build has been executed correctly with the command:
+```bash
+$ docker images
+```
+which should then list the `ros4maes` image.
+
+### Spinning up a Container
+The image can be started with the following command:
+```bash
+$ docker run --rm -it \
+    -p 10000:10000 \
+    -p 10022:22 \
+    -v $(pwd)/Assets/maes-ros-slam-ws:/home/dev_ws/code \
+    --name ros4maes \
+    ros4maes
+```
+This will spin up a container based on the previously built image.
+- The `--rm` option makes the container remove itself once it is powered down.
+- The `-it` option makes the container attachable/detachable, useful if you need more than one terminal window into the container.
+- The `-p 10000:10000` maps port 10000 from localhost into the container, and the container will listen/wait for the connection from the `ROS-TCP-Endpoint` in Unity on its internal port 10000.
+- The container boots up with an SSH server running, and the `-p 10022:22` option makes it possible to login via SSH (`ssh root@localhost -p 10022 #pw:root`).
+- The `-v` option maps a folder from the OS into the container, and changes made here will then persist after the container has been powered down. You can change the path of the folder to be mapped, if you have placed it elsewere than the default.
+
+### Spinning up a Container with GUI Compatability (Linux)
+If you are on Linux, you can pass along your xsession to allow the container to execute programs that include some sort of GUI, such as RVIZ.
+This is a bit more advanced, and currently only work correctly on Ubuntu >=20.04 LTS.
+
+```bash
+$ xhost +local:docker
+$ docker run --rm -it \
+    -p 10000:10000 \
+    -p 10022:22 \
+    -v $(pwd)/Assets/maes-ros-slam-ws:/home/dev_ws/code \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    --env=DISPLAY \
+    --name ros4maes \
+    ros4maes
+```
+Once the container is up and running, you can test to see if a GUI will render by executing a program with a GUI. `rviz2` for instance.
+If the configuration has worked correctly, a program window should appear.
+
+On OS' other than Ubuntu it will be necessary to research how to allow a docker container to render GUI on its host system.
 
 # Contributors
 

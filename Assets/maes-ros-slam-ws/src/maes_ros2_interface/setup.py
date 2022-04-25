@@ -13,13 +13,14 @@ setup(
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name), [
-                                                'rviz/maes_nav2.rviz',
-                                                'launch/maes_ros2_multi_robot_launch.py',
-                                                'launch/rviz_launch.py',
-                                                'launch/maes_bringup_launch.py',
-                                                'launch/maes_slam_launch.py',
-                                                'params/maes_nav2_multirobot_params_robotn.yaml',
-                                                ])
+            'rviz/maes_nav2.rviz',
+            'launch/maes_ros2_multi_robot_launch.py',
+            'launch/rviz_launch.py',
+            'launch/maes_bringup_launch.py',
+            'launch/maes_slam_launch.py',
+            'params/maes_nav2_multirobot_params_robotn.yaml',
+            'maes_config.yaml'
+        ])
     ],
     install_requires=['setuptools'],
     zip_safe=True,
