@@ -128,8 +128,7 @@ def generate_launch_description():
                               'autostart': autostart,
                               'params_file': maes_injected_params_file,
                               'use_lifecycle_mgr': 'false',
-                              'map_subscribe_transient_local': 'true',
-                              'default_bt_xml_filename': default_bt_xml_filename}.items()),
+                              'map_subscribe_transient_local': 'true'}.items()),
     ])
 
     # Create the launch description and populate
