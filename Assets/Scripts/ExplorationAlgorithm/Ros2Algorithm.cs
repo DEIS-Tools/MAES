@@ -39,7 +39,10 @@ namespace Maes.ExplorationAlgorithm {
                     _controller.StopCurrentTask();
                 } else {
                     var sign = rotationCommandValue > 0 ? -1 : 1;
-                    _controller.RotateAtRate(sign * Mathf.Pow(Math.Abs(rotationCommandValue), 1.8f));
+                    var force = Mathf.Pow(Math.Abs(1.3f * rotationCommandValue), 2.0f) * 0.6f;
+                    force = Mathf.Min(1f, force); // Ensure maximum force of 1.0 
+                    force = sign * force; // Apply direction / sign +-
+                    _controller.RotateAtRate(force);
                 }
                 // var degrees = 10 * rotationCommandValue;
                 // Debug.Log($"Turning {degrees} degrees");

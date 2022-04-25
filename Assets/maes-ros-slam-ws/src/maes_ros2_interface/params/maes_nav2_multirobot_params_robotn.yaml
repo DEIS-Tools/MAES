@@ -135,8 +135,8 @@ controller_server:
       primary_controller: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
       angular_dist_threshold: 0.2
       forward_sampling_distance: 0.5
-      rotate_to_heading_angular_vel: 0.3 # 1.8
-      max_angular_accel: 2.0 # 3.2
+      rotate_to_heading_angular_vel: 0.4 # 1.8
+      max_angular_accel: 1.8 # 3.2
       simulate_ahead_time: 1.0
 
 controller_server_rclcpp_node:
