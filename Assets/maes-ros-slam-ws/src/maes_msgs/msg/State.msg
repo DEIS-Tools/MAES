@@ -1,3 +1,4 @@
+int64 tick
 string status
 bool colliding
 Broadcast[] incoming_broadcast_msgs

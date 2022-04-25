@@ -13,6 +13,7 @@ namespace RosMessageTypes.Maes
         public const string k_RosMessageName = "maes_msgs/State";
         public override string RosMessageName => k_RosMessageName;
 
+        public long tick;
         public string status;
         public bool colliding;
         public BroadcastMsg[] incoming_broadcast_msgs;
@@ -21,6 +22,7 @@ namespace RosMessageTypes.Maes
 
         public StateMsg()
         {
+            this.tick = 0;
             this.status = "";
             this.colliding = false;
             this.incoming_broadcast_msgs = new BroadcastMsg[0];
@@ -28,8 +30,9 @@ namespace RosMessageTypes.Maes
             this.nearby_robots = new NearbyRobotMsg[0];
         }
 
-        public StateMsg(string status, bool colliding, BroadcastMsg[] incoming_broadcast_msgs, EnvironmentTagMsg[] tags_nearby, NearbyRobotMsg[] nearby_robots)
+        public StateMsg(long tick, string status, bool colliding, BroadcastMsg[] incoming_broadcast_msgs, EnvironmentTagMsg[] tags_nearby, NearbyRobotMsg[] nearby_robots)
         {
+            this.tick = tick;
             this.status = status;
             this.colliding = colliding;
             this.incoming_broadcast_msgs = incoming_broadcast_msgs;
@@ -41,6 +44,7 @@ namespace RosMessageTypes.Maes
 
         private StateMsg(MessageDeserializer deserializer)
         {
+            deserializer.Read(out this.tick);
             deserializer.Read(out this.status);
             deserializer.Read(out this.colliding);
             deserializer.Read(out this.incoming_broadcast_msgs, BroadcastMsg.Deserialize, deserializer.ReadLength());
@@ -50,6 +54,7 @@ namespace RosMessageTypes.Maes
 
         public override void SerializeTo(MessageSerializer serializer)
         {
+            serializer.Write(this.tick);
             serializer.Write(this.status);
             serializer.Write(this.colliding);
             serializer.WriteLength(this.incoming_broadcast_msgs);
@@ -63,6 +68,7 @@ namespace RosMessageTypes.Maes
         public override string ToString()
         {
             return "StateMsg: " +
+            "\ntick: " + tick.ToString() +
             "\nstatus: " + status.ToString() +
             "\ncolliding: " + colliding.ToString() +
             "\nincoming_broadcast_msgs: " + System.String.Join(", ", incoming_broadcast_msgs.ToList()) +

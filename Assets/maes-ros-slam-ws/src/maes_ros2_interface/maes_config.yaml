@@ -1,5 +1,5 @@
 random_seeds: [0]
-number_of_robots: 2
+number_of_robots: 1
 global_settings:
   logic_ticks_delta_millis: 100
   physics_ticks_per_logic_update: 10
