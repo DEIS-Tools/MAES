@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+from typing import Callable
+
 import geometry_msgs.msg
 from maes_msgs.msg import State
 from maes_msgs.srv import BroadcastToAll, DepositTag
@@ -21,13 +24,19 @@ from rclpy.qos import QoSDurabilityPolicy, QoSHistoryPolicy, QoSReliabilityPolic
 from rclpy.qos import QoSProfile
 
 
+@dataclass
+class Coord2D:
+    x: float
+    y: float
+
+
 class RobotController(Node):
 
     def __init__(self):
         # The name and namespace is usually overridden be the launch file
         super().__init__(node_name="maes_robot_controller")
 
-        self.topic_namespace_prefix = self.get_namespace() # All topics have prefixed with the namespace of the node e.g. /robot0
+        self.topic_namespace_prefix = self.get_namespace()  # All topics have prefixed with the namespace of the node e.g. /robot0
 
         # Declare topics
         self.state_topic = self.topic_namespace_prefix + "/maes_state"
@@ -76,6 +85,9 @@ class RobotController(Node):
         # Create navigation action client
         self.nav_to_pose_client = ActionClient(self, NavigateToPose, self.topic_namespace_prefix + '/navigate_to_pose')
 
+        # Logic variables below here
+        self.next_target: Coord2D = None
+        self.next_target_costmap_index: int = None
 
     def logic_loop(self, state: State):
         '''
@@ -95,44 +107,52 @@ class RobotController(Node):
         self.cancel_nav()
         self.is_nav_complete()
         self.get_feedback()
-
-
         '''
 
-        # self.get_logger().info('Robot0 heard: "%s"' % msg)
-        # self.broadcast_msg(msg="Testing broadcasting")
-        # self.deposit_tag(tag_msg="Content of env_tag")
-        # if state.tick == 1:
-        #     goal_pose = self.create_goal_pose(pose_x=10.0, pose_y=2.0, pose_z=0.0,
-        #                                       ori_x=0.0, ori_y=0.0, ori_z=0.0, ori_w=1.0)
+        # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
+        # We assume anything between 10 and 90 to be uncertain, and thus a frontier
+        is_frontier: Callable[[int], bool] = lambda e: (0 < e < 100)
+        # If no target found
+        if self.next_target is None:
+            target_frontier_tile_index = next((x for x in self.costmap.data if is_frontier(x)), None)
+            if target_frontier_tile_index is None:
+                self.info("Robot with namespace {0} is has found no more frontiers".format(self.topic_namespace_prefix))
+            else:
+                self.next_target = self.costmap_index_to_pos(target_frontier_tile_index)
+                self.next_target_costmap_index = target_frontier_tile_index
+                self.info("Robot with namespace {0} found new target at ({1},{2})".format(self.topic_namespace_prefix,
+                                                                                          self.next_target.x,
+                                                                                          self.next_target.y))
+                self.move_to_pos(self.next_target.x, self.next_target.y)
+        # If target is no yet reached, i.e. it is  still a frontier
+        elif is_frontier(self.costmap.data[self.next_target_costmap_index]):
+            # Print feedback from action server or something, idk?
+            pass
+        # If target is reached
+        else:
+            self.info("Robot with namespace {0} reached its target at ({1},{2})".format(self.topic_namespace_prefix,
+                                                                                        self.next_target.x,
+                                                                                        self.next_target.y))
+            self.next_target_costmap_index = None
+            self.next_target = None
 
-            # self.go_to_pose(goal_pose)
-        # if state.tick == 100:
-        #    self.cancel_nav()
+    def costmap_index_to_pos(self, index: int) -> Coord2D:
+        y_tile: int = int(index / self.costmap.info.width)
+        x_tile: int = index - (y_tile * self.costmap.info.width)
+        return self.cost_map_tiles_to_pos(x_tile=x_tile, y_tile=y_tile)
 
-        self.info("Robot position: {0}".format(self.robot_position.transform))
-        pos = self.robot_position.transform.translation
-        x, y = self.coord_to_costmap_tile(32.479, 0.0126)
-        self.info("Value of robot position at ({0},{1}): {2}".format(x, y, self.get_costmap_coord_status(x, y)))
-        self.info("Origin ({0},{1})".format(self.costmap.info.origin.position.x, self.costmap.info.origin.position.y))
-        # self.info(str(self.is_nav_complete()) + " " + str(self.get_feedback()))
-
-        # Find next unknown tile (Tile value -1)
-        # Move until 0.1 > tile_value || tile_value > 0.9
-            # Cancel move and start over
-
-    def cost_map_tiles_to_pos(self, x_tile: int, y_tile: int) -> (float, float):
+    def cost_map_tiles_to_pos(self, x_tile: int, y_tile: int) -> Coord2D:
         x = x_tile * self.costmap.info.resolution
         y = y_tile * self.costmap.info.resolution
-        return x, y
+        return Coord2D(x, y)
 
-    def coord_to_costmap_index(self, x: float, y: float) -> int:
-        x_tile, y_tile = self.coord_to_costmap_tile(x, y)
+    def pos_to_costmap_index(self, pos: Coord2D) -> int:
+        x_tile, y_tile = self.pos_to_costmap_tile(pos)
         return y_tile * self.costmap.info.width + x_tile
 
-    def coord_to_costmap_tile(self, x: float, y: float) -> (int, int):
-        x_tile = int((x - self.costmap.info.origin.position.x) / self.costmap.info.resolution)
-        y_tile = int((y - self.costmap.info.origin.position.y) / self.costmap.info.resolution)
+    def pos_to_costmap_tile(self, pos: Coord2D) -> (int, int):
+        x_tile = int((pos.x - self.costmap.info.origin.position.x) / self.costmap.info.resolution)
+        y_tile = int((pos.y - self.costmap.info.origin.position.y) / self.costmap.info.resolution)
         return x_tile, y_tile
 
     def get_costmap_coord_status(self, x: int, y: int) -> float:
@@ -147,7 +167,14 @@ class RobotController(Node):
     def save_costmap(self, occ_map: OccupancyGrid):
         self.costmap = occ_map
 
-    def create_goal_pose(self, pose_x: float, pose_y: float, pose_z: float, ori_x: float, ori_y: float, ori_z: float, ori_w: float) -> PoseStamped:
+    def move_to_pos(self, pose_x, pose_y):
+        goal = self.create_goal_pose(pose_x=pose_x, pose_y=pose_y,
+                                     pose_z=0.0, ori_x=0.0, ori_y=0.0,
+                                     ori_z=0.0, ori_w=1.0)
+        self.go_to_pose(goal)
+
+    def create_goal_pose(self, pose_x: float, pose_y: float, pose_z: float, ori_x: float, ori_y: float, ori_z: float,
+                         ori_w: float) -> PoseStamped:
         goal_pose = PoseStamped()
         goal_pose.header.frame_id = 'map'
         goal_pose.header.stamp = self.get_clock().now().to_msg()
@@ -160,7 +187,6 @@ class RobotController(Node):
         goal_pose.pose.orientation.w = ori_w
 
         return goal_pose
-
 
     def deposit_tag(self, tag_msg):
         request = DepositTag.Request()
@@ -251,11 +277,9 @@ class RobotController(Node):
             time.sleep(2)
         return
 
-
     def _feedback_callback(self, msg):
         self.feedback = msg.feedback
         return
-
 
     def info(self, msg):
         self.get_logger().info(msg)
