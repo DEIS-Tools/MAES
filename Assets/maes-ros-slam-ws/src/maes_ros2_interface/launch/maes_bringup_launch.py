@@ -1,17 +1,3 @@
-# Copyright (c) 2018 Intel Corporation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -39,7 +25,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     params_file = LaunchConfiguration('params_file')
     autostart = LaunchConfiguration('autostart')
-    # Maes params
+    # Maes params /home/philipholler/RiderProjects/MAES/Assets/maes-ros-slam-ws/install/maes_ros2_interface/share/maes_ros2_interface/navigate_through_poses_w_replanning_and_recovery.xml
     raytrace_range = LaunchConfiguration('raytrace_range')
     robot_radius = LaunchConfiguration('robot_radius')
     # TODO: For some reason the global costmap does not dynamically resize.
@@ -49,6 +35,11 @@ def generate_launch_description():
     global_costmap_origin_x = LaunchConfiguration('global_costmap_origin_x')
     global_costmap_origin_y = LaunchConfiguration('global_costmap_origin_y')
 
+    # Injecting the behavior tree xml file as launch configuration does not seem to work
+    # Thus it is done directly with a path. This should maybe be done as a launch configuration in the future
+    bt_nav_through_poses_xml_path = os.path.join(os.getcwd(), 'install', package_name, 'share', package_name, 'navigate_through_poses_w_replanning_and_recovery.xml')
+    bt_nav_to_pose_xml_path = os.path.join(os.getcwd(), 'install', package_name, 'share', package_name, 'navigate_to_pose_w_replanning_and_recovery.xml')
+
     maes_injected_params_file = ReplaceString(
         source_file=params_file,
         replacements={'<robot_namespace>': ('', namespace),
@@ -57,7 +48,9 @@ def generate_launch_description():
                       '<global_costmap_width>': ('', global_costmap_width),
                       '<global_costmap_height>': ('', global_costmap_height),
                       '<global_costmap_origin_x>': ('', global_costmap_origin_x),
-                      '<global_costmap_origin_y>': ('', global_costmap_origin_y)})
+                      '<global_costmap_origin_y>': ('', global_costmap_origin_y),
+                      '<bt_nav_through_poses_xml_path>': ('', bt_nav_through_poses_xml_path),
+                      '<bt_nav_to_pose_xml_path>': ('', bt_nav_to_pose_xml_path)})
 
     stdout_linebuf_envvar = SetEnvironmentVariable(
         'RCUTILS_LOGGING_BUFFERED_STREAM', '1')
@@ -82,7 +75,6 @@ def generate_launch_description():
         'global_costmap_origin_y',
         description='Offsets the map in the y direction to ensure availability until map border')
 
-    # ROS launch arguments
     declare_namespace_cmd = DeclareLaunchArgument(
         'namespace',
         default_value='',
@@ -91,7 +83,7 @@ def generate_launch_description():
 
     declare_use_namespace_cmd = DeclareLaunchArgument(
         'use_namespace',
-        default_value='false',
+        default_value='true',
         description='Whether to apply a namespace to the navigation stack')
 
     declare_slam_cmd = DeclareLaunchArgument(

@@ -19,7 +19,9 @@ setup(
             'launch/maes_bringup_launch.py',
             'launch/maes_slam_launch.py',
             'params/maes_nav2_multirobot_params_robotn.yaml',
-            'maes_config.yaml'
+            'maes_config.yaml',
+            'behavior_trees/navigate_through_poses_w_replanning_and_recovery.xml',
+            'behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml',
         ])
     ],
     install_requires=['setuptools'],

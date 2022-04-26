@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 from typing import Callable
 
@@ -111,10 +112,20 @@ class RobotController(Node):
 
         # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
         # We assume anything between 10 and 90 to be uncertain, and thus a frontier
-        is_frontier: Callable[[int], bool] = lambda e: (0 < e < 100)
         # If no target found
         if self.next_target is None:
-            target_frontier_tile_index = next((x for x in self.costmap.data if is_frontier(x)), None)
+            target_frontier_tile_index = next((index for index, value in enumerate(self.costmap.data) if self.is_frontier(index)), None)
+            # frontier_points = [index for index, value in enumerate(self.costmap.data) if is_frontier(value)]
+            # frontier_points.sort(key=lambda e1: self.distance_to_costmap_index(e1), reverse=True)
+            # frontier_points = filter(lambda e: self.distance_to_costmap_index(e) > 2.0, frontier_points)
+            # target_frontier_tile_index = next(iter(frontier_points), None)
+
+            # fp = list(map(self.costmap_index_to_pos, frontier_points))
+            # fp_string = ""
+            # for point in fp:
+            #     fp_string = fp_string + "," + str(point)
+            # self.info(fp_string)
+
             if target_frontier_tile_index is None:
                 self.info("Robot with namespace {0} is has found no more frontiers".format(self.topic_namespace_prefix))
             else:
@@ -125,9 +136,18 @@ class RobotController(Node):
                                                                                           self.next_target.y))
                 self.move_to_pos(self.next_target.x, self.next_target.y)
         # If target is no yet reached, i.e. it is  still a frontier
-        elif is_frontier(self.costmap.data[self.next_target_costmap_index]):
+        # elif is_frontier(self.costmap.data[self.next_target_costmap_index]):
+        elif self.is_frontier(self.next_target_costmap_index):
+            self.info("Frontier value: {0}".format(self.costmap.data[self.next_target_costmap_index]))
+            # self.info("Feedback from action server: {0}".format(self.get_feedback()))
+            self.get_feedback()
             # Print feedback from action server or something, idk?
             pass
+
+        # elif self.status in [GoalStatus.STATUS_ABORTED, GoalStatus.STATUS_CANCELED]:
+        #     self.info("Goal status appears to be {0}. Resetting targets".format(self.status))
+        #     self.next_target_costmap_index = None
+        #    self.next_target = None
         # If target is reached
         else:
             self.info("Robot with namespace {0} reached its target at ({1},{2})".format(self.topic_namespace_prefix,
@@ -136,14 +156,52 @@ class RobotController(Node):
             self.next_target_costmap_index = None
             self.next_target = None
 
+    # This method returns true if the tile is not itself unknown, but has a neighbor, that is unknown
+    def is_frontier(self, index: int):
+        # It is itself unknown
+        if self.costmap.data[index] == -1:
+            return False
+        # It is itself a wall
+        if self.costmap.data[index] > 65:
+            return False
+
+        return self.has_unknown_neighbor(index)
+
+    def get_unknown_neighbor(self, index: int):
+        up_left = index + self.costmap.info.width - 1
+        up = index + self.costmap.info.width
+        up_right = index + self.costmap.info.width + 1
+        left = index - 1
+        right = index + 1
+        down_left = index - self.costmap.info.width - 1
+        down = index - self.costmap.info.width
+        down_right = index - self.costmap.info.width + 1
+        all = [up_left, up, up_right, left, right, down_left, down, down_right]
+        all = list(filter(lambda e: e > 0, all))
+        for neighbor in all:
+            if self.costmap.data[neighbor] == -1:
+                return neighbor
+
+        return None
+
+    def has_unknown_neighbor(self, index: int):
+        return self.get_unknown_neighbor(index) is not None
+
+    def distance_to_costmap_index(self, index: int) -> float:
+        robot_x = self.robot_position.transform.translation.x
+        robot_y = self.robot_position.transform.translation.y
+        index_pos = self.costmap_index_to_pos(index)
+        return math.sqrt(math.pow(robot_x - index_pos.x, 2) +
+                         math.pow(robot_y - index_pos.y, 2))
+
     def costmap_index_to_pos(self, index: int) -> Coord2D:
         y_tile: int = int(index / self.costmap.info.width)
-        x_tile: int = index - (y_tile * self.costmap.info.width)
+        x_tile: int = index % self.costmap.info.width
         return self.cost_map_tiles_to_pos(x_tile=x_tile, y_tile=y_tile)
 
     def cost_map_tiles_to_pos(self, x_tile: int, y_tile: int) -> Coord2D:
-        x = x_tile * self.costmap.info.resolution
-        y = y_tile * self.costmap.info.resolution
+        x = (x_tile - (self.costmap.info.width / 2)) * self.costmap.info.resolution
+        y = (y_tile - (self.costmap.info.height / 2)) * self.costmap.info.resolution
         return Coord2D(x, y)
 
     def pos_to_costmap_index(self, pos: Coord2D) -> int:
@@ -211,16 +269,16 @@ class RobotController(Node):
                   str(pose.pose.position.y) + '...')
         send_goal_future = self.nav_to_pose_client.send_goal_async(goal_msg,
                                                                    self._feedback_callback)
-        rclpy.spin_until_future_complete(self, send_goal_future)
-        self.goal_handle = send_goal_future.result()
+        # rclpy.spin_until_future_complete(self, send_goal_future)
+        # self.goal_handle = send_goal_future.result()
 
-        if not self.goal_handle.accepted:
-            self.error('Goal to ' + str(pose.pose.position.x) + ' ' +
-                       str(pose.pose.position.y) + ' was rejected!')
-            return False
-
-        self.result_future = self.goal_handle.get_result_async()
-        return True
+        # if not self.goal_handle.accepted:
+        #     self.error('Goal to ' + str(pose.pose.position.x) + ' ' +
+        #                str(pose.pose.position.y) + ' was rejected!')
+        #     return False
+        #
+        # self.result_future = self.goal_handle.get_result_async()
+        # return True
 
     def cancel_nav(self):
         self.info('Canceling current goal.')

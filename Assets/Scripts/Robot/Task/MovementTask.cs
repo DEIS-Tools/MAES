@@ -1,16 +1,17 @@
+using UnityEngine;
+
 namespace Maes.Robot.Task {
     public class MovementTask : ITask {
-        private readonly bool _reverse;
-        private readonly float _force;
+        public float ForceMultiplier;
 
-        public MovementTask(float force, bool reverse = false) {
-            _reverse = reverse;
-            _force = force;
+        public MovementTask(float forceMultiplier) {
+            ForceMultiplier = forceMultiplier;
         }
 
         public MovementDirective GetNextDirective() {
-            if (_reverse) return MovementDirective.Reverse(_force);
-            else return MovementDirective.Forward(_force);
+            var absForce = Mathf.Abs(ForceMultiplier);
+            if (ForceMultiplier < 0) return MovementDirective.Reverse(absForce);
+            else return MovementDirective.Forward(absForce);
         }
 
         public bool IsCompleted() {
