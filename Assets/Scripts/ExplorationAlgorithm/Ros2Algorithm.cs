@@ -112,24 +112,34 @@ namespace Maes.ExplorationAlgorithm {
         void ReactToCmdVel(float speedCommandValue, float rotationCommandValue) {
             Debug.Log($"Command velocities: [{speedCommandValue}, {rotationCommandValue}]");
             var robotStatus = _controller.GetStatus();
-            // We prioritise rotation over movement - However if desired rotation is very small (<0.1) we ignore it
-            if (Math.Abs(rotationCommandValue) > 0.04) {
+            
+            if (Math.Abs(speedCommandValue) < 0.01f && Math.Abs(rotationCommandValue) > 0.0) {
                 if (robotStatus != RobotStatus.Idle && !_controller.IsRotatingIndefinitely()) {
                     // The robot is currently performing another task - Stop that task and continue
                     _controller.StopCurrentTask();
                 } else {
                     var sign = rotationCommandValue > 0 ? -1 : 1;
-                    var force = Mathf.Pow(Math.Abs(1.3f * rotationCommandValue), 2.0f) * 0.6f;
+                    var force = Mathf.Pow(1.3f * rotationCommandValue, 2.0f) * 0.6f;
                     force = Mathf.Min(1f, force); // Ensure maximum force of 1.0 
                     force = sign * force; // Apply direction / sign +-
                     _controller.RotateAtRate(force);
                 }
-            } else if (rosLinearSpeed > 0) {
-                if (robotStatus != RobotStatus.Idle && _controller.IsRotating()) {
-                    // The robot must stop rotation task before starting the desired movement task
+            } else if (speedCommandValue > 0) {
+                if (robotStatus != RobotStatus.Idle && !_controller.IsPerformingDifferentialDriveTask()) {
+                    // The robot must stop current task before starting the desired movement task
                     _controller.StopCurrentTask();
-                } else if (robotStatus == RobotStatus.Idle) {
-                    _controller.MoveAtRate(speedCommandValue);
+                } else {
+                    // The force applied at each wheel before factoring in rotation
+                    float flatWheelForce = speedCommandValue;
+                    
+                    // The difference in applied force between the right and left wheel. 
+                    float rotationSign = rotationCommandValue > 0 ? -1 : 1;
+                    float wheelForceDelta = rotationSign * Mathf.Pow(1.3f * rotationCommandValue, 2.0f) * 0.6f;
+                    
+                    // Calculate the force applied to each wheel and send the values to the controller
+                    float leftWheelForce = flatWheelForce + wheelForceDelta / 2f;
+                    float rightWheelForce = flatWheelForce - wheelForceDelta / 2f;
+                    _controller.SetWheelForceFactors(leftWheelForce, rightWheelForce);
                 }
             } else if (_controller.GetStatus() != RobotStatus.Idle){
                 // If cmd_vel does not indicate any desired movement - then stop robot if currently moving 
