@@ -134,7 +134,7 @@ class RobotController(Node):
                 self.info("Robot with namespace {0} found new target at ({1},{2})".format(self.topic_namespace_prefix,
                                                                                           self.next_target.x,
                                                                                           self.next_target.y))
-                # self.move_to_pos(self.next_target.x, self.next_target.y)
+                self.move_to_pos(self.next_target.x, self.next_target.y)
         # If target is no yet reached, i.e. it is  still a frontier
         # elif is_frontier(self.costmap.data[self.next_target_costmap_index]):
         elif self.is_frontier(self.next_target_costmap_index):
