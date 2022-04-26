@@ -134,7 +134,7 @@ controller_server:
       plugin: "nav2_rotation_shim_controller::RotationShimController"
       primary_controller: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
       # Rotational parameters
-      angular_dist_threshold: 0.05
+      angular_dist_threshold: 0.4
       forward_sampling_distance: 0.5
       rotate_to_heading_angular_vel: 0.5 # 1.8
       max_angular_accel: 6.2 # 3.2

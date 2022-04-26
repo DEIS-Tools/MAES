@@ -321,6 +321,10 @@ namespace Maes.Robot {
         public bool IsRotating() {
             return CurrentTask is FiniteRotationTask || CurrentTask is InfiniteRotationTasK;
         }
+
+        public bool IsPerformingDifferentialDriveTask() {
+            return CurrentTask is InfiniteDifferentialMovementTask;
+        }
         
         public bool IsRotatingIndefinitely() {
             return CurrentTask is InfiniteRotationTasK;
