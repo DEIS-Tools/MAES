@@ -22,7 +22,7 @@ namespace Maes.Robot {
 
         private MonaRobot _robot;
         private RobotStatus _currentStatus = RobotStatus.Idle;
-        private ITask? _currentTask;
+        protected ITask? CurrentTask;
 
         public CommunicationManager CommunicationManager { get; set; }
         public SlamMap SlamMap { get; set; }
@@ -118,7 +118,7 @@ namespace Maes.Robot {
             _previousRightWheelPosition = _rightWheel.position;
 
             // Update the current status to indicate whether the robot is currently moving, stopping or idle
-            if (_currentTask != null) {
+            if (CurrentTask != null) {
                 // The robot is currently following an assigned task
                 _currentStatus = RobotStatus.Moving;
             }
@@ -130,7 +130,7 @@ namespace Maes.Robot {
                 _currentStatus = RobotStatus.Idle;
             }
 
-            var isAttemptingToMoveForwards = _currentTask is MovementTask;
+            var isAttemptingToMoveForwards = CurrentTask is MovementTask;
             if (_isCurrentlyColliding && isAttemptingToMoveForwards) {
                 if (_physicsUpdatesSinceStartingMovement > _movementUpdatesBeforeRedeclaringCollision)
                     NotifyCollided();
@@ -143,15 +143,15 @@ namespace Maes.Robot {
             }
 
             // Get directive from current task if present
-            var directive = _currentTask?.GetNextDirective();
+            var directive = CurrentTask?.GetNextDirective();
 
             if (directive != null)
                 ApplyWheelForce(directive);
 
             // Delete task once completed
-            var isCurrentTaskCompleted = _currentTask?.IsCompleted() ?? false;
+            var isCurrentTaskCompleted = CurrentTask?.IsCompleted() ?? false;
             if (isCurrentTaskCompleted) {
-                _currentTask = null;
+                CurrentTask = null;
             }
 
             if (directive != null)
@@ -183,39 +183,39 @@ namespace Maes.Robot {
         }
 
         public RobotStatus GetStatus() {
-            if (_currentStatus == RobotStatus.Idle && _currentTask != null) return RobotStatus.Moving;
+            if (_currentStatus == RobotStatus.Idle && CurrentTask != null) return RobotStatus.Moving;
             return _currentStatus;
         }
 
         public void Rotate(float degrees) {
-            if (_currentTask != null) {
+            if (CurrentTask != null) {
                 StopCurrentTask();
                 return;
             }
 
             AssertRobotIsInIdleState("rotation");
 
-            _currentTask = new FiniteRotationTask(_transform, degrees);
+            CurrentTask = new FiniteRotationTask(_transform, degrees);
         }
 
         public void StartRotating(bool counterClockwise = false) {
-            if (_currentTask != null) {
+            if (CurrentTask != null) {
                 StopCurrentTask();
                 return;
             }
             
             AssertRobotIsInIdleState("rotation");
-            _currentTask = new InfiniteRotationTasK(Constraints.RelativeMoveSpeed * (counterClockwise ? -1 : 1));
+            CurrentTask = new InfiniteRotationTasK(Constraints.RelativeMoveSpeed * (counterClockwise ? -1 : 1));
         }
 
 
         public void StartMoving(bool reverse = false) {
             AssertRobotIsInIdleState("Moving Forwards");
-            _currentTask = new MovementTask(Constraints.RelativeMoveSpeed * (reverse ? -1 : 1));
+            CurrentTask = new MovementTask(Constraints.RelativeMoveSpeed * (reverse ? -1 : 1));
         }
 
         // Asserts that the current status is idle, and throws an exception if not
-        private void AssertRobotIsInIdleState(String attemptedActionName) {
+        protected void AssertRobotIsInIdleState(String attemptedActionName) {
             var currentStatus = GetStatus();
             if (currentStatus != RobotStatus.Idle)
                 throw new InvalidOperationException("Tried to start action: '" + attemptedActionName
@@ -229,7 +229,7 @@ namespace Maes.Robot {
 
 
         public void StopCurrentTask() {
-            _currentTask = null;
+            CurrentTask = null;
         }
 
         public void Broadcast(object data) {
@@ -268,7 +268,7 @@ namespace Maes.Robot {
             info.Append($"id: {this._robot.id}\n");
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
-            info.AppendLine($"Current task: {_currentTask?.GetType()}");
+            info.AppendLine($"Current task: {CurrentTask?.GetType()}");
             info.Append($"Slam position: {approxPosition.x.ToString("#.0")}, {approxPosition.y.ToString("#.0")}\n");
             info.Append($"Slam tile: {SlamMap.GetCurrentPositionSlamTile()}\n");
             info.Append($"Coarse tile: {SlamMap.GetCoarseMap().FromSlamMapCoordinate(SlamMap.GetCurrentPositionSlamTile())}\n");
@@ -278,7 +278,7 @@ namespace Maes.Robot {
 
         public void Move(float distanceInMeters, bool reverse = false) {
             AssertRobotIsInIdleState($"Move forwards {distanceInMeters} meters");
-            _currentTask = new FiniteMovementTask(_transform, distanceInMeters, Constraints.RelativeMoveSpeed, reverse);
+            CurrentTask = new FiniteMovementTask(_transform, distanceInMeters, Constraints.RelativeMoveSpeed, reverse);
         }
 
         public float GetGlobalAngle() {
@@ -319,11 +319,11 @@ namespace Maes.Robot {
         }
 
         public bool IsRotating() {
-            return _currentTask is FiniteRotationTask || _currentTask is InfiniteRotationTasK;
+            return CurrentTask is FiniteRotationTask || CurrentTask is InfiniteRotationTasK;
         }
         
         public bool IsRotatingIndefinitely() {
-            return _currentTask is InfiniteRotationTasK;
+            return CurrentTask is InfiniteRotationTasK;
         }
         
         // This method requires the robot to currently be idle or already be performing an infinite rotation 
@@ -333,13 +333,13 @@ namespace Maes.Robot {
                                             $"Given value: {forceMultiplier}");
             }
 
-            if (_currentTask is InfiniteRotationTasK currentRotationTask) {
+            if (CurrentTask is InfiniteRotationTasK currentRotationTask) {
                 // Adjust existing rotation task
                 currentRotationTask.ForceMultiplier = Constraints.RelativeMoveSpeed * forceMultiplier;
             } else {
                 // Create new rotation task
                 AssertRobotIsInIdleState("infinite rotation");
-                _currentTask = new InfiniteRotationTasK(Constraints.RelativeMoveSpeed * forceMultiplier);
+                CurrentTask = new InfiniteRotationTasK(Constraints.RelativeMoveSpeed * forceMultiplier);
             }
         }
 
@@ -350,13 +350,29 @@ namespace Maes.Robot {
                                             $"Given value: {forceMultiplier}");
             }
 
-            if (_currentTask is MovementTask currentMovementTask) {
+            if (CurrentTask is MovementTask currentMovementTask) {
                 // Adjust existing movement task
                 currentMovementTask.ForceMultiplier = Constraints.RelativeMoveSpeed * forceMultiplier;
             } else {
                 // Create new movement task
                 AssertRobotIsInIdleState("Inifinite movement");
-                _currentTask = new MovementTask(Constraints.RelativeMoveSpeed * forceMultiplier);
+                CurrentTask = new MovementTask(Constraints.RelativeMoveSpeed * forceMultiplier);
+            }
+        }
+        
+        // This method allows for differential drive (each wheel is controlled separately)
+        public void SetWheelForceFactors(float leftWheelForce, float rightWheelForce) {
+            // Apply force multiplier from robot constraints (this value varies based on robot size)
+            leftWheelForce *= Constraints.RelativeMoveSpeed;
+            rightWheelForce *= Constraints.RelativeMoveSpeed;
+
+            if (CurrentTask is InfiniteDifferentialMovementTask existingTask) {
+                // Update the existing differential movement task
+                existingTask.UpdateWheelForces(leftWheelForce, rightWheelForce);
+            } else {
+                // The robot must be in idle state to start this task
+                AssertRobotIsInIdleState("Differential movement");
+                CurrentTask = new InfiniteDifferentialMovementTask(leftWheelForce, rightWheelForce);
             }
         }
     }

@@ -134,16 +134,14 @@ controller_server:
       plugin: "nav2_rotation_shim_controller::RotationShimController"
       primary_controller: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
       # Rotational parameters
-      angular_dist_threshold: 0.1
+      angular_dist_threshold: 0.05
       forward_sampling_distance: 0.5
-      rotate_to_heading_angular_vel: 0.4 # 1.8
-      max_angular_accel: 1.8 # 3.2
+      rotate_to_heading_angular_vel: 0.5 # 1.8
+      max_angular_accel: 6.2 # 3.2
       simulate_ahead_time: 1.0
       # Straight line movement parameters
       desired_linear_vel: 0.5
       max_linear_decel: 0.2
-      min_approach_linear_velocity: 0.05
-      use_approach_linear_velocity_scaling: true
 
 controller_server_rclcpp_node:
   ros__parameters:
@@ -167,7 +165,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.01
+        inflation_radius: 0.1
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -228,7 +226,7 @@ global_costmap:
           data_type: "LaserScan"
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        inflation_radius: 0.01
+        inflation_radius: 0.1
   global_costmap_client:
     ros__parameters:
       use_sim_time: True
