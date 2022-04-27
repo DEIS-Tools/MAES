@@ -15,6 +15,7 @@ from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import NavigateThroughPoses, NavigateToPose
 from nav2_msgs.msg import *
 from nav_msgs.msg import OccupancyGrid
+from rclpy.impl.rcutils_logger import RcutilsLogger
 from tf2_msgs.msg import TFMessage
 
 import rclpy
@@ -25,72 +26,47 @@ from rclpy.qos import QoSDurabilityPolicy, QoSHistoryPolicy, QoSReliabilityPolic
 from rclpy.qos import QoSProfile
 
 
-@dataclass
-class Coord2D:
-    x: float
-    y: float
-
-
 class RobotController(Node):
 
     def __init__(self):
         # The name and namespace is usually overridden be the launch file
         super().__init__(node_name="maes_robot_controller")
 
-        self.topic_namespace_prefix = self.get_namespace()  # All topics have prefixed with the namespace of the node e.g. /robot0
+        # All topics have prefixed with the namespace of the node e.g. /robot0
+        self.topic_namespace_prefix = self.get_namespace()
 
-        # Declare topics
-        self.state_topic = self.topic_namespace_prefix + "/maes_state"
-        self.broadcast_srv_topic = self.topic_namespace_prefix + "/maes_broadcast"
-        self.deposit_env_tag_srv_topic = self.topic_namespace_prefix + "/maes_deposit_tag"
-        self.goal_pose2D_topic = self.topic_namespace_prefix + "/goal_pose"
-        self.nav_to_pose_topic = self.topic_namespace_prefix + "/navigate_to_pose"
-        self.global_costmap_2d_topic = self.topic_namespace_prefix + "/global_costmap/costmap"
-        self.tf2_topic = self.topic_namespace_prefix + "/tf"
-
-        # Quality of service profile for subscriptions
-        qos_profile = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            history=HistoryPolicy.KEEP_LAST,
-            depth=2
-        )
-
-        # Create subscribers
-        self.state_subscriber = self.create_subscription(msg_type=State,
-                                                         topic=self.state_topic,
-                                                         callback=self.logic_loop,
-                                                         qos_profile=qos_profile)
-        self.global_costmap_sub = self.create_subscription(msg_type=OccupancyGrid,
-                                                           topic=self.global_costmap_2d_topic,
-                                                           callback=self.save_costmap,
-                                                           qos_profile=qos_profile)
-        self.tf_sub = self.create_subscription(msg_type=TFMessage,
-                                               topic=self.tf2_topic,
-                                               callback=self.save_robot_position,
-                                               qos_profile=qos_profile)
-
-        # Register service clients
-        self.broadcast_srv = self.create_client(srv_type=BroadcastToAll, srv_name=self.broadcast_srv_topic)
-        self.deposit_env_tag_srv = self.create_client(srv_type=DepositTag, srv_name=self.deposit_env_tag_srv_topic)
+        # Used to print to console running ros2
+        self.logger = MaesLogger(logger=self.get_logger())
 
         # Register fields for navigation
-        self.goal_handle = None
-        self.result_future = None
-        self.feedback = None
-        self.status = None
-        # The map data, in row-major order, starting with (0, 0).  Occupancy
-        # probabilities are in the range [0,100].  Unknown is -1.
-        self.costmap: OccupancyGrid = None
+        self.nav_goal_handle = None
+        self.nav_result_future = None
+        self.nav_feedback = None
+        self.nav_status = None
+
+        # Interface to use global costmap for nagivation
+        self.global_costmap: MaesCostmap = MaesCostmap(self.logger)
+
+        # Robot position set by a callback function from the tf topic
         self.robot_position: TransformStamped = None
 
-        # Create navigation action client
-        self.nav_to_pose_client = ActionClient(self, NavigateToPose, self.topic_namespace_prefix + '/navigate_to_pose')
+        # Registers subscribers, services and actions and assigns to variables below.
+        # Subscribers
+        self.state_subscriber = None
+        self.global_costmap_sub = None
+        self.tf_sub = None
+        # Service clients
+        self.broadcast_srv = None
+        self.deposit_env_tag_srv = None
+        # Navigation action client
+        self.nav_to_pose_client = None
+        self._register_subs_srvs_actions()  # Assign to variables
 
-        # Logic variables below here
+        # Logic variables for YOUR algorithm below here
         self.next_target: Coord2D = None
         self.next_target_costmap_index: int = None
 
-    def logic_loop(self, state: State):
+    def logic_loop_callback(self, state: State):
         '''
         This function is called every time the robot receives a new state msg from MAES
         Use this function to express the logic that makes the robot move.
@@ -110,120 +86,44 @@ class RobotController(Node):
         self.get_feedback()
         '''
 
-        # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
-        # We assume anything between 10 and 90 to be uncertain, and thus a frontier
         # If no target found
         if self.next_target is None:
-            target_frontier_tile_index = next((index for index, value in enumerate(self.costmap.data) if self.is_frontier(index)), None)
-            # frontier_points = [index for index, value in enumerate(self.costmap.data) if is_frontier(value)]
-            # frontier_points.sort(key=lambda e1: self.distance_to_costmap_index(e1), reverse=True)
-            # frontier_points = filter(lambda e: self.distance_to_costmap_index(e) > 2.0, frontier_points)
-            # target_frontier_tile_index = next(iter(frontier_points), None)
-
-            # fp = list(map(self.costmap_index_to_pos, frontier_points))
-            # fp_string = ""
-            # for point in fp:
-            #     fp_string = fp_string + "," + str(point)
-            # self.info(fp_string)
+            # Find index of first tile in costmap that is a frontier
+            target_frontier_tile_index = next((index for index, value in enumerate(self.global_costmap.costmap.data) if self.is_frontier(index)), None)
 
             if target_frontier_tile_index is None:
-                self.info("Robot with namespace {0} is has found no more frontiers".format(self.topic_namespace_prefix))
+                self.logger.log_info("Robot with namespace {0} is has found no more frontiers".format(self.topic_namespace_prefix))
             else:
-                self.next_target = self.costmap_index_to_pos(target_frontier_tile_index)
+                self.next_target = self.global_costmap.costmap_index_to_pos(target_frontier_tile_index)
                 self.next_target_costmap_index = target_frontier_tile_index
-                self.info("Robot with namespace {0} found new target at ({1},{2})".format(self.topic_namespace_prefix,
+                self.logger.log_info("Robot with namespace {0} found new target at ({1},{2})".format(self.topic_namespace_prefix,
                                                                                           self.next_target.x,
                                                                                           self.next_target.y))
                 self.move_to_pos(self.next_target.x, self.next_target.y)
         # If target is no yet reached, i.e. it is  still a frontier
-        # elif is_frontier(self.costmap.data[self.next_target_costmap_index]):
         elif self.is_frontier(self.next_target_costmap_index):
-            self.info("Frontier value: {0}".format(self.costmap.data[self.next_target_costmap_index]))
-            # self.info("Feedback from action server: {0}".format(self.get_feedback()))
-            self.get_feedback()
-            # Print feedback from action server or something, idk?
+            # This section allows for logging feedback etc.
+            self.logger.log_info("Frontier value: {0}".format(self.global_costmap.costmap.data[self.next_target_costmap_index]))
             pass
-
-        # elif self.status in [GoalStatus.STATUS_ABORTED, GoalStatus.STATUS_CANCELED]:
-        #     self.info("Goal status appears to be {0}. Resetting targets".format(self.status))
-        #     self.next_target_costmap_index = None
-        #    self.next_target = None
         # If target is reached
         else:
-            self.info("Robot with namespace {0} reached its target at ({1},{2})".format(self.topic_namespace_prefix,
+            self.logger.log_info("Robot with namespace {0} reached its target at ({1},{2})".format(self.topic_namespace_prefix,
                                                                                         self.next_target.x,
                                                                                         self.next_target.y))
             self.next_target_costmap_index = None
             self.next_target = None
 
     # This method returns true if the tile is not itself unknown, but has a neighbor, that is unknown
-    def is_frontier(self, index: int):
+    def is_frontier(self, map_index: int):
+        # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
         # It is itself unknown
-        if self.costmap.data[index] == -1:
+        if self.global_costmap.costmap.data[map_index] == -1:
             return False
         # It is itself a wall
-        if self.costmap.data[index] > 65:
+        if self.global_costmap.costmap.data[map_index] >= 65:
             return False
 
-        return self.has_unknown_neighbor(index)
-
-    def get_unknown_neighbor(self, index: int):
-        up_left = index + self.costmap.info.width - 1
-        up = index + self.costmap.info.width
-        up_right = index + self.costmap.info.width + 1
-        left = index - 1
-        right = index + 1
-        down_left = index - self.costmap.info.width - 1
-        down = index - self.costmap.info.width
-        down_right = index - self.costmap.info.width + 1
-        all = [up_left, up, up_right, left, right, down_left, down, down_right]
-        all = list(filter(lambda e: e > 0, all))
-        for neighbor in all:
-            if self.costmap.data[neighbor] == -1:
-                return neighbor
-
-        return None
-
-    def has_unknown_neighbor(self, index: int):
-        return self.get_unknown_neighbor(index) is not None
-
-    def distance_to_costmap_index(self, index: int) -> float:
-        robot_x = self.robot_position.transform.translation.x
-        robot_y = self.robot_position.transform.translation.y
-        index_pos = self.costmap_index_to_pos(index)
-        return math.sqrt(math.pow(robot_x - index_pos.x, 2) +
-                         math.pow(robot_y - index_pos.y, 2))
-
-    def costmap_index_to_pos(self, index: int) -> Coord2D:
-        y_tile: int = int(index / self.costmap.info.width)
-        x_tile: int = index % self.costmap.info.width
-        return self.cost_map_tiles_to_pos(x_tile=x_tile, y_tile=y_tile)
-
-    def cost_map_tiles_to_pos(self, x_tile: int, y_tile: int) -> Coord2D:
-        x = (x_tile - (self.costmap.info.width / 2)) * self.costmap.info.resolution
-        y = (y_tile - (self.costmap.info.height / 2)) * self.costmap.info.resolution
-        return Coord2D(x, y)
-
-    def pos_to_costmap_index(self, pos: Coord2D) -> int:
-        x_tile, y_tile = self.pos_to_costmap_tile(pos)
-        return y_tile * self.costmap.info.width + x_tile
-
-    def pos_to_costmap_tile(self, pos: Coord2D) -> (int, int):
-        x_tile = int((pos.x - self.costmap.info.origin.position.x) / self.costmap.info.resolution)
-        y_tile = int((pos.y - self.costmap.info.origin.position.y) / self.costmap.info.resolution)
-        return x_tile, y_tile
-
-    def get_costmap_coord_status(self, x: int, y: int) -> float:
-        index = y * self.costmap.info.width + x
-        return self.costmap.data[index]
-
-    def save_robot_position(self, msg: TFMessage):
-        odom = list(filter(lambda e: e.header.frame_id == "odom", msg.transforms))
-        if len(odom) == 1:
-            self.robot_position = odom[0]
-
-    def save_costmap(self, occ_map: OccupancyGrid):
-        self.costmap = occ_map
+        return self.global_costmap.has_unknown_neighbor(map_index)
 
     def move_to_pos(self, pose_x, pose_y):
         goal = self.create_goal_pose(pose_x=pose_x, pose_y=pose_y,
@@ -258,17 +158,18 @@ class RobotController(Node):
 
     def go_to_pose(self, pose: PoseStamped):
         # Sends a `NavToPose` action request and waits for completion
-        self.debug("Waiting for 'NavigateToPose' action server")
+        self.logger.log_debug("Waiting for 'NavigateToPose' action server")
         while not self.nav_to_pose_client.wait_for_server(timeout_sec=1.0):
-            self.info("'NavigateToPose' action server not available, waiting...")
+            self.logger.log_info("'NavigateToPose' action server not available, waiting...")
 
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose = pose
 
-        self.info('Navigating to goal: ' + str(pose.pose.position.x) + ' ' +
+        self.logger.log_info('Navigating to goal: ' + str(pose.pose.position.x) + ' ' +
                   str(pose.pose.position.y) + '...')
         send_goal_future = self.nav_to_pose_client.send_goal_async(goal_msg,
                                                                    self._feedback_callback)
+        # In case we want to wait for action to complete before returning to logic loop
         # rclpy.spin_until_future_complete(self, send_goal_future)
         # self.goal_handle = send_goal_future.result()
 
@@ -281,78 +182,103 @@ class RobotController(Node):
         # return True
 
     def cancel_nav(self):
-        self.info('Canceling current goal.')
-        if self.result_future:
-            future = self.goal_handle.cancel_goal_async()
+        self.logger.log_info('Canceling current goal.')
+        if self.nav_result_future:
+            future = self.nav_goal_handle.cancel_goal_async()
             rclpy.spin_until_future_complete(self, future)
         return
 
     def is_nav_complete(self):
-        if not self.result_future:
+        if not self.nav_result_future:
             # task was cancelled or completed
             return True
-        rclpy.spin_until_future_complete(self, self.result_future, timeout_sec=0.10)
-        if self.result_future.result():
-            self.status = self.result_future.result().status
-            if self.status != GoalStatus.STATUS_SUCCEEDED:
-                self.info('Goal with failed with status code: {0}'.format(self.status))
+        rclpy.spin_until_future_complete(self, self.nav_result_future, timeout_sec=0.10)
+        if self.nav_result_future.result():
+            self.nav_status = self.nav_result_future.result().status
+            if self.nav_status != GoalStatus.STATUS_SUCCEEDED:
+                self.logger.log_info('Goal with failed with status code: {0}'.format(self.nav_status))
                 return True
         else:
             # Timed out, still processing, not complete yet
             return False
 
-        self.info('Goal succeeded!')
+        self.logger.log_info('Goal succeeded!')
         return True
 
-    def get_feedback(self):
-        return self.feedback
-
-    def get_result(self):
-        return self.status
-
-    def wait_until_nav2_active(self):
+    """
+    def _wait_until_nav2_active(self):
         self._wait_for_node_to_activate(self.topic_namespace_prefix + 'bt_navigator')
-        self.info('Nav2 is ready for use!')
+        self.logger.log_info('Nav2 is ready for use!')
         return
 
     def _wait_for_node_to_activate(self, node_name):
         # Waits for the node within the tester namespace to become active
-        self.debug('Waiting for ' + node_name + ' to become active..')
+        self.logger.log_debug('Waiting for ' + node_name + ' to become active..')
         node_service = node_name + '/get_state'
         state_client = self.create_client(GetState, node_service)
         while not state_client.wait_for_service(timeout_sec=1.0):
-            self.info(node_service + ' service not available, waiting...')
+            self.logger.log_info(node_service + ' service not available, waiting...')
 
         req = GetState.Request()
         state = 'unknown'
         while (state != 'active'):
-            self.debug('Getting ' + node_name + ' state...')
+            self.logger.log_debug('Getting ' + node_name + ' state...')
             future = state_client.call_async(req)
             rclpy.spin_until_future_complete(self, future)
             if future.result() is not None:
                 state = future.result().current_state.label
-                self.debug('Result of get_state: %s' % state)
+                self.logger.log_debug('Result of get_state: %s' % state)
             time.sleep(2)
         return
+    """
+
+    def _register_subs_srvs_actions(self):
+        # Declare topics
+        state_topic = self.topic_namespace_prefix + "/maes_state"
+        broadcast_srv_topic = self.topic_namespace_prefix + "/maes_broadcast"
+        deposit_env_tag_srv_topic = self.topic_namespace_prefix + "/maes_deposit_tag"
+        nav_to_pose_topic = self.topic_namespace_prefix + "/navigate_to_pose"
+        global_costmap_2d_topic = self.topic_namespace_prefix + "/global_costmap/costmap"
+        tf2_topic = self.topic_namespace_prefix + "/tf"
+
+        # Quality of service profile for subscriptions
+        qos_profile = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=2
+        )
+
+        # Create subscribers
+        self.state_subscriber = self.create_subscription(msg_type=State,
+                                                         topic=state_topic,
+                                                         callback=self.logic_loop_callback,
+                                                         qos_profile=qos_profile)
+        self.global_costmap_sub = self.create_subscription(msg_type=OccupancyGrid,
+                                                           topic=global_costmap_2d_topic,
+                                                           callback=self.global_costmap.update_costmap,
+                                                           qos_profile=qos_profile)
+        self.tf_sub = self.create_subscription(msg_type=TFMessage,
+                                               topic=tf2_topic,
+                                               callback=self.save_robot_position_callback,
+                                               qos_profile=qos_profile)
+
+        # Register service clients
+        self.broadcast_srv = self.create_client(srv_type=BroadcastToAll, srv_name=broadcast_srv_topic)
+        self.deposit_env_tag_srv = self.create_client(srv_type=DepositTag, srv_name=deposit_env_tag_srv_topic)
+
+        # Create navigation action client
+        self.nav_to_pose_client = ActionClient(self, NavigateToPose, nav_to_pose_topic)
+
+    """
+    Call back functions from here
+    """
+    def save_robot_position_callback(self, msg: TFMessage):
+        odom = list(filter(lambda e: e.header.frame_id == "odom", msg.transforms))
+        if len(odom) == 1:
+            self.robot_position = odom[0]
 
     def _feedback_callback(self, msg):
-        self.feedback = msg.feedback
-        return
-
-    def info(self, msg):
-        self.get_logger().info(msg)
-        return
-
-    def warn(self, msg):
-        self.get_logger().warn(msg)
-        return
-
-    def error(self, msg):
-        self.get_logger().error(msg)
-        return
-
-    def debug(self, msg):
-        self.get_logger().debug(msg)
+        self.nav_feedback = msg.feedback
         return
 
 
@@ -372,3 +298,97 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
+"""
+Helper classes from here
+"""
+class MaesLogger:
+    """
+    This class was made to pass a simple logging interface to both the costmap and the controller
+    """
+    def __init__(self, logger) -> None:
+        super().__init__()
+        self._logger: RcutilsLogger = logger
+
+    def log_info(self, msg):
+        self._logger.info(msg)
+
+    def log_warn(self, msg):
+        self._logger.warn(msg)
+
+    def log_error(self, msg):
+        self._logger.error(msg)
+
+    def log_debug(self, msg):
+        self._logger.debug(msg)
+
+@dataclass
+class Coord2D:
+    x: float
+    y: float
+
+
+class MaesCostmap:
+    def __init__(self, logger: MaesLogger) -> None:
+        super().__init__()
+        self.logger = logger
+        # The map data, in row-major order, starting with (0, 0).  Occupancy
+        # probabilities are in the range [0,100].  Unknown is -1.
+        self.costmap: OccupancyGrid = None
+
+
+    def update_costmap(self, costmap: OccupancyGrid):
+        self.costmap = costmap
+
+    def distance_to_costmap_index(self, from_coord: Coord2D, index: int) -> float:
+        index_pos = self.costmap_index_to_pos(index)
+        return math.sqrt(math.pow(from_coord.x - index_pos.x, 2) +
+                         math.pow(from_coord.y - index_pos.y, 2))
+
+
+    def costmap_index_to_pos(self, index: int) -> Coord2D:
+        y_tile: int = int(index / self.costmap.info.width)
+        x_tile: int = index % self.costmap.info.width
+        return self.cost_map_tiles_to_pos(x_tile=x_tile, y_tile=y_tile)
+
+    def cost_map_tiles_to_pos(self, x_tile: int, y_tile: int) -> Coord2D:
+        x = (x_tile - (self.costmap.info.width / 2)) * self.costmap.info.resolution
+        y = (y_tile - (self.costmap.info.height / 2)) * self.costmap.info.resolution
+        return Coord2D(x, y)
+
+    def pos_to_costmap_index(self, pos: Coord2D) -> int:
+        x_tile, y_tile = self.pos_to_costmap_tile(pos)
+        return y_tile * self.costmap.info.width + x_tile
+
+    def pos_to_costmap_tile(self, pos: Coord2D) -> (int, int):
+        x_tile = int((pos.x - self.costmap.info.origin.position.x) / self.costmap.info.resolution)
+        y_tile = int((pos.y - self.costmap.info.origin.position.y) / self.costmap.info.resolution)
+        return x_tile, y_tile
+
+    def get_costmap_coord_status(self, x: int, y: int) -> float:
+        index = y * self.costmap.info.width + x
+        return self.costmap.data[index]
+
+    def get_unknown_neighbor_if_avail(self, index: int):
+        width = self.costmap.info.width
+        height = self.costmap.info.height
+        up_left = index + width - 1
+        up = index + width
+        up_right = index + width + 1
+        left = index - 1
+        right = index + 1
+        down_left = index - width - 1
+        down = index - width
+        down_right = index - width + 1
+        neighbors = [up_left, up, up_right, left, right, down_left, down, down_right]
+        # Filter out neighbors, that are out of bounds
+        neighbors = list(filter(lambda tile_index: 0 <= tile_index <= width * height - 1, neighbors))
+        for neighbor_index in neighbors:
+            # If neighbor is unknown, return index of that neighbor
+            if self.costmap.data[neighbor_index] == -1:
+                return neighbor_index
+
+        return None
+
+    def has_unknown_neighbor(self, index: int):
+        return self.get_unknown_neighbor_if_avail(index) is not None
