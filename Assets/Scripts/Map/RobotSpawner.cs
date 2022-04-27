@@ -244,22 +244,26 @@ namespace Maes.Map
             float RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
             robot.transform.position = new Vector3(x + RTOffset + collisionMap.ScaledOffset.x,
                 y + RTOffset + collisionMap.ScaledOffset.y);
-            
-            if(GlobalSettings.IsRosMode)
+
+            if (GlobalSettings.IsRosMode) {
                 AttachRosComponentsToRobot(robotGameObject);
+            }
+                
 
             robot.id = robotID;
             robot.ExplorationAlgorithm = algorithm;
             robot.Controller.CommunicationManager = CommunicationManager;
             robot.Controller.SlamMap = new SlamMap(collisionMap, RobotConstraints, seed);
-            robot.Controller.Constraints = RobotConstraints; 
+            robot.Controller.Constraints = RobotConstraints;
             algorithm.SetController(robot.Controller);
-            
+
             return robot;
         }
 
         private void AttachRosComponentsToRobot(GameObject robot) {
-            
+            // The components are disabled in their awake function to allow for
+            // setting the parameters before calling the start method
+            // This must be done to ensure correct ros topics etc.
             var laserScanner = robot.AddComponent<LaserScanSensor>();
             laserScanner.ScanTopic = "/scan";
             laserScanner.PublishPeriodSeconds = 0.1;
@@ -272,10 +276,14 @@ namespace Maes.Map
             laserScanner.TimeBetweenMeasurementsSeconds = 0;
             laserScanner.FrameId = "base_scan";
             laserScanner.m_WrapperObject = robot;
+            // Is disabled in awake, now enable component
+            laserScanner.enabled = true;
 
             var tfPublisher = robot.AddComponent<ROSTransformTreePublisher>();
             tfPublisher.m_WrapperObject = robot;
             tfPublisher.m_RootGameObject = robot.transform.Find("base_footprint").gameObject;
+            // Is disabled in awake, now enable component
+            tfPublisher.enabled = true;
         }
         
         private List<Vector2Int> FindEdgeTiles(List<Vector2Int> tiles, bool checkDiagonal) {

@@ -36,6 +36,12 @@ public class LaserScanSensor : MonoBehaviour
     [SerializeField]
     public GameObject m_WrapperObject;
 
+    private void Awake() {
+        // This module should not be enabled (i.e. run start) until explicitly told so
+        // This allows for setting parameters before start runs.
+        this.enabled = false;
+    }
+
     protected virtual void Start() {
         ScanTopic = "/" + m_WrapperObject.name + ScanTopic; // Prepend robot name as namespace
         m_Ros = ROSConnection.GetOrCreateInstance();

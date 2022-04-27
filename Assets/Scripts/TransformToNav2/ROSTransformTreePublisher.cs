@@ -36,6 +36,12 @@ public class ROSTransformTreePublisher : MonoBehaviour
 
     bool ShouldPublishMessage => Clock.NowTimeInSeconds > m_LastPublishTimeSeconds + PublishPeriodSeconds;
 
+    private void Awake() {
+        // This module should not be enabled (i.e. run start) until explicitly told so
+        // This allows for setting parameters before start runs.
+        this.enabled = false;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
