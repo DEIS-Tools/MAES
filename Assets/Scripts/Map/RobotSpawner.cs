@@ -244,6 +244,9 @@ namespace Maes.Map
             float RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
             robot.transform.position = new Vector3(x + RTOffset + collisionMap.ScaledOffset.x,
                 y + RTOffset + collisionMap.ScaledOffset.y);
+            
+            if(GlobalSettings.IsRosMode)
+                AttachRosComponentsToRobot(robotGameObject);
 
             robot.id = robotID;
             robot.ExplorationAlgorithm = algorithm;
@@ -253,6 +256,26 @@ namespace Maes.Map
             algorithm.SetController(robot.Controller);
             
             return robot;
+        }
+
+        private void AttachRosComponentsToRobot(GameObject robot) {
+            
+            var laserScanner = robot.AddComponent<LaserScanSensor>();
+            laserScanner.ScanTopic = "/scan";
+            laserScanner.PublishPeriodSeconds = 0.1;
+            laserScanner.RangeMetersMax = 0.0f;
+            laserScanner.RangeMetersMax = 1000f;
+            laserScanner.ScanAngleStartDegrees = 0;
+            laserScanner.ScanAngleEndDegrees = -359;
+            laserScanner.ScanOffsetAfterPublish = 0;
+            laserScanner.NumMeasurementsPerScan = 180;
+            laserScanner.TimeBetweenMeasurementsSeconds = 0;
+            laserScanner.FrameId = "base_scan";
+            laserScanner.m_WrapperObject = robot;
+
+            var tfPublisher = robot.AddComponent<ROSTransformTreePublisher>();
+            tfPublisher.m_WrapperObject = robot;
+            tfPublisher.m_RootGameObject = robot.transform.Find("base_footprint").gameObject;
         }
         
         private List<Vector2Int> FindEdgeTiles(List<Vector2Int> tiles, bool checkDiagonal) {

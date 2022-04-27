@@ -199,56 +199,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1 &2389353831528316076
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 9005463527228745035}
-  - component: {fileID: 1420922927392604190}
-  m_Layer: 0
-  m_Name: ROSPublisher
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &9005463527228745035
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2389353831528316076}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -1.291}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 9210634985821422330}
-  m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1420922927392604190
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2389353831528316076}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cfeb25bec2af4aafaa10b484c17df977, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_PublishRateHz: 10
-  m_GlobalFrameIds:
-  - map
-  - odom
-  m_RootGameObject: {fileID: 218963881731823193}
-  m_WrapperObject: {fileID: 9210634985821422333}
 --- !u!1 &4252694085193147738
 GameObject:
   m_ObjectHideFlags: 0
@@ -528,7 +478,6 @@ GameObject:
   - component: {fileID: 9210634985821422331}
   - component: {fileID: 9210634985821422329}
   - component: {fileID: 5156427515509347382}
-  - component: {fileID: 5478260830804215171}
   m_Layer: 0
   m_Name: MaesRobot2D
   m_TagString: Untagged
@@ -549,7 +498,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7351260818183478304}
-  - {fileID: 9005463527228745035}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3627,27 +3575,3 @@ MonoBehaviour:
     - {x: 0.69540966, y: 0.6793566, z: 0.2342651}
     - {x: 0.7624647, y: 0.6462776, z: 0.031190768}
     - {x: -0.69540966, y: 0.6793566, z: 0.2342651}
---- !u!114 &5478260830804215171
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9210634985821422333}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 36fe032a45d54f07ba83d71898f8729f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ScanTopic: /scan
-  PublishPeriodSeconds: 0.1
-  RangeMetersMin: 0.12
-  RangeMetersMax: 100
-  ScanAngleStartDegrees: 0
-  ScanAngleEndDegrees: -359
-  ScanOffsetAfterPublish: 0
-  NumMeasurementsPerScan: 180
-  TimeBetweenMeasurementsSeconds: 0
-  LayerMaskName: TurtleBot3Manual
-  FrameId: base_scan
-  m_WrapperObject: {fileID: 9210634985821422333}

@@ -18,13 +18,13 @@ public class ROSTransformTreePublisher : MonoBehaviour
     const string k_TfTopic = "/tf";
     
     [SerializeField]
-    double m_PublishRateHz = 20f;
+    double m_PublishRateHz = 10f;
     [SerializeField]
     List<string> m_GlobalFrameIds = new List<string> {"map", "odom"};
     [SerializeField]
-    GameObject m_RootGameObject;
+    public GameObject m_RootGameObject;
     [SerializeField]
-    GameObject m_WrapperObject;
+    public GameObject m_WrapperObject;
     String m_NameSpace = "";
     
     double m_LastPublishTimeSeconds;

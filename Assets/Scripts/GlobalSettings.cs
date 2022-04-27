@@ -15,7 +15,6 @@ namespace Maes {
     // This class contains all settings related to an instance of an simulation
     public static class GlobalSettings {
         private static readonly string ConfigFileName;
-        private static readonly bool IgnoreConfigFiles = false;
 
         // Times per second that robot logic is updated
         public static readonly int LogicTickDeltaMillis = 100;
@@ -44,9 +43,11 @@ namespace Maes {
         public static readonly int TicksBeforeExplorationHeatMapCold = 10 * 60 * 4;
         public static readonly int TicksBeforeCoverageHeatMapCold = 10 * 60 * 4;
 
+        public static readonly bool IsRosMode = false;
+
         static GlobalSettings() {
-            // If not using config files or the file has already been loaded and parameters set.
-            if (IgnoreConfigFiles) {
+            // Maes only loads config from yaml file when in Ros Mode
+            if (!IsRosMode) {
                 return;
             }
 
@@ -71,9 +72,6 @@ namespace Maes {
             PopulateAdjacencyAndComGroupsEveryTick = config.GlobalSettings.PopulateAdjacencyAndCommGroupsEveryTick;
             TicksBeforeExplorationHeatMapCold = config.GlobalSettings.TicksBeforeExplorationHeatmapCold;
             TicksBeforeCoverageHeatMapCold = config.GlobalSettings.TicksBeforeCoverageHeatmapCold;
-
-            // Ignore further changes to config file to avoid confusion.
-            IgnoreConfigFiles = true;
         }
     }
 }

@@ -22,6 +22,9 @@ namespace Maes {
         private SimulationScenario _currentScenario;
         public Simulation CurrentSimulation;
         private GameObject _simulationGameObject;
+        
+        public GameObject RosClockPrefab;
+        public GameObject RosVisualizerPrefab;
 
         public SimulationPlayState PlayState { get; }
         private int _logicTicksCurrentSim = 0;
@@ -31,14 +34,23 @@ namespace Maes {
             // This simulation handles physics updates custom time factors, so disable built in real time physics calls
             Physics.autoSimulation = false;
             Physics2D.simulationMode = SimulationMode2D.Script;
-
-            // _scenarios = ScenarioGenerator.GenerateYoutubeVideoScenarios();
-            _scenarios = ScenarioGenerator.GenerateROS2Scenario();
-            // _scenarios = ScenarioGenerator.GenerateTnfScenarios();
+            
+            if (GlobalSettings.IsRosMode) {
+                _scenarios = ScenarioGenerator.GenerateROS2Scenario();
+                this.CreateRosClockAndVisualiserObjects();
+            }
+            else {
+                _scenarios = ScenarioGenerator.GenerateYoutubeVideoScenarios();
+            }
             CreateSimulation(_scenarios.Dequeue());
             if (Application.isBatchMode) {
                 AttemptSetPlayState(SimulationPlayState.FastAsPossible);
             }
+        }
+
+        public void CreateRosClockAndVisualiserObjects() {
+            Instantiate(RosClockPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+            Instantiate(RosVisualizerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
         }
 
         public SimulationPlayState AttemptSetPlayState(SimulationPlayState targetState) {
