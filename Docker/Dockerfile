@@ -21,9 +21,6 @@ COPY ./Docker/welcome_message /home/maes-user/.welcome
 # Change to workspace on sign-in
 RUN echo "cd /home/maes-user/code" >> /home/maes-user/.bashrc
 
-# prepare  the workspace
-# RUN cd home/dev_ws/code
-
 # Add commands to be executed on tty log-in
 ## Source the workspace on sign in and colcon-build the first time
 RUN echo ". /opt/ros/galactic/setup.sh && [ ! -f /home/maes-user/.firstbuild ] && colcon build" >> /home/maes-user/.bashrc 
