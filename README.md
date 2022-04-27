@@ -151,7 +151,7 @@ $ docker images
 which should then list the `ros4maes` image.
 
 ### Spinning up a Container
-The image can be started with the following command:
+The container can be started with the following command:
 ```bash
 $ docker run --rm -it \
     -p 10000:10000 \
@@ -188,11 +188,11 @@ $ docker run --rm -it \
 If you are on Windows 10, you will have to install [VcXsrv](https://sourceforge.net/projects/vcxsrv/), an X-server for Windows.
 After installation, open the XLaunch program from the start menu:
 
-![XLaunch](.ReadmeAssets/XLaunch.png)
+![XLaunch](.readmeAssets/XLaunch.png)
 
 Going through the configuration, choose the default values for the first two windows and add a checkmark to the third window in the "Disable access control" box:
 
-![XLaunch_2](.ReadmeAssets/XLaunch_2.png)
+![XLaunch_2](.readmeAssets/XLaunch_2.png)
 
 <sup><sup>(Be aware: this is an unsafe setting to leave on for a prolonged time. Therefore, do not have this setting enabled unless you are about to launch the ROS-container)</sup></sup>
 
