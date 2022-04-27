@@ -249,6 +249,12 @@ namespace Maes.Statistics {
             SetVisualizationMode(new CurrentlyVisibleAreaVisualization(_explorationMap, _selectedRobot.Controller));
         }
 
+        public void ShowSelectedRobotSlamMap() {
+            if (_selectedRobot == null)
+                throw new Exception("Cannot change to 'ShowSelectedRobotSlamMap' visualization mode when no robot is selected");
+            SetVisualizationMode(new SelectedRobotSlamMapVisualization(_explorationMap, _selectedRobot.Controller));
+        }
+
         private void SetVisualizationMode(VisualizationMode newMode) {
             _currentVisualizationMode = newMode;
             _currentVisualizationMode.UpdateVisualization(_explorationVisualizer, _currentTick);

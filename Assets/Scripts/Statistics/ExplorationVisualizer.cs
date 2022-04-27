@@ -32,7 +32,6 @@ namespace Maes.Statistics {
         public delegate Color32 CellToColor(ExplorationCell cell);
         public delegate Color32 CellIndexToColor(int cellIndex);
         
-
         public void SetMap(SimulationMap<ExplorationCell> newMap, Vector3 offset) {
             _map = newMap;
             _widthInTiles = _map.WidthInTiles;
@@ -155,7 +154,7 @@ namespace Maes.Statistics {
 
             mesh.colors32 = _colors;
         }
-        
+
         /// <summary>
         /// Updates the color of ALL triangles based on the given map and color function. This is an expensive operation
         /// and should be only called when it is necessary to replace all colors. To update a small subset of the
@@ -171,6 +170,20 @@ namespace Maes.Statistics {
             }
 
             mesh.colors32 = _colors;
+        }
+        
+        public void SetAllColors(CellIndexToColor getColorByIndex) {
+            foreach (var (index, _) in _map) {
+                SetCellColor(index, getColorByIndex(index));
+            }
+            mesh.colors32 = _colors;
+        }
+
+        private void SetCellColor(int triangleIndex, Color32 color) {
+            var vertexIndex = triangleIndex * 3;
+            _colors[vertexIndex] = color;
+            _colors[vertexIndex + 1] = color;
+            _colors[vertexIndex + 2] = color;
         }
 
         /// <summary>

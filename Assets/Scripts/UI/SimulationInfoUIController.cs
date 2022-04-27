@@ -18,6 +18,7 @@ namespace Maes.UI {
         public Button AllExplorationHeatMapButton;
         public Button AllCoverageHeatMapButton;
         public Button SelectVisibleAreaButton;
+        public Button SelectedSlamMapButton;
 
         private List<Button> _mapVisualizationToggleGroup;
         private Color _mapVisualizationColor = Color.white;
@@ -33,7 +34,7 @@ namespace Maes.UI {
         private void Start() {
             _mapVisualizationToggleGroup = new List<Button>() {
                 AllExplorationButton, AllCoverageButton, AllExplorationHeatMapButton, AllCoverageHeatMapButton,
-                SelectVisibleAreaButton
+                SelectVisibleAreaButton, SelectedSlamMapButton
             };
             SelectVisualizationButton(AllExplorationButton);
             
@@ -59,6 +60,15 @@ namespace Maes.UI {
                     if (sim != null) {
                         if (!sim.HasSelectedRobot()) sim.SelectFirstRobot();
                         sim.ExplorationTracker.ShowSelectedRobotVisibleArea();    
+                    }
+                });
+            });
+            
+            SelectedSlamMapButton.onClick.AddListener(() => {
+                ExecuteAndRememberMapVisualizationModification((sim) => {
+                    if (sim != null) {
+                        if (!sim.HasSelectedRobot()) sim.SelectFirstRobot();
+                        sim.ExplorationTracker.ShowSelectedRobotSlamMap();    
                     }
                 });
             });
@@ -129,6 +139,8 @@ namespace Maes.UI {
                 SelectVisualizationButton(AllCoverageHeatMapButton);
             } else if (mode is CurrentlyVisibleAreaVisualization) {
                 SelectVisualizationButton(SelectVisibleAreaButton);
+            } else if (mode is SelectedRobotSlamMapVisualization) {
+                SelectVisualizationButton(SelectedSlamMapButton);
             } else {
                 throw new Exception($"No registered button matches the Visualization mode {mode.GetType()}");
             }
