@@ -8,6 +8,7 @@ using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.ExplorationAlgorithm.Voronoi;
 using Maes.Map.MapGen;
 using Maes.Robot;
+using Maes.Utilities.Files;
 using Maes.YamlConfig;
 using UnityEngine;
 using static Maes.Map.RobotSpawner;
@@ -19,7 +20,7 @@ namespace Maes {
          public static Queue<SimulationScenario> GenerateROS2Scenario() {
              Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
              var yamlConfig = MaesYamlConfigLoader.LoadConfig();
-             
+
              // Number of robots
              var numberOfRobots = yamlConfig.NumberOfRobots;
              
@@ -194,7 +195,8 @@ namespace Maes {
          /// <summary>
          /// Generates the scenarios used for the YouTube video recordings.
          /// </summary>
-        public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
+        public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() { 
+             PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
             var numberOfRobots = 2;
             var maxRunTime = 60 * Minute;
