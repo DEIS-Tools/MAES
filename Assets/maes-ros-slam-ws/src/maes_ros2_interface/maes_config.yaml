@@ -34,7 +34,7 @@ robot_spawn_config:
   # suggested_starting_point_x: 0
   # suggested_starting_point_y: 0
   # spawn_at_hallway_ends: true
-map:
+generated_map:
   # Include either cave_config or building_config
   wall_height: 2.0 # Must be bigger greater than 2. Otherwise, just cosmetic
   width_in_tiles: 70

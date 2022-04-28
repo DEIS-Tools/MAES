@@ -20,7 +20,7 @@ namespace Maes {
          public static Queue<SimulationScenario> GenerateROS2Scenario() {
              Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
              var yamlConfig = MaesYamlConfigLoader.LoadConfig();
-
+             
              // Number of robots
              var numberOfRobots = yamlConfig.NumberOfRobots;
              
@@ -49,14 +49,18 @@ namespace Maes {
 
              foreach (var seed in yamlConfig.RandomSeeds) {
                  MapFactory mapSpawner = null;
-                 if (yamlConfig.Map.CaveConfig != null) {
+                 if (yamlConfig.CustomMapFilename != null) {
+                     // Load custom map from file
+                     var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent(yamlConfig.CustomMapFilename);
+                     mapSpawner = (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f);
+                 } else if (yamlConfig.GeneratedMap.CaveConfig != null) { 
+                     // Generate Cave Map
                      var caveConfig = new CaveMapConfig(yamlConfig, seed);
-                     mapSpawner = (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, yamlConfig.Map.WallHeight);
-                 }
-                 // Building type
-                 else {
+                     mapSpawner = (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, yamlConfig.GeneratedMap.WallHeight);
+                 } else {  
+                     // Building type
                      var buildingConfig = new BuildingMapConfig(yamlConfig, seed);
-                     mapSpawner = (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, yamlConfig.Map.WallHeight);
+                     mapSpawner = (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, yamlConfig.GeneratedMap.WallHeight);
                  }
 
 
