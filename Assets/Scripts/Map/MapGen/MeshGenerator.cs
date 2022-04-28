@@ -69,7 +69,7 @@ namespace Maes.Map.MapGen {
         }
 
         public SimulationMap<bool> GenerateMesh(int[,] map, float wallHeight,
-            bool removeRoundedCorners, List<Room> rooms) {
+            bool roundCornersWithMarchingSquares, List<Room> rooms) {
 
             // Generate grid of squares containing control nodes and between nodes 
             // for the marching square algorithm
@@ -85,7 +85,7 @@ namespace Maes.Map.MapGen {
                 for (int y = 0; y < squareGrid2D.squares.GetLength(1); y++) {
                     // Create triangles from all the points in the squares
                     // assigned to variables "vertices" and "triangles"
-                    TriangulateSquare(squareGrid2D.squares[x, y], false, removeRoundedCorners);
+                    TriangulateSquare(squareGrid2D.squares[x, y], false, roundCornersWithMarchingSquares);
                 }
             }
 
@@ -94,7 +94,7 @@ namespace Maes.Map.MapGen {
                     for (int y = 0; y < squareGrid3D.squares.GetLength(1); y++) {
                         // Create triangles from all the points in the squares
                         // assigned to variables "vertices" and "triangles"
-                        TriangulateSquare(squareGrid3D.squares[x,y], true, removeRoundedCorners);
+                        TriangulateSquare(squareGrid3D.squares[x,y], true, roundCornersWithMarchingSquares);
                     }
                 }
             }
@@ -124,7 +124,7 @@ namespace Maes.Map.MapGen {
             Generate2DColliders();
 
             return GenerateCollisionMap(squareGrid2D,
-                new Vector2(squareGrid2D.XOffset, squareGrid2D.YOffset), removeRoundedCorners, rooms);
+                new Vector2(squareGrid2D.XOffset, squareGrid2D.YOffset), roundCornersWithMarchingSquares, rooms);
         }
 
         private SimulationMap<bool> GenerateCollisionMap(SquareGrid squareGrid, Vector3 offset,

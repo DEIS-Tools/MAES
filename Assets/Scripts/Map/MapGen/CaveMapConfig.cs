@@ -33,15 +33,15 @@ namespace Maes.Map.MapGen {
         public readonly int neighbourWallsNeededToStayWall;
 
         public CaveMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
-            widthInTiles: config.Map.WidthInTiles,
-            heightInTiles: config.Map.HeightInTiles,
+            widthInTiles: config.GeneratedMap.WidthInTiles,
+            heightInTiles: config.GeneratedMap.HeightInTiles,
             randomSeed: seed,
-            smoothingRuns: config.Map.CaveConfig.SmoothingRuns,
-            connectionPassagesWidth: config.Map.CaveConfig.ConnectionPassageWidth,
-            randomFillPercent: config.Map.CaveConfig.RandomFillPercent,
-            wallThresholdSize: config.Map.CaveConfig.WallThresholdSize,
-            roomThresholdSize: config.Map.CaveConfig.RoomThresholdSize,
-            borderSize: config.Map.BorderSize) {
+            smoothingRuns: config.GeneratedMap.CaveConfig.SmoothingRuns,
+            connectionPassagesWidth: config.GeneratedMap.CaveConfig.ConnectionPassageWidth,
+            randomFillPercent: config.GeneratedMap.CaveConfig.RandomFillPercent,
+            wallThresholdSize: config.GeneratedMap.CaveConfig.WallThresholdSize,
+            roomThresholdSize: config.GeneratedMap.CaveConfig.RoomThresholdSize,
+            borderSize: config.GeneratedMap.BorderSize) {
         }
         
         public CaveMapConfig(int widthInTiles, int heightInTiles, int randomSeed, int smoothingRuns,

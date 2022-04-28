@@ -27,16 +27,16 @@ namespace Maes.Map.MapGen {
         public readonly int borderSize;
 
         public BuildingMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
-            widthInTiles: config.Map.WidthInTiles,
-            heightInTiles: config.Map.HeightInTiles,
+            widthInTiles: config.GeneratedMap.WidthInTiles,
+            heightInTiles: config.GeneratedMap.HeightInTiles,
             randomSeed: seed,
-            maxHallInPercent: config.Map.BuildingConfig.MaxHallInPercent,
-            hallWidth: config.Map.BuildingConfig.HallWidth,
-            minRoomSideLength: config.Map.BuildingConfig.MinRoomSideLength,
-            doorWidth: config.Map.BuildingConfig.DoorWidth,
-            doorPadding: config.Map.BuildingConfig.DoorPadding,
-            roomSplitChancePercent: config.Map.BuildingConfig.RoomSplitChance,
-            borderSize: config.Map.BorderSize
+            maxHallInPercent: config.GeneratedMap.BuildingConfig.MaxHallInPercent,
+            hallWidth: config.GeneratedMap.BuildingConfig.HallWidth,
+            minRoomSideLength: config.GeneratedMap.BuildingConfig.MinRoomSideLength,
+            doorWidth: config.GeneratedMap.BuildingConfig.DoorWidth,
+            doorPadding: config.GeneratedMap.BuildingConfig.DoorPadding,
+            roomSplitChancePercent: config.GeneratedMap.BuildingConfig.RoomSplitChance,
+            borderSize: config.GeneratedMap.BorderSize
             ) {
             
         }

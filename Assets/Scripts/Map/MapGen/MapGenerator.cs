@@ -481,6 +481,28 @@ namespace Maes.Map.MapGen {
 
             return collisionMap;
         }
+        
+        /// <summary>
+        /// Method for creating a map from an array of ints {0, 1}.
+        /// </summary>
+        public SimulationMap<bool> CreateMapFromBitMap(int[,] bitmap, float wallHeight) {
+            // Clear and destroy objects from previous map
+            clearMap();
+
+            bitmap = CreateBorderedMap(bitmap, bitmap.GetLength(0), bitmap.GetLength(1), 1);
+            var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(0, 0, bitmap);
+            
+            MeshGenerator meshGen = GetComponent<MeshGenerator>();
+            var collisionMap = meshGen.GenerateMesh(bitmap, wallHeight,
+                true, survivingRooms);
+
+            // Rotate to fit 2D view
+            plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
+            ResizePlaneToFitMap(bitmap.GetLength(0), bitmap.GetLength(1));
+            MovePlaneAndWallRoofToFitWallHeight(wallHeight);
+            
+            return collisionMap;
+        }
 
         private SimulationMap<bool> CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 3.0f) {
             // Fill map with random walls and empty tiles (Looks kinda like a QR code)
