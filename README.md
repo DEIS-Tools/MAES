@@ -156,7 +156,7 @@ The container can be started with the following command:
 $ docker run --rm -it \
     -p 10000:10000 \
     -p 10022:22 \
-    -v $(pwd)/Assets/maes-ros-slam-ws:/home/maes-user/code \
+    -v $(pwd)/maes-ros-slam-ws:/home/maes-user/code \
     --name ros4maes \
     ros4maes
 ```
@@ -177,7 +177,7 @@ $ xhost +local:docker
 $ docker run --rm -it \
     -p 10000:10000 \
     -p 10022:22 \
-    -v $(pwd)/Assets/maes-ros-slam-ws:/home/maes-user/code \
+    -v $(pwd)/maes-ros-slam-ws:/home/maes-user/code \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     --env=DISPLAY \
     --name ros4maes \
@@ -205,7 +205,7 @@ $ export DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0.0
 $ docker run --rm -it \
     -p 10000:10000 \
     -p 10022:22 \
-    -v $(pwd)/Assets/maes-ros-slam-ws:/home/maes-user/code \
+    -v $(pwd)/maes-ros-slam-ws:/home/maes-user/code \
     -e DISPLAY \
     --name ros4maes \
     ros4maes
