@@ -195,98 +195,98 @@ namespace Maes {
          /// <summary>
          /// Generates the scenarios used for the YouTube video recordings.
          /// </summary>
-        public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() { 
-             PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
-            Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
-            var numberOfRobots = 2;
-            var maxRunTime = 60 * Minute;
-            var width = 50;
-            var height = 50;
-            SimulationEndCriteriaDelegate hasFinishedFunc =
-                (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime || simulation.ExplorationTracker.ExploredProportion > 0.995f);
+        public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
+             
+             var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
+             
+             Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
+             var numberOfRobots = 2;
+             var maxRunTime = 60 * Minute;
+             var width = 50;
+             var height = 50;
+             SimulationEndCriteriaDelegate hasFinishedFunc =
+                 (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime ||
+                                  simulation.ExplorationTracker.ExploredProportion > 0.995f);
 
-            var robotConstraints = new RobotConstraints(
-                broadcastRange: float.MaxValue,
-                broadcastBlockedByWalls: false,
-                senseNearbyAgentsRange: 7f,
-                senseNearbyAgentsBlockedByWalls: true,
-                automaticallyUpdateSlam: true,
-                slamUpdateIntervalInTicks: 10,
-                slamSynchronizeIntervalInTicks: 10,
-                slamPositionInaccuracy: 0.2f, 
-                distributeSlam: true,
-                environmentTagReadRange: 4.0f,
-                slamRayTraceRange: 7.0f,
-                relativeMoveSpeed: 10f,
-                agentRelativeSize: 0.6f
-            );
+             var robotConstraints = new RobotConstraints(
+                 broadcastRange: float.MaxValue,
+                 broadcastBlockedByWalls: false,
+                 senseNearbyAgentsRange: 7f,
+                 senseNearbyAgentsBlockedByWalls: true,
+                 automaticallyUpdateSlam: true,
+                 slamUpdateIntervalInTicks: 10,
+                 slamSynchronizeIntervalInTicks: 10,
+                 slamPositionInaccuracy: 0.2f,
+                 distributeSlam: true,
+                 environmentTagReadRange: 4.0f,
+                 slamRayTraceRange: 7.0f,
+                 relativeMoveSpeed: 10f,
+                 agentRelativeSize: 0.6f
+             );
 
-            for (int i = 0; i < 1; i++) {
-                var randomSeed = i;
-                
-                var caveConfig = new CaveMapConfig(
-                    width,
-                    height,
-                    randomSeed,
-                    4,
-                    4,
-                    45,
-                    10,
-                    10,
-                    1);
-                var buildingConfig = new BuildingMapConfig(
-                    width,
-                    height,
-                    randomSeed,
-                    20,
-                    4,
-                    6,
-                    2,
-                    2,
-                    85,
-                    1);
-                
-                var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>()
-                {
-                    ((seed) => new SsbAlgorithm(robotConstraints, seed),"SSB"),
-                    ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
-                    ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
-                };
+             for (int i = 0; i < 1; i++) {
+                 var randomSeed = i;
 
-                foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
-                    scenarios.Enqueue(new SimulationScenario(
-                        seed: randomSeed,
-                        hasFinishedSim: hasFinishedFunc,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
-                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
-                            map, 
-                            randomSeed, 
-                            numberOfRobots,
-                            createAlgorithmDelegate),
-                        robotConstraints: robotConstraints,
-                        $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
-                    ));
-                    scenarios.Enqueue(new SimulationScenario(
-                        seed: randomSeed,
-                        hasFinishedSim: hasFinishedFunc,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
-                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                            map, 
-                            randomSeed, 
-                            numberOfRobots,
-                            new Vector2Int(0,0),
-                            createAlgorithmDelegate),
-                        robotConstraints: robotConstraints,
-                        $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
-                    ));
-                }
-            }
-            
-            
-            
+                 var caveConfig = new CaveMapConfig(
+                     width,
+                     height,
+                     randomSeed,
+                     4,
+                     4,
+                     45,
+                     10,
+                     10,
+                     1);
+                 var buildingConfig = new BuildingMapConfig(
+                     width,
+                     height,
+                     randomSeed,
+                     20,
+                     4,
+                     6,
+                     2,
+                     2,
+                     85,
+                     1);
 
-            return scenarios;
-        }
+                 var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>() {
+                     ((seed) => new SsbAlgorithm(robotConstraints, seed), "SSB"),
+                     ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
+                     ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
+                 };
+
+                 foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
+                     // scenarios.Enqueue(new SimulationScenario(
+                     //     seed: randomSeed,
+                     //     hasFinishedSim: hasFinishedFunc,
+                     //     mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                     //     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                     //         map,
+                     //         randomSeed,
+                     //         numberOfRobots,
+                     //         createAlgorithmDelegate),
+                     //     robotConstraints: robotConstraints,
+                     //     $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
+                     // ));
+                     scenarios.Enqueue(new SimulationScenario(
+                         seed: randomSeed,
+                         hasFinishedSim: hasFinishedFunc,
+                         mapSpawner: (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f),
+                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                             map,
+                             randomSeed,
+                             numberOfRobots,
+                             new Vector2Int(0, 0),
+                             createAlgorithmDelegate),
+                         robotConstraints: robotConstraints,
+                         $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                     ));
+                 }
+             }
+
+
+             return scenarios;
+         }
         
         /// <summary>
         /// Generates the scenarios used for the main experiments of the MAES paper.
