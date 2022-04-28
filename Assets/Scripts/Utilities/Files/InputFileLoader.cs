@@ -6,7 +6,7 @@ namespace Maes.Utilities.Files {
     public class InputFileLoader {
 
         public static string GetDefaultInputPath() {
-            return Path.Join(Path.Join(Directory.GetCurrentDirectory(), "Assets", "maes-ros-slam-ws"), "src",
+            return Path.Join(Path.Join(Directory.GetCurrentDirectory(), "maes-ros-slam-ws"), "src",
                 "maes_ros2_interface");
         }
 
