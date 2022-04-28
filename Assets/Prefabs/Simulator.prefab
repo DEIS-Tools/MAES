@@ -50,8 +50,8 @@ MonoBehaviour:
   SimulationStatusText: {fileID: 0}
   simulationInfoUIController: {fileID: 0}
   CurrentSimulation: {fileID: 0}
-  RosClockPrefab: {fileID: 8420379381742167934, guid: b403826ea8707746e9f36ef7857427e1, type: 3}
-  RosVisualizerPrefab: {fileID: 6636523858597077128, guid: 5b68f79b74d88e56ba25abb23c89e77a, type: 3}
+  RosClockPrefab: {fileID: 8420379381742167934, guid: b78f79af27f36bedbb7abcd4c9d0f623, type: 3}
+  RosVisualizerPrefab: {fileID: 2315420966074849842, guid: 9ccaf897dbd316d32931129760020fa8, type: 3}
 --- !u!114 &4230307919047253344
 MonoBehaviour:
   m_ObjectHideFlags: 0

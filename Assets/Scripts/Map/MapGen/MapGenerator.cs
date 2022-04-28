@@ -485,11 +485,11 @@ namespace Maes.Map.MapGen {
         /// <summary>
         /// Method for creating a map from an array of ints {0, 1}.
         /// </summary>
-        public SimulationMap<bool> CreateMapFromBitMap(int[,] bitmap, float wallHeight) {
+        public SimulationMap<bool> CreateMapFromBitMap(int[,] bitmap, float wallHeight, int borderSize) {
             // Clear and destroy objects from previous map
             clearMap();
 
-            bitmap = CreateBorderedMap(bitmap, bitmap.GetLength(0), bitmap.GetLength(1), 1);
+            bitmap = CreateBorderedMap(bitmap, bitmap.GetLength(0), bitmap.GetLength(1), borderSize);
             var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(0, 0, bitmap);
             
             MeshGenerator meshGen = GetComponent<MeshGenerator>();

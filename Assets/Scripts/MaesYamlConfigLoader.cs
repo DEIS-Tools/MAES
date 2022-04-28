@@ -66,11 +66,10 @@ namespace Maes.YamlConfig {
             public RobotConstraintsType RobotConstraints { get; set; }
             public EndCriteriaType EndCriteria { get; set; }
             public RobotSpawnConfigType RobotSpawnConfig { get; set; }
-            public MapType GeneratedMap { get; set; } = null;
-            public string CustomMapFilename { get; set; } = null;
+            public MapType Map { get; set; } = null;
 
             public override string ToString() {
-                return $"{nameof(RandomSeeds)}: {RandomSeeds}, {nameof(NumberOfRobots)}: {NumberOfRobots}, {nameof(GlobalSettings)}: {GlobalSettings}, {nameof(RobotConstraints)}: {RobotConstraints}, {nameof(EndCriteria)}: {EndCriteria}, {nameof(RobotSpawnConfig)}: {RobotSpawnConfig}, {nameof(GeneratedMap)}: {GeneratedMap}";
+                return $"{nameof(RandomSeeds)}: {RandomSeeds}, {nameof(NumberOfRobots)}: {NumberOfRobots}, {nameof(GlobalSettings)}: {GlobalSettings}, {nameof(RobotConstraints)}: {RobotConstraints}, {nameof(EndCriteria)}: {EndCriteria}, {nameof(RobotSpawnConfig)}: {RobotSpawnConfig}, {nameof(Map)}: {Map}";
             }
         }    
         
@@ -192,6 +191,8 @@ namespace Maes.YamlConfig {
             public int BorderSize { get; set; } = 1;
             public BuildingConfigType BuildingConfig { get; set; } = null;
             public CaveConfigType CaveConfig { get; set; } = null;
+
+            public string CustomMapFilename { get; set; } = null;
 
             public override string ToString() {
                 return $"{nameof(WallHeight)}: {WallHeight}, {nameof(WidthInTiles)}: {WidthInTiles}, {nameof(HeightInTiles)}: {HeightInTiles}, {nameof(BorderSize)}: {BorderSize}, {nameof(BuildingConfig)}: {BuildingConfig}, {nameof(CaveConfig)}: {CaveConfig}";

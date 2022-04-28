@@ -34,23 +34,23 @@ robot_spawn_config:
   # suggested_starting_point_x: 0
   # suggested_starting_point_y: 0
   # spawn_at_hallway_ends: true
-#generated_map:
-#  # Include either cave_config or building_config
-#  wall_height: 2.0 # Must be bigger greater than 2. Otherwise, just cosmetic
-#  width_in_tiles: 70
-#  height_in_tiles: 50
-#  border_size: 1 # Border around map. Only cosmetic. Must be at least 1
+map:
+  wall_height: 2.0 # Must be bigger greater than 2. Otherwise, just cosmetic
+  width_in_tiles: 100
+  height_in_tiles: 100
+  border_size: 1 # Border around map. Only cosmetic. Must be at least 1
+  # Include either cave_config, building_config or custom map
+  custom_map_filename: 'map.pgm'
 #  cave_config:
 #    smoothing_runs: 4 # Works best with 4, or optionally 3 or 5
 #    connection_passage_width: 4 # The width of the interconnections between rooms in the cave
 #    random_fill_percent: 43 # Works best in the range 30-50%
 #    wall_threshold_size: 10 # Smallest group of isolated wall tiles allowed to remain in the map
 #    room_threshold_size: 10 # Smallest room allowed to remain in the map
-  #building_config:
-  #   hall_width: 4
-  #   max_hall_in_percent: 20 # How much of the map should consist of hallways?
-  #   min_room_side_length: 6 # The shortest allowed wall length of a room
-  #   door_width: 2 # Width of the doors interconnecting the rooms
-  #   door_padding: 2 # Minimum distance from the edge of a wall to the start of a door. Requirement: min_room_side_length >= 2 * door_padding + door_width
-  #   room_split_chance: 85 # Lower value gives bigger rooms
-custom_map_filename: 'map.pgm'
+#  building_config:
+#    hall_width: 4
+#    max_hall_in_percent: 20 # How much of the map should consist of hallways?
+#    min_room_side_length: 6 # The shortest allowed wall length of a room
+#    door_width: 2 # Width of the doors interconnecting the rooms
+#    door_padding: 2 # Minimum distance from the edge of a wall to the start of a door. Requirement: min_room_side_length >= 2 * door_padding + door_width
+#    room_split_chance: 85 # Lower value gives bigger rooms

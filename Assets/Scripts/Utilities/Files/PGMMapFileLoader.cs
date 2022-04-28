@@ -57,7 +57,7 @@ namespace Maes.Utilities.Files {
                     debugString += " " + bitmapValue;
                 }
                 
-                Debug.Log(debugString);
+                // Debug.Log(debugString);
             }
 
             return data;

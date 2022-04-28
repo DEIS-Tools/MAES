@@ -49,18 +49,18 @@ namespace Maes {
 
              foreach (var seed in yamlConfig.RandomSeeds) {
                  MapFactory mapSpawner = null;
-                 if (yamlConfig.CustomMapFilename != null) {
+                 if (yamlConfig.Map.CustomMapFilename != null) {
                      // Load custom map from file
-                     var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent(yamlConfig.CustomMapFilename);
-                     mapSpawner = (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f);
-                 } else if (yamlConfig.GeneratedMap.CaveConfig != null) { 
+                     var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent(yamlConfig.Map.CustomMapFilename);
+                     mapSpawner = (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, yamlConfig.Map.WallHeight, yamlConfig.Map.BorderSize);
+                 } else if (yamlConfig.Map.CaveConfig != null) { 
                      // Generate Cave Map
                      var caveConfig = new CaveMapConfig(yamlConfig, seed);
-                     mapSpawner = (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, yamlConfig.GeneratedMap.WallHeight);
+                     mapSpawner = (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, yamlConfig.Map.WallHeight);
                  } else {  
                      // Building type
                      var buildingConfig = new BuildingMapConfig(yamlConfig, seed);
-                     mapSpawner = (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, yamlConfig.GeneratedMap.WallHeight);
+                     mapSpawner = (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, yamlConfig.Map.WallHeight);
                  }
 
 
@@ -275,7 +275,7 @@ namespace Maes {
                      scenarios.Enqueue(new SimulationScenario(
                          seed: randomSeed,
                          hasFinishedSim: hasFinishedFunc,
-                         mapSpawner: (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f),
+                         mapSpawner: (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f, 1),
                          robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                              map,
                              randomSeed,

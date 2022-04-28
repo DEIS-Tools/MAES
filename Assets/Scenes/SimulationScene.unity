@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.43040693, g: 0.4653563, b: 0.49721318, a: 1}
+  m_IndirectSpecularColor: {r: 0.43040666, g: 0.46535593, b: 0.4972127, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -2034,7 +2034,7 @@ PrefabInstance:
     - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: RosClockPrefab
       value: 
-      objectReference: {fileID: 8420379381742167934, guid: b403826ea8707746e9f36ef7857427e1, type: 3}
+      objectReference: {fileID: 8420379381742167934, guid: b78f79af27f36bedbb7abcd4c9d0f623, type: 3}
     - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: SimulationPrefab
       value: 
@@ -2046,7 +2046,7 @@ PrefabInstance:
     - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: RosVisualizerPrefab
       value: 
-      objectReference: {fileID: 6636523858597077128, guid: 5b68f79b74d88e56ba25abb23c89e77a, type: 3}
+      objectReference: {fileID: 2315420966074849842, guid: 9ccaf897dbd316d32931129760020fa8, type: 3}
     - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: SimulationStatusText
       value: 
@@ -4202,7 +4202,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1984548824}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.52199996
+  m_Size: 0.522
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
