@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using Maes.Utilities.Files;
 using UnityEngine;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
@@ -17,7 +18,7 @@ namespace Maes.YamlConfig {
             
             string ConfigFileName;
             try {
-                var yFile = new DirectoryInfo(Path.Join(Path.Join(Directory.GetCurrentDirectory(), "Assets", "maes-ros-slam-ws"), "src", "maes_ros2_interface"))
+                var yFile = new DirectoryInfo(InputFileLoader.GetDefaultInputPath())
                     .GetFiles("*.y*ml")
                     .Where(f => f.Name.ToLower().Contains("config"))
                     .OrderByDescending(f => f.LastWriteTime)
