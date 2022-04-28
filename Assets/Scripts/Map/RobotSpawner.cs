@@ -246,7 +246,7 @@ namespace Maes.Map
                 y + RTOffset + collisionMap.ScaledOffset.y);
 
             if (GlobalSettings.IsRosMode) {
-                AttachRosComponentsToRobot(robotGameObject);
+                AttachRosComponentsToRobot(robotGameObject, RobotConstraints);
             }
                 
 
@@ -260,7 +260,7 @@ namespace Maes.Map
             return robot;
         }
 
-        private void AttachRosComponentsToRobot(GameObject robot) {
+        private void AttachRosComponentsToRobot(GameObject robot, RobotConstraints constraints) {
             // The components are disabled in their awake function to allow for
             // setting the parameters before calling the start method
             // This must be done to ensure correct ros topics etc.
@@ -268,7 +268,10 @@ namespace Maes.Map
             laserScanner.ScanTopic = "/scan";
             laserScanner.PublishPeriodSeconds = 0.1;
             laserScanner.RangeMetersMax = 0.0f;
-            laserScanner.RangeMetersMax = 1000f;
+            // Range should be set to a higher value than it is possible to generate maps for
+            // This is because the slam_toolbox package does not raytrace empty space, unless an obstacle 
+            // is hit within the range set. This makes the robot stay close to the walls
+            laserScanner.RangeMetersMax = 500f;
             laserScanner.ScanAngleStartDegrees = 0;
             laserScanner.ScanAngleEndDegrees = -359;
             laserScanner.ScanOffsetAfterPublish = 0;

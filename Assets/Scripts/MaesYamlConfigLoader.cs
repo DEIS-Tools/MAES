@@ -17,7 +17,7 @@ namespace Maes.YamlConfig {
             
             string ConfigFileName;
             try {
-                var yFile = new DirectoryInfo(Path.Join(Path.Join(Directory.GetCurrentDirectory(), "Assets", "maes-ros-slam-ws"), "src", "maes_ros2_interface"))
+                var yFile = new DirectoryInfo(Path.Join(Path.Join(Directory.GetCurrentDirectory(), "maes-ros-slam-ws"), "src", "maes_ros2_interface"))
                     .GetFiles("*.y*ml")
                     .Where(f => f.Name.ToLower().Contains("config"))
                     .OrderByDescending(f => f.LastWriteTime)
