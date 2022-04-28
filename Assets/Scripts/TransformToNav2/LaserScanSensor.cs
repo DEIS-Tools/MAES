@@ -13,15 +13,14 @@ public class LaserScanSensor : MonoBehaviour
     public string ScanTopic = "/scan";
     [FormerlySerializedAs("TimeBetweenScansSeconds")]
     public double PublishPeriodSeconds = 0.1;
-    public float RangeMetersMin = 0;
-    public float RangeMetersMax = 1000;
-    public float ScanAngleStartDegrees = -45;
-    public float ScanAngleEndDegrees = 45;
+    public float RangeMetersMin = 0f;
+    public float RangeMetersMax = 1000f;
+    public float ScanAngleStartDegrees = 0;
+    public float ScanAngleEndDegrees = -359;
     // Change the scan start and end by this amount after every publish
     public float ScanOffsetAfterPublish = 0f;
-    public int NumMeasurementsPerScan = 10;
-    public float TimeBetweenMeasurementsSeconds = 0.01f;
-    public string LayerMaskName = "TurtleBot3Manual";
+    public int NumMeasurementsPerScan = 180;
+    public float TimeBetweenMeasurementsSeconds = 0;
     public string FrameId = "base_scan";
 
     float m_CurrentScanAngleStart;
@@ -35,7 +34,13 @@ public class LaserScanSensor : MonoBehaviour
     double m_TimeLastScanBeganSeconds = -1;
     
     [SerializeField]
-    GameObject m_WrapperObject;
+    public GameObject m_WrapperObject;
+
+    private void Awake() {
+        // This module should not be enabled (i.e. run start) until explicitly told so
+        // This allows for setting parameters before start runs.
+        this.enabled = false;
+    }
 
     protected virtual void Start() {
         ScanTopic = "/" + m_WrapperObject.name + ScanTopic; // Prepend robot name as namespace

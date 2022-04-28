@@ -245,14 +245,48 @@ namespace Maes.Map
             robot.transform.position = new Vector3(x + RTOffset + collisionMap.ScaledOffset.x,
                 y + RTOffset + collisionMap.ScaledOffset.y);
 
+            if (GlobalSettings.IsRosMode) {
+                AttachRosComponentsToRobot(robotGameObject, RobotConstraints);
+            }
+                
+
             robot.id = robotID;
             robot.ExplorationAlgorithm = algorithm;
             robot.Controller.CommunicationManager = CommunicationManager;
             robot.Controller.SlamMap = new SlamMap(collisionMap, RobotConstraints, seed);
-            robot.Controller.Constraints = RobotConstraints; 
+            robot.Controller.Constraints = RobotConstraints;
             algorithm.SetController(robot.Controller);
-            
+
             return robot;
+        }
+
+        private void AttachRosComponentsToRobot(GameObject robot, RobotConstraints constraints) {
+            // The components are disabled in their awake function to allow for
+            // setting the parameters before calling the start method
+            // This must be done to ensure correct ros topics etc.
+            var laserScanner = robot.AddComponent<LaserScanSensor>();
+            laserScanner.ScanTopic = "/scan";
+            laserScanner.PublishPeriodSeconds = 0.1;
+            laserScanner.RangeMetersMax = 0.0f;
+            // Range should be set to a higher value than it is possible to generate maps for
+            // This is because the slam_toolbox package does not raytrace empty space, unless an obstacle 
+            // is hit within the range set. This makes the robot stay close to the walls
+            laserScanner.RangeMetersMax = 500f;
+            laserScanner.ScanAngleStartDegrees = 0;
+            laserScanner.ScanAngleEndDegrees = -359;
+            laserScanner.ScanOffsetAfterPublish = 0;
+            laserScanner.NumMeasurementsPerScan = 180;
+            laserScanner.TimeBetweenMeasurementsSeconds = 0;
+            laserScanner.FrameId = "base_scan";
+            laserScanner.m_WrapperObject = robot;
+            // Is disabled in awake, now enable component
+            laserScanner.enabled = true;
+
+            var tfPublisher = robot.AddComponent<ROSTransformTreePublisher>();
+            tfPublisher.m_WrapperObject = robot;
+            tfPublisher.m_RootGameObject = robot.transform.Find("base_footprint").gameObject;
+            // Is disabled in awake, now enable component
+            tfPublisher.enabled = true;
         }
         
         private List<Vector2Int> FindEdgeTiles(List<Vector2Int> tiles, bool checkDiagonal) {

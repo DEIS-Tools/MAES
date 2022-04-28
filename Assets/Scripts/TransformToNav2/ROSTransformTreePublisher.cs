@@ -18,13 +18,13 @@ public class ROSTransformTreePublisher : MonoBehaviour
     const string k_TfTopic = "/tf";
     
     [SerializeField]
-    double m_PublishRateHz = 20f;
+    double m_PublishRateHz = 10f;
     [SerializeField]
     List<string> m_GlobalFrameIds = new List<string> {"map", "odom"};
     [SerializeField]
-    GameObject m_RootGameObject;
+    public GameObject m_RootGameObject;
     [SerializeField]
-    GameObject m_WrapperObject;
+    public GameObject m_WrapperObject;
     String m_NameSpace = "";
     
     double m_LastPublishTimeSeconds;
@@ -35,6 +35,12 @@ public class ROSTransformTreePublisher : MonoBehaviour
     double PublishPeriodSeconds => 1.0f / m_PublishRateHz;
 
     bool ShouldPublishMessage => Clock.NowTimeInSeconds > m_LastPublishTimeSeconds + PublishPeriodSeconds;
+
+    private void Awake() {
+        // This module should not be enabled (i.e. run start) until explicitly told so
+        // This allows for setting parameters before start runs.
+        this.enabled = false;
+    }
 
     // Start is called before the first frame update
     void Start()
