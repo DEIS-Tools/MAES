@@ -196,7 +196,7 @@ Going through the configuration, choose the default values for the first two win
 
 <sup><sup>(Be aware: this is an unsafe setting to leave on for a prolonged time. Therefore, do not have this setting enabled unless you are about to launch the ROS-container)</sup></sup>
 
-Finally, you can choose to save this configuration to local storage, and use it as a hortcut for starting up XLaunch.
+Finally, you can choose to save this configuration to local storage, and use it as a shortcut for starting up XLaunch.
 To launch an X-server with the settings now, press "finish".
 
 Now, in your WSL terminal, go to the root MAES directory and enter the following commands:
