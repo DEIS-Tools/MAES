@@ -98,10 +98,6 @@ def generate_launch_description():
                     {'autostart': autostart},
                     {'node_names': lifecycle_nodes}])
 
-    # If the provided param file doesn't have slam_toolbox params, we must remove the 'params_file'
-    # LaunchConfiguration, or it will be passed automatically to slam_toolbox and will not load
-    # the default file
-
     start_slam_toolbox_cmd_with_params = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(slam_launch_file),
         launch_arguments={'use_sim_time': use_sim_time,
@@ -119,7 +115,6 @@ def generate_launch_description():
     ld.add_action(start_map_saver_server_cmd)
     ld.add_action(start_lifecycle_manager_cmd)
 
-    # Running SLAM Toolbox (Only one of them will be run)
     ld.add_action(start_slam_toolbox_cmd_with_params)
 
     return ld

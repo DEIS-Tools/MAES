@@ -107,7 +107,7 @@ controller_server:
   ros__parameters:
     use_sim_time: True
     controller_frequency: 5.0
-    min_x_velocity_threshold: 0.001
+    min_x_velocity_threshold: 0.5
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
     failure_tolerance: 10.0
@@ -153,7 +153,7 @@ local_costmap:
   local_costmap:
     ros__parameters:
       update_frequency: 5.0
-      publish_frequency: 2.0
+      publish_frequency: 1.0
       global_frame: odom
       robot_base_frame: base_footprint
       footprint_padding: 0.05
@@ -162,13 +162,13 @@ local_costmap:
       track_unknown_space: true
       width: 8
       height: 8
-      resolution: 0.05
+      resolution: 0.2
       robot_radius: <robot_radius>
       plugins: ["inflation_layer", "obstacle_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 20.0
-        inflation_radius: 2.5
+        inflation_radius: 3.5
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -200,14 +200,14 @@ global_costmap:
   global_costmap:
     ros__parameters:
       update_frequency: 5.0
-      publish_frequency: 2.0
+      publish_frequency: 1.0
       global_frame: map
       map_topic: /<robot_namespace>/map
       robot_base_frame: base_footprint
       footprint_padding: 0.3
       use_sim_time: True
       robot_radius: <robot_radius>
-      resolution: 0.05
+      resolution: 0.2
       origin_x: <global_costmap_origin_x>
       origin_y: <global_costmap_origin_y>
       width: <global_costmap_width>
@@ -238,7 +238,7 @@ global_costmap:
           inf_is_valid: false
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        inflation_radius: 2.5
+        inflation_radius: 3.5
         cost_scaling_factor: 20.0
   global_costmap_client:
     ros__parameters:
@@ -343,7 +343,7 @@ slam_toolbox:
     throttle_scans: 1
     transform_publish_period: 0.1 #if 0 never publishes odometry
     map_update_interval: 2.0
-    resolution: 0.05
+    resolution: 0.05 # Does not seem to work... It does not affect the resolution in RVIZ
     max_laser_range: <raytrace_range> #for rastering images
     minimum_time_interval: 0.5
     transform_timeout: 0.2

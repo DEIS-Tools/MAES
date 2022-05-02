@@ -26,6 +26,7 @@ def include_swarm_launch_descriptions(context):
     package_name = 'maes_ros2_interface'
     package_dir = get_package_share_directory(package_name)
     rviz_config_file = context.launch_configurations['rviz_config']
+    use_rviz = context.launch_configurations['use_rviz']
     default_bt_xml_filename = context.launch_configurations["default_bt_xml_filename"]
 
     maes_config = get_maes_config_from_yaml(package_name)
@@ -53,6 +54,7 @@ def include_swarm_launch_descriptions(context):
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(package_dir, 'rviz_launch.py')),
+                condition=IfCondition(use_rviz),
                 launch_arguments={
                     'namespace': TextSubstitution(text=robot_name),
                     'use_namespace': 'True',
@@ -65,7 +67,6 @@ def include_swarm_launch_descriptions(context):
                     "slam": 'True',
                     "use_sim_time": 'True',
                     "params_file":  os.path.join(package_dir, 'maes_nav2_multirobot_params_robotn.yaml'),
-                    # "default_bt_xml_filename": default_bt_xml_filename,
                     "autostart": 'True',
                     "raytrace_range": str(maes_config['robot_constraints']['slam_raytrace_range']),
                     "robot_radius": str(float(maes_config['robot_constraints']['agent_relative_size']) / 2),
@@ -118,7 +119,6 @@ def generate_launch_description():
     launch_description.add_action(declare_rviz_config_file_cmd)
     launch_description.add_action(declare_use_rviz_cmd)
     launch_description.add_action(declare_bt_xml_cmd)
-    # launch_description.add_action(declare_number_of_robots_cmd)
 
     launch_description.add_action(OpaqueFunction(function=include_swarm_launch_descriptions))
 
