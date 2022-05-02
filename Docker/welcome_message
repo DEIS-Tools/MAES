@@ -16,11 +16,11 @@ be visible above this message.
 
 Any changes you make in the /home/dev_ws/code directory will per-
 sist. Changes to other files will be reset whenever the contain-
-er starts.
+er stops.
 
 An ssh-server has been startet on localhost, and should be acces-
 sible on port 10022 if you have followed the suggested starting
-command (login = root:root)
+command (login = maes-user:maes (sudo-pw = root))
 
 Have fun!
 

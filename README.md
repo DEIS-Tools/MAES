@@ -134,6 +134,8 @@ When in batch mode, the application will quit automatically when the scenario qu
 ## Docker Support for ROS2
 This repository contains the files needed to build a docker image which can be used to launch ROS2 services.
 
+On Windows 10 we recommend using the WSL2 backend for Docker.
+
 ### Building the Image
 The image is currently not to be found on any image-repositories, and should therefore be build locally.
 Assuming you already have [docker](https://docs.docker.com/get-docker/) installed and running correctly, we suggest you build with the command (from the root MAES directory):
@@ -149,12 +151,12 @@ $ docker images
 which should then list the `ros4maes` image.
 
 ### Spinning up a Container
-The image can be started with the following command:
+The container can be started with the following command:
 ```bash
 $ docker run --rm -it \
     -p 10000:10000 \
     -p 10022:22 \
-    -v $(pwd)/Assets/maes-ros-slam-ws:/home/dev_ws/code \
+    -v $(pwd)/maes-ros-slam-ws:/home/maes-user/code \
     --name ros4maes \
     ros4maes
 ```
@@ -162,28 +164,59 @@ This will spin up a container based on the previously built image.
 - The `--rm` option makes the container remove itself once it is powered down.
 - The `-it` option makes the container attachable/detachable, useful if you need more than one terminal window into the container.
 - The `-p 10000:10000` maps port 10000 from localhost into the container, and the container will listen/wait for the connection from the `ROS-TCP-Endpoint` in Unity on its internal port 10000.
-- The container boots up with an SSH server running, and the `-p 10022:22` option makes it possible to login via SSH (`ssh root@localhost -p 10022 #pw:root`).
+- The container boots up with an SSH server running, and the `-p 10022:22` option makes it possible to login via SSH (`ssh maes-user@localhost -p 10022 #pw=maes`).
 - The `-v` option maps a folder from the OS into the container, and changes made here will then persist after the container has been powered down. You can change the path of the folder to be mapped, if you have placed it elsewere than the default.
 
-### Spinning up a Container with GUI Compatability (Linux)
-If you are on Linux, you can pass along your xsession to allow the container to execute programs that include some sort of GUI, such as RVIZ.
-This is a bit more advanced, and currently only work correctly on Ubuntu >=20.04 LTS.
+### Spinning up a Container with GUI Compatability
+#### - **Linux**
+If you are on Linux, you can pass along your xsession to allow the container to execute programs that include some sort of GUI, such as RVIZ and rqt.
+This is a bit more advanced, but has been seen working currently on Ubuntu >=20.04 LTS.
 
 ```bash
 $ xhost +local:docker
 $ docker run --rm -it \
     -p 10000:10000 \
     -p 10022:22 \
-    -v $(pwd)/Assets/maes-ros-slam-ws:/home/dev_ws/code \
+    -v $(pwd)/maes-ros-slam-ws:/home/maes-user/code \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     --env=DISPLAY \
     --name ros4maes \
     ros4maes
 ```
+
+#### - **Windows 10**
+If you are on Windows 10, you will have to install [VcXsrv](https://sourceforge.net/projects/vcxsrv/), an X-server for Windows.
+After installation, open the XLaunch program from the start menu:
+
+![XLaunch](.readmeAssets/XLaunch.png)
+
+Going through the configuration, choose the default values for the first two windows and add a checkmark to the third window in the "Disable access control" box:
+
+![XLaunch_2](.readmeAssets/XLaunch_2.png)
+
+<sup><sup>(Be aware: this is an unsafe setting to leave on for a prolonged time. Therefore, do not have this setting enabled unless you are about to launch the ROS-container)</sup></sup>
+
+Finally, you can choose to save this configuration to local storage, and use it as a shortcut for starting up XLaunch.
+To launch an X-server with the settings now, press "finish".
+
+Now, in your WSL terminal, go to the root MAES directory and enter the following commands:
+```bash
+$ export DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0.0
+$ docker run --rm -it \
+    -p 10000:10000 \
+    -p 10022:22 \
+    -v $(pwd)/maes-ros-slam-ws:/home/maes-user/code \
+    -e DISPLAY \
+    --name ros4maes \
+    ros4maes
+```
+
+
 Once the container is up and running, you can test to see if a GUI will render by executing a program with a GUI. `rviz2` for instance.
 If the configuration has worked correctly, a program window should appear.
 
-On OS' other than Ubuntu it will be necessary to research how to allow a docker container to render GUI on its host system.
+#### - **Other OS?**
+On other operating systems it will be necessary to research how to allow a docker container to render GUI on its host system.
 
 # Contributors
 
