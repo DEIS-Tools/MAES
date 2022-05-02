@@ -2040,6 +2040,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8097070572256205125, guid: 149ae245e642a06868289a1b00d2d408, type: 3}
     - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
+      propertyPath: SpeedControllerGO
+      value: 
+      objectReference: {fileID: 823299937}
+    - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: UISpeedController
       value: 
       objectReference: {fileID: 1519781281}
@@ -2055,6 +2059,10 @@ PrefabInstance:
       propertyPath: explorationVisualizer
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
+      propertyPath: UIDebugInfoTextBoxesGO
+      value: 
+      objectReference: {fileID: 146376969}
     - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: statisticsUIController
       value: 
@@ -5513,11 +5521,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Robot controller:
-
-    sdfsdf
-
-'
+  m_Text: 'Robot controller:'
 --- !u!222 &1690853874
 CanvasRenderer:
   m_ObjectHideFlags: 0

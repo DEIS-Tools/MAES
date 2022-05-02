@@ -14,6 +14,8 @@ namespace Maes {
         private Queue<SimulationScenario> _scenarios;
 
         public SimulationSpeedController UISpeedController;
+        public GameObject SpeedControllerGO;
+        public GameObject UIDebugInfoTextBoxesGO;
         public Text SimulationStatusText;
         private int _physicsTicksSinceUpdate = 0;
 
@@ -45,6 +47,10 @@ namespace Maes {
             CreateSimulation(_scenarios.Dequeue());
             if (Application.isBatchMode) {
                 AttemptSetPlayState(SimulationPlayState.FastAsPossible);
+            } else if (GlobalSettings.IsRosMode) {
+                AttemptSetPlayState(SimulationPlayState.Play);
+                SpeedControllerGO.SetActive(false);
+                UIDebugInfoTextBoxesGO.SetActive(false);
             }
         }
 
