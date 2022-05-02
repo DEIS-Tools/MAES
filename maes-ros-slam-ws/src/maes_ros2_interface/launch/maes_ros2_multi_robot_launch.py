@@ -37,6 +37,19 @@ def include_swarm_launch_descriptions(context):
         robot_name = "robot{0}".format(n)
 
         robot_n_description = GroupAction([
+            LaunchDescription([
+                Node(
+                    package='maes_robot_controller',
+                    executable='maes_controller',
+                    name='maes_robot_controller',
+                    output='screen',
+                    namespace=robot_name,
+                    emulate_tty=True,
+                    parameters=[
+                        {'robot_id': robot_name}
+                    ]
+                )
+            ]),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(package_dir, 'rviz_launch.py')),
@@ -61,20 +74,6 @@ def include_swarm_launch_descriptions(context):
                     "global_costmap_origin_x": str(-float(maes_config['map']['width_in_tiles'] / 2)),
                     "global_costmap_origin_y": str(-float(maes_config['map']['height_in_tiles'] / 2))
                 }.items()),
-            LaunchDescription([
-                Node(
-                    package='maes_robot_controller',
-                    executable='maes_controller',
-                    name='maes_robot_controller',
-                    output='screen',
-                    namespace=robot_name,
-                    emulate_tty=True,
-                    parameters=[
-                        {'robot_id': robot_name}
-                    ]
-                )
-            ])
-
         ])
         swarm_descriptions += [robot_n_description]
 
@@ -87,6 +86,7 @@ def generate_launch_description():
     rviz_config_file = LaunchConfiguration('rviz_config')
     use_rviz = LaunchConfiguration('use_rviz')
     default_bt_xml_filename = LaunchConfiguration("default_bt_xml_filename")
+
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config',

@@ -110,7 +110,7 @@ namespace Maes.ExplorationAlgorithm {
         }
 
         void ReactToCmdVel(float speedCommandValue, float rotationCommandValue) {
-            Debug.Log($"Command velocities: [{speedCommandValue}, {rotationCommandValue}]");
+            Debug.Log($"{this._robotRosId} command velocities: [{speedCommandValue}, {rotationCommandValue}]");
             var robotStatus = _controller.GetStatus();
             
             if (Math.Abs(speedCommandValue) < 0.01f && Math.Abs(rotationCommandValue) > 0.0) {
