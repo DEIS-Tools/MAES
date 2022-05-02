@@ -136,7 +136,7 @@ Visualization Manager:
       Class: rviz_default_plugins/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: false
+      Enabled: true
       Name: GlobalCostmap
       Topic:
         Depth: 5
@@ -157,7 +157,7 @@ Visualization Manager:
       Class: rviz_default_plugins/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: false
+      Enabled: true
       Name: LocalCostmap
       Topic:
         Depth: 5

@@ -1,5 +1,5 @@
 random_seeds: [0]
-number_of_robots: 1
+number_of_robots: 2
 global_settings:
   logic_ticks_delta_millis: 100 
   physics_ticks_per_logic_update: 10
@@ -30,9 +30,9 @@ end_criteria:
   # exploration_percent: 99.5
 robot_spawn_config:
   biggest_room: true
-    # spawn_together:
-  # suggested_starting_point_x: 0
-  # suggested_starting_point_y: 0
+  # spawn_together:
+    # suggested_starting_point_x: 0
+    # suggested_starting_point_y: 0
   # spawn_at_hallway_ends: true
 map:
   wall_height: 2.0 # Must be bigger greater than 2. Otherwise, just cosmetic
