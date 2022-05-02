@@ -63,8 +63,8 @@ sysinfo.txt
 crashlytics-build.properties
 
 # ROS workspace
-maes_ros2_ws/log
-maes_ros2_ws/install
-maes_ros2_ws/build
+maes-ros-slam-ws/install
+maes-ros-slam-ws/build
+maes-ros-slam-ws/log
 # if workspace opened in pycharm, this folder will be created
-maes_ros2_ws/.idea
+maes-ros-slam-ws/.idea
