@@ -5,9 +5,6 @@ using TMPro;
 
 namespace Maes.Robot {
     public readonly struct RobotConstraints {
-        public readonly float SenseNearbyRobotRange;
-        public readonly bool SenseNearbyRobotBlockedByWalls;
-        
         public delegate float SignalTransmissionProbability(float totalDistance, float distanceThroughWalls);
 
         public readonly SignalTransmissionProbability calculateSignalTransmissionProbability;
@@ -47,12 +44,10 @@ namespace Maes.Robot {
 
         public readonly float RobotRelativeSize;
 
-        // TODO: Add robot size to constraints class
-        
         public readonly float AgentRelativeSize;
 
 
-        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyAgentsRange,
+        public RobotConstraints(float senseNearbyAgentsRange,
             bool senseNearbyAgentsBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks,
             int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam,
             float environmentTagReadRange, float slamRayTraceRange, float relativeMoveSpeed, float agentRelativeSize, 
