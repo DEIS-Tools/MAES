@@ -226,6 +226,12 @@ namespace Maes {
                  slamRayTraceRange: 7.0f,
                  relativeMoveSpeed: 10f,
                  agentRelativeSize: 0.6f
+                 // Example of a transmission probability function that disallows communication through walls
+                 // calculateSignalTransmissionProbability: (distance, distanceThroughWalls) => {
+                 //     if (distance > 15) return 0.8f;
+                 //     if (distanceThroughWalls > 0.1f) return 0.8f;
+                 //     return 1.0f;
+                 // }  
              );
 
              for (int i = 0; i < 1; i++) {
