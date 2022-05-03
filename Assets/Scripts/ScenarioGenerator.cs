@@ -201,7 +201,7 @@ namespace Maes {
          /// </summary>
         public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
              
-             var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
+             // var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
              
              Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
              var numberOfRobots = 2;
@@ -210,7 +210,7 @@ namespace Maes {
              var height = 50;
              SimulationEndCriteriaDelegate hasFinishedFunc =
                  (simulation) => (simulation.SimulateTimeSeconds >= maxRunTime ||
-                                  simulation.ExplorationTracker.ExploredProportion > 0.995f);
+                                  simulation.ExplorationTracker.CoverageProportion > 0.995f);
 
              var robotConstraints = new RobotConstraints(
                  broadcastRange: float.MaxValue,
@@ -255,36 +255,36 @@ namespace Maes {
 
                  var algorithmsAndFileNames = new List<(CreateAlgorithmDelegate, string)>() {
                      ((seed) => new SsbAlgorithm(robotConstraints, seed), "SSB"),
-                     ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
-                     ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
+                     // ((seed) => new RandomExplorationAlgorithm(seed), "RBW"),
+                     // ((seed) => new VoronoiExplorationAlgorithm(seed, robotConstraints, 1), "LVD"),
                  };
 
                  foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
-                     // scenarios.Enqueue(new SimulationScenario(
-                     //     seed: randomSeed,
-                     //     hasFinishedSim: hasFinishedFunc,
-                     //     mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
-                     //     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
-                     //         map,
-                     //         randomSeed,
-                     //         numberOfRobots,
-                     //         createAlgorithmDelegate),
-                     //     robotConstraints: robotConstraints,
-                     //     $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
-                     // ));
                      scenarios.Enqueue(new SimulationScenario(
                          seed: randomSeed,
                          hasFinishedSim: hasFinishedFunc,
-                         mapSpawner: (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f, 1),
-                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                         mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                              map,
                              randomSeed,
                              numberOfRobots,
-                             new Vector2Int(0, 0),
                              createAlgorithmDelegate),
                          robotConstraints: robotConstraints,
-                         $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                         $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
                      ));
+                     // scenarios.Enqueue(new SimulationScenario(
+                     //     seed: randomSeed,
+                     //     hasFinishedSim: hasFinishedFunc,
+                     //     mapSpawner: (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f, 1),
+                     //     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                     //         map,
+                     //         randomSeed,
+                     //         numberOfRobots,
+                     //         new Vector2Int(0, 0),
+                     //         createAlgorithmDelegate),
+                     //     robotConstraints: robotConstraints,
+                     //     $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                     // ));
                  }
              }
 

@@ -66,6 +66,7 @@ namespace Maes.YamlConfig {
             public RobotConstraintsType RobotConstraints { get; set; }
             public EndCriteriaType EndCriteria { get; set; }
             public RobotSpawnConfigType RobotSpawnConfig { get; set; }
+
             public MapType Map { get; set; } = null;
 
             public override string ToString() {
