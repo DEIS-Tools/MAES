@@ -36,12 +36,12 @@ MAES can be run in two different configurations, either ROSMode or UnityMode.
 UnityMode requires a unity editor installed and allows for developing algorithm in C#.
 UnityMode requires an installed Unity editor (It is last tested with version 2021.2.17f1).
 It has been tested to work on both Linux (Ubuntu 20.04, 21.04, 21.10 and 22.04), MacOS Monterey 12 and Windows 10.
-Click [here](##Running in Unity Mode) to get started in UnityMode.
+Click [here](#Running in Unity Mode) to get started in UnityMode.
 
 ROSMode enables ROS2 Galactic integration, where the robots can be controlled from ROS (Robot Operating System) nodes.
 In ROSMode development is done in either Python or C++. 
 A Docker image with ROS preinstalled is supplied to make it easier to get started.
-Click [here](##Running in ROSMode) to get started running in ROSMode.
+Click [here](#Running in ROSMode) to get started running in ROSMode.
 
 ## Running in UnityMode
 A scenario is a configuration, that can be injected into a simulation, that the simulator can then execute.
@@ -84,7 +84,7 @@ docker run --rm -it \
 --name ros4maes \
 ros4maes
 ```
-With RVIZ (Only tested on Ubuntu 20.04, 21.04, 21.10 and 22.04. Possible workaround for Windows 10 [here](####RVIZ visualisation in for Windows 10))
+With RVIZ (Only tested on Ubuntu 20.04, 21.04, 21.10 and 22.04. Possible workaround for Windows 10 [here](#RVIZ visualisation in for Windows 10))
 ```bash
 xhost +local:docker
 ```
