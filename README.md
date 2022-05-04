@@ -10,13 +10,6 @@ A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
   <img src=".readmeAssets/example_image_2.png" width="400" />
 </p>
 
-
-
-
-
-
-
-
 # Table of Contents
 - [Introduction to MAES](#introduction-to-maes)
 - [Getting started](#getting-started)
@@ -25,9 +18,9 @@ A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
     * [Running in ROSMode](#running-in-rosmode)
         + [ROSMode with Docker](#rosmode-with-docker)
             - [RVIZ visualisation in Windows 10](#rviz-visualisation-in-windows-10)
-        + [ROSMode running natively (Without Docker)](#rosmode-running-natively--without-docker-)
-- [Extracting Statistics (Applies to both ROSMode and UnityMode)](#extracting-statistics--applies-to-both-rosmode-and-unitymode-)
-- [Headless Runs (Only UnityMode)](#headless-runs--only-unitymode-)
+        + [ROSMode running natively (Without Docker)](#rosmode-running-natively-without-docker)
+- [Extracting Statistics (Applies to both ROSMode and UnityMode)](#extracting-statistics-applies-to-both-rosmode-and-unitymode)
+- [Headless Runs (Only UnityMode)](#headless-runs-only-unitymode)
 - [Simulator Parameters Explanations](#simulator-parameters-explanations)
 - [Contributors](#contributors)
 
