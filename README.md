@@ -29,12 +29,12 @@ MAES can be run in two different configurations, either ROSMode or UnityMode.
 UnityMode requires a unity editor installed and allows for developing algorithm in C#.
 UnityMode requires an installed Unity editor (It is last tested with version 2021.2.17f1).
 It has been tested to work on both Linux (Ubuntu 20.04, 21.04, 21.10 and 22.04), MacOS Monterey 12 and Windows 10.
-Click [here](#Running in Unity Mode) to get started in UnityMode.
+Click [here](#running-in-unitymode) to get started in UnityMode.
 
 ROSMode enables ROS2 Galactic integration, where the robots can be controlled from ROS (Robot Operating System) nodes.
 In ROSMode development is done in either Python or C++. 
 A Docker image with ROS preinstalled is supplied to make it easier to get started.
-Click [here](#Running in ROSMode) to get started running in ROSMode.
+Click [here](#running-in-rosmode) to get started running in ROSMode.
 
 ## Running in UnityMode
 A scenario is a configuration, that can be injected into a simulation, that the simulator can then execute.
@@ -52,8 +52,7 @@ If you create your own custom scenarios by creating a new method inside [Scenari
 In order to implement your own algorithm, you must create a class that implements the [IExplorationAlgorithm.cs](Assets/Scripts/ExplorationAlgorithm/IExplorationAlgorithm.cs) interface.
 This provides the algorithm with access to the robot controller, which in turn provides access to movement controls, slam map and all sensor data available on the agent given the constraints of the scenario.
 
-In order to test you algorithm, make sure you configure the simulator to use a scenario that uses the algorithm.
-Instructions for this can be found in [Changing Simulation Setup](#changing-simulation-setup-and-scenarios).
+In order to test you algorithm, make sure you configure the simulator to use a scenario that uses the algorithm as mentioned in [this](#running-in-unitymode) Section.
 
 ## Running in ROSMode
 MAES can be run with ROS running either in a docker image or natively. The docker image has everything preinstalled and is thus easier to set up. 
@@ -77,7 +76,7 @@ docker run --rm -it \
 --name ros4maes \
 ros4maes
 ```
-With RVIZ (Only tested on Ubuntu 20.04, 21.04, 21.10 and 22.04. Possible workaround for Windows 10 [here](#RVIZ visualisation in for Windows 10))
+With RVIZ (Only tested on Ubuntu 20.04, 21.04, 21.10 and 22.04. Possible workaround for Windows 10 [here](#rviz-visualisation-in-windows-10))
 ```bash
 xhost +local:docker
 ```
@@ -106,7 +105,7 @@ The logic_loop is called as a callback function whenever a logic tick occurs in 
 
 The configuration of the ROS2 system can be changed by tuning parameters in [maes_config.yaml](maes-ros-slam-ws/src/maes_ros2_interface/maes_config.yaml) found inside the maes_ros2_interface package in the workspace.
 Note: The field names must be written in [snake_case](https://en.wikipedia.org/wiki/Snake_case).
-Explanations for all configuration parameters can be seen in Section [Simulation Parameters Explanations](#Simulator Parameters Explanations).
+Explanations for all configuration parameters can be seen in Section [Simulation Parameters Explanations](#simulator-parameters-explanations).
 Both MAES and ROS take parameters from the same file, so they automatically synchronise.
 
 Remember to colcon build after each change in config file or controller.
@@ -180,7 +179,7 @@ The logic_loop is called as a callback function whenever a logic tick occurs in 
 The configuration of the ROS2 system can be changed by tuning parameters in [maes_config.yaml](maes-ros-slam-ws/src/maes_ros2_interface/maes_config.yaml).
 found inside the maes_ros2_interface package in the workspace. Many fields have default values, which can be seen in [MaesYamlConfigLoader.cs](Assets/Scripts/MaesYamlConfigLoader.cs).
 Note: The field names must be written in [snake_case](https://en.wikipedia.org/wiki/Snake_case).
-Explanations for all configuration parameters can be seen in Section [Simulation Parameters Explanations](#Simulator Parameters Explanations).
+Explanations for all configuration parameters can be seen in Section [Simulation Parameters Explanations](#simulator-parameters-explanations).
 Both MAES and ROS take parameters from the same file, so they automatically synchronise.
 
 Remember to colcon build after each change in config file or controller.
