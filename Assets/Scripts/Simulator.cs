@@ -15,7 +15,8 @@ namespace Maes {
 
         public SimulationSpeedController UISpeedController;
         public GameObject SpeedControllerGO;
-        public GameObject UIDebugInfoTextBoxesGO;
+        public GameObject UIControllerDebugTitle;
+        public GameObject UIControllerDebugInfo;
         public Text SimulationStatusText;
         private int _physicsTicksSinceUpdate = 0;
 
@@ -50,7 +51,8 @@ namespace Maes {
             } else if (GlobalSettings.IsRosMode) {
                 AttemptSetPlayState(SimulationPlayState.Play);
                 SpeedControllerGO.SetActive(false);
-                UIDebugInfoTextBoxesGO.SetActive(false);
+                UIControllerDebugTitle.SetActive(false);
+                UIControllerDebugInfo.SetActive(false);
             }
         }
 
