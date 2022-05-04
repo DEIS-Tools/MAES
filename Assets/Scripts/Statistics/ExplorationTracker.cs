@@ -30,12 +30,10 @@ namespace Maes.Statistics {
         private int _currentTick = 0;
 
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
-        // Coverage is measured in 'mini-tiles'. Each large map tile consists of 4 mini-tiles, // TODO: Is is actually measured in mini tiles?
+        // Coverage is measured in 'mini-tiles'. Each large map tile consists of 4 mini-tiles, 
         // where each mini-tile is composed of two triangles
         public float CoverageProportion => CoveredMiniTiles / (float) _coverableTiles;
         
-        // private readonly bool[,] _isCovered;
-        // private readonly bool[,] _canBeCovered;
         private readonly int _coverableTiles;
         private bool _isFirstTick = true;
         private RobotConstraints _constraints;
@@ -127,12 +125,17 @@ namespace Maes.Statistics {
 
                     var (triangle1, triangle2) = 
                     _explorationMap.GetMiniTileTrianglesByWorldCoordinates(tilePosition);
+                    if (!triangle1.Item2.CanBeCovered)
+                        continue; // Skip this mini tile if it is not coverable
+                    
                     if (!triangle1.Item2.IsCovered) {
-                        CoveredMiniTiles++; // This tile was not covered before, register as first coverage
+                        // This tile was not covered before, register as first coverage
+                        CoveredMiniTiles++; 
                         newlyCoveredCells.Add(triangle1);
                         newlyCoveredCells.Add(triangle2);
                     }
                     
+                    // Register coverage (both repeated and first time) for other statistics such as the heat map 
                     triangle1.Item2.RegisterCoverage(_currentTick);
                     triangle2.Item2.RegisterCoverage(_currentTick);
                 }   
