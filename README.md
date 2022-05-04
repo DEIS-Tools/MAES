@@ -1,3 +1,22 @@
+# Introduction to MAES
+MAES is a tool for simulating and testing multi robot online exploration algorithms in a realistic continuous space environment.
+MAES is visualised and physics driven using the Unity Game Engine.
+MAES was created as part of a Master's Thesis at Aalborg University, Denmark, on the subject of distributed systems.
+
+A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
+
+<p float="left">
+  <img src=".readmeAssets/example_image_1.png" width="400" alt="Screenshots taken in MAES"/>
+  <img src=".readmeAssets/example_image_2.png" width="400" />
+</p>
+
+
+
+
+
+
+
+
 # Table of Contents
 - [Introduction to MAES](#introduction-to-maes)
 - [Getting started](#getting-started)
@@ -11,13 +30,6 @@
 - [Headless Runs (Only UnityMode)](#headless-runs--only-unitymode-)
 - [Simulator Parameters Explanations](#simulator-parameters-explanations)
 - [Contributors](#contributors)
-
-# Introduction to MAES
-MAES is a tool for simulating and testing multi robot online exploration algorithms in a realistic continuous space environment.
-MAES is visualised and physics driven using the Unity Game Engine. 
-MAES was created as part of a Master's Thesis at Aalborg University, Denmark, on the subject of distributed systems. 
-
-A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
 
 # Getting started
 MAES can be run in two different configurations, either ROSMode or UnityMode. 
