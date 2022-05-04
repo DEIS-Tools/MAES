@@ -25,11 +25,21 @@ namespace Maes {
              var numberOfRobots = yamlConfig.NumberOfRobots;
              
              // End criteria
-             SimulationEndCriteriaDelegate shouldEndSim = yamlConfig.EndCriteria.CoveragePercent == null
-                 ? (simulation) => (simulation.ExplorationTracker
-                     .ExploredProportion > yamlConfig.EndCriteria.ExplorationPercent)
-                 : (simulation) => (simulation.ExplorationTracker
+             SimulationEndCriteriaDelegate shouldEndSim;
+             if (yamlConfig.EndCriteria.CoveragePercent != null) {
+                 // End at coverage achieved
+                 shouldEndSim = (simulation) => (simulation.ExplorationTracker
                      .CoverageProportion > yamlConfig.EndCriteria.CoveragePercent);
+             }
+             else if (yamlConfig.EndCriteria.ExplorationPercent != null) {
+                 // End at exploration achieved
+                 shouldEndSim = (simulation) => (simulation.ExplorationTracker
+                     .ExploredProportion > yamlConfig.EndCriteria.ExplorationPercent);
+             }
+             else {
+                 // End at tick
+                 shouldEndSim = (simulation) => (simulation.SimulatedLogicTicks >= yamlConfig.EndCriteria.Tick);
+             }
 
              var constraints = new RobotConstraints(
                  senseNearbyAgentsRange: yamlConfig.RobotConstraints.SenseNearbyAgentsRange,

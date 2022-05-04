@@ -131,8 +131,10 @@ namespace Maes.YamlConfig {
             public float? CoveragePercent { get; set; } = null;
             public float? ExplorationPercent { get; set; } = null;
 
+            public int? Tick { get; set; } = null;
+
             public override string ToString() {
-                return $"{nameof(CoveragePercent)}: {CoveragePercent}, {nameof(ExplorationPercent)}: {ExplorationPercent}";
+                return $"{nameof(CoveragePercent)}: {CoveragePercent}, {nameof(ExplorationPercent)}: {ExplorationPercent}, {nameof(Tick)}: {Tick}";
             }
         }
 
