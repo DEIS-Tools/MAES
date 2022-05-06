@@ -266,26 +266,15 @@ namespace Maes.Robot {
         }
 
         public void DepositTag(MonaRobot robot, EnvironmentTaggingMap.ITag tag) {
-            var placedTag = _environmentTaggingMap.AddTag(robot.transform.position, tag);
-            
-            if (GlobalSettings.ShowEnvironmentTags)
-                _visualizer.AddEnvironmentTag(placedTag);
-        }
-
-        public void DepositTag(EnvironmentTaggingMap.ITag tag, Vector2 position) {
-            var pos = position + _rayTracingMap._map.ScaledOffset;
-            var placedTag = _environmentTaggingMap.AddTag(pos, tag);
-
             if (GlobalSettings.ShowEnvironmentTags) {
+                var placedTag = _environmentTaggingMap.AddTag(robot.transform.position, new VisibleTag(robot.id, robot.ClaimTag(), tag));
                 _visualizer.AddEnvironmentTag(placedTag);
             }
+            else {
+                _environmentTaggingMap.AddTag(robot.transform.position, tag);
+            }
         }
-
-        public void RemoveTagAt(Vector2 position) {
-            var pos = position + _rayTracingMap._map.ScaledOffset;
-            _visualizer.RemoveEnvironmentTagAt(pos);
-        }
-
+        
         public List<EnvironmentTaggingMap.PlacedTag> ReadNearbyTags(MonaRobot robot) {
             var tags = _environmentTaggingMap.GetTagsNear(robot.transform.position,
                 _robotConstraints.EnvironmentTagReadRange);

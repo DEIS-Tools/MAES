@@ -76,6 +76,7 @@ namespace Maes.UI {
                 movementTransform = null;
                 // Notify current simulation that no robot is selected
                 Simulator.GetCurrentSimulation().SetSelectedRobot(null);
+                Simulator.GetCurrentSimulation().SetSelectedTag(null);
             }
         }
 
@@ -139,7 +140,8 @@ namespace Maes.UI {
         private void HandleMouseRotateZoomInput() {
             #region MouseZoomRegion
 
-            if (Input.mouseScrollDelta.y != 0) {
+            if (Input.mouseScrollDelta.y != 0 && !uiPanels.Any(panel =>
+                    RectTransformUtility.RectangleContainsScreenPoint(panel, Input.mousePosition))) {
                 PrepareZoom(Input.mouseScrollDelta.y);
             }
 
