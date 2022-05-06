@@ -16,6 +16,7 @@ from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import NavigateThroughPoses, NavigateToPose
 from nav2_msgs.msg import *
 from nav_msgs.msg import OccupancyGrid
+from rclpy import Future
 from rclpy.impl.rcutils_logger import RcutilsLogger
 from tf2_msgs.msg import TFMessage
 
@@ -73,23 +74,25 @@ class RobotController(Node):
         Use this function to express the logic that makes the robot move.
 
         INSTRUCTIONS:
-        Movement using Nav2: 
+        Movement using Nav2:
         self.move_to_pos(0,0)
         self.cancel_nav()
         self.is_nav_complete()
         self.get_feedback()
         self.robot_position.transform.translation.x // Get position x
         self.robot_position.transform.translation.y // Get position y
-        
+
         Use services:
         self.broadcast_msg(msg="Testing broadcasting")
         self.deposit_tag(tag_msg="Content of env_tag")
 
         Use robot state from MAES:
         state.tick // Get ticks
-        
+
         Below is an example of a simple frontier algorithm. Feel free to delete
         '''
+
+
         # This method returns true if the tile is not itself unknown, but has a neighbor, that is unknown
         def is_frontier(map_index: int, costmap: MaesCostmap):
             # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
@@ -121,8 +124,8 @@ class RobotController(Node):
             self.next_target_costmap_index = target_frontier_tile_index
             self.move_to_pos(self.next_target.x, self.next_target.y)
             self.logger.log_info("Robot with namespace {0} found new target at ({1},{2})".format(self.topic_namespace_prefix,
-                                                                                                 self.next_target.x,
-                                                                                                 self.next_target.y))
+                                                                                             self.next_target.x,
+                                                                                             self.next_target.y))
         # If target found but not yet reached, i.e. it is still a frontier
         elif is_frontier(self.next_target_costmap_index, self.global_costmap):
             # This section allows for logging feedback etc. e.g.
@@ -131,12 +134,12 @@ class RobotController(Node):
         # If target is explored, i.e. next_target not None and not frontier
         else:
             self.logger.log_info("Robot with namespace {0} explored its target at ({1},{2})".format(self.topic_namespace_prefix,
-                                                                                        self.next_target.x,
-                                                                                        self.next_target.y))
+                                                                                                    self.next_target.x,
+                                                                                                    self.next_target.y))
             self.next_target_costmap_index = None
             self.next_target = None
             self.cancel_nav()
-            
+
     def move_to_pos(self, pose_x, pose_y):
         goal_pose = PoseStamped()
         goal_pose.header.frame_id = 'map'
@@ -171,26 +174,29 @@ class RobotController(Node):
         goal_msg.pose = pose
 
         self.logger.log_info('Navigating to goal: ' + str(pose.pose.position.x) + ' ' +
-                  str(pose.pose.position.y) + '...')
+                             str(pose.pose.position.y) + '...')
         send_goal_future = self.nav_to_pose_client.send_goal_async(goal_msg,
                                                                    self._feedback_callback)
-        # In case we want to wait for action to complete before returning to logic loop
-        # rclpy.spin_until_future_complete(self, send_goal_future)
-        # self.goal_handle = send_goal_future.result()
+        # Call function and assign goal handle etc. when action server accepts the goal
+        send_goal_future.add_done_callback(self._action_server_response_callback)
 
-        # if not self.goal_handle.accepted:
-        #     self.error('Goal to ' + str(pose.pose.position.x) + ' ' +
-        #                str(pose.pose.position.y) + ' was rejected!')
-        #     return False
-        #
-        # self.result_future = self.goal_handle.get_result_async()
-        # return True
+    def _action_server_response_callback(self, future: Future):
+        self.nav_goal_handle = future.result()
+
+        if not self.nav_goal_handle.accepted:
+            self.logger.log_error('Goal was rejected!')
+            return False
+
+        self.nav_result_future = self.nav_goal_handle.get_result_async()
 
     def cancel_nav(self):
-        self.logger.log_info('Canceling current goal.')
+        if self.nav_result_future is None:
+            self.logger.log_debug("Tried to cancel nav, but nav_result_future is None")
+
         if self.nav_result_future:
+            self.logger.log_info('Canceling current goal.')
             future = self.nav_goal_handle.cancel_goal_async()
-            rclpy.spin_until_future_complete(self, future)
+            # rclpy.spin_until_future_complete(self, future)
         return
 
     def is_nav_complete(self):
