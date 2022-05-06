@@ -35,7 +35,7 @@ namespace Maes.Statistics {
 
         public void RegisterCoverage(int currenTimeTicks) {
             if (!CanBeCovered)
-                return; //throw new Exception("Registered coverage for a tile that was marked not coverable");
+                throw new Exception("Registered coverage for a tile that was marked not coverable");
             CoverageTimeInTicks += 1;
             LastCoverageTimeInTicks = currenTimeTicks;
             IsCovered = true;

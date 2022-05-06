@@ -120,8 +120,15 @@ namespace Maes {
 
         public void UpdateDebugInfo() {
             if (_selectedRobot != null) {
-                SimInfoUIController.UpdateAlgorithmDebugInfo(_selectedRobot.ExplorationAlgorithm.GetDebugInfo());
-                SimInfoUIController.UpdateControllerDebugInfo(_selectedRobot.Controller.GetDebugInfo());
+                if (GlobalSettings.IsRosMode) {
+                    SimInfoUIController.UpdateAlgorithmDebugInfo(_selectedRobot.ExplorationAlgorithm.GetDebugInfo());
+                    // SimInfoUIController.UpdateControllerDebugInfo(_selectedRobot.Controller.GetDebugInfo());
+                }
+                else {
+                    SimInfoUIController.UpdateAlgorithmDebugInfo(_selectedRobot.ExplorationAlgorithm.GetDebugInfo());
+                    SimInfoUIController.UpdateControllerDebugInfo(_selectedRobot.Controller.GetDebugInfo());
+                }
+                
             }
             if (_selectedTag != null) {
                 SimInfoUIController.UpdateTagDebugInfo(_selectedTag.GetDebugInfo());
@@ -148,6 +155,8 @@ namespace Maes {
 
         public void Awake() {
             SingletonInstance = this;
+
+            
         }
     }
 }

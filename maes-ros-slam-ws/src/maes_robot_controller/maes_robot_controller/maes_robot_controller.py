@@ -90,41 +90,35 @@ class RobotController(Node):
         self.get_feedback()
         '''
 
-        # Wait for map to be initialised
+        # This algorithm requires costmap, thus don't do anything unless we have received the first costmap
         if self.global_costmap.costmap is None:
             self.logger.log_debug("Robot with namespace {0} has no global map".format(self.topic_namespace_prefix))
             return
 
-        # If no target found or current nav cancelled by nav2 stack
-        if self.next_target is None or self.is_nav_complete():
+        # If no target found
+        if self.next_target is None:
             # Find index of first tile in costmap that is a frontier
-            all_frontiers = [index for index, value in enumerate(self.global_costmap.costmap.data) if self.is_frontier(index)]
+            target_frontier_tile_index = next((index for index, value in enumerate(self.global_costmap.costmap.data) if self.is_frontier(index)), None)
 
-            # Choose random frontier from the list of all frontiers
-            if self.topic_namespace_prefix == "/robot0":
-                target_frontier_tile_index = max(all_frontiers) if len(all_frontiers) > 0 else None
-            else:
-                target_frontier_tile_index = min(all_frontiers) if len(all_frontiers) > 0 else None
-
-            if target_frontier_tile_index is not None:
-                self.next_target = self.global_costmap.costmap_index_to_pos(target_frontier_tile_index)
-                self.next_target_costmap_index = target_frontier_tile_index
-                self.move_to_pos(self.next_target.x, self.next_target.y)
-                self.logger.log_info("Robot with namespace {0} found new target at ({1},{2})".format(self.topic_namespace_prefix,
-                                                                                                     self.next_target.x,
-                                                                                                     self.next_target.y))
-            else:
+            # No more frontiers found, just return
+            if target_frontier_tile_index is None:
                 self.logger.log_info("Robot with namespace {0} is has found no more frontiers".format(self.topic_namespace_prefix))
+                return
 
-
-        # If target is no yet reached, i.e. it is  still a frontier
+            self.next_target = self.global_costmap.costmap_index_to_pos(target_frontier_tile_index)
+            self.next_target_costmap_index = target_frontier_tile_index
+            self.move_to_pos(self.next_target.x, self.next_target.y)
+            self.logger.log_info("Robot with namespace {0} found new target at ({1},{2})".format(self.topic_namespace_prefix,
+                                                                                                 self.next_target.x,
+                                                                                                 self.next_target.y))
+        # If target found but not yet reached, i.e. it is still a frontier
         elif self.is_frontier(self.next_target_costmap_index):
-            # This section allows for logging feedback etc.
-            #self.logger.log_info("Frontier value: {0}".format(self.global_costmap.costmap.data[self.next_target_costmap_index]))
-            pass
-        # If target is reached
+            # This section allows for logging feedback etc. e.g.
+            # self.logger.log_info("Frontier value: {0}".format(self.global_costmap.costmap.data[self.next_target_costmap_index]))
+            return
+        # If target is explored, i.e. next_target not None and not frontier
         else:
-            self.logger.log_info("Robot with namespace {0} reached its target at ({1},{2})".format(self.topic_namespace_prefix,
+            self.logger.log_info("Robot with namespace {0} explored its target at ({1},{2})".format(self.topic_namespace_prefix,
                                                                                         self.next_target.x,
                                                                                         self.next_target.y))
             self.next_target_costmap_index = None
@@ -141,7 +135,7 @@ class RobotController(Node):
         if self.global_costmap.costmap.data[map_index] >= 65:
             return False
 
-        return self.global_costmap.has_unknown_neighbor(map_index)
+        return self.global_costmap.has_at_least_n_unknown_neighbors(index=map_index, n=2)
 
     def move_to_pos(self, pose_x, pose_y):
         goal = self.create_goal_pose(pose_x=pose_x, pose_y=pose_y,
@@ -232,6 +226,22 @@ class RobotController(Node):
         global_costmap_2d_topic = self.topic_namespace_prefix + "/global_costmap/costmap"
         tf2_topic = self.topic_namespace_prefix + "/tf"
 
+        # Register service clients
+        self.broadcast_srv = self.create_client(srv_type=BroadcastToAll, srv_name=broadcast_srv_topic)
+        self.deposit_env_tag_srv = self.create_client(srv_type=DepositTag, srv_name=deposit_env_tag_srv_topic)
+
+        # Wait for services to be active
+        while not self.broadcast_srv.wait_for_service(timeout_sec=1) or not self.deposit_env_tag_srv.wait_for_service(timeout_sec=1):
+            self.logger.log_info("{0} waiting for either broadcast or deposit tag services".format(self.topic_namespace_prefix))
+
+        # Create navigation action client
+        self.nav_to_pose_client = ActionClient(self, NavigateToPose, nav_to_pose_topic)
+
+        # Wait for action service to be active
+        while not self.nav_to_pose_client.wait_for_server(timeout_sec=1):
+            self.logger.log_info("{0} waiting for either nav action client to start".format(self.topic_namespace_prefix))
+
+
         # Quality of service profile for subscriptions
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -252,21 +262,6 @@ class RobotController(Node):
                                                topic=tf2_topic,
                                                callback=self.save_robot_position_callback,
                                                qos_profile=qos_profile)
-
-        # Register service clients
-        self.broadcast_srv = self.create_client(srv_type=BroadcastToAll, srv_name=broadcast_srv_topic)
-        self.deposit_env_tag_srv = self.create_client(srv_type=DepositTag, srv_name=deposit_env_tag_srv_topic)
-
-        # Wait for services to be active
-        while not self.broadcast_srv.wait_for_service(timeout_sec=1) or not self.deposit_env_tag_srv.wait_for_service(timeout_sec=1):
-            self.logger.log_info("{0} waiting for either broadcast or deposit tag services".format(self.topic_namespace_prefix))
-
-        # Create navigation action client
-        self.nav_to_pose_client = ActionClient(self, NavigateToPose, nav_to_pose_topic)
-
-        # Wait for action service to be active
-        while not self.nav_to_pose_client.wait_for_server(timeout_sec=1):
-            self.logger.log_info("{0} waiting for either nav action client to start".format(self.topic_namespace_prefix))
 
     """
     Call back functions from here
@@ -368,7 +363,7 @@ class MaesCostmap:
         index = y * self.costmap.info.width + x
         return self.costmap.data[index]
 
-    def get_unknown_neighbor_if_avail(self, index: int):
+    def get_number_of_unknown_neighbors(self, index: int):
         width = self.costmap.info.width
         height = self.costmap.info.height
         up_left = index + width - 1
@@ -380,14 +375,15 @@ class MaesCostmap:
         down = index - width
         down_right = index - width + 1
         neighbors = [up_left, up, up_right, left, right, down_left, down, down_right]
-        # Filter out neighbors, that are out of bounds
         neighbors = list(filter(lambda tile_index: 0 <= tile_index <= width * height - 1, neighbors))
+
+        unknown_neighbors = 0
         for neighbor_index in neighbors:
             # If neighbor is unknown, return index of that neighbor
             if self.costmap.data[neighbor_index] == -1:
-                return neighbor_index
+                unknown_neighbors += 1
 
-        return None
+        return unknown_neighbors
 
-    def has_unknown_neighbor(self, index: int):
-        return self.get_unknown_neighbor_if_avail(index) is not None
+    def has_at_least_n_unknown_neighbors(self, index: int, n: int):
+        return self.get_number_of_unknown_neighbors(index) >= n

@@ -52,7 +52,7 @@ namespace Maes {
 
         // Debugging measure to visualize communication between robots
         public void AddCommunicationTrail(MonaRobot robot1, MonaRobot robot2) {
-            _links.Enqueue(new CommunicationLink(robot1, robot2, _currentTick + 40));
+            _links.Enqueue(new CommunicationLink(robot1, robot2, _currentTick + 10));
             
         }
 

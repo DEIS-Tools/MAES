@@ -28,6 +28,7 @@ robot_constraints:
 end_criteria:
   coverage_percent: 99.5
   # exploration_percent: 99.5
+  # tick: 1000
 robot_spawn_config:
   biggest_room: true
   # spawn_together:

@@ -2,10 +2,13 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>maes_msgs</name>
-  <version>0.0.1</version>
-  <description>Messages used to interface to Maes simulator</description>
-  <maintainer email="philipholler94@gmail.com">philipholler</maintainer>
-  <license>TODO: License declaration</license>
+  <version>1.0.0</version>
+  <description>Messages used to interface with Maes simulator</description>
+  <maintainer email="michele.albano@gmail.com">Michele Albano</maintainer>
+  <maintainer email="philipholler94@gmail.com">Philip Holler</maintainer>
+  <maintainer email="info@mza.dk">Malte Zoëga</maintainer>
+  <maintainer email="magnjensen@gmail.com">Magnus Jensen</maintainer>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

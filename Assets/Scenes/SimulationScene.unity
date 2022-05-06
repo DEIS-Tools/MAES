@@ -2183,9 +2183,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1097963918}
     - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
+      propertyPath: UIControllerDebugInfo
+      value: 
+      objectReference: {fileID: 1403450958}
+    - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: explorationVisualizer
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
+      propertyPath: UIControllerDebugTitle
+      value: 
+      objectReference: {fileID: 1690853871}
     - target: {fileID: 4230307919047253347, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: UIDebugInfoTextBoxesGO
       value: 

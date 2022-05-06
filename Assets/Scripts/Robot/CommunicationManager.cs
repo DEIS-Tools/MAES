@@ -52,12 +52,17 @@ namespace Maes.Robot {
             public readonly float Distance;
             public readonly float Angle;
             public readonly int WallsCellsPassedThrough;
+            public readonly int RegularCellsPassedThrough;
+            public readonly float transmissionProbability;
 
-            public CommunicationInfo(float distance, float angle, int wallsCellsPassedThrough) {
+            public CommunicationInfo(float distance, float angle, int wallsCellsPassedThrough, int regularCellsPassedThrough, float transmissionProbability) {
                 Distance = distance;
                 Angle = angle;
                 WallsCellsPassedThrough = wallsCellsPassedThrough;
+                RegularCellsPassedThrough = regularCellsPassedThrough;
+                this.transmissionProbability = transmissionProbability;
             }
+
         }
 
         public readonly struct SensedObject<T> {
@@ -104,12 +109,11 @@ namespace Maes.Robot {
             foreach (var message in _readableMessages) {
                 // The robot will not receive its own messages
                 if (message.Sender.id == receiver.id) continue;
-
+                
                 var communicationTrace = _adjacencyMatrix[(message.Sender.id, receiver.id)];
-                if (communicationTrace.Distance <= _robotConstraints.BroadcastRange) {
-                    if(_robotConstraints.BroadcastBlockedByWalls && communicationTrace.WallsCellsPassedThrough != 0)
-                        continue;
-                    
+                // If the transmission probability is above the specified threshold then the message will be sent
+                // otherwise it is discarded
+                if (communicationTrace.transmissionProbability >= _robotConstraints.MinimumSignalTransmissionProbability) {
                     messages.Add(message.Contents);
                     if (GlobalSettings.DrawCommunication)
                         _visualizer.AddCommunicationTrail(message.Sender, receiver);
@@ -126,25 +130,27 @@ namespace Maes.Robot {
             // to make the angle relative to the x axis. (Moving from oregon along the x axis is 0 degrees in out system)
             if (pos1.y > pos2.y) angle = 360f - angle;
 
-            if (distance > Math.Max(_robotConstraints.BroadcastRange, _robotConstraints.SenseNearbyRobotRange))
-                return new CommunicationInfo(distance, angle, -1);
-
             var angleMod = angle % 90f;
             if (angleMod <= 45.05f && angleMod >= 45f) angle += 0.005f;
             else if (angleMod >= 44.95f && angleMod <= 45f) angle -= 0.005f;
                 
             var wallsTravelledThrough = 0;
-            if (_robotConstraints.BroadcastBlockedByWalls || _robotConstraints.SenseNearbyAgentsBlockedByWalls) {
-                _rayTracingMap.Raytrace(pos1, angle, distance,
-                    (_, cellIsSolid) => {
-                        if (cellIsSolid) {
-                            wallsTravelledThrough++;
-                        }
-                        return true;
-                    });
-            }
-            
-            return new CommunicationInfo(distance, angle, wallsTravelledThrough);
+            var regularCellsTravelledThrough = 0;
+            _rayTracingMap.Raytrace(pos1, angle, distance, (_, cellIsSolid) => {
+                if (cellIsSolid) wallsTravelledThrough++;
+                else regularCellsTravelledThrough++;
+                return true;
+            });
+
+            return CreateCommunicationInfo(angle, wallsTravelledThrough, regularCellsTravelledThrough, distance);
+        }
+
+        private CommunicationInfo CreateCommunicationInfo(float angle, int wallsCellsPassedThrough, int regularCellsPassedThrough, float distance) {
+            var totalCells = wallsCellsPassedThrough + regularCellsPassedThrough;
+            var distanceTravelledThroughWalls = ((float) wallsCellsPassedThrough / (float) totalCells)  * distance;
+            var transmissionProbability = _robotConstraints
+                .calculateSignalTransmissionProbability(distance, distanceTravelledThroughWalls);
+            return new CommunicationInfo(distance, angle, wallsCellsPassedThrough, regularCellsPassedThrough, transmissionProbability);
         }
 
         public void LogicUpdate() {
@@ -221,7 +227,11 @@ namespace Maes.Robot {
                             _adjacencyMatrix[(r1.id, r2.id)] = RayTraceCommunication(r1Vector2, r2Vector2);
                         }
                         catch (Exception e) {
-                            _adjacencyMatrix[(r1.id, r2.id)] = new CommunicationInfo(float.MaxValue, 90, 1);
+                            // In case of an 
+                            Debug.Log(e);
+                            Debug.Log("Raytracing failed - Execution continued by providing a fake trace" +
+                                      " with zero transmission probability");
+                            _adjacencyMatrix[(r1.id, r2.id)] = new CommunicationInfo(float.MaxValue, 90, 1, 1, 0f);
                         }
                         
                     }
@@ -251,7 +261,7 @@ namespace Maes.Robot {
                 var currentKey = keys.Dequeue();
 
                 var inRange = _adjacencyMatrix
-                    .Where((kv) => kv.Key.Item1 == currentKey && kv.Value.Distance < _robotConstraints.BroadcastRange && (!_robotConstraints.BroadcastBlockedByWalls || kv.Value.WallsCellsPassedThrough == 0))
+                    .Where((kv) => kv.Key.Item1 == currentKey && kv.Value.transmissionProbability >= _robotConstraints.MinimumSignalTransmissionProbability)
                     .Select((e) => e.Key.Item2);
 
                 foreach (var rInRange in inRange) {

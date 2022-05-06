@@ -7,7 +7,7 @@ package_name = 'maes_ros2_interface'
 
 setup(
     name=package_name,
-    version='0.0.2',
+    version='1.0.0',
     packages=[],
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
@@ -26,9 +26,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Maes',
-    maintainer_email='pholle17@student.aau.dk',
-    description='Maes Ros2 interface',
+    maintainer='Michele Albano',
+    maintainer_email='michele.albano@gmail.com',
+    description='Main entry point for MAES robot bring-up of multiple robots.',
     license='Apache 2.0',
     tests_require=['pytest']
 )
