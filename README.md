@@ -10,7 +10,6 @@ A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
   <img src=".readmeAssets/example_image_2.png" width="400" />
 </p>
 
-# Table of Contents
 - [Introduction to MAES](#introduction-to-maes)
 - [Getting started](#getting-started)
     * [Running in UnityMode](#running-in-unitymode)
@@ -19,6 +18,7 @@ A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
         + [ROSMode with Docker](#rosmode-with-docker)
             - [RVIZ visualisation in Windows 10](#rviz-visualisation-in-windows-10)
         + [ROSMode running natively (Without Docker)](#rosmode-running-natively-without-docker)
+- [ROS Workspace packages](#ros-workspace-packages)
 - [Extracting Statistics (Applies to both ROSMode and UnityMode)](#extracting-statistics-applies-to-both-rosmode-and-unitymode)
 - [Headless Runs (Only UnityMode)](#headless-runs-only-unitymode)
 - [Simulator Parameters Explanations](#simulator-parameters-explanations)
@@ -183,6 +183,20 @@ Explanations for all configuration parameters can be seen in Section [Simulation
 Both MAES and ROS take parameters from the same file, so they automatically synchronise.
 
 Remember to colcon build after each change in config file or controller.
+
+# ROS Workspace packages
+A workspace is included in this repository for connecting ROS with MAES. 
+The workspace is found under [maes-ros-slam-ws](maes-ros-slam-ws) and contains 5 packages.
+
+| Name                  | Content                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| maes_msgs             | Contains ROS msgs types used to communicate robot state between MAES and ROS                                                                                                                                                                                                                                                                                                                                                            |
+| maes_robot_controller | Contains the maes_robot_controller.py script, which has the main logic loop for controlling the robots in MAES. Subscriptions, services and actions servers for nav2, state etc. are already setup in this script. Each robot has its own controller.                                                                                                                                                                                   |
+| maes_ros2_interface   | Contains behaviour trees, main launch files, parameters files, rviz configuration and main parameter file shared between ROS and MAES, i.e. [maes_config.yaml](maes-ros-slam-ws/src/maes_ros2_interface/maes_config.yaml). In order to launch a multi robot system, the [maes_ros2_multi_robot_launch.py](maes-ros-slam-ws/src/maes_ros2_interface/launch/maes_ros2_multi_robot_launch.py) file is used.                                |
+| ROS-TCP-Endpoint      | A node relaying all messages from the ROS-TCP-Connector, which receives the ROS msgs sent inside MAES. The official repository can be found here: [https://github.com/Unity-Technologies/ROS-TCP-Endpoint](https://github.com/Unity-Technologies/ROS-TCP-Endpoint ). We use version 0.7.0. The TCP connector inside MAES is also version 0.7.0.                                                                                         |
+| slam_toolbox          | Officially available at [https://github.com/SteveMacenski/slam_toolbox/](https://github.com/SteveMacenski/slam_toolbox/tree/galactic). We included it here, since the official release of 2.5.1 from September 2021 had a bug, where the odom was constantly published to /tf. The version in our repository is from the galactic branch and the latest commit has message "Backport 479 galactic" and was committed on 25. march 2022. |
+
+ 
 
 # Extracting Statistics (Applies to both ROSMode and UnityMode)
 Maes supports extraction of data as csv files regarding both coverage, exploration and communication.
