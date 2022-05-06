@@ -90,6 +90,16 @@ class RobotController(Node):
         
         Below is an example of a simple frontier algorithm. Feel free to delete
         '''
+        # This method returns true if the tile is not itself unknown, but has a neighbor, that is unknown
+        def is_frontier(map_index: int):
+            # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
+            # It is itself unknown
+            if self.global_costmap.costmap.data[map_index] == -1:
+                return False
+            # It is itself a wall
+            if self.global_costmap.costmap.data[map_index] >= 65:
+                return False
+        
         # This algorithm requires costmap, thus don't do anything unless we have received the first costmap
         if self.global_costmap.costmap is None:
             self.logger.log_debug("Robot with namespace {0} has no global map".format(self.topic_namespace_prefix))
@@ -98,7 +108,7 @@ class RobotController(Node):
         # If no target found
         if self.next_target is None:
             # Find index of first tile in costmap that is a frontier
-            target_frontier_tile_index = next((index for index, value in enumerate(self.global_costmap.costmap.data) if self.is_frontier(index)), None)
+            target_frontier_tile_index = next((index for index, value in enumerate(self.global_costmap.costmap.data) if is_frontier(index)), None)
 
             # No more frontiers found, just return
             if target_frontier_tile_index is None:
@@ -112,7 +122,7 @@ class RobotController(Node):
                                                                                                  self.next_target.x,
                                                                                                  self.next_target.y))
         # If target found but not yet reached, i.e. it is still a frontier
-        elif self.is_frontier(self.next_target_costmap_index):
+        elif is_frontier(next_target_costmap_index):
             # This section allows for logging feedback etc. e.g.
             # self.logger.log_info("Frontier value: {0}".format(self.global_costmap.costmap.data[self.next_target_costmap_index]))
             return
