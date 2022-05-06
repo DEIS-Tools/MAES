@@ -63,5 +63,11 @@ namespace Maes.Robot {
             CameraController.singletonInstance.movementTransform = transform;
             OnRobotSelected(this);
         }
+
+        public GameObject ClaimTag() {
+            var gameObj = Instantiate(Resources.Load<GameObject>("TagPost"), transform);
+            gameObj.SetActive(false);
+            return gameObj;
+        }
     }
 }

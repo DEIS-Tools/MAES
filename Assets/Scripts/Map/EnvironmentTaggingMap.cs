@@ -79,7 +79,7 @@ namespace Maes.Map {
         }
 
         public interface ITag {
-            public void DrawGizmos(Vector3 position);
+            public void DrawTag(Vector3 position);
         }
 
         public class PlacedTag {

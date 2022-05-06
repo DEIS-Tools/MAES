@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Maes.Map.Visualization;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,13 +13,20 @@ namespace Maes.UI {
 
         public Text AlgorithmDebugText;
         public Text ControllerDebugText;
-
+        public Text TagDebugText;
+        
         public Button AllExplorationButton;
         public Button AllCoverageButton;
         public Button AllExplorationHeatMapButton;
         public Button AllCoverageHeatMapButton;
         public Button SelectVisibleAreaButton;
         public Button SelectedSlamMapButton;
+        
+        public Button AllVisualizeTagsButton;
+        private bool _visualizingAllTags = false;
+        public Button VisualizeTagsButton;
+        private bool _visualizingSelectedTags = false;
+
 
         private List<Button> _mapVisualizationToggleGroup;
         private Color _mapVisualizationColor = Color.white;
@@ -30,6 +38,7 @@ namespace Maes.UI {
         delegate void SimulationModification(Simulation? simulation);
 
         private SimulationModification? _mostRecentMapVisualizationModification;
+        private SimulationModification? _mostRecentTagVisualization;
 
         private void Start() {
             _mapVisualizationToggleGroup = new List<Button>() {
@@ -72,12 +81,61 @@ namespace Maes.UI {
                     }
                 });
             });
+            
+            // Set listeners for Tag visualization buttons 
+            AllVisualizeTagsButton.onClick.AddListener(() => {
+                ExecuteAndRememberTagVisualization(sim => {
+                    if (sim != null) {
+                        ToggleVisualizeTagsButtons(AllVisualizeTagsButton);
+                    }
+                });
+            });
+            
+            VisualizeTagsButton.onClick.AddListener(() => {
+                ExecuteAndRememberTagVisualization(sim => {
+                    if (sim != null) {
+                        if (sim.HasSelectedRobot()) {
+                            ToggleVisualizeTagsButtons(VisualizeTagsButton);
+                        }
+                    }
+                });
+            });
+        }
+
+        public void Update() {
+            if (_visualizingAllTags) {
+                simulator.CurrentSimulation.ShowAllTags();
+            }
+            else if (_visualizingSelectedTags) {
+                simulator.CurrentSimulation.ShowSelectedTags();
+            }
+            simulator.CurrentSimulation.RenderCommunicationLines();
+        }
+
+        private void ToggleVisualizeTagsButtons(Button button) {
+            simulator.CurrentSimulation.ClearVisualTags();
+            if (button.name == "AllVisualizeTags") {
+                _visualizingSelectedTags = false;
+                VisualizeTagsButton.image.color = _mapVisualizationColor;
+                _visualizingAllTags = !_visualizingAllTags;
+                button.image.color = _visualizingAllTags ? _mapVisualizationSelectedColor : _mapVisualizationColor;
+            }
+            else {
+                _visualizingAllTags = false;
+                AllVisualizeTagsButton.image.color = _mapVisualizationColor;
+                _visualizingSelectedTags = !_visualizingSelectedTags;
+                button.image.color = _visualizingSelectedTags ? _mapVisualizationSelectedColor : _mapVisualizationColor;
+            }
         }
 
         // This function executes the given map visualization change and remembers it.
         // Whenever the simulator creates a new simulation the most recent visualization change is repeated 
         private void ExecuteAndRememberMapVisualizationModification(SimulationModification modificationFunc) {
             _mostRecentMapVisualizationModification = modificationFunc;
+            modificationFunc(simulator.CurrentSimulation);
+        }
+
+        private void ExecuteAndRememberTagVisualization(SimulationModification modificationFunc) {
             modificationFunc(simulator.CurrentSimulation);
         }
 
@@ -118,6 +176,10 @@ namespace Maes.UI {
 
         public void UpdateControllerDebugInfo(string info) {
             ControllerDebugText.text = info;
+        }
+
+        public void UpdateTagDebugInfo(string info) {
+            TagDebugText.text = info;
         }
 
         // Called whenever the simulator instantiates a new simulation object 
