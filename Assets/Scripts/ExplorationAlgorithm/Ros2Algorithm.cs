@@ -51,6 +51,7 @@ namespace Maes.ExplorationAlgorithm {
                 ReactToDepositTagRequests();
 
             PublishState();
+            
             _tick++;
         }
         
@@ -101,7 +102,7 @@ namespace Maes.ExplorationAlgorithm {
 
             // ---- Nearby environment tags ---- //
             var tags = _controller.ReadNearbyTags();
-            var rosTagsWithPos = tags.Select(e => (((RosTag)e.Item).msg, GetRelativePosition(robotPosition, robot_rotation, e)));
+            var rosTagsWithPos = tags.Select(e => (((RosTag) ((VisibleTag) e.Item).innerITag).msg, GetRelativePosition(robotPosition, robot_rotation, e)));
             var rosTagAsMsgs =
                     rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.msg, new Vector2DMsg(e.Item2.x, e.Item2.y)));
             state.tags_nearby = rosTagAsMsgs.ToArray();
@@ -228,7 +229,7 @@ namespace Maes.ExplorationAlgorithm {
             
             private const float TagSquareSize = 0.3f;
             private readonly Vector3 _tagCubeSize = new Vector3(TagSquareSize, TagSquareSize, TagSquareSize);
-            public void DrawGizmos(Vector3 position) {
+            public void DrawTag(Vector3 position) {
                 Gizmos.color = Color.magenta;
                 Gizmos.DrawCube(new Vector3(position.x, position.y, -_tagCubeSize.z / 2f), _tagCubeSize);
             }

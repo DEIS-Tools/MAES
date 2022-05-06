@@ -12,6 +12,7 @@ using UnityEngine;
 
 namespace Maes {
     public class Simulation : MonoBehaviour, ISimulationUnit {
+        public static Simulation SingletonInstance;
         public int SimulatedLogicTicks { get; private set; } = 0;
         public int SimulatedPhysicsTicks { get; private set; } = 0;
         public float SimulateTimeSeconds { get; private set; } = 0;
@@ -26,6 +27,8 @@ namespace Maes {
 
         [CanBeNull] private MonaRobot _selectedRobot;
         public bool HasSelectedRobot() => _selectedRobot != null;
+        [CanBeNull] private VisibleTagInfoHandler _selectedTag;
+        public bool HasSelectedTag() => _selectedTag != null;
         public ExplorationTracker ExplorationTracker { get; private set; }
         public CommunicationManager _communicationManager;
 
@@ -66,6 +69,13 @@ namespace Maes {
             SetSelectedRobot(_robots[0]);
         }
 
+        public void SetSelectedTag([CanBeNull] VisibleTagInfoHandler newSelectedTag) {
+            if (_selectedTag != null) _selectedTag.outline.enabled = false;
+            _selectedTag = newSelectedTag;
+            if (newSelectedTag != null) newSelectedTag.outline.enabled = true;
+            UpdateDebugInfo();
+        }
+
         public void LogicUpdate() {
             _debugVisualizer.LogicUpdate();
             ExplorationTracker.LogicUpdate(_robots);
@@ -96,7 +106,7 @@ namespace Maes {
         }
 
         private void OnDrawGizmos() {
-            _debugVisualizer.Render();
+            // _debugVisualizer.Render();
         }
 
         // ----- Future work -------
@@ -120,6 +130,31 @@ namespace Maes {
                 }
                 
             }
+            if (_selectedTag != null) {
+                SimInfoUIController.UpdateTagDebugInfo(_selectedTag.GetDebugInfo());
+            }
+        }
+
+        public void ShowAllTags() {
+            _debugVisualizer.RenderVisibleTags();
+        }
+
+        public void ShowSelectedTags() {
+            if (_selectedRobot != null) {
+                _debugVisualizer.RenderSelectedVisibleTags(_selectedRobot.id);
+            }
+        }
+
+        public void ClearVisualTags() {
+            _debugVisualizer.UnRenderAllTags();
+        }
+
+        public void RenderCommunicationLines() {
+            _debugVisualizer.RenderCommunicationLines();
+        }
+
+        public void Awake() {
+            SingletonInstance = this;
 
             
         }

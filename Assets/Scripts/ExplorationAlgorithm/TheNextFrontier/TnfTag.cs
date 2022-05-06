@@ -21,7 +21,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
         private const float TagSquareSize = 0.3f;
         private readonly Vector3 _tagCubeSize = new Vector3(TagSquareSize, TagSquareSize, TagSquareSize);
 
-        public void DrawGizmos(Vector3 position) {
+        public void DrawTag(Vector3 position) {
             Gizmos.color = _color;
             Gizmos.DrawCube(new Vector3(position.x, position.y, -_tagCubeSize.z / 2f), _tagCubeSize);
         }
