@@ -91,15 +91,17 @@ class RobotController(Node):
         Below is an example of a simple frontier algorithm. Feel free to delete
         '''
         # This method returns true if the tile is not itself unknown, but has a neighbor, that is unknown
-        def is_frontier(map_index: int):
+        def is_frontier(map_index: int, costmap: MaesCostmap):
             # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
             # It is itself unknown
-            if self.global_costmap.costmap.data[map_index] == -1:
+            if costmap.costmap.data[map_index] == -1:
                 return False
             # It is itself a wall
-            if self.global_costmap.costmap.data[map_index] >= 65:
+            if costmap.costmap.data[map_index] >= 65:
                 return False
-        
+
+            return costmap.has_at_least_n_unknown_neighbors(index=map_index, n=2)
+
         # This algorithm requires costmap, thus don't do anything unless we have received the first costmap
         if self.global_costmap.costmap is None:
             self.logger.log_debug("Robot with namespace {0} has no global map".format(self.topic_namespace_prefix))
@@ -108,7 +110,7 @@ class RobotController(Node):
         # If no target found
         if self.next_target is None:
             # Find index of first tile in costmap that is a frontier
-            target_frontier_tile_index = next((index for index, value in enumerate(self.global_costmap.costmap.data) if is_frontier(index)), None)
+            target_frontier_tile_index = next((index for index, value in enumerate(self.global_costmap.costmap.data) if is_frontier(index, self.global_costmap)), None)
 
             # No more frontiers found, just return
             if target_frontier_tile_index is None:
@@ -122,7 +124,7 @@ class RobotController(Node):
                                                                                                  self.next_target.x,
                                                                                                  self.next_target.y))
         # If target found but not yet reached, i.e. it is still a frontier
-        elif is_frontier(next_target_costmap_index):
+        elif is_frontier(self.next_target_costmap_index, self.global_costmap):
             # This section allows for logging feedback etc. e.g.
             # self.logger.log_info("Frontier value: {0}".format(self.global_costmap.costmap.data[self.next_target_costmap_index]))
             return
@@ -147,7 +149,7 @@ class RobotController(Node):
         goal_pose.pose.orientation.z = 0.0
         goal_pose.pose.orientation.w = 1.0
 
-        self.go_to_pose(goal)
+        self.go_to_pose(goal_pose)
 
     def deposit_tag(self, tag_msg):
         request = DepositTag.Request()
