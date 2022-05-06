@@ -4302,7 +4302,7 @@ MonoBehaviour:
   SelectVisibleAreaButton: {fileID: 2095771674}
   SelectedSlamMapButton: {fileID: 1790117147}
   AllVisualizeTagsButton: {fileID: 298196231}
-  VisualizeTagsButton: {fileID: 298196231}
+  VisualizeTagsButton: {fileID: 1809190276}
   simulator: {fileID: 1176058410}
 --- !u!1 &1316479753
 GameObject:
