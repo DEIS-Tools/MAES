@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Maes.Map;
 using Maes.Robot;
@@ -33,20 +34,20 @@ namespace Maes.ExplorationAlgorithm {
         private int _tick = 0;
         
         // Used to react to cmlVel from ROS
-        private float rosLinearSpeed = 0f;
-        private float rosRotationSpeed = 0f;
+        private float _rosLinearSpeed = 0f;
+        private float _rosRotationSpeed = 0f;
 
         // Service calls from ROS uses a callback function. We need to store the results 
         // and act on them in the next logic tick
-        private List<string> msgsToBroadcast = new List<string>();
-        private List<string> envTagsToDeposit = new List<string>();
+        private List<string> _msgsToBroadcast = new List<string>();
+        private List<string> _envTagsToDeposit = new List<string>();
 
         public void UpdateLogic() {
-            ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
+            ReactToCmdVel(_rosLinearSpeed, _rosRotationSpeed);
 
-            if(envTagsToDeposit.Count != 0)
+            if(_envTagsToDeposit.Count != 0)
                 ReactToBroadcastRequests();
-            if(msgsToBroadcast.Count != 0)
+            if(_msgsToBroadcast.Count != 0)
                 ReactToDepositTagRequests();
 
             PublishState();
@@ -54,17 +55,17 @@ namespace Maes.ExplorationAlgorithm {
         }
         
         private void ReactToDepositTagRequests() {
-            foreach (var tagMsg in envTagsToDeposit) {
+            foreach (var tagMsg in _envTagsToDeposit) {
                 _controller.DepositTag(new RosTag(tagMsg));
             }
-            envTagsToDeposit.Clear();
+            _envTagsToDeposit.Clear();
         }
 
         private void ReactToBroadcastRequests() {
-            foreach (var msg in msgsToBroadcast) {
+            foreach (var msg in _msgsToBroadcast) {
                 _controller.Broadcast(new RosBroadcastMsg(msg, _robotRosId));
             }
-            msgsToBroadcast.Clear();
+            _msgsToBroadcast.Clear();
         }
 
         private void PublishState() {
@@ -149,13 +150,28 @@ namespace Maes.ExplorationAlgorithm {
         }
 
         void ReceiveRosCmd(TwistMsg cmdVel) {
-            rosLinearSpeed = (float)cmdVel.linear.x;
-            rosRotationSpeed = (float)cmdVel.angular.z;
+            _rosLinearSpeed = (float)cmdVel.linear.x;
+            _rosRotationSpeed = (float)cmdVel.angular.z;
             Debug.Log($"Robot {_controller.GetRobotID()}: Received cmdVel twist: {cmdVel.ToString()}");
         }
 
         public string GetDebugInfo() {
-            return "";
+            var info = new StringBuilder();
+            
+            var robotPosition = new Vector2(-_worldPosition.position.x, -_worldPosition.position.y);
+
+            info.AppendLine($"Robot ID: {this._robotRosId}");
+            info.AppendLine($"Namespace: {this._topicPrefix}");
+            info.AppendLine($"Position: ({robotPosition.x},{robotPosition.y})");
+            info.AppendLine($"Status: {Enum.GetName(typeof(RobotStatus), _controller.GetStatus())}");
+            info.AppendLine($"Is Colliding: {this._controller.IsCurrentlyColliding()}");
+            info.AppendLine($"Number of nearby robots: {_controller.SenseNearbyRobots().Count}");
+            info.AppendLine($"Number Incoming broadcast msg: {_controller.ReceiveBroadcast().Count}");
+            info.AppendLine($"Number of nearby env tags: {_controller.ReadNearbyTags().Count}");
+            info.AppendLine($"rosLinearSpeed: {this._rosLinearSpeed}");
+            info.AppendLine($"rosRotationalSpeed: {this._rosRotationSpeed}");
+
+            return info.ToString();
         }
         
         public void SetController(Robot2DController controller) {

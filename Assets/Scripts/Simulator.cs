@@ -14,8 +14,8 @@ namespace Maes {
         private Queue<SimulationScenario> _scenarios;
 
         public SimulationSpeedController UISpeedController;
-        public GameObject SpeedControllerGO;
-        public GameObject UIDebugInfoTextBoxesGO;
+        public GameObject UIControllerDebugTitle;
+        public GameObject UIControllerDebugInfo;
         public Text SimulationStatusText;
         private int _physicsTicksSinceUpdate = 0;
 
@@ -39,7 +39,6 @@ namespace Maes {
             
             if (GlobalSettings.IsRosMode) {
                 _scenarios = ScenarioGenerator.GenerateROS2Scenario();
-                this.CreateRosClockAndVisualiserObjects();
             }
             else {
                 _scenarios = ScenarioGenerator.GenerateYoutubeVideoScenarios();
@@ -47,11 +46,36 @@ namespace Maes {
             CreateSimulation(_scenarios.Dequeue());
             if (Application.isBatchMode) {
                 AttemptSetPlayState(SimulationPlayState.FastAsPossible);
-            } else if (GlobalSettings.IsRosMode) {
-                AttemptSetPlayState(SimulationPlayState.Play);
-                SpeedControllerGO.SetActive(false);
-                UIDebugInfoTextBoxesGO.SetActive(false);
+            } 
+            // Adapt UI for ros mode
+            else if (GlobalSettings.IsRosMode) {
+                CreateRosClockAndVisualiserObjects();
+                RemoveFastForwardButtonsFromControlPanel();
+                UIControllerDebugTitle.SetActive(false);
+                UIControllerDebugInfo.SetActive(false);
             }
+        }
+
+        public void RemoveFastForwardButtonsFromControlPanel() {
+            // Deactivate fast forward buttons
+            UISpeedController.stepperButton.gameObject.SetActive(false);
+            UISpeedController.fastForwardButton.gameObject.SetActive(false);
+            UISpeedController.fastAsPossibleButton.gameObject.SetActive(false);
+            
+            // Resize background
+            var controlPanel = GameObject.Find("ControlPanel");
+            var cpRectTransform = controlPanel.GetComponent<RectTransform>();
+            cpRectTransform.sizeDelta = new Vector2(100, 50);
+            
+            // Reposition play button
+            var playButton = GameObject.Find("PlayButton");
+            var pbRectTransform = playButton.GetComponent<RectTransform>();
+            pbRectTransform.anchoredPosition = new Vector2(-20, 0);
+            
+            // Reposition pause button
+            var pauseButton = GameObject.Find("PauseButton");
+            var pauseRectTransform = pauseButton.GetComponent<RectTransform>();
+            pauseRectTransform.anchoredPosition = new Vector2(20, 0);
         }
 
         public void CreateRosClockAndVisualiserObjects() {

@@ -43,7 +43,7 @@ namespace Maes {
         public static readonly int TicksBeforeExplorationHeatMapCold = 10 * 60 * 4;
         public static readonly int TicksBeforeCoverageHeatMapCold = 10 * 60 * 4;
 
-        public static readonly bool IsRosMode = true;
+        public static readonly bool IsRosMode = false;
 
         static GlobalSettings() {
             // Maes only loads config from yaml file when in Ros Mode

@@ -90,41 +90,40 @@ class RobotController(Node):
         self.get_feedback()
         '''
 
-        # Wait for map to be initialised
+        # This algorithm requires costmap, thus don't do anything unless we have received the first costmap
         if self.global_costmap.costmap is None:
             self.logger.log_debug("Robot with namespace {0} has no global map".format(self.topic_namespace_prefix))
             return
 
-        # If no target found or current nav cancelled by nav2 stack
+        # If no target found
         if self.next_target is None:
-            target_frontier_tile_index = next((index for index, value in enumerate(self.global_costmap.costmap.data) if self.is_frontier(index)), None)
             # Find index of first tile in costmap that is a frontier
-            # all_frontiers = [index for index, value in enumerate(self.global_costmap.costmap.data) if self.is_frontier(index)]
+            target_frontier_tile_index = next((index for index, value in enumerate(self.global_costmap.costmap.data) if self.is_frontier(index)), None)
 
-            if target_frontier_tile_index is not None:
-                self.next_target = self.global_costmap.costmap_index_to_pos(target_frontier_tile_index)
-                self.next_target_costmap_index = target_frontier_tile_index
-                self.move_to_pos(self.next_target.x, self.next_target.y)
-                self.logger.log_info("Robot with namespace {0} found new target at ({1},{2})".format(self.topic_namespace_prefix,
-                                                                                                     self.next_target.x,
-                                                                                                     self.next_target.y))
-            else:
+            # No more frontiers found, just return
+            if target_frontier_tile_index is None:
                 self.logger.log_info("Robot with namespace {0} is has found no more frontiers".format(self.topic_namespace_prefix))
+                return
 
-
-        # If target is no yet reached, i.e. it is  still a frontier
-        # elif self.is_frontier(self.next_target_costmap_index):
-            # This section allows for logging feedback etc.
-            #self.logger.log_info("Frontier value: {0}".format(self.global_costmap.costmap.data[self.next_target_costmap_index]))
-            # pass
-        # If target is reached
+            self.next_target = self.global_costmap.costmap_index_to_pos(target_frontier_tile_index)
+            self.next_target_costmap_index = target_frontier_tile_index
+            self.move_to_pos(self.next_target.x, self.next_target.y)
+            self.logger.log_info("Robot with namespace {0} found new target at ({1},{2})".format(self.topic_namespace_prefix,
+                                                                                                 self.next_target.x,
+                                                                                                 self.next_target.y))
+        # If target found but not yet reached, i.e. it is still a frontier
+        elif self.is_frontier(self.next_target_costmap_index):
+            # This section allows for logging feedback etc. e.g.
+            # self.logger.log_info("Frontier value: {0}".format(self.global_costmap.costmap.data[self.next_target_costmap_index]))
+            return
+        # If target is explored, i.e. next_target not None and not frontier
         else:
-            self.logger.log_info("Robot with namespace {0} reached its target at ({1},{2})".format(self.topic_namespace_prefix,
+            self.logger.log_info("Robot with namespace {0} explored its target at ({1},{2})".format(self.topic_namespace_prefix,
                                                                                         self.next_target.x,
                                                                                         self.next_target.y))
             self.next_target_costmap_index = None
             self.next_target = None
-            # self.cancel_nav()
+            self.cancel_nav()
 
     # This method returns true if the tile is not itself unknown, but has a neighbor, that is unknown
     def is_frontier(self, map_index: int):
