@@ -72,24 +72,24 @@ class RobotController(Node):
         This function is called every time the robot receives a new state msg from MAES
         Use this function to express the logic that makes the robot move.
 
-        Examples of using services:
-        self.broadcast_msg(msg="Testing broadcasting")
-        self.deposit_tag(tag_msg="Content of env_tag")
-
-        Example of moving:
-        goal_pose = self.create_goal_pose(pose_x=10.0, pose_y=2.0, pose_z=0.0,
-                                          ori_x=0.0, ori_y=0.0, ori_z=0.0, ori_w=1.0)
-        self.go_to_pose(goal_pose)
-
-        Get current time in ticks
-        state.tick
-
-        The navigator can also to used to cancel moves and/or check status of the current goal e.g.
+        INSTRUCTIONS:
+        Movement using Nav2: 
+        self.move_to_pos(0,0)
         self.cancel_nav()
         self.is_nav_complete()
         self.get_feedback()
-        '''
+        self.robot_position.transform.translation.x // Get position x
+        self.robot_position.transform.translation.y // Get position y
+        
+        Use services:
+        self.broadcast_msg(msg="Testing broadcasting")
+        self.deposit_tag(tag_msg="Content of env_tag")
 
+        Use robot state from MAES:
+        state.tick // Get ticks
+        
+        Below is an example of a simple frontier algorithm. Feel free to delete
+        '''
         # This algorithm requires costmap, thus don't do anything unless we have received the first costmap
         if self.global_costmap.costmap is None:
             self.logger.log_debug("Robot with namespace {0} has no global map".format(self.topic_namespace_prefix))
@@ -124,39 +124,20 @@ class RobotController(Node):
             self.next_target_costmap_index = None
             self.next_target = None
             self.cancel_nav()
-
-    # This method returns true if the tile is not itself unknown, but has a neighbor, that is unknown
-    def is_frontier(self, map_index: int):
-        # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
-        # It is itself unknown
-        if self.global_costmap.costmap.data[map_index] == -1:
-            return False
-        # It is itself a wall
-        if self.global_costmap.costmap.data[map_index] >= 65:
-            return False
-
-        return self.global_costmap.has_at_least_n_unknown_neighbors(index=map_index, n=2)
-
+            
     def move_to_pos(self, pose_x, pose_y):
-        goal = self.create_goal_pose(pose_x=pose_x, pose_y=pose_y,
-                                     pose_z=0.0, ori_x=0.0, ori_y=0.0,
-                                     ori_z=0.0, ori_w=1.0)
-        self.go_to_pose(goal)
-
-    def create_goal_pose(self, pose_x: float, pose_y: float, pose_z: float, ori_x: float, ori_y: float, ori_z: float,
-                         ori_w: float) -> PoseStamped:
         goal_pose = PoseStamped()
         goal_pose.header.frame_id = 'map'
         goal_pose.header.stamp = self.get_clock().now().to_msg()
-        goal_pose.pose.position.x = pose_x
-        goal_pose.pose.position.y = pose_y
-        goal_pose.pose.position.z = pose_z
-        goal_pose.pose.orientation.x = ori_x
-        goal_pose.pose.orientation.y = ori_y
-        goal_pose.pose.orientation.z = ori_z
-        goal_pose.pose.orientation.w = ori_w
+        goal_pose.pose.position.x = float(pose_x)
+        goal_pose.pose.position.y = float(pose_y)
+        goal_pose.pose.position.z = 0.0
+        goal_pose.pose.orientation.x = 0.0
+        goal_pose.pose.orientation.y = 0.0
+        goal_pose.pose.orientation.z = 0.0
+        goal_pose.pose.orientation.w = 1.0
 
-        return goal_pose
+        self.go_to_pose(goal)
 
     def deposit_tag(self, tag_msg):
         request = DepositTag.Request()

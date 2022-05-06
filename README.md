@@ -68,7 +68,7 @@ docker build --force-rm -t ros4maes -f Docker/Dockerfile .
 ```
 5. Spinup container either with RVIZ visualisation or not.
 
-Without RVIZ (Works on Windows, macOS and Linux)
+5.1a Without RVIZ (Works on Windows, macOS and Linux)
 ```bash
 docker run --rm -it \
 -p 10000:10000 \
@@ -77,7 +77,7 @@ docker run --rm -it \
 --name ros4maes \
 ros4maes
 ```
-With RVIZ (Only tested on Ubuntu 20.04, 21.04, 21.10 and 22.04. Possible workaround for Windows 10 [here](#rviz-visualisation-in-windows-10))
+5.1b With RVIZ (Only tested on Ubuntu 20.04, 21.04, 21.10 and 22.04. Possible workaround for Windows 10 [here](#rviz-visualisation-in-windows-10))
 ```bash
 xhost +local:docker
 ```
@@ -91,11 +91,22 @@ docker run --rm -it \
   --name ros4maes \
   ros4maes
 ```
-7. Launch multiple robots with launch file maes_ros2_multi_robot_launch.py inside pkg maes_ros2_interface with command 
+6. Launch multiple robots with following command
+
+6.1a Without RVIZ
+```bash
+ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py use_rviz:=false
+```
+
+6.1b With RVIZ
 ```bash
 ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py
 ```
-8. Open Maes executable from package (TODO)
+
+
+7. Open Maes executable from package (TODO)
+
+HOW TO CONFIGURE:
 
 The workspace (maes-ros-slam-ws) inside the MAES package is shared with the docker container. 
 It is thus possible to change these files directly using your favorite editor or IDE.
