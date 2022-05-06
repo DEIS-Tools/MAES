@@ -10,6 +10,7 @@ A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
   <img src=".readmeAssets/example_image_2.png" width="400" />
 </p>
 
+# Table of Contents
 - [Introduction to MAES](#introduction-to-maes)
 - [Getting started](#getting-started)
     * [Running in UnityMode](#running-in-unitymode)
