@@ -27,6 +27,9 @@ namespace Maes.UI {
         public Button VisualizeTagsButton;
         private bool _visualizingSelectedTags = false;
 
+        public Button StickyCameraButton;
+        public bool StickyCameraEnabled;
+        
 
         private List<Button> _mapVisualizationToggleGroup;
         private Color _mapVisualizationColor = Color.white;
@@ -38,7 +41,6 @@ namespace Maes.UI {
         delegate void SimulationModification(Simulation? simulation);
 
         private SimulationModification? _mostRecentMapVisualizationModification;
-        private SimulationModification? _mostRecentTagVisualization;
 
         private void Start() {
             _mapVisualizationToggleGroup = new List<Button>() {
@@ -99,6 +101,12 @@ namespace Maes.UI {
                         }
                     }
                 });
+            });
+            
+            StickyCameraButton.onClick.AddListener(() => {
+                StickyCameraEnabled = !StickyCameraEnabled;
+                CameraController.singletonInstance.stickyCam = StickyCameraEnabled;
+                StickyCameraButton.image.color = StickyCameraEnabled ? _mapVisualizationSelectedColor : _mapVisualizationColor;
             });
         }
 

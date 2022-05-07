@@ -35,6 +35,8 @@ namespace Maes.UI {
 
         public List<RectTransform> uiPanels;
 
+        public bool stickyCam;
+
         // Start is called before the first frame update
         void Start() {
             singletonInstance = this;
@@ -42,6 +44,7 @@ namespace Maes.UI {
             newPosition = t.position;
             newRotation = t.rotation;
             CameraInitialization();
+            stickyCam = false;
         }
 
         private void CameraInitialization() {
@@ -59,7 +62,7 @@ namespace Maes.UI {
 
         // Update is called once per frame
         void Update() {
-            if (movementTransform == null) {
+            if (movementTransform == null || !stickyCam) {
                 HandleMouseMovementInput();
                 HandleKeyboardMovementInput();
             }
