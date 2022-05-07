@@ -35,7 +35,7 @@ class RobotController(Node):
         super().__init__(node_name="maes_robot_controller")
 
         # All topics have prefixed with the namespace of the node e.g. /robot0
-        self.topic_namespace_prefix = self.get_namespace()
+        self._topic_namespace_prefix = self.get_namespace()
 
         # Used to print to console running ros2
         self.logger = MaesLogger(logger=self.get_logger())
@@ -54,19 +54,21 @@ class RobotController(Node):
 
         # Registers subscribers, services and actions and assigns to variables below.
         # Subscribers
-        self.state_subscriber = None
-        self.global_costmap_sub = None
-        self.tf_sub = None
+        self._state_sub = None
+        self._global_costmap_sub = None
+        self._tf_sub = None
         # Service clients
-        self.broadcast_srv = None
-        self.deposit_env_tag_srv = None
+        self._broadcast_srv = None
+        self._deposit_env_tag_srv = None
         # Navigation action client
-        self.nav_to_pose_client = None
+        self._nav_to_pose_client = None
         self._register_subs_srvs_actions()  # Assign to variables
 
         # Logic variables for YOUR algorithm below here
         self.next_target: Coord2D = None
         self.next_target_costmap_index: int = None
+        self.has_send_goal = False
+        self.has_cancelled = False
 
     def logic_loop_callback(self, state: State):
         '''
@@ -74,8 +76,11 @@ class RobotController(Node):
         Use this function to express the logic that makes the robot move.
 
         INSTRUCTIONS:
+        Print to ROS Terminal (there exists info, error, warn, debug tags):
+        self.logger.log_info("From maes_robot_controller.py")
+
         Movement using Nav2:
-        self.move_to_pos(0,0)
+        self.nav_to_pos(0,0)
         self.cancel_nav()
         self.is_nav_complete()
         self.get_feedback()
@@ -92,6 +97,17 @@ class RobotController(Node):
         Below is an example of a simple frontier algorithm. Feel free to delete
         '''
 
+        if state.tick < 30:
+            self.nav_to_pos(0, 0)
+        elif 30 < state.tick < 60:
+            self.cancel_nav()
+        elif 60 < state.tick:
+            self.nav_to_pos(0, 0)
+            self.deposit_tag("From tick: {0}".format(state.tick))
+            self.logger.log_info("Current position: {0},{1}".format(self.robot_position.transform.translation.x,
+                                                                    self.robot_position.transform.translation.y))
+
+        return
 
         # This method returns true if the tile is not itself unknown, but has a neighbor, that is unknown
         def is_frontier(map_index: int, costmap: MaesCostmap):
@@ -107,7 +123,7 @@ class RobotController(Node):
 
         # This algorithm requires costmap, thus don't do anything unless we have received the first costmap
         if self.global_costmap.costmap is None:
-            self.logger.log_debug("Robot with namespace {0} has no global map".format(self.topic_namespace_prefix))
+            self.logger.log_debug("Robot with namespace {0} has no global map".format(self._topic_namespace_prefix))
             return
 
         # If no target found
@@ -117,15 +133,15 @@ class RobotController(Node):
 
             # No more frontiers found, just return
             if target_frontier_tile_index is None:
-                self.logger.log_info("Robot with namespace {0} is has found no more frontiers".format(self.topic_namespace_prefix))
+                self.logger.log_info("Robot with namespace {0} is has found no more frontiers".format(self._topic_namespace_prefix))
                 return
 
             self.next_target = self.global_costmap.costmap_index_to_pos(target_frontier_tile_index)
             self.next_target_costmap_index = target_frontier_tile_index
-            self.move_to_pos(self.next_target.x, self.next_target.y)
-            self.logger.log_info("Robot with namespace {0} found new target at ({1},{2})".format(self.topic_namespace_prefix,
-                                                                                             self.next_target.x,
-                                                                                             self.next_target.y))
+            self.nav_to_pos(self.next_target.x, self.next_target.y)
+            self.logger.log_info("Robot with namespace {0} found new target at ({1},{2})".format(self._topic_namespace_prefix,
+                                                                                                 self.next_target.x,
+                                                                                                 self.next_target.y))
         # If target found but not yet reached, i.e. it is still a frontier
         elif is_frontier(self.next_target_costmap_index, self.global_costmap):
             # This section allows for logging feedback etc. e.g.
@@ -133,14 +149,14 @@ class RobotController(Node):
             return
         # If target is explored, i.e. next_target not None and not frontier
         else:
-            self.logger.log_info("Robot with namespace {0} explored its target at ({1},{2})".format(self.topic_namespace_prefix,
+            self.logger.log_info("Robot with namespace {0} explored its target at ({1},{2})".format(self._topic_namespace_prefix,
                                                                                                     self.next_target.x,
                                                                                                     self.next_target.y))
             self.next_target_costmap_index = None
             self.next_target = None
             self.cancel_nav()
 
-    def move_to_pos(self, pose_x, pose_y):
+    def nav_to_pos(self, pose_x, pose_y):
         goal_pose = PoseStamped()
         goal_pose.header.frame_id = 'map'
         goal_pose.header.stamp = self.get_clock().now().to_msg()
@@ -152,22 +168,22 @@ class RobotController(Node):
         goal_pose.pose.orientation.z = 0.0
         goal_pose.pose.orientation.w = 1.0
 
-        self.go_to_pose(goal_pose)
+        self.nav_to_pose_with_orientation(goal_pose)
 
     def deposit_tag(self, tag_msg):
         request = DepositTag.Request()
         request.msg = tag_msg
-        self.deposit_env_tag_srv.call_async(request=request)
+        self._deposit_env_tag_srv.call_async(request=request)
 
     def broadcast_msg(self, msg):
         request = BroadcastToAll.Request()
         request.msg = msg
-        self.broadcast_srv.call_async(request=request)
+        self._broadcast_srv.call_async(request=request)
 
-    def go_to_pose(self, pose: PoseStamped):
+    def nav_to_pose_with_orientation(self, pose: PoseStamped):
         # Sends a `NavToPose` action request and waits for completion
         self.logger.log_debug("Waiting for 'NavigateToPose' action server")
-        while not self.nav_to_pose_client.wait_for_server(timeout_sec=1.0):
+        while not self._nav_to_pose_client.wait_for_server(timeout_sec=1.0):
             self.logger.log_info("'NavigateToPose' action server not available, waiting...")
 
         goal_msg = NavigateToPose.Goal()
@@ -175,19 +191,23 @@ class RobotController(Node):
 
         self.logger.log_info('Navigating to goal: ' + str(pose.pose.position.x) + ' ' +
                              str(pose.pose.position.y) + '...')
-        send_goal_future = self.nav_to_pose_client.send_goal_async(goal_msg,
-                                                                   self._feedback_callback)
+
+        def _feedback_callback(msg):
+            self.nav_feedback = msg.feedback
+
+        send_goal_future = self._nav_to_pose_client.send_goal_async(goal_msg, _feedback_callback)
+
+        def _action_server_response_callback(future: Future):
+            self.nav_goal_handle = future.result()
+
+            if not self.nav_goal_handle.accepted:
+                self.logger.log_error('Goal was rejected!')
+                return False
+
+            self.nav_result_future = self.nav_goal_handle.get_result_async()
+
         # Call function and assign goal handle etc. when action server accepts the goal
-        send_goal_future.add_done_callback(self._action_server_response_callback)
-
-    def _action_server_response_callback(self, future: Future):
-        self.nav_goal_handle = future.result()
-
-        if not self.nav_goal_handle.accepted:
-            self.logger.log_error('Goal was rejected!')
-            return False
-
-        self.nav_result_future = self.nav_goal_handle.get_result_async()
+        send_goal_future.add_done_callback(_action_server_response_callback)
 
     def cancel_nav(self):
         if self.nav_result_future is None:
@@ -218,27 +238,27 @@ class RobotController(Node):
 
     def _register_subs_srvs_actions(self):
         # Declare topics
-        state_topic = self.topic_namespace_prefix + "/maes_state"
-        broadcast_srv_topic = self.topic_namespace_prefix + "/maes_broadcast"
-        deposit_env_tag_srv_topic = self.topic_namespace_prefix + "/maes_deposit_tag"
-        nav_to_pose_topic = self.topic_namespace_prefix + "/navigate_to_pose"
-        global_costmap_2d_topic = self.topic_namespace_prefix + "/global_costmap/costmap"
-        tf2_topic = self.topic_namespace_prefix + "/tf"
+        state_topic = self._topic_namespace_prefix + "/maes_state"
+        broadcast_srv_topic = self._topic_namespace_prefix + "/maes_broadcast"
+        deposit_env_tag_srv_topic = self._topic_namespace_prefix + "/maes_deposit_tag"
+        nav_to_pose_topic = self._topic_namespace_prefix + "/navigate_to_pose"
+        global_costmap_2d_topic = self._topic_namespace_prefix + "/global_costmap/costmap"
+        tf2_topic = self._topic_namespace_prefix + "/tf"
 
         # Register service clients
-        self.broadcast_srv = self.create_client(srv_type=BroadcastToAll, srv_name=broadcast_srv_topic)
-        self.deposit_env_tag_srv = self.create_client(srv_type=DepositTag, srv_name=deposit_env_tag_srv_topic)
+        self._broadcast_srv = self.create_client(srv_type=BroadcastToAll, srv_name=broadcast_srv_topic)
+        self._deposit_env_tag_srv = self.create_client(srv_type=DepositTag, srv_name=deposit_env_tag_srv_topic)
 
         # Wait for services to be active
-        while not self.broadcast_srv.wait_for_service(timeout_sec=1) or not self.deposit_env_tag_srv.wait_for_service(timeout_sec=1):
-            self.logger.log_info("{0} waiting for either broadcast or deposit tag services".format(self.topic_namespace_prefix))
+        while not self._broadcast_srv.wait_for_service(timeout_sec=1) or not self._deposit_env_tag_srv.wait_for_service(timeout_sec=1):
+            self.logger.log_info("{0} waiting for either broadcast or deposit tag services".format(self._topic_namespace_prefix))
 
         # Create navigation action client
-        self.nav_to_pose_client = ActionClient(self, NavigateToPose, nav_to_pose_topic)
+        self._nav_to_pose_client = ActionClient(self, NavigateToPose, nav_to_pose_topic)
 
         # Wait for action service to be active
-        while not self.nav_to_pose_client.wait_for_server(timeout_sec=1):
-            self.logger.log_info("{0} waiting for either nav action client to start".format(self.topic_namespace_prefix))
+        while not self._nav_to_pose_client.wait_for_server(timeout_sec=1):
+            self.logger.log_info("{0} waiting for either nav action client to start".format(self._topic_namespace_prefix))
 
 
         # Quality of service profile for subscriptions
@@ -249,31 +269,25 @@ class RobotController(Node):
         )
 
         # Create subscribers
-        self.state_subscriber = self.create_subscription(msg_type=State,
-                                                         topic=state_topic,
-                                                         callback=self.logic_loop_callback,
-                                                         qos_profile=qos_profile)
-        self.global_costmap_sub = self.create_subscription(msg_type=OccupancyGrid,
-                                                           topic=global_costmap_2d_topic,
-                                                           callback=self.global_costmap.update_costmap,
-                                                           qos_profile=qos_profile)
-        self.tf_sub = self.create_subscription(msg_type=TFMessage,
-                                               topic=tf2_topic,
-                                               callback=self.save_robot_position_callback,
-                                               qos_profile=qos_profile)
+        self._state_sub = self.create_subscription(msg_type=State,
+                                                   topic=state_topic,
+                                                   callback=self.logic_loop_callback,
+                                                   qos_profile=qos_profile)
+        self._global_costmap_sub = self.create_subscription(msg_type=OccupancyGrid,
+                                                            topic=global_costmap_2d_topic,
+                                                            callback=self.global_costmap.update_costmap,
+                                                            qos_profile=qos_profile)
 
-    """
-    Call back functions from here
-    """
-    def save_robot_position_callback(self, msg: TFMessage):
-        odom = list(filter(lambda e: e.header.frame_id == "odom", msg.transforms))
-        if len(odom) == 1:
-            self.robot_position = odom[0]
+        def save_robot_position_callback(msg: TFMessage):
+            odom = list(filter(lambda e: e.header.frame_id == "odom", msg.transforms))
+            if len(odom) == 1:
+                self.robot_position = odom[0]
 
-    def _feedback_callback(self, msg):
-        self.nav_feedback = msg.feedback
-        return
 
+        self._tf_sub = self.create_subscription(msg_type=TFMessage,
+                                                topic=tf2_topic,
+                                                callback=save_robot_position_callback,
+                                                qos_profile=qos_profile)
 
 def main(args=None):
     rclpy.init(args=args)
