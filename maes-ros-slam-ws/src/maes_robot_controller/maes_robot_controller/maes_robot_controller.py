@@ -80,8 +80,8 @@ class RobotController(Node):
         Movement using Nav2:
         self.nav_to_pos(0,0)
         self.cancel_nav()
-        self.is_nav_complete()
-        self.get_feedback()
+        self.is_nav_complete() -> Bool
+        self.nav_feedback // Contains feedback from current navigation
         self.robot_position.transform.translation.x // Get position x
         self.robot_position.transform.translation.y // Get position y
 
