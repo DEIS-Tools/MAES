@@ -14,6 +14,7 @@
                         <ReactiveFallback name="ComputePathToPoseRecoveryFallback">
                             <GoalUpdated/>
                             <Spin spin_dist="0.1"/>
+                            <BackUp backup_dist="0.2" backup_speed="0.025"/>
                             <ClearEntireCostmap name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
                         </ReactiveFallback>
                     </RecoveryNode>
@@ -28,6 +29,7 @@
             <ReactiveFallback name="RecoveryFallback">
                 <GoalUpdated/>
                 <Spin spin_dist="1"/>
+
                 <ClearEntireCostmap name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
             </ReactiveFallback>
         </RecoveryNode>

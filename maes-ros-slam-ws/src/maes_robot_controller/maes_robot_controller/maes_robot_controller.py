@@ -65,10 +65,8 @@ class RobotController(Node):
         self._register_subs_srvs_actions()  # Assign to variables
 
         # Logic variables for YOUR algorithm below here
-        self.next_target: Coord2D = None
-        self.next_target_costmap_index: int = None
-        self.has_send_goal = False
-        self.has_cancelled = False
+        self.next_target: Coord2D = None # Used for frontier example
+        self.next_target_costmap_index: int = None # Used for frontier example algorithm
 
     def logic_loop_callback(self, state: State):
         '''
@@ -97,19 +95,7 @@ class RobotController(Node):
         Below is an example of a simple frontier algorithm. Feel free to delete
         '''
 
-        if state.tick < 30:
-            self.nav_to_pos(0, 0)
-        elif 30 < state.tick < 60:
-            self.cancel_nav()
-        elif 60 < state.tick:
-            self.nav_to_pos(0, 0)
-            self.deposit_tag("From tick: {0}".format(state.tick))
-            self.logger.log_info("Current position: {0},{1}".format(self.robot_position.transform.translation.x,
-                                                                    self.robot_position.transform.translation.y))
-
-        return
-
-        # This method returns true if the tile is not itself unknown, but has a neighbor, that is unknown
+        # This method returns true if the tile is not itself unknown, but has 2 neighbors, that are unknown
         def is_frontier(map_index: int, costmap: MaesCostmap):
             # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
             # It is itself unknown
