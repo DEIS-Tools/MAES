@@ -80,6 +80,7 @@ namespace Maes.UI {
                 // Notify current simulation that no robot is selected
                 Simulator.GetCurrentSimulation().SetSelectedRobot(null);
                 Simulator.GetCurrentSimulation().SetSelectedTag(null);
+                Simulator.GetCurrentSimulation().ClearVisualTags();
             }
         }
 

@@ -1442,12 +1442,20 @@ PrefabInstance:
       value: Marker
       objectReference: {fileID: 0}
     - target: {fileID: -8391222552659086748, guid: 94eeac50c01a258b29f4c5beb98e324a, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8391222552659086748, guid: 94eeac50c01a258b29f4c5beb98e324a, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -5568371526223589888, guid: 94eeac50c01a258b29f4c5beb98e324a, type: 3}
       propertyPath: m_Name
       value: Post
+      objectReference: {fileID: 0}
+    - target: {fileID: -5568371526223589888, guid: 94eeac50c01a258b29f4c5beb98e324a, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -5568371526223589888, guid: 94eeac50c01a258b29f4c5beb98e324a, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -1480,6 +1488,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 94eeac50c01a258b29f4c5beb98e324a, type: 3}
       propertyPath: m_Name
       value: StopSign
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 94eeac50c01a258b29f4c5beb98e324a, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7202271454713460447, guid: 94eeac50c01a258b29f4c5beb98e324a, type: 3}
       propertyPath: m_Materials.Array.data[0]
