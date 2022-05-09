@@ -104,7 +104,7 @@ ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py
 ```
 
 
-7. Open Maes executable from package (TODO)
+7. Open Maes executable called MAES.x86_64
 
 HOW TO CONFIGURE:
 
@@ -182,7 +182,7 @@ source install/setup.sh
 ```bash
 ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py
 ```
-10. Open Maes executable from package (TODO)
+10. Open Maes executable called MAES.x86_64
 
 The logic controlling the behavior of the robots can be found in [maes_robot_controller.py](maes-ros-slam-ws/src/maes_robot_controller/maes_robot_controller/maes_robot_controller.py).
 Actionservers, subscriptions and services are already setup and can be used inside the logic_loop function to control the robot.
