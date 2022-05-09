@@ -147,7 +147,7 @@ namespace Maes {
         }
 
         public void ClearVisualTags() {
-            _debugVisualizer.UnRenderAllTags();
+            _debugVisualizer.HideAllTags();
         }
 
         public void RenderCommunicationLines() {

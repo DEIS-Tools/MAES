@@ -3,7 +3,7 @@ using Maes.Map;
 using UnityEngine;
 
 namespace Maes.ExplorationAlgorithm.BrickAndMortar {
-    public class BrickAndMortarTag: EnvironmentTaggingMap.ITag {
+    /*public class BrickAndMortarTag: EnvironmentTaggingMap.ITag {
 
         public BrickAndMortar.TileStatus Status;
         public readonly int ID;
@@ -50,5 +50,5 @@ namespace Maes.ExplorationAlgorithm.BrickAndMortar {
         }
         
         
-    }
+    }*/
 }

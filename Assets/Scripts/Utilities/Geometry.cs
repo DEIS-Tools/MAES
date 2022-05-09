@@ -13,6 +13,11 @@ namespace Maes.Utilities {
             // return Mathf.Sqrt(Mathf.Pow(xDelta, 2f) + Mathf.Pow(yDelta, 2f));
         }
 
+        public static Vector2 ToROSCoord(Vector3 MapPosition) {
+            // Map position is robots position in the tile grid. NOT world position / game object position
+            return new Vector2(-MapPosition.x, -MapPosition.y);
+        }
+
 
         public static Vector2 VectorFromDegreesAndMagnitude(float angleDegrees, float magnitude) {
             var angleRad = angleDegrees * Mathf.Deg2Rad;

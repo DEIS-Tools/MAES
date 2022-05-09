@@ -13,7 +13,7 @@ namespace Maes {
         private bool _shouldRenderAllTags = false;
 
         // Environment tags
-        private readonly List<EnvironmentTaggingMap.PlacedTag> _environmentTags = new List<EnvironmentTaggingMap.PlacedTag>();
+        private readonly List<EnvironmentTag> _environmentTags = new List<EnvironmentTag>();
 
         private readonly Color _tagColor = new Color(50f / 255f, 120f / 255f, 255f / 255f);
         private readonly Color _readableTagColor = new Color(255f / 255f, 150f / 255f, 255f / 255f);
@@ -41,13 +41,8 @@ namespace Maes {
         }
 
         // Debugging measure to visualize all environment tags
-        public void AddEnvironmentTag(EnvironmentTaggingMap.PlacedTag tag) {
+        public void AddEnvironmentTag(EnvironmentTag tag) {
             _environmentTags.Add(tag);
-        }
-
-        public void RemoveEnvironmentTagAt(Vector2 position) {
-            var tag = _environmentTags.Find(t => t.WorldPosition == position);
-            _environmentTags.Remove(tag);
         }
 
         // Debugging measure to visualize communication between robots
@@ -56,7 +51,7 @@ namespace Maes {
             
         }
 
-        public void Render() {
+        /*public void Render() {
             // Render communication links between robots
             Gizmos.color = _linkColor;
             Vector3 offset = new Vector3(0.5f, 0.5f, 1);
@@ -66,23 +61,17 @@ namespace Maes {
             
             foreach (var placedTag in _environmentTags) 
                 placedTag.tag.DrawTag(placedTag.WorldPosition);
-        }
+        }*/
 
         public void RenderVisibleTags() {
-            foreach (var placedTag in _environmentTags) {
-                if (placedTag.tag is VisibleTag tag) {
-                    tag.SetVisibility(true);
-                    tag.DrawTag(new Vector3(placedTag.WorldPosition.x, placedTag.WorldPosition.y ,-.1f));
-                }
+            foreach (var tag in _environmentTags) {
+                tag.SetVisibility(true);
             }
         }
 
         public void RenderSelectedVisibleTags(int id) {
-            foreach (var placedTag in _environmentTags) {
-                if (placedTag.tag is VisibleTag tag) {
-                    tag.SetVisibility(tag.sender == id);
-                    tag.DrawTag(new Vector3(placedTag.WorldPosition.x, placedTag.WorldPosition.y ,-.1f));
-                }
+            foreach (var tag in _environmentTags) {
+                tag.SetVisibility(tag.sender == id);
             }
         }
 
@@ -105,11 +94,9 @@ namespace Maes {
             throw new System.NotImplementedException();
         }
 
-        public void UnRenderAllTags() {
-            foreach (var placedTag in _environmentTags) {
-                if (placedTag.tag is VisibleTag tag) {
-                    tag.SetVisibility(false);
-                }
+        public void HideAllTags() {
+            foreach (var tag in _environmentTags) {
+                tag.SetVisibility(false);
             }
         }
 

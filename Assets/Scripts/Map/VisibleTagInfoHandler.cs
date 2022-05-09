@@ -4,18 +4,18 @@ using YamlDotNet.Core.Tokens;
 
 namespace Maes.Map {
     public class VisibleTagInfoHandler : MonoBehaviour {
-        private VisibleTag _visibleTag;
+        private EnvironmentTag _environmentTag;
         private delegate void OnVisibleTagSelectedDelegate(VisibleTagInfoHandler t);
         public Outline outline;
         private OnVisibleTagSelectedDelegate _onVisibleTagSelected;
 
-        public void SetTag(VisibleTag t) {
-            _visibleTag = t;
+        public void SetTag(EnvironmentTag t) {
+            _environmentTag = t;
             _onVisibleTagSelected = Simulation.SingletonInstance.SetSelectedTag;
         }
         
         public void OnMouseEnter() {
-            Tooltip.ShowTooltip_Static(_visibleTag.ToString());
+            Tooltip.ShowTooltip_Static(_environmentTag.ToString());
         }
 
         public void OnMouseExit() {
@@ -27,7 +27,7 @@ namespace Maes.Map {
         }
 
         public string GetDebugInfo() {
-            return _visibleTag.GetDebugInfo();
+            return _environmentTag.GetDebugInfo();
         }
     }
 }

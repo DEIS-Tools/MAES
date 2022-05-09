@@ -89,7 +89,6 @@ namespace Maes.YamlConfig {
 
             // Debug visualizer
             public bool DrawCommunication { get; set; } = true;
-            public bool ShowEnvironmentTags { get; set; } = true;
 
             // Statistics
             public bool ShouldWriteCsvResults { get; set; } = false;
@@ -101,7 +100,7 @@ namespace Maes.YamlConfig {
             public int TicksBeforeCoverageHeatmapCold { get; set; } = 2400;    // 10*60*4
 
             public override string ToString() {
-                return $"{nameof(LogicTicksDeltaMillis)}: {LogicTicksDeltaMillis}, {nameof(PhysicsTicksPerLogicUpdate)}: {PhysicsTicksPerLogicUpdate}, {nameof(DrawCommunication)}: {DrawCommunication}, {nameof(ShowEnvironmentTags)}: {ShowEnvironmentTags}, {nameof(ShouldWriteCsvResults)}: {ShouldWriteCsvResults}, {nameof(StatisticsResultPath)}: {StatisticsResultPath}, {nameof(TicksPerStatsSnapshot)}: {TicksPerStatsSnapshot}, {nameof(PopulateAdjacencyAndCommGroupsEveryTick)}: {PopulateAdjacencyAndCommGroupsEveryTick}, {nameof(TicksBeforeExplorationHeatmapCold)}: {TicksBeforeExplorationHeatmapCold}, {nameof(TicksBeforeCoverageHeatmapCold)}: {TicksBeforeCoverageHeatmapCold}";
+                return $"{nameof(LogicTicksDeltaMillis)}: {LogicTicksDeltaMillis}, {nameof(PhysicsTicksPerLogicUpdate)}: {PhysicsTicksPerLogicUpdate}, {nameof(DrawCommunication)}: {DrawCommunication}, {nameof(ShouldWriteCsvResults)}: {ShouldWriteCsvResults}, {nameof(StatisticsResultPath)}: {StatisticsResultPath}, {nameof(TicksPerStatsSnapshot)}: {TicksPerStatsSnapshot}, {nameof(PopulateAdjacencyAndCommGroupsEveryTick)}: {PopulateAdjacencyAndCommGroupsEveryTick}, {nameof(TicksBeforeExplorationHeatmapCold)}: {TicksBeforeExplorationHeatmapCold}, {nameof(TicksBeforeCoverageHeatmapCold)}: {TicksBeforeCoverageHeatmapCold}";
             }
         }
             
