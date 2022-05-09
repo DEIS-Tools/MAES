@@ -224,7 +224,7 @@ namespace Maes.Statistics {
             _selectedRobot = robot;
             if (_selectedRobot != null)
                 SetVisualizationMode(new CurrentlyVisibleAreaVisualization(_explorationMap, _selectedRobot.Controller));
-            else if (_currentVisualizationMode is CurrentlyVisibleAreaVisualization) 
+            else 
                 // Revert to all robots exploration visualization when current robot is deselected
                 // while visualization mode is based on the selected robot
                 SetVisualizationMode(new AllRobotsExplorationVisualization(_explorationMap));

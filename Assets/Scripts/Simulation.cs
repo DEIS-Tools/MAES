@@ -62,6 +62,7 @@ namespace Maes {
             _selectedRobot = newSelectedRobot;
             if (newSelectedRobot != null) newSelectedRobot.outLine.enabled = true;
             ExplorationTracker.SetVisualizedRobot(newSelectedRobot);
+            if(_selectedRobot == null) SimInfoUIController.ClearSelectedRobot();
             UpdateDebugInfo();
         }
         
@@ -146,7 +147,7 @@ namespace Maes {
         }
 
         public void ClearVisualTags() {
-            _debugVisualizer.UnRenderAllTags();
+            _debugVisualizer.HideAllTags();
         }
 
         public void RenderCommunicationLines() {

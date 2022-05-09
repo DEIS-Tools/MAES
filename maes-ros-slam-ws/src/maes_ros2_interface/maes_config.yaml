@@ -1,10 +1,9 @@
 random_seeds: [0]
-number_of_robots: 2
+number_of_robots: 1
 global_settings:
   logic_ticks_delta_millis: 100 
   physics_ticks_per_logic_update: 10
   draw_communication: true
-  show_environment_tags: true
   should_write_csv_results: false
   statistics_result_path: "ROS2-some-name" # defaults to 'Desktop/MaesStatistics/' if not overwritten here with a valid path.
   ticks_per_stats_snapshot: 10

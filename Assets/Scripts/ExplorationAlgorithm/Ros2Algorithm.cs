@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Maes.Map;
 using Maes.Robot;
 using Maes.Robot.Task;
+using Maes.Utilities;
 using Maes.YamlConfig;
 using RosMessageTypes.BuiltinInterfaces;
 using RosMessageTypes.Geometry;
@@ -57,7 +58,7 @@ namespace Maes.ExplorationAlgorithm {
         
         private void ReactToDepositTagRequests() {
             foreach (var tagMsg in _envTagsToDeposit) {
-                _controller.DepositTag(new RosTag(tagMsg));
+                _controller.DepositTag(tagMsg);
             }
             _envTagsToDeposit.Clear();
         }
@@ -75,7 +76,7 @@ namespace Maes.ExplorationAlgorithm {
             var robot_rotation = _worldPosition.rotation.eulerAngles.z - 90f;
             // Flip signs like also done in TransformTreePublisher 
             // TODO: Maybe create utility function for transforming coordinates between ROS and Maes ? - Philip
-            robotPosition = new Vector2(-robotPosition.x, -robotPosition.y);
+            robotPosition = Geometry.ToROSCoord(robotPosition);
             // ---- tick ---- //
             state.tick = _tick;
             // ---- Status ---- //
@@ -102,9 +103,9 @@ namespace Maes.ExplorationAlgorithm {
 
             // ---- Nearby environment tags ---- //
             var tags = _controller.ReadNearbyTags();
-            var rosTagsWithPos = tags.Select(e => (((RosTag) ((VisibleTag) e.Item).innerITag).msg, GetRelativePosition(robotPosition, robot_rotation, e)));
+            var rosTagsWithPos = tags.Select(e => (e.Item.Content, GetRelativePosition(robotPosition, robot_rotation, e)));
             var rosTagAsMsgs =
-                    rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.msg, new Vector2DMsg(e.Item2.x, e.Item2.y)));
+                    rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.Content, new Vector2DMsg(e.Item2.x, e.Item2.y)));
             state.tags_nearby = rosTagAsMsgs.ToArray();
 
             // ---- Publish to ROS ---- //
@@ -195,7 +196,7 @@ namespace Maes.ExplorationAlgorithm {
         }
 
         private DepositTagResponse DepositTag(DepositTagRequest req) {
-            _controller.DepositTag(new RosTag(req.msg));
+            _controller.DepositTag(req.msg);
             return new DepositTagResponse(true);
         }
 
@@ -218,25 +219,6 @@ namespace Maes.ExplorationAlgorithm {
             var x = myPosition.x + (o.Distance * Mathf.Cos(Mathf.Deg2Rad * ((o.RelativeAngle + globalAngle) % 360)));
             var y = myPosition.y + (o.Distance * Mathf.Sin(Mathf.Deg2Rad * ((o.RelativeAngle + globalAngle) % 360)));
             return new Vector2(x, y);
-        }
-
-        private class RosTag : EnvironmentTaggingMap.ITag {
-            public string msg;
-
-            public RosTag(string msg) {
-                this.msg = msg;
-            }
-            
-            private const float TagSquareSize = 0.3f;
-            private readonly Vector3 _tagCubeSize = new Vector3(TagSquareSize, TagSquareSize, TagSquareSize);
-            public void DrawTag(Vector3 position) {
-                Gizmos.color = Color.magenta;
-                Gizmos.DrawCube(new Vector3(position.x, position.y, -_tagCubeSize.z / 2f), _tagCubeSize);
-            }
-
-            public override string ToString() {
-                return $"Rostag - {nameof(msg)}: {msg}";
-            }
         }
 
         public object SaveState() {

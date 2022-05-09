@@ -286,14 +286,15 @@ namespace Maes.Robot {
         }
 
         // Deposits an environment tag at the current position of the robot
-        public void DepositTag(EnvironmentTaggingMap.ITag tag) {
-            CommunicationManager.DepositTag(_robot, tag);
+        public void DepositTag(String content) {
+            CommunicationManager.DepositTag(_robot, content);
         }
 
         // Returns a list of all environment tags that are within sensor range
-        public List<RelativeObject<EnvironmentTaggingMap.ITag>> ReadNearbyTags() {
+        public List<RelativeObject<EnvironmentTag>> ReadNearbyTags() {
+            
             var tags = CommunicationManager.ReadNearbyTags(_robot);
-            return tags.Select(placedTag => ToRelativePosition(placedTag.WorldPosition, placedTag.tag)).ToList();
+            return tags.Select(tag => ToRelativePosition(tag.MapPosition, tag)).ToList();
         }
 
         private RelativeObject<T> ToRelativePosition<T>(Vector2 tagPosition, T item) {

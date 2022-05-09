@@ -75,8 +75,11 @@ namespace Maes.Robot {
         }
 
         public GameObject ClaimTag() {
-            var gameObj = Instantiate(Resources.Load<GameObject>("TagPost"), transform);
+            var envTagHolder = GameObject.Find("EnvTagHolder");
+            var gameObj = Instantiate(Resources.Load<GameObject>("TagPost"), envTagHolder.transform);
+            gameObj.transform.position = this.transform.position + new Vector3(0,0,-0.1f);
             gameObj.SetActive(false);
+            gameObj.name = $"robot{0}-" + gameObj.name;
             return gameObj;
         }
     }

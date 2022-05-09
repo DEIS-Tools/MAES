@@ -124,6 +124,7 @@ class RobotController(Node):
 
             self.next_target = self.global_costmap.costmap_index_to_pos(target_frontier_tile_index)
             self.next_target_costmap_index = target_frontier_tile_index
+            self.deposit_tag("From tick: {0}".format(state.tick))
             self.nav_to_pos(self.next_target.x, self.next_target.y)
             self.logger.log_info("Robot with namespace {0} found new target at ({1},{2})".format(self._topic_namespace_prefix,
                                                                                                  self.next_target.x,

@@ -9,7 +9,7 @@ using UnityEngine;
 using Random = System.Random;
 
 namespace Maes.ExplorationAlgorithm.BrickAndMortar {
-    public class BrickAndMortar: IExplorationAlgorithm {
+    /*public class BrickAndMortar: IExplorationAlgorithm {
 
         private RobotConstraints _constraints;
         private IRobotController _controller;
@@ -521,5 +521,5 @@ namespace Maes.ExplorationAlgorithm.BrickAndMortar {
         public void RestoreState(object stateInfo) {
             throw new System.NotImplementedException();
         }
-    }
+    }*/
 }
