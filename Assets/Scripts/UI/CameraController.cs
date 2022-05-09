@@ -35,6 +35,8 @@ namespace Maes.UI {
 
         public List<RectTransform> uiPanels;
 
+        public bool stickyCam;
+
         // Start is called before the first frame update
         void Start() {
             singletonInstance = this;
@@ -42,6 +44,7 @@ namespace Maes.UI {
             newPosition = t.position;
             newRotation = t.rotation;
             CameraInitialization();
+            stickyCam = false;
         }
 
         private void CameraInitialization() {
@@ -59,7 +62,7 @@ namespace Maes.UI {
 
         // Update is called once per frame
         void Update() {
-            if (movementTransform == null) {
+            if (movementTransform == null || !stickyCam) {
                 HandleMouseMovementInput();
                 HandleKeyboardMovementInput();
             }
@@ -76,6 +79,8 @@ namespace Maes.UI {
                 movementTransform = null;
                 // Notify current simulation that no robot is selected
                 Simulator.GetCurrentSimulation().SetSelectedRobot(null);
+                Simulator.GetCurrentSimulation().SetSelectedTag(null);
+                Simulator.GetCurrentSimulation().ClearVisualTags();
             }
         }
 
@@ -139,7 +144,8 @@ namespace Maes.UI {
         private void HandleMouseRotateZoomInput() {
             #region MouseZoomRegion
 
-            if (Input.mouseScrollDelta.y != 0) {
+            if (Input.mouseScrollDelta.y != 0 && !uiPanels.Any(panel =>
+                    RectTransformUtility.RectangleContainsScreenPoint(panel, Input.mousePosition))) {
                 PrepareZoom(Input.mouseScrollDelta.y);
             }
 

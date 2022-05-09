@@ -25,15 +25,23 @@ namespace Maes {
              var numberOfRobots = yamlConfig.NumberOfRobots;
              
              // End criteria
-             SimulationEndCriteriaDelegate shouldEndSim = yamlConfig.EndCriteria.CoveragePercent == null
-                 ? (simulation) => (simulation.ExplorationTracker
-                     .ExploredProportion > yamlConfig.EndCriteria.ExplorationPercent)
-                 : (simulation) => (simulation.ExplorationTracker
+             SimulationEndCriteriaDelegate shouldEndSim;
+             if (yamlConfig.EndCriteria.CoveragePercent != null) {
+                 // End at coverage achieved
+                 shouldEndSim = (simulation) => (simulation.ExplorationTracker
                      .CoverageProportion > yamlConfig.EndCriteria.CoveragePercent);
+             }
+             else if (yamlConfig.EndCriteria.ExplorationPercent != null) {
+                 // End at exploration achieved
+                 shouldEndSim = (simulation) => (simulation.ExplorationTracker
+                     .ExploredProportion > yamlConfig.EndCriteria.ExplorationPercent);
+             }
+             else {
+                 // End at tick
+                 shouldEndSim = (simulation) => (simulation.SimulatedLogicTicks >= yamlConfig.EndCriteria.Tick);
+             }
 
              var constraints = new RobotConstraints(
-                 broadcastRange: yamlConfig.RobotConstraints.BroadcastRange,
-                 broadcastBlockedByWalls: yamlConfig.RobotConstraints.BroadcastBlockedByWalls,
                  senseNearbyAgentsRange: yamlConfig.RobotConstraints.SenseNearbyAgentsRange,
                  senseNearbyAgentsBlockedByWalls: yamlConfig.RobotConstraints.SenseNearbyAgentsBlockedByWalls,
                  automaticallyUpdateSlam: yamlConfig.RobotConstraints.AutomaticallyUpdateSlam,
@@ -44,7 +52,18 @@ namespace Maes {
                  environmentTagReadRange: yamlConfig.RobotConstraints.EnvironmentTagReadRange,
                  slamRayTraceRange: yamlConfig.RobotConstraints.SlamRaytraceRange,
                  relativeMoveSpeed: yamlConfig.RobotConstraints.RelativeMoveSpeed,
-                 agentRelativeSize: yamlConfig.RobotConstraints.AgentRelativeSize
+                 agentRelativeSize: yamlConfig.RobotConstraints.AgentRelativeSize,
+                 calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) => {
+                     if (yamlConfig.RobotConstraints.BroadcastBlockedByWalls && distanceThroughWalls > 0) {
+                         return 0.0f;
+                     }
+                     else if (yamlConfig.RobotConstraints.BroadcastRange < distanceTravelled) {
+                         return 0.0f;
+                     }
+
+                     return 1.0f;
+                 },
+                 minimumSignalTransmissionProbability: 0.99f
              );
 
              foreach (var seed in yamlConfig.RandomSeeds) {
@@ -119,8 +138,8 @@ namespace Maes {
                                                                                  .CoverageProportion > 0.995f);
             
             var robotConstraintsLVD = new RobotConstraints(
-                broadcastRange: 0,
-                broadcastBlockedByWalls: false,
+                // broadcastRange: 0,
+                // broadcastBlockedByWalls: false,
                 senseNearbyAgentsRange: 20f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -131,7 +150,8 @@ namespace Maes {
                 environmentTagReadRange: 0f,
                 slamRayTraceRange: 20f,
                 relativeMoveSpeed: 1f,
-                agentRelativeSize: 0.6f
+                agentRelativeSize: 0.6f,
+                minimumSignalTransmissionProbability: 1.1f // Higher than 1, i.e. never allows communication
             );
             
             for (int i = 0; i < runs; i++) { 
@@ -213,8 +233,6 @@ namespace Maes {
                                   simulation.ExplorationTracker.CoverageProportion > 0.995f);
 
              var robotConstraints = new RobotConstraints(
-                 broadcastRange: float.MaxValue,
-                 broadcastBlockedByWalls: false,
                  senseNearbyAgentsRange: 7f,
                  senseNearbyAgentsBlockedByWalls: true,
                  automaticallyUpdateSlam: true,
@@ -225,7 +243,14 @@ namespace Maes {
                  environmentTagReadRange: 4.0f,
                  slamRayTraceRange: 7.0f,
                  relativeMoveSpeed: 10f,
-                 agentRelativeSize: 0.6f
+                 agentRelativeSize: 0.6f,
+                 minimumSignalTransmissionProbability: -1.0f // Communication always gets through
+                 // Example of a transmission probability function that disallows communication through walls
+                 // calculateSignalTransmissionProbability: (distance, distanceThroughWalls) => {
+                 //     if (distance > 15) return 0.8f;
+                 //     if (distanceThroughWalls > 0.1f) return 0.8f;
+                 //     return 1.0f;
+                 // }  
              );
 
              for (int i = 0; i < 1; i++) {
@@ -312,8 +337,6 @@ namespace Maes {
             
             
             var robotConstraintsLVD = new RobotConstraints(
-                broadcastRange: 0,
-                broadcastBlockedByWalls: false,
                 senseNearbyAgentsRange: 7f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -324,12 +347,13 @@ namespace Maes {
                 environmentTagReadRange: 0f,
                 slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
-                agentRelativeSize: 0.6f
+                agentRelativeSize: 0.6f,
+                minimumSignalTransmissionProbability: 1.1f // Communication never succeeds
             );
             
             var robotConstraintsTNF = new RobotConstraints(
-                broadcastRange: 15,
-                broadcastBlockedByWalls: true,
+                // broadcastRange: 15,
+                // broadcastBlockedByWalls: true,
                 senseNearbyAgentsRange: 12f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -340,12 +364,21 @@ namespace Maes {
                 environmentTagReadRange: 0f,
                 slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
-                agentRelativeSize: 0.6f
+                agentRelativeSize: 0.6f,
+                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) => {
+                    if (distanceThroughWalls > 0) {
+                        return 0.0f;
+                    }
+                    else if (15 < distanceTravelled) {
+                        return 0.0f;
+                    }
+
+                    return 1.0f;
+                },
+                minimumSignalTransmissionProbability: 0.9f
             );
             
             var robotConstraintsRBW = new RobotConstraints(
-                broadcastRange: 0,
-                broadcastBlockedByWalls: false,
                 senseNearbyAgentsRange: 0,
                 senseNearbyAgentsBlockedByWalls: false,
                 automaticallyUpdateSlam: false,
@@ -356,12 +389,13 @@ namespace Maes {
                 environmentTagReadRange: 0f,
                 slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
-                agentRelativeSize: 0.6f
+                agentRelativeSize: 0.6f,
+                minimumSignalTransmissionProbability: 1.1f // Never succeeds
             );
             
             var robotConstraintsSSB = new RobotConstraints(
-                broadcastRange: float.MaxValue,
-                broadcastBlockedByWalls: false,
+                // broadcastRange: float.MaxValue,
+                // broadcastBlockedByWalls: false,
                 senseNearbyAgentsRange: 7.0f,
                 senseNearbyAgentsBlockedByWalls: false,
                 automaticallyUpdateSlam: true,
@@ -372,7 +406,8 @@ namespace Maes {
                 environmentTagReadRange: 0f,
                 slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
-                agentRelativeSize: 0.6f
+                agentRelativeSize: 0.6f,
+                minimumSignalTransmissionProbability: -1.0f // Always higher than -1.0, thus always succeeds
             ); 
 
             for (int i = 0; i < runs; i++) { 
@@ -473,8 +508,6 @@ namespace Maes {
                     1);
 
                 var robotConstraints = new RobotConstraints(
-                    broadcastRange: float.MaxValue,
-                    broadcastBlockedByWalls: false,
                     senseNearbyAgentsRange: 10f,
                     senseNearbyAgentsBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
@@ -485,7 +518,8 @@ namespace Maes {
                     environmentTagReadRange: 4.0f,
                     slamRayTraceRange: 7f,
                     relativeMoveSpeed: 1f,
-                    agentRelativeSize: 0.6f
+                    agentRelativeSize: 0.6f,
+                    minimumSignalTransmissionProbability: -1.0f // Always higher than -1.0f, thus always succeeds
                 );
 
                 if (i % 2 != 0) {
@@ -556,8 +590,6 @@ namespace Maes {
 
                 
                 var robotConstraints = new RobotConstraints(
-                    broadcastRange: 15.0f,
-                    broadcastBlockedByWalls: true,
                     senseNearbyAgentsRange: 10f,
                     senseNearbyAgentsBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
@@ -568,7 +600,18 @@ namespace Maes {
                     environmentTagReadRange: 4.0f,
                     slamRayTraceRange: 7.0f,
                     relativeMoveSpeed: 1f,
-                    agentRelativeSize: 0.6f
+                    agentRelativeSize: 0.6f,
+                    calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) => {
+                        if (distanceThroughWalls > 0) {
+                            return 0.0f;
+                        }
+                        else if (15.0f < distanceTravelled) {
+                            return 0.0f;
+                        }
+
+                        return 1.0f;
+                    },
+                    minimumSignalTransmissionProbability: 0.9f
                 );
 
                 if (i % 2 == 0) {
@@ -604,86 +647,7 @@ namespace Maes {
 
             return scenarios;
         }
-        
-        /// <summary>
-        /// Generates scenarios with the BNM algorithm.<br/>
-        /// <b>WARNING!!!</b>: Algorithm not fully implemented. Will not work as advertised.
-        /// </summary>
-        public static Queue<SimulationScenario> GenerateBrickAndMortarScenarios() {
-            Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
 
-            for (int i = 0; i < 5; i++) {
-                int randomSeed = i + 4 + 1;
-                int minute = 60;
-                var mapConfig = new CaveMapConfig(
-                    60,
-                    60,
-                    randomSeed,
-                    4,
-                    2,
-                    48,
-                    10,
-                    1,
-                    1);
-
-                var buildingConfig = new BuildingMapConfig(
-                    60,
-                    60,
-                    randomSeed,
-                    58,
-                    4,
-                    5,
-                    2,
-                    1,
-                    75,
-                    1);
-
-                var robotConstraints = new RobotConstraints(
-                    broadcastRange: 15.0f,
-                    broadcastBlockedByWalls: true,
-                    senseNearbyAgentsRange: 5f,
-                    senseNearbyAgentsBlockedByWalls: true,
-                    automaticallyUpdateSlam: true,
-                    slamUpdateIntervalInTicks: 10,
-                    slamSynchronizeIntervalInTicks: 10,
-                    slamPositionInaccuracy: 0.5f,
-                    distributeSlam: false,
-                    environmentTagReadRange: 4.0f,
-                    slamRayTraceRange: 7.0f,
-                    relativeMoveSpeed: 1f,
-                    agentRelativeSize: 0.6f
-                );
-                
-                /*scenarios.Enqueue(new SimulationScenario(
-                    seed: randomSeed,
-                    hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
-                    mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 2.0f),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsInBiggestRoom(
-                        map, 
-                        randomSeed, 
-                        1, 
-                        0.6f,
-                        (seed) => new BrickAndMortar(robotConstraints, seed)),
-                    robotConstraints: robotConstraints
-                ));*/
-                
-                scenarios.Enqueue(new SimulationScenario(
-                    seed: randomSeed,
-                    hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
-                    mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
-                        map, 
-                        randomSeed, 
-                        1,
-                        (seed) => new BrickAndMortar(robotConstraints, seed)),
-                    robotConstraints: robotConstraints,
-                    "BM-building-hallway-" + randomSeed
-                ));
-            }
-
-            return scenarios;
-        }
-     
         /// <summary>
         /// Generates scenarios with the SSB algorithm.
         /// </summary>
@@ -717,8 +681,6 @@ namespace Maes {
                     1);
 
                 var robotConstraints = new RobotConstraints(
-                    broadcastRange: float.MaxValue,
-                    broadcastBlockedByWalls: false,
                     senseNearbyAgentsRange: 5f,
                     senseNearbyAgentsBlockedByWalls: true,
                     automaticallyUpdateSlam: true,
@@ -729,7 +691,8 @@ namespace Maes {
                     environmentTagReadRange: 4.0f,
                     slamRayTraceRange: 7.0f,
                     relativeMoveSpeed: 1f,
-                    agentRelativeSize: 0.6f
+                    agentRelativeSize: 0.6f,
+                    minimumSignalTransmissionProbability: -1.0f // Always higher than -1.0, thus always succeeds
                 );
 
                 scenarios.Enqueue(new SimulationScenario(
@@ -781,8 +744,6 @@ namespace Maes {
                 1);
 
             var robotConstraints = new RobotConstraints(
-                broadcastRange: 15.0f,
-                broadcastBlockedByWalls: true,
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -793,7 +754,20 @@ namespace Maes {
                 environmentTagReadRange: 4.0f,
                 slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
-                agentRelativeSize: 0.6f
+                agentRelativeSize: 0.6f,
+                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) => {
+                    // Blocked by walls
+                    if (distanceThroughWalls > 0) {
+                        return 0.0f;
+                    }
+                    // Max distance 15.0f
+                    else if (15.0f < distanceTravelled) {
+                        return 0.0f;
+                    }
+
+                    return 1.0f;
+                },
+                minimumSignalTransmissionProbability: 0.9f
             );
             
             scenarios.Enqueue(new SimulationScenario(

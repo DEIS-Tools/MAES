@@ -12,6 +12,7 @@ using UnityEngine;
 
 namespace Maes {
     public class Simulation : MonoBehaviour, ISimulationUnit {
+        public static Simulation SingletonInstance;
         public int SimulatedLogicTicks { get; private set; } = 0;
         public int SimulatedPhysicsTicks { get; private set; } = 0;
         public float SimulateTimeSeconds { get; private set; } = 0;
@@ -26,6 +27,8 @@ namespace Maes {
 
         [CanBeNull] private MonaRobot _selectedRobot;
         public bool HasSelectedRobot() => _selectedRobot != null;
+        [CanBeNull] private VisibleTagInfoHandler _selectedTag;
+        public bool HasSelectedTag() => _selectedTag != null;
         public ExplorationTracker ExplorationTracker { get; private set; }
         public CommunicationManager _communicationManager;
 
@@ -59,11 +62,19 @@ namespace Maes {
             _selectedRobot = newSelectedRobot;
             if (newSelectedRobot != null) newSelectedRobot.outLine.enabled = true;
             ExplorationTracker.SetVisualizedRobot(newSelectedRobot);
+            if(_selectedRobot == null) SimInfoUIController.ClearSelectedRobot();
             UpdateDebugInfo();
         }
         
         public void SelectFirstRobot() {
             SetSelectedRobot(_robots[0]);
+        }
+
+        public void SetSelectedTag([CanBeNull] VisibleTagInfoHandler newSelectedTag) {
+            if (_selectedTag != null) _selectedTag.outline.enabled = false;
+            _selectedTag = newSelectedTag;
+            if (newSelectedTag != null) newSelectedTag.outline.enabled = true;
+            UpdateDebugInfo();
         }
 
         public void LogicUpdate() {
@@ -96,7 +107,7 @@ namespace Maes {
         }
 
         private void OnDrawGizmos() {
-            _debugVisualizer.Render();
+            // _debugVisualizer.Render();
         }
 
         // ----- Future work -------
@@ -110,9 +121,43 @@ namespace Maes {
 
         public void UpdateDebugInfo() {
             if (_selectedRobot != null) {
-                SimInfoUIController.UpdateAlgorithmDebugInfo(_selectedRobot.ExplorationAlgorithm.GetDebugInfo());
-                SimInfoUIController.UpdateControllerDebugInfo(_selectedRobot.Controller.GetDebugInfo());
+                if (GlobalSettings.IsRosMode) {
+                    SimInfoUIController.UpdateAlgorithmDebugInfo(_selectedRobot.ExplorationAlgorithm.GetDebugInfo());
+                    // SimInfoUIController.UpdateControllerDebugInfo(_selectedRobot.Controller.GetDebugInfo());
+                }
+                else {
+                    SimInfoUIController.UpdateAlgorithmDebugInfo(_selectedRobot.ExplorationAlgorithm.GetDebugInfo());
+                    SimInfoUIController.UpdateControllerDebugInfo(_selectedRobot.Controller.GetDebugInfo());
+                }
+                
             }
+            if (_selectedTag != null) {
+                SimInfoUIController.UpdateTagDebugInfo(_selectedTag.GetDebugInfo());
+            }
+        }
+
+        public void ShowAllTags() {
+            _debugVisualizer.RenderVisibleTags();
+        }
+
+        public void ShowSelectedTags() {
+            if (_selectedRobot != null) {
+                _debugVisualizer.RenderSelectedVisibleTags(_selectedRobot.id);
+            }
+        }
+
+        public void ClearVisualTags() {
+            _debugVisualizer.HideAllTags();
+        }
+
+        public void RenderCommunicationLines() {
+            _debugVisualizer.RenderCommunicationLines();
+        }
+
+        public void Awake() {
+            SingletonInstance = this;
+
+            
         }
     }
 }

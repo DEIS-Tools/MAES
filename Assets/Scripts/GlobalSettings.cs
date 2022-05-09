@@ -25,7 +25,6 @@ namespace Maes {
 
         // Debug visualizer
         public static readonly bool DrawCommunication = true;
-        public static readonly bool ShowEnvironmentTags = true;
 
         // Statistics
         public static readonly bool ShouldWriteCSVResults = false;
@@ -57,7 +56,6 @@ namespace Maes {
             LogicTickDeltaMillis = config.GlobalSettings.LogicTicksDeltaMillis;
             PhysicsTickDeltaMillis = config.GlobalSettings.PhysicsTicksPerLogicUpdate;
             DrawCommunication = config.GlobalSettings.DrawCommunication;
-            ShowEnvironmentTags = config.GlobalSettings.ShowEnvironmentTags;
             ShouldWriteCSVResults = config.GlobalSettings.ShouldWriteCsvResults;
             if (config.GlobalSettings.StatisticsResultPath.Length > 0 && config.GlobalSettings.StatisticsResultPath.ToLower() != "default") {
                 var dir = new DirectoryInfo(config.GlobalSettings.StatisticsResultPath);

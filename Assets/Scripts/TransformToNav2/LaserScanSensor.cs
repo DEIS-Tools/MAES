@@ -159,7 +159,7 @@ public class LaserScanSensor : MonoBehaviour
             directionVector = new Vector3(directionVector.x, directionVector.z, directionVector.y);
             var measurementStart = RangeMetersMin * directionVector + transform.position + Vector3.back * 0.1f;
             var measurementRay = new Ray(measurementStart, directionVector);
-            var foundValidMeasurement = Physics.Raycast(measurementRay, out var hit, RangeMetersMax);
+            var foundValidMeasurement = Physics.Raycast(measurementRay, out var hit, RangeMetersMax, layerMask: 1 << 3);
             // Only record measurement if it's within the sensor's operating range
             if (foundValidMeasurement)
             {

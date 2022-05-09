@@ -2,10 +2,13 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>maes_robot_controller</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="philipholler94@gmail.com">philipholler</maintainer>
-  <license>TODO: License declaration</license>
+  <version>1.0.0</version>
+  <description>The controller with a logic loop for controlling the behavior of the MAES robots</description>
+  <maintainer email="michele.albano@gmail.com">Michele Albano</maintainer>
+  <maintainer email="philipholler94@gmail.com">Philip Holler</maintainer>
+  <maintainer email="info@mza.dk">Malte Zoëga</maintainer>
+  <maintainer email="magnjensen@gmail.com">Magnus Jensen</maintainer>
+  <license>Apache 2.0</license>
 
 
   <exec_depend>rclpy</exec_depend>

@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Maes.ExplorationAlgorithm;
 using Maes.UI;
+using UnityEditor;
 using UnityEngine;
 
 namespace Maes.Robot {
@@ -62,6 +64,23 @@ namespace Maes.Robot {
         public void OnMouseDown() {
             CameraController.singletonInstance.movementTransform = transform;
             OnRobotSelected(this);
+        }
+
+        public void OnMouseEnter() {
+            Tooltip.ShowTooltip_Static($"robot{id}");
+        }
+
+        public void OnMouseExit() {
+            Tooltip.HideTooltip_Static();
+        }
+
+        public GameObject ClaimTag() {
+            var envTagHolder = GameObject.Find("EnvTagHolder");
+            var gameObj = Instantiate(Resources.Load<GameObject>("TagPost"), envTagHolder.transform);
+            gameObj.transform.position = this.transform.position + new Vector3(0,0,-0.1f);
+            gameObj.SetActive(false);
+            gameObj.name = $"robot{0}-" + gameObj.name;
+            return gameObj;
         }
     }
 }

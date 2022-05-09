@@ -162,7 +162,7 @@ local_costmap:
       track_unknown_space: true
       width: 8
       height: 8
-      resolution: 0.2
+      resolution: 0.05
       robot_radius: <robot_radius>
       plugins: ["inflation_layer", "obstacle_layer"]
       inflation_layer:
@@ -207,7 +207,7 @@ global_costmap:
       footprint_padding: 0.3
       use_sim_time: True
       robot_radius: <robot_radius>
-      resolution: 0.2
+      resolution: 0.05
       origin_x: <global_costmap_origin_x>
       origin_y: <global_costmap_origin_y>
       width: <global_costmap_width>

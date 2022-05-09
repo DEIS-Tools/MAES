@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Maes.Map;
 using Maes.Robot;
 using Maes.Robot.Task;
+using Maes.Utilities;
 using Maes.YamlConfig;
 using RosMessageTypes.BuiltinInterfaces;
 using RosMessageTypes.Geometry;
@@ -33,38 +35,39 @@ namespace Maes.ExplorationAlgorithm {
         private int _tick = 0;
         
         // Used to react to cmlVel from ROS
-        private float rosLinearSpeed = 0f;
-        private float rosRotationSpeed = 0f;
+        private float _rosLinearSpeed = 0f;
+        private float _rosRotationSpeed = 0f;
 
         // Service calls from ROS uses a callback function. We need to store the results 
         // and act on them in the next logic tick
-        private List<string> msgsToBroadcast = new List<string>();
-        private List<string> envTagsToDeposit = new List<string>();
+        private List<string> _msgsToBroadcast = new List<string>();
+        private List<string> _envTagsToDeposit = new List<string>();
 
         public void UpdateLogic() {
-            ReactToCmdVel(rosLinearSpeed, rosRotationSpeed);
+            ReactToCmdVel(_rosLinearSpeed, _rosRotationSpeed);
 
-            if(envTagsToDeposit.Count != 0)
+            if(_envTagsToDeposit.Count != 0)
                 ReactToBroadcastRequests();
-            if(msgsToBroadcast.Count != 0)
+            if(_msgsToBroadcast.Count != 0)
                 ReactToDepositTagRequests();
 
             PublishState();
+            
             _tick++;
         }
         
         private void ReactToDepositTagRequests() {
-            foreach (var tagMsg in envTagsToDeposit) {
-                _controller.DepositTag(new RosTag(tagMsg));
+            foreach (var tagMsg in _envTagsToDeposit) {
+                _controller.DepositTag(tagMsg);
             }
-            envTagsToDeposit.Clear();
+            _envTagsToDeposit.Clear();
         }
 
         private void ReactToBroadcastRequests() {
-            foreach (var msg in msgsToBroadcast) {
+            foreach (var msg in _msgsToBroadcast) {
                 _controller.Broadcast(new RosBroadcastMsg(msg, _robotRosId));
             }
-            msgsToBroadcast.Clear();
+            _msgsToBroadcast.Clear();
         }
 
         private void PublishState() {
@@ -73,7 +76,7 @@ namespace Maes.ExplorationAlgorithm {
             var robot_rotation = _worldPosition.rotation.eulerAngles.z - 90f;
             // Flip signs like also done in TransformTreePublisher 
             // TODO: Maybe create utility function for transforming coordinates between ROS and Maes ? - Philip
-            robotPosition = new Vector2(-robotPosition.x, -robotPosition.y);
+            robotPosition = Geometry.ToROSCoord(robotPosition);
             // ---- tick ---- //
             state.tick = _tick;
             // ---- Status ---- //
@@ -100,9 +103,9 @@ namespace Maes.ExplorationAlgorithm {
 
             // ---- Nearby environment tags ---- //
             var tags = _controller.ReadNearbyTags();
-            var rosTagsWithPos = tags.Select(e => (((RosTag)e.Item).msg, GetRelativePosition(robotPosition, robot_rotation, e)));
+            var rosTagsWithPos = tags.Select(e => (e.Item.Content, GetRelativePosition(robotPosition, robot_rotation, e)));
             var rosTagAsMsgs =
-                    rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.msg, new Vector2DMsg(e.Item2.x, e.Item2.y)));
+                    rosTagsWithPos.Select(e => new EnvironmentTagMsg(e.Content, new Vector2DMsg(e.Item2.x, e.Item2.y)));
             state.tags_nearby = rosTagAsMsgs.ToArray();
 
             // ---- Publish to ROS ---- //
@@ -149,13 +152,28 @@ namespace Maes.ExplorationAlgorithm {
         }
 
         void ReceiveRosCmd(TwistMsg cmdVel) {
-            rosLinearSpeed = (float)cmdVel.linear.x;
-            rosRotationSpeed = (float)cmdVel.angular.z;
+            _rosLinearSpeed = (float)cmdVel.linear.x;
+            _rosRotationSpeed = (float)cmdVel.angular.z;
             Debug.Log($"Robot {_controller.GetRobotID()}: Received cmdVel twist: {cmdVel.ToString()}");
         }
 
         public string GetDebugInfo() {
-            return "";
+            var info = new StringBuilder();
+            
+            var robotPosition = new Vector2(-_worldPosition.position.x, -_worldPosition.position.y);
+
+            info.AppendLine($"Robot ID: {this._robotRosId}");
+            info.AppendLine($"Namespace: {this._topicPrefix}");
+            info.AppendLine($"Position: ({robotPosition.x},{robotPosition.y})");
+            info.AppendLine($"Status: {Enum.GetName(typeof(RobotStatus), _controller.GetStatus())}");
+            info.AppendLine($"Is Colliding: {this._controller.IsCurrentlyColliding()}");
+            info.AppendLine($"Number of nearby robots: {_controller.SenseNearbyRobots().Count}");
+            info.AppendLine($"Number Incoming broadcast msg: {_controller.ReceiveBroadcast().Count}");
+            info.AppendLine($"Number of nearby env tags: {_controller.ReadNearbyTags().Count}");
+            info.AppendLine($"rosLinearSpeed: {this._rosLinearSpeed}");
+            info.AppendLine($"rosRotationalSpeed: {this._rosRotationSpeed}");
+
+            return info.ToString();
         }
         
         public void SetController(Robot2DController controller) {
@@ -178,7 +196,7 @@ namespace Maes.ExplorationAlgorithm {
         }
 
         private DepositTagResponse DepositTag(DepositTagRequest req) {
-            _controller.DepositTag(new RosTag(req.msg));
+            _controller.DepositTag(req.msg);
             return new DepositTagResponse(true);
         }
 
@@ -201,25 +219,6 @@ namespace Maes.ExplorationAlgorithm {
             var x = myPosition.x + (o.Distance * Mathf.Cos(Mathf.Deg2Rad * ((o.RelativeAngle + globalAngle) % 360)));
             var y = myPosition.y + (o.Distance * Mathf.Sin(Mathf.Deg2Rad * ((o.RelativeAngle + globalAngle) % 360)));
             return new Vector2(x, y);
-        }
-
-        private class RosTag : EnvironmentTaggingMap.ITag {
-            public string msg;
-
-            public RosTag(string msg) {
-                this.msg = msg;
-            }
-            
-            private const float TagSquareSize = 0.3f;
-            private readonly Vector3 _tagCubeSize = new Vector3(TagSquareSize, TagSquareSize, TagSquareSize);
-            public void DrawGizmos(Vector3 position) {
-                Gizmos.color = Color.magenta;
-                Gizmos.DrawCube(new Vector3(position.x, position.y, -_tagCubeSize.z / 2f), _tagCubeSize);
-            }
-
-            public override string ToString() {
-                return $"Rostag - {nameof(msg)}: {msg}";
-            }
         }
 
         public object SaveState() {
