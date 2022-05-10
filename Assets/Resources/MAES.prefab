@@ -446,7 +446,7 @@ MonoBehaviour:
   AllVisualizeTagsButton: {fileID: 2610927066240571758}
   VisualizeTagsButton: {fileID: 2610927065333549549}
   StickyCameraButton: {fileID: 2610927066652511427}
-  simulator: {fileID: 2201964410496377778}
+  simulationManager: {fileID: 2201964410496377778}
 --- !u!1 &2610927064833849629
 GameObject:
   m_ObjectHideFlags: 0
@@ -6367,7 +6367,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   movementTransform: {fileID: 0}
   currentCam: {fileID: 0}
-  Simulator: {fileID: 2201964410496377778}
+  simulationManager: {fileID: 2201964410496377778}
   movementSpeed: 1
   movementTime: 8
   rotationAmount: 1
@@ -7991,6 +7991,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2610927065332065997}
     - target: {fileID: 4230307919047253344, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
+      propertyPath: simulationManager
+      value: 
+      objectReference: {fileID: 2201964410496377778}
+    - target: {fileID: 4230307919047253344, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: fastAsPossibleButton
       value: 
       objectReference: {fileID: 2610927065898763013}
@@ -8100,7 +8104,7 @@ PrefabInstance:
       objectReference: {fileID: 2610927064789841707}
     - target: {fileID: 4230307919047253350, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
       propertyPath: m_Name
-      value: Simulator
+      value: SimulationManager
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 78450a8afcd5aeea8977789bce2b03ad, type: 3}
