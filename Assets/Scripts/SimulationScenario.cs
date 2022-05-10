@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
+using Maes.ExplorationAlgorithm.RandomBallisticWalk;
 using Maes.Map;
 using Maes.Map.MapGen;
 using Maes.Robot;
+using UnityEngine;
 
 namespace Maes
 {
@@ -26,14 +29,25 @@ namespace Maes
         public readonly RobotConstraints RobotConstraints;
         public readonly string StatisticsFileName;
 
-        public SimulationScenario(int seed, SimulationEndCriteriaDelegate hasFinishedSim, MapFactory mapSpawner, RobotFactory robotSpawner, RobotConstraints robotConstraints, string statisticsFileName)
+        public SimulationScenario(
+            int seed, 
+            SimulationEndCriteriaDelegate hasFinishedSim=null, 
+            MapFactory mapSpawner=null, 
+            RobotFactory robotSpawner=null, 
+            RobotConstraints? robotConstraints=null, 
+            string statisticsFileName=null
+            )
         {
             Seed = seed;
-            HasFinishedSim = hasFinishedSim;
-            MapSpawner = mapSpawner;
-            RobotSpawner = robotSpawner;
-            RobotConstraints = robotConstraints;
-            StatisticsFileName = statisticsFileName;
+            HasFinishedSim = hasFinishedSim ?? (simulation => simulation.ExplorationTracker.ExploredProportion > 0.99f || simulation.SimulatedLogicTicks > 3600 * 10);
+            // Default to generating a cave map when no map generator is specified
+            MapSpawner = mapSpawner ?? (generator => generator.GenerateCaveMap(new CaveMapConfig(seed)));
+            RobotSpawner = robotSpawner ?? ((map, spawner) => spawner.SpawnRobotsTogether( map, seed, 2, 
+                Vector2Int.zero, (robotSeed) => new RandomExplorationAlgorithm(robotSeed)));
+            RobotConstraints = robotConstraints ?? new RobotConstraints();
+            StatisticsFileName = statisticsFileName ?? $"statistics_{DateTime.Now.ToShortDateString()} " +
+                $"_${DateTime.Now.ToShortTimeString()}";
+            
         }
         
     }
