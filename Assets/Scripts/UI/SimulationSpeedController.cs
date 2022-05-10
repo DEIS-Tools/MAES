@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace Maes.UI {
     public class SimulationSpeedController : MonoBehaviour {
-        public Simulator simulator;
+        public SimulationManager simulationManager;
         public Button pauseButton;
         public Button playButton;
         public Button fastForwardButton;
@@ -11,7 +11,7 @@ namespace Maes.UI {
         public Button stepperButton;
 
         private void Start() {
-            UpdateButtonsUI(simulator.PlayState);
+            UpdateButtonsUI(simulationManager.PlayState);
             pauseButton.onClick.AddListener(Pause);
             playButton.onClick.AddListener(Play);
             fastForwardButton.onClick.AddListener(FastForward);
@@ -53,7 +53,7 @@ namespace Maes.UI {
         }
 
         private void AttemptSwitchState(SimulationPlayState newPlayState) {
-            var actualState = simulator.AttemptSetPlayState(newPlayState);
+            var actualState = simulationManager.AttemptSetPlayState(newPlayState);
             UpdateButtonsUI(actualState);
         }
     }

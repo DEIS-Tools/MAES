@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // ReSharper disable ConvertIfStatementToNullCoalescingAssignment
 
@@ -12,7 +13,7 @@ namespace Maes.UI {
         private List<CamAssembly> _cams;
         public Camera currentCam;
 
-        public Simulator Simulator;
+        [FormerlySerializedAs("Simulator")] public SimulationManager simulationManager;
 
         public float movementSpeed;
         public float movementTime;
@@ -78,9 +79,9 @@ namespace Maes.UI {
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 movementTransform = null;
                 // Notify current simulation that no robot is selected
-                Simulator.GetCurrentSimulation().SetSelectedRobot(null);
-                Simulator.GetCurrentSimulation().SetSelectedTag(null);
-                Simulator.GetCurrentSimulation().ClearVisualTags();
+                simulationManager.GetCurrentSimulation().SetSelectedRobot(null);
+                simulationManager.GetCurrentSimulation().SetSelectedTag(null);
+                simulationManager.GetCurrentSimulation().ClearVisualTags();
             }
         }
 

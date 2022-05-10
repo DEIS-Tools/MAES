@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Maes.Map.Visualization;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Maes.UI {
@@ -34,7 +35,7 @@ namespace Maes.UI {
         private Color _mapVisualizationColor = Color.white;
         private Color _mapVisualizationSelectedColor = new Color(150 / 255f, 200 / 255f, 150 / 255f);
 
-        public Simulator simulator;
+        [FormerlySerializedAs("simulator")] public SimulationManager simulationManager;
         // Represents a function that modifies the given simulation in some way
         // (for example by changing map visualization mode)
         delegate void SimulationModification(Simulation? simulation);
@@ -110,12 +111,12 @@ namespace Maes.UI {
 
         public void Update() {
             if (_visualizingAllTags) {
-                simulator.CurrentSimulation.ShowAllTags();
+                simulationManager.CurrentSimulation.ShowAllTags();
             }
             else if (_visualizingSelectedTags) {
-                simulator.CurrentSimulation.ShowSelectedTags();
+                simulationManager.CurrentSimulation.ShowSelectedTags();
             }
-            simulator.CurrentSimulation.RenderCommunicationLines();
+            simulationManager.CurrentSimulation.RenderCommunicationLines();
         }
 
         public void ClearSelectedRobot() {
@@ -126,7 +127,7 @@ namespace Maes.UI {
         }
 
         private void ToggleVisualizeTagsButtons(Button button) {
-            simulator.CurrentSimulation.ClearVisualTags();
+            simulationManager.CurrentSimulation.ClearVisualTags();
             if (button.name == "AllVisualizeTags") {
                 _visualizingSelectedTags = false;
                 VisualizeTagsButton.image.color = _mapVisualizationColor;
@@ -145,11 +146,11 @@ namespace Maes.UI {
         // Whenever the simulator creates a new simulation the most recent visualization change is repeated 
         private void ExecuteAndRememberMapVisualizationModification(SimulationModification modificationFunc) {
             _mostRecentMapVisualizationModification = modificationFunc;
-            modificationFunc(simulator.CurrentSimulation);
+            modificationFunc(simulationManager.CurrentSimulation);
         }
 
         private void ExecuteAndRememberTagVisualization(SimulationModification modificationFunc) {
-            modificationFunc(simulator.CurrentSimulation);
+            modificationFunc(simulationManager.CurrentSimulation);
         }
 
         // Highlights the selected map visualization button
