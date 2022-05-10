@@ -11,7 +11,7 @@ namespace Maes {
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 
         public GameObject SimulationPrefab;
-        private Queue<SimulationScenario> _scenarios;
+        private Queue<SimulationScenario> _scenarios = new Queue<SimulationScenario>();
 
         public SimulationSpeedController UISpeedController;
         public GameObject UIControllerDebugTitle;
@@ -37,17 +37,8 @@ namespace Maes {
             Physics.autoSimulation = false;
             Physics2D.simulationMode = SimulationMode2D.Script;
             
-            if (GlobalSettings.IsRosMode) {
-                _scenarios = ScenarioGenerator.GenerateROS2Scenario();
-            } else {
-                _scenarios = ScenarioGenerator.GenerateYoutubeVideoScenarios();
-            }
-            CreateSimulation(_scenarios.Dequeue());
-            if (Application.isBatchMode) {
-                AttemptSetPlayState(SimulationPlayState.FastAsPossible);
-            } 
             // Adapt UI for ros mode
-            else if (GlobalSettings.IsRosMode) {
+            if (GlobalSettings.IsRosMode) {
                 CreateRosClockAndVisualiserObjects();
                 RemoveFastForwardButtonsFromControlPanel();
                 UIControllerDebugTitle.SetActive(false);
@@ -105,6 +96,7 @@ namespace Maes {
         private void FixedUpdate() {
             if (_playState == SimulationPlayState.Paused) {
                 if (Application.isBatchMode) {
+                    // The simulation will only enter paused mode after finishing when in headless/batch mode
                     Application.Quit(0);
                 }
                 return;
@@ -112,7 +104,7 @@ namespace Maes {
 
             long startTimeMillis = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             int millisPerFixedUpdate = (int) (1000f * Time.fixedDeltaTime);
-            // Subtract 5 milliseconds to allow for other procedures such as rendering to occur between updates 
+            // Subtract 8 milliseconds to allow for other procedures such as rendering to occur between updates 
             millisPerFixedUpdate -= 8;
             long fixedUpdateEndTime = startTimeMillis + millisPerFixedUpdate;
 
@@ -220,5 +212,17 @@ namespace Maes {
         public Simulation GetCurrentSimulation() {
             return CurrentSimulation;
         }
+
+        public void EnqueueScenario(SimulationScenario simulationScenario) {
+            if (_scenarios.Count > 0)
+                _scenarios.Enqueue(simulationScenario);
+            else // This is the first scenario, initialize it immediately 
+                CreateSimulation(simulationScenario);
+        }
+
+        public bool HasActiveScenario() {
+            return _currentScenario is not null;
+        }
+        
     }
 }

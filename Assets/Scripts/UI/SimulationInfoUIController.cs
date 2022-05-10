@@ -35,7 +35,7 @@ namespace Maes.UI {
         private Color _mapVisualizationColor = Color.white;
         private Color _mapVisualizationSelectedColor = new Color(150 / 255f, 200 / 255f, 150 / 255f);
 
-        [FormerlySerializedAs("simulator")] public SimulationManager simulationManager;
+        public SimulationManager simulationManager;
         // Represents a function that modifies the given simulation in some way
         // (for example by changing map visualization mode)
         delegate void SimulationModification(Simulation? simulation);
@@ -110,13 +110,16 @@ namespace Maes.UI {
         }
 
         public void Update() {
-            if (_visualizingAllTags) {
-                simulationManager.CurrentSimulation.ShowAllTags();
+            var currentSim = simulationManager.CurrentSimulation;
+            if (currentSim is not null) {
+                if (_visualizingAllTags) {
+                    simulationManager.CurrentSimulation.ShowAllTags();
+                }
+                else if (_visualizingSelectedTags) {
+                    simulationManager.CurrentSimulation.ShowSelectedTags();
+                }
+                simulationManager.CurrentSimulation.RenderCommunicationLines();
             }
-            else if (_visualizingSelectedTags) {
-                simulationManager.CurrentSimulation.ShowSelectedTags();
-            }
-            simulationManager.CurrentSimulation.RenderCommunicationLines();
         }
 
         public void ClearSelectedRobot() {

@@ -1,5 +1,9 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using Maes.UI;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Maes {
     public class Simulator {
@@ -18,8 +22,41 @@ namespace Maes {
         public static Simulator GetInstance() {
             return _instance ??= new Simulator();
         }
+        
+        /// <summary>
+        /// This method is used to start the simulation in a predefined configuration that will change depending on
+        /// whether the simulation is in ros mode or not.
+        /// </summary>
+        public void DefaultStart() {
+            IEnumerable<SimulationScenario> generatedScenarios;
+            if (GlobalSettings.IsRosMode) {
+                generatedScenarios = ScenarioGenerator.GenerateROS2Scenario();
+            } else {
+                generatedScenarios = ScenarioGenerator.GenerateYoutubeVideoScenarios();
+            }
+            EnqueueScenarios(generatedScenarios);
+            if (Application.isBatchMode) {
+                _simulationManager.AttemptSetPlayState(SimulationPlayState.FastAsPossible);
+            } 
+            StartSimulation();
+        }
 
+        public void EnqueueScenario(SimulationScenario scenario) {
+            _simulationManager.EnqueueScenario(scenario);
+        }
+        public void EnqueueScenarios(IEnumerable<SimulationScenario> scenario) {
+            foreach (var simulationScenario in scenario)
+                _simulationManager.EnqueueScenario(simulationScenario);
+        }
+        
         public void StartSimulation() {
+            if (_simulationManager.PlayState == SimulationPlayState.Play)
+                throw new InvalidOperationException("Cannot start simulation when it is already in play mode");
+            if (!_simulationManager.HasActiveScenario())
+                throw new InvalidOperationException("You must enqueue at least one scenario before starting the" +
+                                                    " simulation");
+            
+            
             _simulationManager.AttemptSetPlayState(SimulationPlayState.Play);
         }
         
