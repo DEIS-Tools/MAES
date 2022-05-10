@@ -47,10 +47,18 @@ namespace Maes.Robot {
         public readonly float AgentRelativeSize;
 
 
-        public RobotConstraints(float senseNearbyAgentsRange,
-            bool senseNearbyAgentsBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks,
-            int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam,
-            float environmentTagReadRange, float slamRayTraceRange, float relativeMoveSpeed, float agentRelativeSize, 
+        public RobotConstraints(
+            float senseNearbyAgentsRange=20f,
+            bool senseNearbyAgentsBlockedByWalls=true, 
+            bool automaticallyUpdateSlam=true, 
+            int slamUpdateIntervalInTicks=10,
+            int slamSynchronizeIntervalInTicks=10, 
+            float slamPositionInaccuracy=0.2f, 
+            bool distributeSlam=false,
+            float environmentTagReadRange=2f, 
+            float slamRayTraceRange=20f, 
+            float relativeMoveSpeed=1f, 
+            float agentRelativeSize=0.6f, 
             SignalTransmissionProbability? calculateSignalTransmissionProbability = null, 
             float minimumSignalTransmissionProbability = 0.9f, int? slamRayTraceCount = null) : this() {
 
