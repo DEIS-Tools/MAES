@@ -162,9 +162,9 @@ namespace Maes {
                 };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(
-                        width,
-                        height,
                         randomSeed,
+                        width, 
+                        height,
                         4,
                         4,
                         45,
@@ -172,9 +172,9 @@ namespace Maes {
                         10,
                         1);
                     var buildingConfig = new BuildingMapConfig(
+                        randomSeed,
                         width,
                         height,
-                        randomSeed,
                         20,
                         4,
                         6,
@@ -257,9 +257,9 @@ namespace Maes {
                  var randomSeed = i;
 
                  var caveConfig = new CaveMapConfig(
+                     randomSeed,
                      width,
                      height,
-                     randomSeed,
                      4,
                      4,
                      45,
@@ -267,9 +267,9 @@ namespace Maes {
                      10,
                      1);
                  var buildingConfig = new BuildingMapConfig(
+                     randomSeed,
                      width,
                      height,
-                     randomSeed,
                      20,
                      4,
                      6,
@@ -421,9 +421,9 @@ namespace Maes {
                     };
                 foreach (var (width, height) in sizes) {
                     var caveConfig = new CaveMapConfig(
+                        randomSeed,
                         width,
                         height,
-                        randomSeed,
                         4,
                         4,
                         45,
@@ -431,9 +431,9 @@ namespace Maes {
                         10,
                         1);
                     var buildingConfig = new BuildingMapConfig(
+                        randomSeed,
                         width,
                         height,
-                        randomSeed,
                         20,
                         4,
                         6,
@@ -485,9 +485,9 @@ namespace Maes {
                 int randomSeed = i + 4 + 1;
                 int minute = 60;
                 var mapConfig = new CaveMapConfig(
-                    10,
-                    10,
                     randomSeed,
+                    10,
+                    10,
                     4,
                     4,
                     0,
@@ -496,9 +496,9 @@ namespace Maes {
                     1);
 
                 var buildingConfig = new BuildingMapConfig(
-                    50,
-                    50,
                     randomSeed,
+                    50,
+                    50,
                     20,
                     4,
                     6,
@@ -566,9 +566,9 @@ namespace Maes {
                 int randomSeed = i + 4 + 1;
                 int minute = 60;
                 var mapConfig = new CaveMapConfig(
-                    60,
-                    60,
                     randomSeed,
+                    60,
+                    60,
                     4,
                     2,
                     0,
@@ -577,9 +577,9 @@ namespace Maes {
                     1);
 
                 var buildingConfig = new BuildingMapConfig(
-                    30,
-                    30,
                     randomSeed,
+                    30,
+                    30,
                     58,
                     4,
                     5,
@@ -658,9 +658,9 @@ namespace Maes {
                 int randomSeed = i + 4 + 1;
                 int minute = 60;
                 var caveConfig = new CaveMapConfig(
-                    60,
-                    60,
                     randomSeed,
+                    60,
+                    60,
                     4,
                     2,
                     48,
@@ -669,9 +669,9 @@ namespace Maes {
                     1);
 
                 var buildingConfig = new BuildingMapConfig(
-                    60,
-                    60,
                     randomSeed,
+                    60,
+                    60,
                     58,
                     4,
                     5,
@@ -721,9 +721,9 @@ namespace Maes {
             int randomSeed = 4 + 2;
 
             var mapConfig = new CaveMapConfig(
-                100,
-                100,
                 randomSeed,
+                100,
+                100,
                 4,
                 2,
                 48,
@@ -732,9 +732,9 @@ namespace Maes {
                 1);
 
             var buildingConfig = new BuildingMapConfig(
-                200,
-                200,
                 randomSeed,
+                200,
+                200,
                 58,
                 4,    
                 5,

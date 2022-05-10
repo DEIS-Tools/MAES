@@ -60,7 +60,8 @@ namespace Maes.Robot {
             float relativeMoveSpeed=1f, 
             float agentRelativeSize=0.6f, 
             SignalTransmissionProbability? calculateSignalTransmissionProbability = null, 
-            float minimumSignalTransmissionProbability = 0.9f, int? slamRayTraceCount = null) : this() {
+            float minimumSignalTransmissionProbability = 0.9f, 
+            int? slamRayTraceCount = null) : this() {
 
             SenseNearbyAgentsRange = senseNearbyAgentsRange;
             SenseNearbyAgentsBlockedByWalls = senseNearbyAgentsBlockedByWalls;

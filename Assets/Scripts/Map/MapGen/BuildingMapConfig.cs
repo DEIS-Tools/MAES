@@ -27,9 +27,9 @@ namespace Maes.Map.MapGen {
         public readonly int borderSize;
 
         public BuildingMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
+            randomSeed: seed,
             widthInTiles: config.Map.WidthInTiles,
             heightInTiles: config.Map.HeightInTiles,
-            randomSeed: seed,
             maxHallInPercent: config.Map.BuildingConfig.MaxHallInPercent,
             hallWidth: config.Map.BuildingConfig.HallWidth,
             minRoomSideLength: config.Map.BuildingConfig.MinRoomSideLength,
@@ -41,9 +41,16 @@ namespace Maes.Map.MapGen {
             
         }
         
-        public BuildingMapConfig(int widthInTiles, int heightInTiles, int randomSeed, float maxHallInPercent,
-            int hallWidth, int minRoomSideLength, uint doorWidth, int doorPadding, uint roomSplitChancePercent,
-            int borderSize) {
+        public BuildingMapConfig(
+            int randomSeed, 
+            int widthInTiles=50, int heightInTiles=50, 
+            float maxHallInPercent=20,
+            int hallWidth=4, 
+            int minRoomSideLength=6, 
+            uint doorWidth=2, 
+            int doorPadding=2, 
+            uint roomSplitChancePercent=85,
+            int borderSize=1) {
             if ((2 * doorPadding + doorWidth) > minRoomSideLength) {
                 throw new ArgumentOutOfRangeException(
                     "Door width cannot be bigger than the smallest side lenght of rooms plus two times doorPadding");
