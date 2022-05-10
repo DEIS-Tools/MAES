@@ -3,7 +3,7 @@ using Maes.Map;
 using UnityEngine;
 
 namespace Maes.ExplorationAlgorithm.BrickAndMortar {
-    public class BrickAndMortarTag: EnvironmentTaggingMap.ITag {
+    /*public class BrickAndMortarTag: EnvironmentTaggingMap.ITag {
 
         public BrickAndMortar.TileStatus Status;
         public readonly int ID;
@@ -44,11 +44,11 @@ namespace Maes.ExplorationAlgorithm.BrickAndMortar {
         private Color _exploredColor = new Color(50f / 255f, 200f / 255f, 180f / 255f, 1f);
         private Color _visitedColor = new Color(50f / 255f, 50f / 255f, 50f / 255f, 1f);
 
-        public void DrawGizmos(Vector3 position) {
+        public void DrawTag(Vector3 position) {
             Gizmos.color = Status == BrickAndMortar.TileStatus.Visited ? _visitedColor : _exploredColor;
             Gizmos.DrawCube(new Vector3(position.x, position.y, -_tagCubeSize.z / 2f), _tagCubeSize);
         }
         
         
-    }
+    }*/
 }

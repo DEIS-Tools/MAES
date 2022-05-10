@@ -11,7 +11,8 @@ using Vector3 = UnityEngine.Vector3;
 namespace Maes.Map.MapGen {
     public class MapGenerator : MonoBehaviour {
         public Transform plane;
-        public Transform innerWalls;
+        public Transform innerWalls2D;
+        public Transform innerWalls3D;
         public Transform wallRoof;
 
         public MeshGenerator meshGenerator;
@@ -24,9 +25,9 @@ namespace Maes.Map.MapGen {
             newPosition.z = -wallHeight;
             wallRoof.position = newPosition;
 
-            newPosition = innerWalls.position;
+            newPosition = innerWalls2D.position;
             newPosition.z = -wallHeight;
-            innerWalls.position = newPosition;
+            innerWalls2D.position = newPosition;
         }
 
         private void ResizePlaneToFitMap(int bitMapHeight, int bitMapWidth, float padding = 0.1f) {
@@ -478,6 +479,28 @@ namespace Maes.Map.MapGen {
 
             MovePlaneAndWallRoofToFitWallHeight(wallHeight);
 
+            return collisionMap;
+        }
+        
+        /// <summary>
+        /// Method for creating a map from an array of ints {0, 1}.
+        /// </summary>
+        public SimulationMap<bool> CreateMapFromBitMap(int[,] bitmap, float wallHeight, int borderSize) {
+            // Clear and destroy objects from previous map
+            clearMap();
+
+            bitmap = CreateBorderedMap(bitmap, bitmap.GetLength(0), bitmap.GetLength(1), borderSize);
+            var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(0, 0, bitmap);
+            
+            MeshGenerator meshGen = GetComponent<MeshGenerator>();
+            var collisionMap = meshGen.GenerateMesh(bitmap, wallHeight,
+                true, survivingRooms);
+
+            // Rotate to fit 2D view
+            plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
+            ResizePlaneToFitMap(bitmap.GetLength(0), bitmap.GetLength(1));
+            MovePlaneAndWallRoofToFitWallHeight(wallHeight);
+            
             return collisionMap;
         }
 

@@ -89,14 +89,14 @@ namespace Maes.Robot {
         /// Once placed a tag cannot be removed.
         /// </summary>
         /// <param name="tag">The tag of type ITag that will be deposited</param>
-        void DepositTag(EnvironmentTaggingMap.ITag tag);
+        void DepositTag(String content);
         
         
         /// <summary>
         /// Reads tags that are within tag reading range (determined by the RobotConfiguration of the simulation)
         /// </summary>
         /// <returns> a list of all the tags within tag reading range of the robot</returns>
-        List<RelativeObject<EnvironmentTaggingMap.ITag>> ReadNearbyTags();
+        List<RelativeObject<EnvironmentTag>> ReadNearbyTags();
         
         public readonly struct DetectedWall {
             public readonly float distance;

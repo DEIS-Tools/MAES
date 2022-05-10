@@ -1,4 +1,5 @@
 using System;
+using Maes.YamlConfig;
 
 namespace Maes.Map.MapGen {
     public struct BuildingMapConfig {
@@ -25,8 +26,23 @@ namespace Maes.Map.MapGen {
 
         public readonly int borderSize;
 
+        public BuildingMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
+            widthInTiles: config.Map.WidthInTiles,
+            heightInTiles: config.Map.HeightInTiles,
+            randomSeed: seed,
+            maxHallInPercent: config.Map.BuildingConfig.MaxHallInPercent,
+            hallWidth: config.Map.BuildingConfig.HallWidth,
+            minRoomSideLength: config.Map.BuildingConfig.MinRoomSideLength,
+            doorWidth: config.Map.BuildingConfig.DoorWidth,
+            doorPadding: config.Map.BuildingConfig.DoorPadding,
+            roomSplitChancePercent: config.Map.BuildingConfig.RoomSplitChance,
+            borderSize: config.Map.BorderSize
+            ) {
+            
+        }
+        
         public BuildingMapConfig(int widthInTiles, int heightInTiles, int randomSeed, float maxHallInPercent,
-            int hallWidth, float minRoomSideLength, uint doorWidth, int doorPadding, uint roomSplitChancePercent,
+            int hallWidth, int minRoomSideLength, uint doorWidth, int doorPadding, uint roomSplitChancePercent,
             int borderSize) {
             if ((2 * doorPadding + doorWidth) > minRoomSideLength) {
                 throw new ArgumentOutOfRangeException(

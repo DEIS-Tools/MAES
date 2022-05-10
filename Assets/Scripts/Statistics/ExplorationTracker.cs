@@ -30,12 +30,10 @@ namespace Maes.Statistics {
         private int _currentTick = 0;
 
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
-        // Coverage is measured in 'mini-tiles'. Each large map tile consists of 4 mini-tiles, // TODO: Is is actually measured in mini tiles?
+        // Coverage is measured in 'mini-tiles'. Each large map tile consists of 4 mini-tiles, 
         // where each mini-tile is composed of two triangles
         public float CoverageProportion => CoveredMiniTiles / (float) _coverableTiles;
         
-        // private readonly bool[,] _isCovered;
-        // private readonly bool[,] _canBeCovered;
         private readonly int _coverableTiles;
         private bool _isFirstTick = true;
         private RobotConstraints _constraints;
@@ -73,7 +71,7 @@ namespace Maes.Statistics {
             
             // Register all coverable tiles
             for (int x = 0; x < collisionMap.WidthInTiles; x++) {
-                for (int y = 0; y < collisionMap.WidthInTiles; y++) {
+                for (int y = 0; y < collisionMap.HeightInTiles; y++) {
                     var tileCells = collisionMap.GetTileByLocalCoordinate(x, y).GetTriangles();
                     var explorationCells = _explorationMap.GetTileByLocalCoordinate(x, y).GetTriangles();
 
@@ -98,7 +96,7 @@ namespace Maes.Statistics {
         private void UpdateCoverageStatus(MonaRobot robot) {
             var newlyCoveredCells = new List<(int, ExplorationCell)> {};
             var robotPos = robot.transform.position;
-            var coverageRadius = robot.Controller.Constraints.RobotRelativeSize / 3f;
+            var coverageRadius = robot.Controller.Constraints.RobotRelativeSize / 1.5f;
             // The maximum distance between the robot and the center of a tile
             // that would cause that tile to be considered covered 
             var centerCoverageRadius = coverageRadius + 0.25f;
@@ -109,18 +107,35 @@ namespace Maes.Statistics {
             for (int x = -1; x <= 1; x++) {
                 for (int y = -1; y <= 1; y++) {
                     var tilePosition = robotMiniTilePos + new Vector2(x * 0.5f, y * 0.5f);
-                    // Only consider this tile if they are within coverage range in obth x- and y-axis
-                    if (Mathf.Max(Mathf.Abs(tilePosition.x - robotPos.x), Mathf.Abs(tilePosition.y - robotPos.y)) > centerCoverageRadius)
-                        continue;
+                    // ------------------------------------------------------------------------------------------------
+                    // ** The following commented code is bugged - It can be reintroduced and debugged if we need more
+                    //    precise coverage tracking. If left commented, all immediate neighbour tiles will be considered
+                    //    covered regardless of distance from the robot. **
+                    // ------------------------------------------------------------------------------------------------
+                    // var centerOffsetX = tilePosition.x < 0 ? -0.25f : 0.25f;
+                    // var centerOffsetY = tilePosition.y < 0 ? -0.25f : 0.25f;
+                    // // const float centerOffset = 0.25f;
+                    // var tileCenterX = Mathf.Floor(tilePosition.x) + centerOffsetX + Mathf.Round(Mathf.Abs(tilePosition.x) % 1.0f) * 0.5f;
+                    // var tileCenterY = Mathf.Floor(tilePosition.y) + centerOffsetY + Mathf.Round(Mathf.Abs(tilePosition.y) % 1.0f) * 0.5f;
+                    // Debug.Log($"Checking coverage for tile with coordinates ({tileCenterX}, {tileCenterY})");
+                    //
+                    // // Only consider this tile if they are within coverage range in both x- and y-axis
+                    // if (Mathf.Max(Mathf.Abs(tileCenterX - robotPos.x), Mathf.Abs(tileCenterY - robotPos.y)) > centerCoverageRadius && false)
+                    //     continue;
 
                     var (triangle1, triangle2) = 
                     _explorationMap.GetMiniTileTrianglesByWorldCoordinates(tilePosition);
+                    if (!triangle1.Item2.CanBeCovered)
+                        continue; // Skip this mini tile if it is not coverable
+                    
                     if (!triangle1.Item2.IsCovered) {
-                        CoveredMiniTiles++; // This tile was not covered before, register as first coverage
+                        // This tile was not covered before, register as first coverage
+                        CoveredMiniTiles++; 
                         newlyCoveredCells.Add(triangle1);
                         newlyCoveredCells.Add(triangle2);
                     }
                     
+                    // Register coverage (both repeated and first time) for other statistics such as the heat map 
                     triangle1.Item2.RegisterCoverage(_currentTick);
                     triangle2.Item2.RegisterCoverage(_currentTick);
                 }   
@@ -209,7 +224,7 @@ namespace Maes.Statistics {
             _selectedRobot = robot;
             if (_selectedRobot != null)
                 SetVisualizationMode(new CurrentlyVisibleAreaVisualization(_explorationMap, _selectedRobot.Controller));
-            else if (_currentVisualizationMode is CurrentlyVisibleAreaVisualization) 
+            else 
                 // Revert to all robots exploration visualization when current robot is deselected
                 // while visualization mode is based on the selected robot
                 SetVisualizationMode(new AllRobotsExplorationVisualization(_explorationMap));
@@ -235,6 +250,12 @@ namespace Maes.Statistics {
             if (_selectedRobot == null)
                 throw new Exception("Cannot change to 'ShowSelectedRobotVisibleArea' visualization mode when no robot is selected");
             SetVisualizationMode(new CurrentlyVisibleAreaVisualization(_explorationMap, _selectedRobot.Controller));
+        }
+
+        public void ShowSelectedRobotSlamMap() {
+            if (_selectedRobot == null)
+                throw new Exception("Cannot change to 'ShowSelectedRobotSlamMap' visualization mode when no robot is selected");
+            SetVisualizationMode(new SelectedRobotSlamMapVisualization(_explorationMap, _selectedRobot.Controller));
         }
 
         private void SetVisualizationMode(VisualizationMode newMode) {

@@ -14,6 +14,8 @@ namespace Maes {
         private Queue<SimulationScenario> _scenarios;
 
         public SimulationSpeedController UISpeedController;
+        public GameObject UIControllerDebugTitle;
+        public GameObject UIControllerDebugInfo;
         public Text SimulationStatusText;
         private int _physicsTicksSinceUpdate = 0;
 
@@ -22,6 +24,9 @@ namespace Maes {
         private SimulationScenario _currentScenario;
         public Simulation CurrentSimulation;
         private GameObject _simulationGameObject;
+        
+        public GameObject RosClockPrefab;
+        public GameObject RosVisualizerPrefab;
 
         public SimulationPlayState PlayState { get; }
         private int _logicTicksCurrentSim = 0;
@@ -31,14 +36,51 @@ namespace Maes {
             // This simulation handles physics updates custom time factors, so disable built in real time physics calls
             Physics.autoSimulation = false;
             Physics2D.simulationMode = SimulationMode2D.Script;
-
-            // _scenarios = ScenarioGenerator.GenerateYoutubeVideoScenarios();
-            _scenarios = ScenarioGenerator.GenerateROS2Scenario();
-            // _scenarios = ScenarioGenerator.GenerateTnfScenarios();
+            
+            if (GlobalSettings.IsRosMode) {
+                _scenarios = ScenarioGenerator.GenerateROS2Scenario();
+            }
+            else {
+                _scenarios = ScenarioGenerator.GenerateYoutubeVideoScenarios();
+            }
             CreateSimulation(_scenarios.Dequeue());
             if (Application.isBatchMode) {
                 AttemptSetPlayState(SimulationPlayState.FastAsPossible);
+            } 
+            // Adapt UI for ros mode
+            else if (GlobalSettings.IsRosMode) {
+                CreateRosClockAndVisualiserObjects();
+                RemoveFastForwardButtonsFromControlPanel();
+                UIControllerDebugTitle.SetActive(false);
+                UIControllerDebugInfo.SetActive(false);
             }
+        }
+
+        public void RemoveFastForwardButtonsFromControlPanel() {
+            // Deactivate fast forward buttons
+            UISpeedController.stepperButton.gameObject.SetActive(false);
+            UISpeedController.fastForwardButton.gameObject.SetActive(false);
+            UISpeedController.fastAsPossibleButton.gameObject.SetActive(false);
+            
+            // Resize background
+            var controlPanel = GameObject.Find("ControlPanel");
+            var cpRectTransform = controlPanel.GetComponent<RectTransform>();
+            cpRectTransform.sizeDelta = new Vector2(100, 50);
+            
+            // Reposition play button
+            var playButton = GameObject.Find("PlayButton");
+            var pbRectTransform = playButton.GetComponent<RectTransform>();
+            pbRectTransform.anchoredPosition = new Vector2(-20, 0);
+            
+            // Reposition pause button
+            var pauseButton = GameObject.Find("PauseButton");
+            var pauseRectTransform = pauseButton.GetComponent<RectTransform>();
+            pauseRectTransform.anchoredPosition = new Vector2(20, 0);
+        }
+
+        public void CreateRosClockAndVisualiserObjects() {
+            Instantiate(RosClockPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+            Instantiate(RosVisualizerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
         }
 
         public SimulationPlayState AttemptSetPlayState(SimulationPlayState targetState) {

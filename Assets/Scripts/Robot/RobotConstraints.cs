@@ -1,13 +1,16 @@
+#nullable enable
 using System;
+using JetBrains.Annotations;
+using TMPro;
 
 namespace Maes.Robot {
     public readonly struct RobotConstraints {
-        // Broadcasting
-        public readonly float BroadcastRange;
-        public readonly bool BroadcastBlockedByWalls;
+        public delegate float SignalTransmissionProbability(float totalDistance, float distanceThroughWalls);
 
-        public readonly float SenseNearbyRobotRange;
-        public readonly bool SenseNearbyRobotBlockedByWalls;
+        public readonly SignalTransmissionProbability calculateSignalTransmissionProbability;
+        // The cutoff (in units provided by the SignalTransmissionProbability function) at which signals will no
+        // longer be transmitted
+        public readonly float MinimumSignalTransmissionProbability;
 
         public readonly float SenseNearbyAgentsRange;
         public readonly bool SenseNearbyAgentsBlockedByWalls;
@@ -41,20 +44,16 @@ namespace Maes.Robot {
 
         public readonly float RobotRelativeSize;
 
-        // TODO: Add robot size to constraints class
-        
         public readonly float AgentRelativeSize;
 
 
-        public RobotConstraints(float broadcastRange, bool broadcastBlockedByWalls, float senseNearbyAgentsRange,
+        public RobotConstraints(float senseNearbyAgentsRange,
             bool senseNearbyAgentsBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks,
             int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam,
-            float environmentTagReadRange, float slamRayTraceRange, float relativeMoveSpeed, float agentRelativeSize,
-            int? slamRayTraceCount = null) : this() {
-            BroadcastRange = broadcastRange;
-            BroadcastBlockedByWalls = broadcastBlockedByWalls;
+            float environmentTagReadRange, float slamRayTraceRange, float relativeMoveSpeed, float agentRelativeSize, 
+            SignalTransmissionProbability? calculateSignalTransmissionProbability = null, 
+            float minimumSignalTransmissionProbability = 0.9f, int? slamRayTraceCount = null) : this() {
 
-            // SLAM
             SenseNearbyAgentsRange = senseNearbyAgentsRange;
             SenseNearbyAgentsBlockedByWalls = senseNearbyAgentsBlockedByWalls;
 
@@ -67,10 +66,14 @@ namespace Maes.Robot {
             SlamRayTraceCount = slamRayTraceCount;
             DistributeSlam = distributeSlam;
 
-            // 
+            // SLAM
             EnvironmentTagReadRange = environmentTagReadRange;
             RelativeMoveSpeed = relativeMoveSpeed;
             AgentRelativeSize = agentRelativeSize;
+            
+            // Communication/Broadcasting
+            this.calculateSignalTransmissionProbability = calculateSignalTransmissionProbability ?? ((distance, _) => 100.0f);
+            MinimumSignalTransmissionProbability = minimumSignalTransmissionProbability;
         }
     }
 }

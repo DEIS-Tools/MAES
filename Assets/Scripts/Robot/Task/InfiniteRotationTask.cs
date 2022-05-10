@@ -1,15 +1,16 @@
+using System;
+
 namespace Maes.Robot.Task {
     public class InfiniteRotationTasK : ITask {
-        private readonly bool _counterClockWise;
-        private readonly float _force;
+        public float ForceMultiplier;
 
-        public InfiniteRotationTasK(bool counterClockWise, float force) {
-            _counterClockWise = counterClockWise;
-            _force = force;
+        public InfiniteRotationTasK(float forceMultiplier) {
+            ForceMultiplier = forceMultiplier;
         }
 
         public MovementDirective GetNextDirective() {
-            return _counterClockWise ? MovementDirective.Left(_force) : MovementDirective.Right(_force);
+            var absMultiplier = Math.Abs(ForceMultiplier);
+            return ForceMultiplier < 0 ? MovementDirective.Left(absMultiplier) : MovementDirective.Right(absMultiplier);
         }
 
         public bool IsCompleted() {

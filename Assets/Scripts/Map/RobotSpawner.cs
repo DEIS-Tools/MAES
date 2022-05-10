@@ -4,7 +4,6 @@ using System.Linq;
 using Maes.ExplorationAlgorithm;
 using Maes.Map.MapGen;
 using Maes.Robot;
-using ROS2;
 using UnityEngine;
 using static Maes.Utilities.Geometry;
 
@@ -100,11 +99,13 @@ namespace Maes.Map
             // Remove the edges to make sure the robots are not in a solid coarse tile
             var edgeTiles = FindEdgeTiles(possibleSpawnTiles, true);
             possibleSpawnTiles = possibleSpawnTiles.Except(edgeTiles).ToList();
-            
+
+            // If no suggestions made, simply spawn around 0,0
+            if (suggestedStartingPoint == null) suggestedStartingPoint = new Vector2Int(0, 0);
             // Offset suggested starting point to map
             suggestedStartingPoint = new Vector2Int(suggestedStartingPoint.Value.x - (int)collisionMap.ScaledOffset.x,
-                suggestedStartingPoint.Value.y - (int)collisionMap.ScaledOffset.y);
-            
+                    suggestedStartingPoint.Value.y - (int)collisionMap.ScaledOffset.y);
+
             possibleSpawnTiles.Sort((c1, c2) => {
                 return ManhattanDistance(c1, suggestedStartingPoint.Value) -
                        ManhattanDistance(c2, suggestedStartingPoint.Value);
@@ -226,6 +227,7 @@ namespace Maes.Map
             IExplorationAlgorithm algorithm, SimulationMap<bool> collisionMap, int seed) {
             var robotID = robotId;
             var robotGameObject = Instantiate(robotPrefab, parent: transform);
+            robotGameObject.name = $"robot{robotId}";
             var robot = robotGameObject.GetComponent<MonaRobot>();
             // robotRelativeSize is a floating point value in ]0,1.0]. 1.0 = robot is the same size as a tile.
             if (0.001f > relativeSize && relativeSize > 1.0000001f)
@@ -239,23 +241,52 @@ namespace Maes.Map
 
             robot.outLine.enabled = false;
 
-            float
-                RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
+            float RTOffset = 0.01f; // Offset is used, since being exactly at integer value positions can cause issues with ray tracing
             robot.transform.position = new Vector3(x + RTOffset + collisionMap.ScaledOffset.x,
                 y + RTOffset + collisionMap.ScaledOffset.y);
+
+            if (GlobalSettings.IsRosMode) {
+                AttachRosComponentsToRobot(robotGameObject, RobotConstraints);
+            }
+                
 
             robot.id = robotID;
             robot.ExplorationAlgorithm = algorithm;
             robot.Controller.CommunicationManager = CommunicationManager;
             robot.Controller.SlamMap = new SlamMap(collisionMap, RobotConstraints, seed);
-            robot.Controller.Constraints = RobotConstraints; 
+            robot.Controller.Constraints = RobotConstraints;
             algorithm.SetController(robot.Controller);
-            
-            if (algorithm is Ros2Algorithm ros2Algorithm) {
-                ros2Algorithm.SetUnityComponent(robot.GetComponent<ROS2UnityComponent>());
-            }
 
             return robot;
+        }
+
+        private void AttachRosComponentsToRobot(GameObject robot, RobotConstraints constraints) {
+            // The components are disabled in their awake function to allow for
+            // setting the parameters before calling the start method
+            // This must be done to ensure correct ros topics etc.
+            var laserScanner = robot.AddComponent<LaserScanSensor>();
+            laserScanner.ScanTopic = "/scan";
+            laserScanner.PublishPeriodSeconds = 0.1;
+            laserScanner.RangeMetersMax = 0.0f;
+            // Range should be set to a higher value than it is possible to generate maps for
+            // This is because the slam_toolbox package does not raytrace empty space, unless an obstacle 
+            // is hit within the range set. This makes the robot stay close to the walls
+            laserScanner.RangeMetersMax = 500f;
+            laserScanner.ScanAngleStartDegrees = 0;
+            laserScanner.ScanAngleEndDegrees = -359;
+            laserScanner.ScanOffsetAfterPublish = 0;
+            laserScanner.NumMeasurementsPerScan = 180;
+            laserScanner.TimeBetweenMeasurementsSeconds = 0;
+            laserScanner.FrameId = "base_scan";
+            laserScanner.m_WrapperObject = robot;
+            // Is disabled in awake, now enable component
+            laserScanner.enabled = true;
+
+            var tfPublisher = robot.AddComponent<ROSTransformTreePublisher>();
+            tfPublisher.m_WrapperObject = robot;
+            tfPublisher.m_RootGameObject = robot.transform.Find("base_footprint").gameObject;
+            // Is disabled in awake, now enable component
+            tfPublisher.enabled = true;
         }
         
         private List<Vector2Int> FindEdgeTiles(List<Vector2Int> tiles, bool checkDiagonal) {

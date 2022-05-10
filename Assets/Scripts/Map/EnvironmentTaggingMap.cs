@@ -10,7 +10,7 @@ namespace Maes.Map {
     public class EnvironmentTaggingMap {
         
         // Each tile in the map is a list of tags that are positioned within the bounds of that tile
-        private List<PlacedTag>[,] _tagLists;
+        private List<EnvironmentTag>[,] _tagLists;
 
         private int _widthInTiles, _heightInTiles;
         private Vector2 offset;
@@ -19,23 +19,22 @@ namespace Maes.Map {
             this._widthInTiles = collisionMap.WidthInTiles;
             this._heightInTiles = collisionMap.HeightInTiles;
             this.offset = collisionMap.ScaledOffset;
-            _tagLists = new List<PlacedTag>[_widthInTiles, _heightInTiles];
+            _tagLists = new List<EnvironmentTag>[_widthInTiles, _heightInTiles];
             for (int x = 0; x < _widthInTiles; x++) {
                 for (int y = 0; y < _heightInTiles; y++) {
-                    _tagLists[x, y] = new List<PlacedTag>();
+                    _tagLists[x, y] = new List<EnvironmentTag>();
                 }
             }
         }
         
-        public PlacedTag AddTag(Vector2 worldPosition, ITag tag) {
+        public EnvironmentTag AddTag(Vector2 worldPosition, EnvironmentTag tag) {
             var gridCoordinate = ToLocalMapCoordinate(worldPosition);
-            var placedTag = new PlacedTag(worldPosition, tag);
-            _tagLists[gridCoordinate.x, gridCoordinate.y].Add(placedTag);
-            return placedTag;
+            _tagLists[gridCoordinate.x, gridCoordinate.y].Add(tag);
+            return tag;
         }
         
-        public List<PlacedTag> GetTagsNear(Vector2 centerWorldPosition, float radius) {
-            List<PlacedTag> nearbyTags = new List<PlacedTag>();
+        public List<EnvironmentTag> GetTagsNear(Vector2 centerWorldPosition, float radius) {
+            List<EnvironmentTag> nearbyTags = new List<EnvironmentTag>();
             
             var gridPosition = ToLocalMapCoordinate(centerWorldPosition);
             var maxTileRadius = (int) Math.Ceiling(radius);
@@ -79,18 +78,8 @@ namespace Maes.Map {
         }
 
         public interface ITag {
-            public void DrawGizmos(Vector3 position);
+            public void DrawTag(Vector3 position);
         }
 
-        public class PlacedTag {
-            public readonly Vector2 WorldPosition;
-            public readonly ITag tag;
-
-            public PlacedTag(Vector2 worldPosition, ITag tag) {
-                WorldPosition = worldPosition;
-                this.tag = tag;
-            }
-        }
-        
     }
 }

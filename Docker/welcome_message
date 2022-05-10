@@ -1,0 +1,27 @@
+
+Welcome to a docker-container running:
+ ***************************************************************
+*  ____   ___  ____ ____            __  __    _    _____ ____   *
+* |  _ \ / _ \/ ___|___ \     _    |  \/  |  / \  | ____/ ___|  *
+* | |_) | | | \___ \ __) |  _| |_  | |\/| | / _ \ |  _| \___ \  *
+* |  _ <| |_| |___) / __/  |_   _| | |  | |/ ___ \| |___ ___) | *
+* |_| \_\\___/|____/_____|   |_|   |_|  |_/_/   \_\_____|____/  *
+*                                                               *
+ ***************************************************************
+
+The most basic commands, such as 'source /opt/<>/whatever.sh' and
+such have already been executed, and the first initial 'colcon 
+build' has been run. Any error-messages during the build should
+be visible above this message.
+
+Any changes you make in the /home/dev_ws/code directory will per-
+sist. Changes to other files will be reset whenever the contain-
+er stops.
+
+An ssh-server has been startet on localhost, and should be acces-
+sible on port 10022 if you have followed the suggested starting
+command (login = maes-user:maes (sudo-pw = root))
+
+Have fun!
+
+
