@@ -26,9 +26,8 @@ A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
 - [Contributors](#contributors)
 
 # Getting started
-MAES can be run in two different configurations, either ROSMode or UnityMode. 
-UnityMode requires a unity editor installed and allows for developing algorithm in C#.
-UnityMode requires an installed Unity editor (It is last tested with version 2021.2.17f1).
+MAES can be run in two different configurations, either ROSMode or UnityMode.
+UnityMode requires an installed Unity editor (last tested with version 2021.2.17f1), and allows for developing algorithm in C#.
 It has been tested to work on both Linux (Ubuntu 20.04, 21.04, 21.10 and 22.04), MacOS Monterey 12 and Windows 10.
 Click [here](#running-in-unitymode) to get started in UnityMode.
 
@@ -56,12 +55,14 @@ This provides the algorithm with access to the robot controller, which in turn p
 In order to test you algorithm, make sure you configure the simulator to use a scenario that uses the algorithm as mentioned in [this](#running-in-unitymode) Section.
 
 ## Running in ROSMode
-MAES can be run with ROS running either in a docker image or natively. The docker image has everything preinstalled and is thus easier to set up. 
+MAES can be run with ROS running either in a docker image or natively installed on your operation system.
+The docker image has everything preinstalled and is thus easier to set up. 
+ROSMode has been tested to work with the Galactic release of ROS2.
  
 ### ROSMode with Docker
 1. Install Docker https://docs.docker.com/get-docker/ (On Windows 10 we recommend using the WSL2 backend for Docker)
-2. Download MAES package (TODO)
-3. Open terminal in root of MAES Package
+2. Download MAES package and extract (TODO)
+3. Open terminal in the root of the MAES Package
 4. Build image from package with the following command
 ```bash
 docker build --force-rm -t ros4maes -f Docker/Dockerfile .
@@ -104,7 +105,7 @@ ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py
 ```
 
 
-7. Open Maes executable from package (TODO)
+7. Open Maes executable called MAES.x86_64
 
 HOW TO CONFIGURE:
 
@@ -112,15 +113,15 @@ The workspace (maes-ros-slam-ws) inside the MAES package is shared with the dock
 It is thus possible to change these files directly using your favorite editor or IDE.
 
 The logic controlling the behavior of the robots can be found in [maes_robot_controller.py](maes-ros-slam-ws/src/maes_robot_controller/maes_robot_controller/maes_robot_controller.py). 
-Actionservers, subscriptions and services are already setup and can be used inside the logic_loop function to control the robot. 
-The logic_loop is called as a callback function whenever a logic tick occurs in MAES.
+Actionservers, subscriptions and services are already setup and can be used inside the `logic_loop_callback` function to control the robot. 
+The `logic_loop_callback` function is called whenever a logic tick occurs in MAES.
 
 The configuration of the ROS2 system can be changed by tuning parameters in [maes_config.yaml](maes-ros-slam-ws/src/maes_ros2_interface/maes_config.yaml) found inside the maes_ros2_interface package in the workspace.
-Note: The field names must be written in [snake_case](https://en.wikipedia.org/wiki/Snake_case).
+Note: The field-names must be written in [snake_case](https://en.wikipedia.org/wiki/Snake_case).
 Explanations for all configuration parameters can be seen in Section [Simulation Parameters Explanations](#simulator-parameters-explanations).
-Both MAES and ROS take parameters from the same file, so they automatically synchronise.
+MAES and ROS synchronize parameters from this configuration file automatically.
 
-Remember to colcon build after each change in config file or controller.
+Remember to execute a `colcon build` after each change in config file or controller to recompile the ROS project.
 
 #### RVIZ visualisation in Windows 10
 If you are on Windows 10, you will have to install [VcXsrv](https://sourceforge.net/projects/vcxsrv/), an X-server for Windows.
@@ -182,7 +183,7 @@ source install/setup.sh
 ```bash
 ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py
 ```
-10. Open Maes executable from package (TODO)
+10. Open Maes executable called MAES.x86_64
 
 The logic controlling the behavior of the robots can be found in [maes_robot_controller.py](maes-ros-slam-ws/src/maes_robot_controller/maes_robot_controller/maes_robot_controller.py).
 Actionservers, subscriptions and services are already setup and can be used inside the logic_loop function to control the robot.
