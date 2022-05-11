@@ -18,10 +18,10 @@ namespace Maes.Statistics {
 
         public CoverageCalculator(SimulationMap<ExplorationCell> explorationMap, SimulationMap<bool> collisionMap) {
             _explorationMap = explorationMap;
-            FindCoverableTiles(explorationMap, collisionMap);
+            FindCoverableTiles(collisionMap);
         }
 
-        private void FindCoverableTiles(SimulationMap<ExplorationCell> explorationMap, SimulationMap<bool> collisionMap) {
+        private void FindCoverableTiles(SimulationMap<bool> collisionMap) {
             // Register all coverable tiles
             for (int x = 0; x < _explorationMap.WidthInTiles; x++) {
                 for (int y = 0; y < _explorationMap.HeightInTiles; y++) {
