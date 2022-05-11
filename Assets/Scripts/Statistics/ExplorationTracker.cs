@@ -9,6 +9,9 @@ using UnityEngine;
 
 namespace Maes.Statistics {
     public class ExplorationTracker {
+
+        private CoverageCalculator _coverageCalculator;
+        
         // The low-resolution collision map used to create the smoothed map that robots are navigating 
         private SimulationMap<bool> _collisionMap;
         private ExplorationVisualizer _explorationVisualizer;
@@ -23,7 +26,7 @@ namespace Maes.Statistics {
 
         private readonly int _totalExplorableTriangles;
         public int ExploredTriangles { get; private set; }
-        public int CoveredMiniTiles { get; private set; }
+        public int CoveredMiniTiles => _coverageCalculator.CoveredMiniTiles;
 
         [CanBeNull] private MonaRobot _selectedRobot;
 
@@ -32,9 +35,8 @@ namespace Maes.Statistics {
         public float ExploredProportion => ExploredTriangles / (float) _totalExplorableTriangles;
         // Coverage is measured in 'mini-tiles'. Each large map tile consists of 4 mini-tiles, 
         // where each mini-tile is composed of two triangles
-        public float CoverageProportion => CoveredMiniTiles / (float) _coverableTiles;
-        
-        private readonly int _coverableTiles;
+        public float CoverageProportion => _coverageCalculator.CoverageProportion;
+
         private bool _isFirstTick = true;
         private RobotConstraints _constraints;
 
@@ -68,24 +70,8 @@ namespace Maes.Statistics {
             
             _explorationVisualizer.SetMap(_explorationMap, collisionMap.ScaledOffset);
             _rayTracingMap = new RayTracingMap<ExplorationCell>(_explorationMap);
-            
-            // Register all coverable tiles
-            for (int x = 0; x < collisionMap.WidthInTiles; x++) {
-                for (int y = 0; y < collisionMap.HeightInTiles; y++) {
-                    var tileCells = collisionMap.GetTileByLocalCoordinate(x, y).GetTriangles();
-                    var explorationCells = _explorationMap.GetTileByLocalCoordinate(x, y).GetTriangles();
 
-                    for (int i = 0; i < 8; i+=2) {
-                        // If any of the two triangles forming the 'mini-tile' are solid,
-                        // then mark both triangles as non-coverable
-                        // (because the entire mini-tile will be considered as solid in the SLAM map used by the robots)
-                        var isSolid = tileCells[i] || tileCells[i+1];
-                        explorationCells[i].CanBeCovered = !isSolid;
-                        explorationCells[i+1].CanBeCovered = !isSolid;
-                        if (!isSolid) _coverableTiles++;
-                    }
-                }
-            }
+            _coverageCalculator = new CoverageCalculator(_explorationMap, collisionMap);
         }
 
         public void CreateSnapShot() {
@@ -96,50 +82,16 @@ namespace Maes.Statistics {
         private void UpdateCoverageStatus(MonaRobot robot) {
             var newlyCoveredCells = new List<(int, ExplorationCell)> {};
             var robotPos = robot.transform.position;
-            var coverageRadius = robot.Controller.Constraints.RobotRelativeSize / 1.5f;
-            // The maximum distance between the robot and the center of a tile
-            // that would cause that tile to be considered covered 
-            var centerCoverageRadius = coverageRadius + 0.25f;
-            var robotMiniTileCenterX = (float) Math.Truncate(robotPos.x) + Mathf.Round(robotPos.x - (float) Math.Truncate(robotPos.x)) * 0.5f + ((robotPos.x < 0) ? -0.25f : 0.25f);
-            var robotMiniTileCenterY = (float) Math.Truncate(robotPos.y) + Mathf.Round(robotPos.y - (float) Math.Truncate(robotPos.y)) * 0.5f + ((robotPos.y < 0) ? -0.25f : 0.25f);
-            var robotMiniTilePos = new Vector2(robotMiniTileCenterX, robotMiniTileCenterY);
-            // Loop through alle tiles currently near the robot
-            for (int x = -1; x <= 1; x++) {
-                for (int y = -1; y <= 1; y++) {
-                    var tilePosition = robotMiniTilePos + new Vector2(x * 0.5f, y * 0.5f);
-                    // ------------------------------------------------------------------------------------------------
-                    // ** The following commented code is bugged - It can be reintroduced and debugged if we need more
-                    //    precise coverage tracking. If left commented, all immediate neighbour tiles will be considered
-                    //    covered regardless of distance from the robot. **
-                    // ------------------------------------------------------------------------------------------------
-                    // var centerOffsetX = tilePosition.x < 0 ? -0.25f : 0.25f;
-                    // var centerOffsetY = tilePosition.y < 0 ? -0.25f : 0.25f;
-                    // // const float centerOffset = 0.25f;
-                    // var tileCenterX = Mathf.Floor(tilePosition.x) + centerOffsetX + Mathf.Round(Mathf.Abs(tilePosition.x) % 1.0f) * 0.5f;
-                    // var tileCenterY = Mathf.Floor(tilePosition.y) + centerOffsetY + Mathf.Round(Mathf.Abs(tilePosition.y) % 1.0f) * 0.5f;
-                    // Debug.Log($"Checking coverage for tile with coordinates ({tileCenterX}, {tileCenterY})");
-                    //
-                    // // Only consider this tile if they are within coverage range in both x- and y-axis
-                    // if (Mathf.Max(Mathf.Abs(tileCenterX - robotPos.x), Mathf.Abs(tileCenterY - robotPos.y)) > centerCoverageRadius && false)
-                    //     continue;
-
-                    var (triangle1, triangle2) = 
-                    _explorationMap.GetMiniTileTrianglesByWorldCoordinates(tilePosition);
-                    if (!triangle1.Item2.CanBeCovered)
-                        continue; // Skip this mini tile if it is not coverable
-                    
-                    if (!triangle1.Item2.IsCovered) {
-                        // This tile was not covered before, register as first coverage
-                        CoveredMiniTiles++; 
-                        newlyCoveredCells.Add(triangle1);
-                        newlyCoveredCells.Add(triangle2);
-                    }
-                    
-                    // Register coverage (both repeated and first time) for other statistics such as the heat map 
-                    triangle1.Item2.RegisterCoverage(_currentTick);
-                    triangle2.Item2.RegisterCoverage(_currentTick);
-                }   
-            }
+            
+            // Find each mini tile (two triangle cells) covered by the robot and execute the following function on it
+            _coverageCalculator.UpdateRobotCoverage(robotPos, _currentTick,(index1, triangle1, index2, triangle2) => {
+                if (!triangle1.IsCovered) {
+                    // This tile was not covered before, register as newly covered
+                    newlyCoveredCells.Add((index1, triangle1));
+                    newlyCoveredCells.Add((index2, triangle2));
+                }
+            });
+            
             _currentVisualizationMode.RegisterNewlyCoveredCells(robot, newlyCoveredCells);
         }
 

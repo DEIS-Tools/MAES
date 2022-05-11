@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 using TMPro;
 
 namespace Maes.Robot {
-    public readonly struct RobotConstraints {
+    public class RobotConstraints {
         public delegate float SignalTransmissionProbability(float totalDistance, float distanceThroughWalls);
 
         public readonly SignalTransmissionProbability calculateSignalTransmissionProbability;
@@ -40,10 +40,6 @@ namespace Maes.Robot {
         // 1.0f is default. A bigger map with bigger doors would make the robot "feel" slower. It is thus not 
         // a speed value in e.g. km/h .
         public readonly float RelativeMoveSpeed;
-
-
-        public readonly float RobotRelativeSize;
-
         public readonly float AgentRelativeSize;
 
 
@@ -61,7 +57,7 @@ namespace Maes.Robot {
             float agentRelativeSize=0.6f, 
             SignalTransmissionProbability? calculateSignalTransmissionProbability = null, 
             float minimumSignalTransmissionProbability = 0.9f, 
-            int? slamRayTraceCount = null) : this() {
+            int? slamRayTraceCount = null) {
 
             SenseNearbyAgentsRange = senseNearbyAgentsRange;
             SenseNearbyAgentsBlockedByWalls = senseNearbyAgentsBlockedByWalls;
