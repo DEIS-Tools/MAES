@@ -159,5 +159,9 @@ namespace Maes {
 
             
         }
+
+        public Vector2 WorldCoordinateToSlamCoordinate(Vector2 worldPosition) {
+            return _collisionMap.WorldCoordinateLocalCoordinateUnsafe(worldPosition);
+        }
     }
 }

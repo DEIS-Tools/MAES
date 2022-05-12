@@ -49,7 +49,7 @@ namespace Maes.Map {
         
         // Returns the cells of the tile at the given coordinate along with index of the first cell
         public (int, List<TCell>) GetTileCellsByWorldCoordinate(Vector2 worldCoord) {
-            var localCoord = ToLocalMapCoordinate(worldCoord);
+            var localCoord = WorldCoordinateToLocalMapCoordinate(worldCoord);
             int triangleOffset = ((int) localCoord.x) * 8 + ((int) localCoord.y) * WidthInTiles * 8;
             return (triangleOffset, _tiles[(int) localCoord.x, (int) localCoord.y].GetTriangles());
         }
@@ -58,7 +58,7 @@ namespace Maes.Map {
         /// <param name="worldCoordinate">A coordinate that is within the bounds of the mini-tile in world space</param>
         /// <returns> the pair of triangles that make up the 'mini-tile' at the given world location</returns>
         public ((int, TCell), (int, TCell)) GetMiniTileTrianglesByWorldCoordinates(Vector2 worldCoordinate) {
-            var localCoordinate = ToLocalMapCoordinate(worldCoordinate);
+            var localCoordinate = WorldCoordinateToLocalMapCoordinate(worldCoordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             var triangles = tile.GetTriangles();
             var mainTriangleIndex = tile.CoordinateDecimalsToTriangleIndex(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
@@ -72,21 +72,21 @@ namespace Maes.Map {
 
         // Returns the triangle cell at the given world position
         public TCell GetCell(Vector2 coordinate) {
-            var localCoordinate = ToLocalMapCoordinate(coordinate);
+            var localCoordinate = WorldCoordinateToLocalMapCoordinate(coordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             return tile.GetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
         }
 
         // Assigns the given value to the triangle cell at the given coordinate
         public void SetCell(Vector2 coordinate, TCell newCell) {
-            var localCoordinate = ToLocalMapCoordinate(coordinate);
+            var localCoordinate = WorldCoordinateToLocalMapCoordinate(coordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             tile.SetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f, newCell);
         }
 
         // Returns the index of triangle cell at the given world position
         public int GetTriangleIndex(Vector2 coordinate) {
-            var localCoordinate = ToLocalMapCoordinate(coordinate);
+            var localCoordinate = WorldCoordinateToLocalMapCoordinate(coordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             var triangleIndexOffset = ((int) localCoordinate.x) * 8 + ((int) localCoordinate.y) * WidthInTiles * 8;
             return triangleIndexOffset +
@@ -94,7 +94,7 @@ namespace Maes.Map {
         }
 
         // Takes a world coordinates and removes the offset and scale to translate it to a local map coordinate
-        private Vector2 ToLocalMapCoordinate(Vector2 worldCoordinate) {
+        public Vector2 WorldCoordinateToLocalMapCoordinate(Vector2 worldCoordinate) {
             var localCoordinate = (worldCoordinate - ScaledOffset);
             if (!IsWithinLocalMapBounds(localCoordinate)) {
                 throw new ArgumentException("The given coordinate " + localCoordinate
@@ -104,6 +104,11 @@ namespace Maes.Map {
             }
 
             return localCoordinate;
+        }
+
+        // Coordinate conversion without boundary check
+        public Vector2 WorldCoordinateLocalCoordinateUnsafe(Vector2 worldCoordinate) {
+            return worldCoordinate - ScaledOffset;
         }
 
         // Checks that the given coordinate is within the local map bounds

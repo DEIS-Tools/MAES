@@ -15,6 +15,8 @@ namespace Maes.UI {
         public Text AlgorithmDebugText;
         public Text ControllerDebugText;
         public Text TagDebugText;
+
+        public Text MouseCoordinateText;
         
         public Button AllExplorationButton;
         public Button AllCoverageButton;
@@ -29,8 +31,7 @@ namespace Maes.UI {
         private bool _visualizingSelectedTags = false;
 
         public Button StickyCameraButton;
-
-
+        
         private List<Button> _mapVisualizationToggleGroup;
         private Color _mapVisualizationColor = Color.white;
         private Color _mapVisualizationSelectedColor = new Color(150 / 255f, 200 / 255f, 150 / 255f);
@@ -127,6 +128,12 @@ namespace Maes.UI {
             CameraController.singletonInstance.stickyCam = false;
             StickyCameraButton.image.color = _mapVisualizationColor;
             VisualizeTagsButton.image.color = _mapVisualizationColor;
+        }
+
+        public void UpdateMouseCoordinates(Vector2 mousePosition) {
+            var xNumberString = $"{mousePosition.x:00.00}".PadLeft(6);
+            var yNumberString = $"{mousePosition.y:00.00}".PadLeft(6);
+            MouseCoordinateText.text = $"(x: {xNumberString}, y: {yNumberString})";
         }
 
         private void ToggleVisualizeTagsButtons(Button button) {
