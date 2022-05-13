@@ -113,7 +113,7 @@ namespace Maes.ExplorationAlgorithm {
         }
 
         void ReactToCmdVel(float speedCommandValue, float rotationCommandValue) {
-            Debug.Log($"{this._robotRosId} command velocities: [{speedCommandValue}, {rotationCommandValue}]");
+            // Debug.Log($"{this._robotRosId} command velocities: [{speedCommandValue}, {rotationCommandValue}]");
             var robotStatus = _controller.GetStatus();
             
             if (Math.Abs(speedCommandValue) < 0.01f && Math.Abs(rotationCommandValue) > 0.0) {
@@ -154,7 +154,7 @@ namespace Maes.ExplorationAlgorithm {
         void ReceiveRosCmd(TwistMsg cmdVel) {
             _rosLinearSpeed = (float)cmdVel.linear.x;
             _rosRotationSpeed = (float)cmdVel.angular.z;
-            Debug.Log($"Robot {_controller.GetRobotID()}: Received cmdVel twist: {cmdVel.ToString()}");
+            // Debug.Log($"Robot {_controller.GetRobotID()}: Received cmdVel twist: {cmdVel.ToString()}");
         }
 
         public string GetDebugInfo() {
