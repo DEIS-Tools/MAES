@@ -28,7 +28,7 @@ namespace Maes {
         public GameObject RosClockPrefab;
         public GameObject RosVisualizerPrefab;
 
-        public SimulationPlayState PlayState { get; }
+        public SimulationPlayState PlayState { get; } = SimulationPlayState.Paused;
         private int _logicTicksCurrentSim = 0;
 
         // Runs once when starting the program
@@ -43,6 +43,7 @@ namespace Maes {
                 RemoveFastForwardButtonsFromControlPanel();
                 UIControllerDebugTitle.SetActive(false);
                 UIControllerDebugInfo.SetActive(false);
+                UISpeedController.UpdateButtonsUI(PlayState);
             }
         }
 
@@ -83,6 +84,7 @@ namespace Maes {
             _playState = targetState;
             // Reset next update time when changing play mode to avoid skipping ahead
             _nextUpdateTimeMillis = TimeUtils.CurrentTimeMillis();
+            Debug.Log("Attempt set play state called");
             UISpeedController.UpdateButtonsUI(_playState);
             return _playState;
         }
@@ -214,7 +216,7 @@ namespace Maes {
         }
 
         public void EnqueueScenario(SimulationScenario simulationScenario) {
-            if (_scenarios.Count > 0)
+            if (HasActiveScenario()) 
                 _scenarios.Enqueue(simulationScenario);
             else // This is the first scenario, initialize it immediately 
                 CreateSimulation(simulationScenario);

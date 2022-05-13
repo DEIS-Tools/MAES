@@ -27,10 +27,8 @@ namespace Maes {
         public static readonly bool DrawCommunication = true;
 
         // Statistics
-        public static readonly bool ShouldWriteCSVResults = false;
-        public static readonly string StatisticsOutPutPath =
-            Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-            + Path.DirectorySeparatorChar + "MaesStatistics" + Path.DirectorySeparatorChar;
+        public static readonly bool ShouldWriteCSVResults = true;
+        public static readonly string StatisticsOutPutPath = "";
         public static readonly int TicksPerStatsSnapShot = 10;
         public static readonly bool PopulateAdjacencyAndComGroupsEveryTick = false;
 
@@ -57,14 +55,12 @@ namespace Maes {
             PhysicsTickDeltaMillis = config.GlobalSettings.PhysicsTicksPerLogicUpdate;
             DrawCommunication = config.GlobalSettings.DrawCommunication;
             ShouldWriteCSVResults = config.GlobalSettings.ShouldWriteCsvResults;
-            if (config.GlobalSettings.StatisticsResultPath.Length > 0 && config.GlobalSettings.StatisticsResultPath.ToLower() != "default") {
-                var dir = new DirectoryInfo(config.GlobalSettings.StatisticsResultPath);
-                if (dir.Exists) {
-                    StatisticsOutPutPath = config.GlobalSettings.StatisticsResultPath;
-                }
-                else {
-                    Debug.Log($"Directory {config.GlobalSettings.StatisticsResultPath} not found. Defaulting to 'Desktop/MaesStatistics");
-                }
+            if (config.GlobalSettings.StatisticsResultPath.Length == 0) {
+                // Puts results file in same dir as the executable is run from
+                // If run from editor put the path will be path to project folder
+                StatisticsOutPutPath = Directory.GetParent(Application.dataPath)?.ToString() + Path.DirectorySeparatorChar;
+                Debug.Log($"{nameof(config.GlobalSettings.StatisticsResultPath)} was empty. Defaulting to executable dir (or project root if run in unity editor)");
+                
             }
             TicksPerStatsSnapShot = config.GlobalSettings.TicksPerStatsSnapshot;
             PopulateAdjacencyAndComGroupsEveryTick = config.GlobalSettings.PopulateAdjacencyAndCommGroupsEveryTick;

@@ -23,7 +23,6 @@ namespace Maes.Statistics {
             _simulation = simulation;
             var resultForFileName =
                 $"e{(int)_exploreSnapshots[_exploreSnapshots.Count - 1].Value}-c{(int)_coverSnapShots[_coverSnapShots.Count - 1].Value}";
-            Directory.CreateDirectory(GlobalSettings.StatisticsOutPutPath);
             path = GlobalSettings.StatisticsOutPutPath + fileNameWithoutExtension + "-" + resultForFileName + ".csv";
         }
 
@@ -49,6 +48,7 @@ namespace Maes.Statistics {
                 csv.AppendLine(line.ToString());
             }
             
+            Debug.Log($"Writing statistics to path: {path}");
             File.WriteAllText(path, csv.ToString());
         }
     }

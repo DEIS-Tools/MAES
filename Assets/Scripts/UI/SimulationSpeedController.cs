@@ -11,7 +11,6 @@ namespace Maes.UI {
         public Button stepperButton;
 
         private void Start() {
-            UpdateButtonsUI(simulationManager.PlayState);
             pauseButton.onClick.AddListener(Pause);
             playButton.onClick.AddListener(Play);
             fastForwardButton.onClick.AddListener(FastForward);
@@ -54,6 +53,7 @@ namespace Maes.UI {
 
         private void AttemptSwitchState(SimulationPlayState newPlayState) {
             var actualState = simulationManager.AttemptSetPlayState(newPlayState);
+            Debug.Log("Attempt switch state called");
             UpdateButtonsUI(actualState);
         }
     }

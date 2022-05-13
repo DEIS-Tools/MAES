@@ -38,7 +38,7 @@ namespace Maes {
             if (Application.isBatchMode) {
                 _simulationManager.AttemptSetPlayState(SimulationPlayState.FastAsPossible);
             } 
-            StartSimulation();
+            if (!GlobalSettings.IsRosMode) StartSimulation();
         }
 
         public void EnqueueScenario(SimulationScenario scenario) {
@@ -55,12 +55,9 @@ namespace Maes {
             if (!_simulationManager.HasActiveScenario())
                 throw new InvalidOperationException("You must enqueue at least one scenario before starting the" +
                                                     " simulation");
-            
-            
+
+
             _simulationManager.AttemptSetPlayState(SimulationPlayState.Play);
         }
-        
-        
-
     }
 }

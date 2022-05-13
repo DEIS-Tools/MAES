@@ -110,14 +110,13 @@ namespace Maes {
                          createAlgorithmDelegate: (seed) => new Ros2Algorithm()
                      );
                  }
-
                  scenarios.Enqueue(new SimulationScenario(
                      seed: 0,
                      hasFinishedSim: shouldEndSim,
                      mapSpawner: mapSpawner,
                      robotSpawner: robotSpawner,
                      robotConstraints: constraints,
-                     $"{yamlConfig.GlobalSettings.StatisticsResultPath}-{DateTime.Now.Millisecond}"
+                     $"MAES-ROS-Statistics-{DateTimeOffset.Now.ToUnixTimeSeconds()}"
                  ));
              }
 
@@ -220,12 +219,9 @@ namespace Maes {
          /// Generates the scenarios used for the YouTube video recordings.
          /// </summary>
         public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
-             
-             // var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
-             
              Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
              var numberOfRobots = 2;
-             var maxRunTime = 60 * Minute;
+             var maxRunTime = 6; //0 * Minute;
              var width = 50;
              var height = 50;
              SimulationEndCriteriaDelegate hasFinishedFunc =
@@ -253,7 +249,7 @@ namespace Maes {
                  // }  
              );
 
-             for (int i = 0; i < 1; i++) {
+             for (int i = 0; i < 3; i++) {
                  var randomSeed = i;
 
                  var caveConfig = new CaveMapConfig(
