@@ -156,7 +156,7 @@ MonoBehaviour:
     m_Alignment: 2
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 0
+    m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: 
@@ -1792,8 +1792,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2610927065644862384}
   m_HandleRect: {fileID: 2610927065644862385}
   m_Direction: 2
-  m_Value: 1
-  m_Size: 0.522
+  m_Value: 1.0000001
+  m_Size: 0.5220001
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
