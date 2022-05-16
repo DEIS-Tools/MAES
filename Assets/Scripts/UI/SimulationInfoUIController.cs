@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Maes.Map.Visualization;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Maes.UI {
@@ -14,6 +15,8 @@ namespace Maes.UI {
         public Text AlgorithmDebugText;
         public Text ControllerDebugText;
         public Text TagDebugText;
+
+        public Text MouseCoordinateText;
         
         public Button AllExplorationButton;
         public Button AllCoverageButton;
@@ -28,13 +31,12 @@ namespace Maes.UI {
         private bool _visualizingSelectedTags = false;
 
         public Button StickyCameraButton;
-
-
+        
         private List<Button> _mapVisualizationToggleGroup;
         private Color _mapVisualizationColor = Color.white;
         private Color _mapVisualizationSelectedColor = new Color(150 / 255f, 200 / 255f, 150 / 255f);
 
-        public Simulator simulator;
+        public SimulationManager simulationManager;
         // Represents a function that modifies the given simulation in some way
         // (for example by changing map visualization mode)
         delegate void SimulationModification(Simulation? simulation);
@@ -109,13 +111,16 @@ namespace Maes.UI {
         }
 
         public void Update() {
-            if (_visualizingAllTags) {
-                simulator.CurrentSimulation.ShowAllTags();
+            var currentSim = simulationManager.CurrentSimulation;
+            if (currentSim is not null) {
+                if (_visualizingAllTags) {
+                    simulationManager.CurrentSimulation.ShowAllTags();
+                }
+                else if (_visualizingSelectedTags) {
+                    simulationManager.CurrentSimulation.ShowSelectedTags();
+                }
+                simulationManager.CurrentSimulation.RenderCommunicationLines();
             }
-            else if (_visualizingSelectedTags) {
-                simulator.CurrentSimulation.ShowSelectedTags();
-            }
-            simulator.CurrentSimulation.RenderCommunicationLines();
         }
 
         public void ClearSelectedRobot() {
@@ -125,8 +130,14 @@ namespace Maes.UI {
             VisualizeTagsButton.image.color = _mapVisualizationColor;
         }
 
+        public void UpdateMouseCoordinates(Vector2 mousePosition) {
+            var xNumberString = $"{mousePosition.x:00.00}".PadLeft(6);
+            var yNumberString = $"{mousePosition.y:00.00}".PadLeft(6);
+            MouseCoordinateText.text = $"(x: {xNumberString}, y: {yNumberString})";
+        }
+
         private void ToggleVisualizeTagsButtons(Button button) {
-            simulator.CurrentSimulation.ClearVisualTags();
+            simulationManager.CurrentSimulation.ClearVisualTags();
             if (button.name == "AllVisualizeTags") {
                 _visualizingSelectedTags = false;
                 VisualizeTagsButton.image.color = _mapVisualizationColor;
@@ -145,11 +156,11 @@ namespace Maes.UI {
         // Whenever the simulator creates a new simulation the most recent visualization change is repeated 
         private void ExecuteAndRememberMapVisualizationModification(SimulationModification modificationFunc) {
             _mostRecentMapVisualizationModification = modificationFunc;
-            modificationFunc(simulator.CurrentSimulation);
+            modificationFunc(simulationManager.CurrentSimulation);
         }
 
         private void ExecuteAndRememberTagVisualization(SimulationModification modificationFunc) {
-            modificationFunc(simulator.CurrentSimulation);
+            modificationFunc(simulationManager.CurrentSimulation);
         }
 
         // Highlights the selected map visualization button

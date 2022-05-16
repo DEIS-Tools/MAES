@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 using TMPro;
 
 namespace Maes.Robot {
-    public readonly struct RobotConstraints {
+    public class RobotConstraints {
         public delegate float SignalTransmissionProbability(float totalDistance, float distanceThroughWalls);
 
         public readonly SignalTransmissionProbability calculateSignalTransmissionProbability;
@@ -40,19 +40,24 @@ namespace Maes.Robot {
         // 1.0f is default. A bigger map with bigger doors would make the robot "feel" slower. It is thus not 
         // a speed value in e.g. km/h .
         public readonly float RelativeMoveSpeed;
-
-
-        public readonly float RobotRelativeSize;
-
         public readonly float AgentRelativeSize;
 
 
-        public RobotConstraints(float senseNearbyAgentsRange,
-            bool senseNearbyAgentsBlockedByWalls, bool automaticallyUpdateSlam, int slamUpdateIntervalInTicks,
-            int slamSynchronizeIntervalInTicks, float slamPositionInaccuracy, bool distributeSlam,
-            float environmentTagReadRange, float slamRayTraceRange, float relativeMoveSpeed, float agentRelativeSize, 
+        public RobotConstraints(
+            float senseNearbyAgentsRange=20f,
+            bool senseNearbyAgentsBlockedByWalls=true, 
+            bool automaticallyUpdateSlam=true, 
+            int slamUpdateIntervalInTicks=10,
+            int slamSynchronizeIntervalInTicks=10, 
+            float slamPositionInaccuracy=0.2f, 
+            bool distributeSlam=false,
+            float environmentTagReadRange=2f, 
+            float slamRayTraceRange=20f, 
+            float relativeMoveSpeed=1f, 
+            float agentRelativeSize=0.6f, 
             SignalTransmissionProbability? calculateSignalTransmissionProbability = null, 
-            float minimumSignalTransmissionProbability = 0.9f, int? slamRayTraceCount = null) : this() {
+            float minimumSignalTransmissionProbability = 0.9f, 
+            int? slamRayTraceCount = null) {
 
             SenseNearbyAgentsRange = senseNearbyAgentsRange;
             SenseNearbyAgentsBlockedByWalls = senseNearbyAgentsBlockedByWalls;
@@ -65,8 +70,7 @@ namespace Maes.Robot {
             SlamRayTraceRange = slamRayTraceRange;
             SlamRayTraceCount = slamRayTraceCount;
             DistributeSlam = distributeSlam;
-
-            // SLAM
+            
             EnvironmentTagReadRange = environmentTagReadRange;
             RelativeMoveSpeed = relativeMoveSpeed;
             AgentRelativeSize = agentRelativeSize;

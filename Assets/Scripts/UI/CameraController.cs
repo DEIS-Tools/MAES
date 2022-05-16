@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using Maes.Utilities;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // ReSharper disable ConvertIfStatementToNullCoalescingAssignment
 
@@ -12,7 +14,7 @@ namespace Maes.UI {
         private List<CamAssembly> _cams;
         public Camera currentCam;
 
-        public Simulator Simulator;
+        public SimulationManager SimulationManager;
 
         public float movementSpeed;
         public float movementTime;
@@ -78,9 +80,9 @@ namespace Maes.UI {
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 movementTransform = null;
                 // Notify current simulation that no robot is selected
-                Simulator.GetCurrentSimulation().SetSelectedRobot(null);
-                Simulator.GetCurrentSimulation().SetSelectedTag(null);
-                Simulator.GetCurrentSimulation().ClearVisualTags();
+                SimulationManager.GetCurrentSimulation().SetSelectedRobot(null);
+                SimulationManager.GetCurrentSimulation().SetSelectedTag(null);
+                SimulationManager.GetCurrentSimulation().ClearVisualTags();
             }
         }
 
@@ -197,26 +199,30 @@ namespace Maes.UI {
 
             #region MouseMovementRegion
 
+            // Create temp plane along playing field, and a the current mouse position
+            var plane = new Plane(Vector3.forward, Vector3.zero);
+            var ray = currentCam.ScreenPointToRay(Input.mousePosition);
+
+            
+            // Only continue if the ray cast intersects the plane
+            if (!plane.Raycast(ray, out var entry)) return;
+            var mouseWorldPosition = ray.GetPoint(entry);
+            
+            if (GlobalSettings.IsRosMode) {
+                SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(Geometry.ToROSCoord(mouseWorldPosition));    
+            } else if (SimulationManager.CurrentSimulation != null) {
+                var coord = SimulationManager.CurrentSimulation.WorldCoordinateToSlamCoordinate(mouseWorldPosition);
+                SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(coord!);
+            }
+
             // If left mouse button has been clicked since last update()
             if (Input.GetMouseButtonDown(0)) {
-                // Create temp plane along playing field, and a ray from clicked point
-                var plane = new Plane(Vector3.forward, Vector3.zero);
-                var ray = currentCam.ScreenPointToRay(Input.mousePosition);
-
-                if (plane.Raycast(ray, out var entry)) // If ray intersects plane
-                {
-                    dragStartPosition = ray.GetPoint(entry);
-                }
+                dragStartPosition = mouseWorldPosition;
             }
 
             // If left mouse button is still being held down since last update()
             if (Input.GetMouseButton(0)) {
-                var plane = new Plane(Vector3.forward, Vector3.zero);
-                var ray = currentCam.ScreenPointToRay(Input.mousePosition);
-
-                if (!plane.Raycast(ray, out var entry)) return;
-                dragCurrentPosition = ray.GetPoint(entry);
-
+                dragCurrentPosition = mouseWorldPosition;
                 // New position should be current position, plus difference in dragged position, relative to temp plane
                 newPosition = transform.position + (dragStartPosition - dragCurrentPosition);
             }

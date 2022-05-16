@@ -93,7 +93,7 @@ namespace Maes.YamlConfig {
             // Statistics
             public bool ShouldWriteCsvResults { get; set; } = false;
             
-            public string StatisticsResultPath { get; set; } = "Default";
+            public string StatisticsResultPath { get; set; } = "";
             public int TicksPerStatsSnapshot { get; set; } = 10;
             public bool PopulateAdjacencyAndCommGroupsEveryTick { get; set; } = false;
             public int TicksBeforeExplorationHeatmapCold { get; set; } = 2400; // 10*60*4

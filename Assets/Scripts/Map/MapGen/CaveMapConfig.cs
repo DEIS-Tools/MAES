@@ -33,9 +33,9 @@ namespace Maes.Map.MapGen {
         public readonly int neighbourWallsNeededToStayWall;
 
         public CaveMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
+            randomSeed: seed,
             widthInTiles: config.Map.WidthInTiles,
             heightInTiles: config.Map.HeightInTiles,
-            randomSeed: seed,
             smoothingRuns: config.Map.CaveConfig.SmoothingRuns,
             connectionPassagesWidth: config.Map.CaveConfig.ConnectionPassageWidth,
             randomFillPercent: config.Map.CaveConfig.RandomFillPercent,
@@ -44,9 +44,16 @@ namespace Maes.Map.MapGen {
             borderSize: config.Map.BorderSize) {
         }
         
-        public CaveMapConfig(int widthInTiles, int heightInTiles, int randomSeed, int smoothingRuns,
-            int connectionPassagesWidth, int randomFillPercent, int wallThresholdSize, int roomThresholdSize,
-            int borderSize, int neighbourWallsNeededToStayWall = 4) {
+        public CaveMapConfig(
+            int randomSeed,
+            int widthInTiles=50, int heightInTiles=50, 
+            int smoothingRuns=4,
+            int connectionPassagesWidth=4, 
+            int randomFillPercent=45, 
+            int wallThresholdSize=10, 
+            int roomThresholdSize=10,
+            int borderSize=1, 
+            int neighbourWallsNeededToStayWall = 4) {
             // Only fill percent between and including 0 to 100 are allowed
             if (0 > randomFillPercent || randomFillPercent >= 100) {
                 throw new ArgumentOutOfRangeException("randomFillPercent must be between 0 and 100");

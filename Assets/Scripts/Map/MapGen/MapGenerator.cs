@@ -48,7 +48,7 @@ namespace Maes.Map.MapGen {
         /// <param name="wallHeight">A lower height can make it easier to see the robots. Must be a positive value.</param>
         /// <returns> A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles as
         /// used in the Marching Squares Algorithm.</returns>
-        public SimulationMap<bool> GenerateBuildingMap(BuildingMapConfig config, float wallHeight) {
+        public SimulationMap<bool> GenerateBuildingMap(BuildingMapConfig config, float wallHeight=2.0f) {
             // Clear and destroy objects from previous map
             clearMap();
         
@@ -469,7 +469,7 @@ namespace Maes.Map.MapGen {
         /// <param name="wallHeight">A smaller wall height can make it easier to see the robots. Must be a positive value.</param>
         /// <returns> A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles as
         /// used in the Marching Squares Algorithm.</returns>
-        public SimulationMap<bool> GenerateCaveMap(CaveMapConfig caveConfig, float wallHeight) {
+        public SimulationMap<bool> GenerateCaveMap(CaveMapConfig caveConfig, float wallHeight=2.0f) {
             // Clear and destroy objects from previous map
             clearMap();
 

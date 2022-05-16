@@ -106,10 +106,6 @@ namespace Maes {
             return res;
         }
 
-        private void OnDrawGizmos() {
-            // _debugVisualizer.Render();
-        }
-
         // ----- Future work -------
         public object SaveState() {
             throw new NotImplementedException();
@@ -158,6 +154,10 @@ namespace Maes {
             SingletonInstance = this;
 
             
+        }
+
+        public Vector2 WorldCoordinateToSlamCoordinate(Vector2 worldPosition) {
+            return _collisionMap.WorldCoordinateLocalCoordinateUnsafe(worldPosition);
         }
     }
 }

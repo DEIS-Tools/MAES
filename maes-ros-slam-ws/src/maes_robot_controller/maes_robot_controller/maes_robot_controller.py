@@ -270,6 +270,7 @@ class RobotController(Node):
             if len(odom) == 1:
                 self.robot_position = odom[0]
 
+
         self._tf_sub = self.create_subscription(msg_type=TFMessage,
                                                 topic=tf2_topic,
                                                 callback=save_robot_position_callback,
