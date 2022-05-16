@@ -64,17 +64,17 @@ namespace Maes.UI {
 
         // Update is called once per frame
         void Update() {
-            if (movementTransform == null || !stickyCam) {
-                HandleMouseMovementInput();
-                HandleKeyboardMovementInput();
-            }
-            else {
-                newPosition = movementTransform.position;
-            }
-
+            var mouseWorldPosition = GetMouseWorldPosition();
+            if (mouseWorldPosition != null) 
+                OnNewMouseWorldPosition(mouseWorldPosition.Value);
+            // Update the camera position (either by following a robot or through mouse movement)
+            UpdateCameraPosition(mouseWorldPosition);
+            
+            HandleKeyboardMovementInput();
             HandleCameraSelect();
             HandleMouseRotateZoomInput();
             HandleKeyboardRotateZoomInput();
+            
             ApplyMovement();
 
             if (Input.GetKeyDown(KeyCode.Escape)) {
@@ -191,7 +191,41 @@ namespace Maes.UI {
             uiPanels.Add(panel);
         }
 
-        void HandleMouseMovementInput() {
+        private Vector2? GetMouseWorldPosition() {
+            // Create temp plane along playing field, and a the current mouse position
+            var plane = new Plane(Vector3.forward, Vector3.zero);
+            var ray = currentCam.ScreenPointToRay(Input.mousePosition);
+
+            
+            // Only continue if the ray cast intersects the plane
+            if (!plane.Raycast(ray, out var entry)) return null;
+            var mouseWorldPosition = ray.GetPoint(entry);
+            return mouseWorldPosition;
+        }
+
+        private void OnNewMouseWorldPosition(Vector2 mouseWorldPosition) {
+            // Update the UI to show the current position of the mouse in world space
+            // (The frame of reference changes between ros and maes mode)
+            if (GlobalSettings.IsRosMode) {
+                SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(Geometry.ToROSCoord(mouseWorldPosition));    
+            } else if (SimulationManager.CurrentSimulation != null) {
+                var coord = SimulationManager.CurrentSimulation.WorldCoordinateToSlamPosition(mouseWorldPosition);
+                SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(coord!);
+            }
+        }
+
+        void UpdateCameraPosition(Vector2? mouseWorldPosition) {
+            // If sticky cam is enabled and a robot is selected, then camera movement is determined entirely by the
+            // movement of the robot
+            if (stickyCam && movementTransform != null) {
+                newPosition = movementTransform.position;
+                return;
+            }
+
+            // Only use mouse for camera control if the mouse is within the world bounds (ie. it is not hovering over UI)
+            if (mouseWorldPosition == null) 
+                return;
+            
             if (uiPanels.Any(panel =>
                 RectTransformUtility.RectangleContainsScreenPoint(panel, Input.mousePosition))) {
                 return; // Don't do anything here, if mouse is in a UI panel.
@@ -199,30 +233,14 @@ namespace Maes.UI {
 
             #region MouseMovementRegion
 
-            // Create temp plane along playing field, and a the current mouse position
-            var plane = new Plane(Vector3.forward, Vector3.zero);
-            var ray = currentCam.ScreenPointToRay(Input.mousePosition);
-
-            
-            // Only continue if the ray cast intersects the plane
-            if (!plane.Raycast(ray, out var entry)) return;
-            var mouseWorldPosition = ray.GetPoint(entry);
-            
-            if (GlobalSettings.IsRosMode) {
-                SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(Geometry.ToROSCoord(mouseWorldPosition));    
-            } else if (SimulationManager.CurrentSimulation != null) {
-                var coord = SimulationManager.CurrentSimulation.WorldCoordinateToSlamCoordinate(mouseWorldPosition);
-                SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(coord!);
-            }
-
             // If left mouse button has been clicked since last update()
             if (Input.GetMouseButtonDown(0)) {
-                dragStartPosition = mouseWorldPosition;
+                dragStartPosition = mouseWorldPosition.Value;
             }
 
             // If left mouse button is still being held down since last update()
             if (Input.GetMouseButton(0)) {
-                dragCurrentPosition = mouseWorldPosition;
+                dragCurrentPosition = mouseWorldPosition.Value;
                 // New position should be current position, plus difference in dragged position, relative to temp plane
                 newPosition = transform.position + (dragStartPosition - dragCurrentPosition);
             }
