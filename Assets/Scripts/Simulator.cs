@@ -27,7 +27,8 @@ namespace Maes {
         /// This method is used to start the simulation in a predefined configuration that will change depending on
         /// whether the simulation is in ros mode or not.
         /// </summary>
-        public void DefaultStart() {
+        public void DefaultStart(bool isRosMode = false) {
+            GlobalSettings.IsRosMode = isRosMode;
             IEnumerable<SimulationScenario> generatedScenarios;
             if (GlobalSettings.IsRosMode) {
                 generatedScenarios = ScenarioGenerator.GenerateROS2Scenario();
