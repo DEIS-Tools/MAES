@@ -84,7 +84,6 @@ namespace Maes {
             _playState = targetState;
             // Reset next update time when changing play mode to avoid skipping ahead
             _nextUpdateTimeMillis = TimeUtils.CurrentTimeMillis();
-            Debug.Log("Attempt set play state called");
             UISpeedController.UpdateButtonsUI(_playState);
             return _playState;
         }

@@ -6543,7 +6543,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   movementTransform: {fileID: 0}
   currentCam: {fileID: 0}
-  simulationManager: {fileID: 2201964410496377778}
+  SimulationManager: {fileID: 2201964410496377778}
   movementSpeed: 1
   movementTime: 8
   rotationAmount: 1

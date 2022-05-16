@@ -14,7 +14,7 @@ namespace Maes.UI {
         private List<CamAssembly> _cams;
         public Camera currentCam;
 
-        public Simulator Simulator;
+        public SimulationManager SimulationManager;
 
         public float movementSpeed;
         public float movementTime;
@@ -80,9 +80,9 @@ namespace Maes.UI {
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 movementTransform = null;
                 // Notify current simulation that no robot is selected
-                simulationManager.GetCurrentSimulation().SetSelectedRobot(null);
-                simulationManager.GetCurrentSimulation().SetSelectedTag(null);
-                simulationManager.GetCurrentSimulation().ClearVisualTags();
+                SimulationManager.GetCurrentSimulation().SetSelectedRobot(null);
+                SimulationManager.GetCurrentSimulation().SetSelectedTag(null);
+                SimulationManager.GetCurrentSimulation().ClearVisualTags();
             }
         }
 
@@ -209,10 +209,10 @@ namespace Maes.UI {
             var mouseWorldPosition = ray.GetPoint(entry);
             
             if (GlobalSettings.IsRosMode) {
-                simulationManager.simulationInfoUIController.UpdateMouseCoordinates(Geometry.ToROSCoord(mouseWorldPosition));    
-            } else if (simulationManager.CurrentSimulation != null) {
-                var coord = simulationManager.CurrentSimulation.WorldCoordinateToSlamCoordinate(mouseWorldPosition);
-                simulationManager.simulationInfoUIController.UpdateMouseCoordinates(coord!);
+                SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(Geometry.ToROSCoord(mouseWorldPosition));    
+            } else if (SimulationManager.CurrentSimulation != null) {
+                var coord = SimulationManager.CurrentSimulation.WorldCoordinateToSlamCoordinate(mouseWorldPosition);
+                SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(coord!);
             }
 
             // If left mouse button has been clicked since last update()
