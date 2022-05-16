@@ -266,10 +266,9 @@ namespace Maes.Robot {
             var info = new StringBuilder();
             var approxPosition = SlamMap.ApproximatePosition;
             info.Append($"id: {this._robot.id}\n");
+            info.AppendLine($"Current task: {CurrentTask?.GetType()}");
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
-            info.AppendLine($"Current task: {CurrentTask?.GetType()}");
-            info.Append($"Slam position: {approxPosition.x.ToString("#.0")}, {approxPosition.y.ToString("#.0")}\n");
             info.Append($"Slam tile: {SlamMap.GetCurrentPositionSlamTile()}\n");
             info.Append($"Coarse tile: {SlamMap.GetCoarseMap().FromSlamMapCoordinate(SlamMap.GetCurrentPositionSlamTile())}\n");
             info.Append($"Is colliding: {IsCurrentlyColliding()}");

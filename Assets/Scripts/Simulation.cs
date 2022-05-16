@@ -152,12 +152,10 @@ namespace Maes {
 
         public void Awake() {
             SingletonInstance = this;
-
-            
         }
 
-        public Vector2 WorldCoordinateToSlamCoordinate(Vector2 worldPosition) {
-            return _collisionMap.WorldCoordinateLocalCoordinateUnsafe(worldPosition);
+        public Vector2 WorldCoordinateToSlamPosition(Vector2 worldPosition) {
+            return worldPosition;
         }
     }
 }

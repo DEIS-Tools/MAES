@@ -105,9 +105,10 @@ namespace Maes.Map {
 
             return localCoordinate;
         }
-
-        // Coordinate conversion without boundary check
-        public Vector2 WorldCoordinateLocalCoordinateUnsafe(Vector2 worldCoordinate) {
+        
+        // Takes a world coordinates and removes the offset and scale to translate it to a local map coordinate
+        // This unsafe version may return a coordinate that is outside the bounds of the map
+        public Vector2 WorldCoordinateToLocalMapCoordinateUnsafe(Vector2 worldCoordinate) {
             return worldCoordinate - ScaledOffset;
         }
 
