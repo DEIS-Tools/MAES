@@ -14,7 +14,7 @@ namespace Maes.UI {
         private List<CamAssembly> _cams;
         public Camera currentCam;
 
-        [FormerlySerializedAs("Simulator")] public SimulationManager simulationManager;
+        public Simulator Simulator;
 
         public float movementSpeed;
         public float movementTime;

@@ -70,8 +70,7 @@ namespace Maes.Robot {
             SlamRayTraceRange = slamRayTraceRange;
             SlamRayTraceCount = slamRayTraceCount;
             DistributeSlam = distributeSlam;
-
-            // SLAM
+            
             EnvironmentTagReadRange = environmentTagReadRange;
             RelativeMoveSpeed = relativeMoveSpeed;
             AgentRelativeSize = agentRelativeSize;

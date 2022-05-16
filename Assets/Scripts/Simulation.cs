@@ -106,10 +106,6 @@ namespace Maes {
             return res;
         }
 
-        private void OnDrawGizmos() {
-            // _debugVisualizer.Render();
-        }
-
         // ----- Future work -------
         public object SaveState() {
             throw new NotImplementedException();

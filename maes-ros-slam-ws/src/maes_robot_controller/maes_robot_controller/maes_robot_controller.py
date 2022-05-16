@@ -64,7 +64,7 @@ class RobotController(Node):
         self._nav_to_pose_client = None
         self._register_subs_srvs_actions()  # Assign to variables
 
-        # Logic variables for YOUR algorithm below here
+        # Initialisation of logic variables for YOUR algorithm below here
         self.next_target: Coord2D = None # Used for frontier example
         self.next_target_costmap_index: int = None # Used for frontier example algorithm
 
@@ -90,7 +90,7 @@ class RobotController(Node):
         self.deposit_tag(tag_msg="Content of env_tag")
 
         Use robot state from MAES:
-        state.tick // Get ticks
+        state.tick // Get current logic tick from MAES. With default settings a tick lasts for 0.1 seconds
 
         Below is an example of a simple frontier algorithm. Feel free to delete
         '''
@@ -280,6 +280,8 @@ def main(args=None):
     rclpy.init(args=args)
 
     controller = RobotController()
+    # DO NOT put robot logic here.
+    # Robot logic should go in function logic_loop_callback found in this file.
 
     rclpy.spin(controller)
 
