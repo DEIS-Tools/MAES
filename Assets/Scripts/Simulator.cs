@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Maes.UI;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Maes {
@@ -17,6 +19,12 @@ namespace Maes {
             var prefab = Resources.Load("MAES", typeof(GameObject)) as GameObject;
             _maesGameObject = Object.Instantiate(prefab);
             _simulationManager = _maesGameObject.GetComponentInChildren<SimulationManager>();
+            UpdateVersionNumberText();
+        }
+
+        public void UpdateVersionNumberText() {
+            var versionNumberText = GameObject.Find("VersionNumber").GetComponent<Text>();
+            versionNumberText.text = "v." + PlayerSettings.bundleVersion;
         }
         
         public static Simulator GetInstance() {
@@ -39,7 +47,7 @@ namespace Maes {
             if (Application.isBatchMode) {
                 _simulationManager.AttemptSetPlayState(SimulationPlayState.FastAsPossible);
             } 
-            StartSimulation();
+            if (!GlobalSettings.IsRosMode) StartSimulation();
         }
 
         public void EnqueueScenario(SimulationScenario scenario) {
@@ -56,12 +64,9 @@ namespace Maes {
             if (!_simulationManager.HasActiveScenario())
                 throw new InvalidOperationException("You must enqueue at least one scenario before starting the" +
                                                     " simulation");
-            
-            
+
+
             _simulationManager.AttemptSetPlayState(SimulationPlayState.Play);
         }
-        
-        
-
     }
 }
