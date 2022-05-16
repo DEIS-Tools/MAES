@@ -19,14 +19,8 @@ namespace Maes {
             var prefab = Resources.Load("MAES", typeof(GameObject)) as GameObject;
             _maesGameObject = Object.Instantiate(prefab);
             _simulationManager = _maesGameObject.GetComponentInChildren<SimulationManager>();
-            UpdateVersionNumberText();
         }
 
-        public void UpdateVersionNumberText() {
-            var versionNumberText = GameObject.Find("VersionNumber").GetComponent<Text>();
-            versionNumberText.text = "v." + PlayerSettings.bundleVersion;
-        }
-        
         public static Simulator GetInstance() {
             return _instance ??= new Simulator();
         }
