@@ -146,7 +146,7 @@ namespace Maes.ExplorationAlgorithm {
                 }
             } else if (_controller.GetStatus() != RobotStatus.Idle){
                 // If cmd_vel does not indicate any desired movement - then stop robot if currently moving 
-                Debug.Log("Stopping movement!");
+                // Debug.Log("Stopping movement!");
                 _controller.StopCurrentTask();    
             }
         }

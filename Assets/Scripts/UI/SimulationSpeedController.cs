@@ -53,7 +53,6 @@ namespace Maes.UI {
 
         private void AttemptSwitchState(SimulationPlayState newPlayState) {
             var actualState = simulationManager.AttemptSetPlayState(newPlayState);
-            Debug.Log("Attempt switch state called");
             UpdateButtonsUI(actualState);
         }
     }
