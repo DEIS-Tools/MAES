@@ -12,7 +12,7 @@ namespace Maes.UI {
 
         private void UpdateVersionNumberText() {
             var versionNumberText = this.gameObject.GetComponent<Text>();
-            versionNumberText.text = "v." + PlayerSettings.bundleVersion;
+            versionNumberText.text = "v." + Application.version;
         }
     }
 }
