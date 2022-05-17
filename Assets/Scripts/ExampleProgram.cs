@@ -10,8 +10,10 @@ namespace Maes {
             
             // Setup configuration for a scenario
             var caveConfig = new CaveMapConfig(123, widthInTiles: 75, heightInTiles: 75);
-            var scenario = new SimulationScenario(123, mapSpawner: generator => generator.GenerateCaveMap(caveConfig));
-            simulator.EnqueueScenario(scenario);
+            
+            var scenario = ScenarioGenerator.GenerateYoutubeVideoScenarios();
+            // new SimulationScenario(123, mapSpawner: generator => generator.GenerateCaveMap(caveConfig));
+            simulator.EnqueueScenario(scenario.Peek());
             
             simulator.StartSimulation();
         }

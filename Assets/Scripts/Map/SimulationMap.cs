@@ -36,7 +36,7 @@ namespace Maes.Map {
         }
 
         // Private constructor for a pre-specified set of tiles. This is used in the FMap function
-        private SimulationMap(SimulationMapTile<TCell>[,] tiles, Vector2 scaledOffset) {
+        public SimulationMap(SimulationMapTile<TCell>[,] tiles, Vector2 scaledOffset) {
             ScaledOffset = scaledOffset;
             _tiles = tiles;
             WidthInTiles = tiles.GetLength(0);
@@ -46,19 +46,8 @@ namespace Maes.Map {
         public SimulationMapTile<TCell> GetTileByLocalCoordinate(int x, int y) {
             return _tiles[x, y];
         }
-        
-        // Returns the cells of the tile at the given coordinate along with index of the first cell
-        public (int, List<TCell>) GetTileCellsByWorldCoordinate(Vector2 worldCoord) {
-            var localCoord = WorldCoordinateToLocalMapCoordinate(worldCoord);
-            int triangleOffset = ((int) localCoord.x) * 8 + ((int) localCoord.y) * WidthInTiles * 8;
-            return (triangleOffset, _tiles[(int) localCoord.x, (int) localCoord.y].GetTriangles());
-        }
-        
-        
-        /// <param name="worldCoordinate">A coordinate that is within the bounds of the mini-tile in world space</param>
-        /// <returns> the pair of triangles that make up the 'mini-tile' at the given world location</returns>
-        public ((int, TCell), (int, TCell)) GetMiniTileTrianglesByWorldCoordinates(Vector2 worldCoordinate) {
-            var localCoordinate = WorldCoordinateToLocalMapCoordinate(worldCoordinate);
+
+        public ((int, TCell), (int, TCell)) GetMiniTilesByCoarseTileCoordinate(Vector2 localCoordinate) {
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             var triangles = tile.GetTriangles();
             var mainTriangleIndex = tile.CoordinateDecimalsToTriangleIndex(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
@@ -69,24 +58,39 @@ namespace Maes.Map {
             else
                 return ((mainTriangleIndex - 1 + triangleOffset, triangles[mainTriangleIndex - 1]), (mainTriangleIndex + triangleOffset, triangles[mainTriangleIndex]));
         }
+        
+        // Returns the cells of the tile at the given coordinate along with index of the first cell
+        public (int, List<TCell>) GetTileCellsByWorldCoordinate(Vector2 worldCoord) {
+            var localCoord = WorldCoordinateToCoarseTileCoordinate(worldCoord);
+            int triangleOffset = ((int) localCoord.x) * 8 + ((int) localCoord.y) * WidthInTiles * 8;
+            return (triangleOffset, _tiles[(int) localCoord.x, (int) localCoord.y].GetTriangles());
+        }
+        
+        
+        /// <param name="worldCoordinate">A coordinate that is within the bounds of the mini-tile in world space</param>
+        /// <returns> the pair of triangles that make up the 'mini-tile' at the given world location</returns>
+        public ((int, TCell), (int, TCell)) GetMiniTileTrianglesByWorldCoordinates(Vector2 worldCoordinate) {
+            var localCoordinate = WorldCoordinateToCoarseTileCoordinate(worldCoordinate);
+            return GetMiniTilesByCoarseTileCoordinate(localCoordinate);
+        }
 
         // Returns the triangle cell at the given world position
         public TCell GetCell(Vector2 coordinate) {
-            var localCoordinate = WorldCoordinateToLocalMapCoordinate(coordinate);
+            var localCoordinate = WorldCoordinateToCoarseTileCoordinate(coordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             return tile.GetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
         }
 
         // Assigns the given value to the triangle cell at the given coordinate
         public void SetCell(Vector2 coordinate, TCell newCell) {
-            var localCoordinate = WorldCoordinateToLocalMapCoordinate(coordinate);
+            var localCoordinate = WorldCoordinateToCoarseTileCoordinate(coordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             tile.SetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f, newCell);
         }
 
         // Returns the index of triangle cell at the given world position
         public int GetTriangleIndex(Vector2 coordinate) {
-            var localCoordinate = WorldCoordinateToLocalMapCoordinate(coordinate);
+            var localCoordinate = WorldCoordinateToCoarseTileCoordinate(coordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             var triangleIndexOffset = ((int) localCoordinate.x) * 8 + ((int) localCoordinate.y) * WidthInTiles * 8;
             return triangleIndexOffset +
@@ -94,7 +98,7 @@ namespace Maes.Map {
         }
 
         // Takes a world coordinates and removes the offset and scale to translate it to a local map coordinate
-        public Vector2 WorldCoordinateToLocalMapCoordinate(Vector2 worldCoordinate) {
+        public Vector2 WorldCoordinateToCoarseTileCoordinate(Vector2 worldCoordinate) {
             var localCoordinate = (worldCoordinate - ScaledOffset);
             if (!IsWithinLocalMapBounds(localCoordinate)) {
                 throw new ArgumentException("The given coordinate " + localCoordinate
