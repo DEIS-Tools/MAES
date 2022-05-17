@@ -41,11 +41,18 @@ namespace Maes.Statistics {
             }
         }
         
-        public void UpdateRobotCoverage(Vector2 robotPos, int currentTick, MiniTileConsumer tileConsumer) {
-            var robotMiniTileCenterX = (float) Math.Truncate(robotPos.x) + Mathf.Round(robotPos.x - (float) Math.Truncate(robotPos.x)) * 0.5f + ((robotPos.x < 0) ? -0.25f : 0.25f);
-            var robotMiniTileCenterY = (float) Math.Truncate(robotPos.y) + Mathf.Round(robotPos.y - (float) Math.Truncate(robotPos.y)) * 0.5f + ((robotPos.y < 0) ? -0.25f : 0.25f);
+        /// <summary>
+        /// This method will update the coverage status on the map for all tiles currently surrounding the robot
+        /// </summary>
+        /// <param name="robotWorldPos">The current position of the robot in unity/world space</param>
+        /// <param name="currentTick">The current logic tick of the simulation</param>
+        /// <param name="preCoverageTileConsumer">A function that will be executed on the currently covered tiles
+        /// (2 cells each) BEFORE registering coverage</param>
+        public void UpdateRobotCoverage(Vector2 robotWorldPos, int currentTick, MiniTileConsumer preCoverageTileConsumer) {
+            var robotMiniTileCenterX = (float) Math.Truncate(robotWorldPos.x) + Mathf.Round(robotWorldPos.x - (float) Math.Truncate(robotWorldPos.x)) * 0.5f + ((robotWorldPos.x < 0) ? -0.25f : 0.25f);
+            var robotMiniTileCenterY = (float) Math.Truncate(robotWorldPos.y) + Mathf.Round(robotWorldPos.y - (float) Math.Truncate(robotWorldPos.y)) * 0.5f + ((robotWorldPos.y < 0) ? -0.25f : 0.25f);
             var robotMiniTilePos = new Vector2(robotMiniTileCenterX, robotMiniTileCenterY);
-            // Loop through alle tiles currently near the robot
+            // Loop through all tiles currently near the robot
             for (int x = -1; x <= 1; x++) {
                 for (int y = -1; y <= 1; y++) {
                     var tilePosition = robotMiniTilePos + new Vector2(x * 0.5f, y * 0.5f);
@@ -73,7 +80,7 @@ namespace Maes.Statistics {
                     if (!triangle1.Item2.IsCovered) CoveredMiniTiles++; // Register first coverage of this tile
                     
                     // Execute the given function on the two covered cells
-                    tileConsumer(triangle1.Item1, triangle1.Item2, triangle2.Item1,triangle2.Item2);
+                    preCoverageTileConsumer(triangle1.Item1, triangle1.Item2, triangle2.Item1,triangle2.Item2);
 
                     // Register coverage (both repeated and first time) for other statistics such as the heat map 
                     triangle1.Item2.RegisterCoverage(currentTick);

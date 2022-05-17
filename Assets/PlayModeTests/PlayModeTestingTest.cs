@@ -8,8 +8,7 @@ public class PlayModeTestingTest
 {
     // A Test behaves as an ordinary method
     [Test]
-    public void PlayModeTestingTestSimplePasses()
-    {
+    public void PlayModeTestingTestSimplePasses() {
         // Use the Assert class to test conditions
     }
 

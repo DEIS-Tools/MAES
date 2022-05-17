@@ -1,7 +1,6 @@
 #nullable enable
 using System;
 using JetBrains.Annotations;
-using TMPro;
 
 namespace Maes.Robot {
     public class RobotConstraints {
