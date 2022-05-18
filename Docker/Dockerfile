@@ -1,6 +1,7 @@
 FROM osrf/ros:galactic-desktop
 
 RUN apt update && apt install tmux ros-galactic-navigation2 ros-galactic-nav2-bringup openssh-server sudo -y
+RUN apt update && apt upgrade -y
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
 # Create a maes-user that shares UID/GID with default ubuntu-user.
@@ -30,4 +31,3 @@ RUN echo "[ ! -f /home/maes-user/.firstbuild ] && cat /home/maes-user/.welcome &
 
 
 ENTRYPOINT service ssh start && su maes-user && exit
-
