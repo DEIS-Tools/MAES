@@ -62,6 +62,8 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+/UserSettings
+
 # ROS workspace
 maes-ros-slam-ws/install
 maes-ros-slam-ws/build
