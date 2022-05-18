@@ -310,7 +310,22 @@ MAES contains several settings that influences the behaviour of the simulation. 
 | Ticks Before Exploration Heat Map Cold       | Int    | The amount of ticks that need to pass without exploration before the exploration heat map will show that cell as completely cold.                                                                                                                                                                                                                                                                                                                                   |
 | Ticks Before Coverage Heat Map Cold          | Int    | The amount of ticks that need to pass without coverage before the coverage heat map will show that cell as completely cold.                                                                                                                                                                                                                                                                                                                                         |
 
+# Performance Testing (Linux only)
+This repository contains a [bash-script](PerformanceTest/perf.sh) for continuously logging memory usage, CPU utilization, and network activity.
+The script currently assumes that the network activity to be logged is happening on the docker0 interface.
+If you are not running anything in a container, please change the captured interface accordingly in the script.
+Memory use and CPU utilization is measured as system-wide measurements.
 
+The script is especially useful when measuring whether changes made to an exploration algorithm (or the MAES-tool itself) have reduced or increased resource usage.
+
+Open a terminal and run the script to start logging.
+The script checks for missing packages, and will abort if any are not found.
+Data is logged to separate .csv-files (values separated by whitespace), each with a name ending in network/cpu/memory.
+First data-entry on every line is always [Unix-Epoch](https://en.wikipedia.org/wiki/Unix_time), so it is easier to align the data.
+
+While the script is logging, it will prompt for entering in names of events.
+These can be used as "bookmarks" for interpreting the data at a later point, making it easier to determine at which epoch some event happened.
+The "bookmarks" are saved in a separate file.
 
 # Contributors
 
