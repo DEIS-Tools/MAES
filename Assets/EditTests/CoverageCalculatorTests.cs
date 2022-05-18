@@ -46,7 +46,6 @@ namespace EditTests {
             // The test robot is positioned in the middle of the coarse tile at coordinates (20, 20)
             // (Equivalent to the slam tile at (40, 40)
             var robotWorldPos = new Vector2(20.25f, 20.25f);
-            
             var ((_, cell1), (_, cell2)) = _explorationMap.GetMiniTilesByCoarseTileCoordinate(robotWorldPos);
             
             // Assert that none of cells are covered in advance
@@ -101,26 +100,19 @@ namespace EditTests {
                 Assert.IsTrue(cell.IsCovered);
         }
         
-        
+
         [Test]
         public void CoverageTimeUpdateTest() {
             // The test robot is positioned in the middle of the coarse tile at coordinates (20, 20)
             // (Equivalent to the slam tile at (40, 40)
             var robotWorldPos = new Vector2(20.25f, 20.25f);
             var ((_, cell1), (_, cell2)) = _explorationMap.GetMiniTilesByCoarseTileCoordinate(robotWorldPos);
-            
-            // Assert that none of cells are covered in advance
-            Assert.IsFalse(cell1.IsCovered);
-            Assert.IsFalse(cell2.IsCovered);
-            
+
             const int coverageTick = 123456;
             // Register coverage for the testing robot 
             _coverageCalculator.UpdateRobotCoverage(robotWorldPos, coverageTick, (_, __, ___, ____) => {
             });
             
-            // Assert that the status of the tiles has now changed
-            Assert.IsTrue(cell1.IsCovered);
-            Assert.IsTrue(cell2.IsCovered);
             // Assert the the coverage time is updated
             Assert.AreEqual(cell1.LastCoverageTimeInTicks, coverageTick);
             Assert.AreEqual(cell2.LastCoverageTimeInTicks, coverageTick);
@@ -130,6 +122,31 @@ namespace EditTests {
             });
             Assert.AreEqual(cell1.LastCoverageTimeInTicks, coverageTick + 1);
             Assert.AreEqual(cell2.LastCoverageTimeInTicks, coverageTick + 1);
+        }
+
+        [Test]
+        public void TilesAreMarkedCoverableCorrectly() {
+            // Copy the existing exploration map and to get a new map where all CanBeCovered flags are true
+            var freshExplorationMap = _explorationMap.FMap((cell) => new ExplorationCell(cell.IsExplorable));
+            for (int x = 0; x < Width; x++) {
+                for (int y = 0; y < Height; y++) {
+                    Assert.IsTrue(freshExplorationMap.GetTileByLocalCoordinate(x, y).IsTrueForAll(cell => cell.CanBeCovered));
+                }
+            }
+
+            new CoverageCalculator(freshExplorationMap, _collisionMap);
+            // Pass the new exploration map to the coverage calculator which should cause the solid tiles to be
+            // marked as non-coverable
+            for (int x = 0; x < Width; x++) {
+                for (int y = 0; y < Height; y++) {
+                    // We now expect the tiles have a 'CanBeCovered' status that is opposite to the solid status of tile
+                    // (ie. solid tiles cannot be covered and non-solid ones can be covered)
+                    var isSolid = IsGeneratedTileSolid(new Vector2Int(x, y));
+                    Assert.IsTrue(freshExplorationMap.GetTileByLocalCoordinate(x, y)
+                        .IsTrueForAll(cell => cell.CanBeCovered != isSolid));
+                }
+            }
+            
         }
     }
 }
