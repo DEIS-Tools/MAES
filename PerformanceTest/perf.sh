@@ -6,7 +6,7 @@ function report_missing_executable () { echo "$1 not installed ($2)"; export ALL
 # Test for needed executables
 command -v bmon   &> /dev/null || report_missing_executable "bmon" "sudo apt-get install bmon"
 command -v sed    &> /dev/null || report_missing_executable "sed" "sudo apt-get install sed"
-command -v awk    &> /dev/null || report_missing_executable "awk" "sudo apt-get install gawk"
+command -v gawk   &> /dev/null || report_missing_executable "awk" "sudo apt-get install gawk"
 command -v free   &> /dev/null || report_missing_executable "free" "sudo apt-get install procps"
 command -v docker &> /dev/null || report_missing_executable "docker" "wget -O - https://get.docker.com | sh"
 command -v xhost  &> /dev/null || report_missing_executable "xhost" "sudo apt-get install x11-xserver-utils"
@@ -29,7 +29,7 @@ function log_cpu () {
     echo "Epoch CpuUtilizationInPercent" >> $CPU_FILE_NAME
     top -b -d1 \
         | grep --line-buffered "Cpu(s)" \
-        | sed -u "s/.*, *\([0-9]*,[0-9]\)%* id.*/\1/ ; s/\,/\./" \
+        | sed -u "s/.*, *\([0-9]*.[0-9]\)%* id.*/\1/ ; s/\,/\./" \
         | while read line; do 
               awk -v file_name=$CPU_FILE_NAME -v line=$line 'BEGIN { printf ("%d %.1f\n", systime(), 100.0 - line) >> file_name}'; 
           done;
