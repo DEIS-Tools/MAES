@@ -23,6 +23,7 @@ A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
 - [Extracting Statistics (Applies to both ROSMode and UnityMode)](#extracting-statistics-applies-to-both-rosmode-and-unitymode)
 - [Headless Runs (Only UnityMode)](#headless-runs-only-unitymode)
 - [Simulator Parameters Explanations](#simulator-parameters-explanations)
+- [Performance Testing (Linux only)](#performance-testing-linux-only)
 - [Contributors](#contributors)
 
 # Getting started
