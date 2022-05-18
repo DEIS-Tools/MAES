@@ -96,12 +96,12 @@ docker run --rm -it \
 
 6.1a Without RVIZ
 ```bash
-ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py use_rviz:=false
+ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py
 ```
 
 6.1b With RVIZ
 ```bash
-ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py
+ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py use_rviz:=true
 ```
 
 
@@ -180,9 +180,15 @@ colcon build
 source install/setup.sh
 ```
 9. Launch multiple robots with launch file maes_ros2_multi_robot_launch.py inside pkg maes_ros2_interface 
+9.1a without RVIZ
 ```bash
 ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py
 ```
+9.1b With RVIZ
+```bash
+ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py use_rviz:=true
+```
+
 10. Open Maes executable called MAES.x86_64
 
 The logic controlling the behavior of the robots can be found in [maes_robot_controller.py](maes-ros-slam-ws/src/maes_robot_controller/maes_robot_controller/maes_robot_controller.py).
