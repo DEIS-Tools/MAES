@@ -146,7 +146,6 @@ namespace EditTests {
                         .IsTrueForAll(cell => cell.CanBeCovered != isSolid));
                 }
             }
-            
         }
     }
 }

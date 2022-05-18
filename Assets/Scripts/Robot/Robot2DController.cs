@@ -158,12 +158,17 @@ namespace Maes.Robot {
                 ApplyWheelForce(directive);
         }
 
+        // The robot is rotated relative to Unity's coordinate system, so 'up' is actually forward for the robot
+        public Vector3 GetForwardDirectionVector() {
+            return _transform.up;
+        }
+
         // Applies force at the positions of the wheels to create movement using physics simulation
         private void ApplyWheelForce(MovementDirective directive) {
             var leftPosition = _leftWheel.position;
             var rightPosition = _rightWheel.position;
 
-            var forward = _transform.up;
+            var forward = GetForwardDirectionVector();
 
             // Force changes depending on whether the robot is rotating or accelerating
             var force = MoveForce;

@@ -62,5 +62,9 @@ namespace Maes {
 
             _simulationManager.AttemptSetPlayState(SimulationPlayState.Play);
         }
+
+        public SimulationManager GetSimulationManager() {
+            return _simulationManager;
+        }
     }
 }

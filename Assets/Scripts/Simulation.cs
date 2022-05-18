@@ -23,7 +23,7 @@ namespace Maes {
 
         private SimulationScenario _scenario;
         private SimulationMap<bool> _collisionMap;
-        private List<MonaRobot> _robots;
+        public List<MonaRobot> Robots;
 
         [CanBeNull] private MonaRobot _selectedRobot;
         public bool HasSelectedRobot() => _selectedRobot != null;
@@ -46,12 +46,12 @@ namespace Maes {
             RobotSpawner.CommunicationManager = _communicationManager;
             RobotSpawner.RobotConstraints = scenario.RobotConstraints;
             
-            _robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
+            Robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
             _communicationManager.SetRobotRelativeSize(scenario.RobotConstraints.AgentRelativeSize);
-            foreach (var robot in _robots)
+            foreach (var robot in Robots)
                 robot.OnRobotSelected = SetSelectedRobot;
             
-            _communicationManager.SetRobotReferences(_robots);
+            _communicationManager.SetRobotReferences(Robots);
 
             ExplorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer, scenario.RobotConstraints);
         }
@@ -67,7 +67,7 @@ namespace Maes {
         }
         
         public void SelectFirstRobot() {
-            SetSelectedRobot(_robots[0]);
+            SetSelectedRobot(Robots[0]);
         }
 
         public void SetSelectedTag([CanBeNull] VisibleTagInfoHandler newSelectedTag) {
@@ -79,14 +79,14 @@ namespace Maes {
 
         public void LogicUpdate() {
             _debugVisualizer.LogicUpdate();
-            ExplorationTracker.LogicUpdate(_robots);
-            _robots.ForEach(robot => robot.LogicUpdate());
+            ExplorationTracker.LogicUpdate(Robots);
+            Robots.ForEach(robot => robot.LogicUpdate());
             SimulatedLogicTicks++;
             _communicationManager.LogicUpdate();
         }
 
         public void PhysicsUpdate() {
-            _robots.ForEach(simUnit => simUnit.PhysicsUpdate());
+            Robots.ForEach(simUnit => simUnit.PhysicsUpdate());
             Physics2D.Simulate(GlobalSettings.PhysicsTickDeltaSeconds);
             SimulateTimeSeconds += GlobalSettings.PhysicsTickDeltaSeconds;
             SimulatedPhysicsTicks++;
@@ -99,7 +99,7 @@ namespace Maes {
         /// </summary>
         public bool TnfBotsOutOfFrontiers() {
             var res = true;
-            foreach (var monaRobot in _robots) {
+            foreach (var monaRobot in Robots) {
                 res &= (monaRobot.ExplorationAlgorithm as TnfExplorationAlgorithm)?.IsOutOfFrontiers() ?? true;
             }
 
