@@ -22,8 +22,11 @@ A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
 - [ROS Workspace packages](#ros-workspace-packages)
 - [Extracting Statistics (Applies to both ROSMode and UnityMode)](#extracting-statistics-applies-to-both-rosmode-and-unitymode)
 - [Headless Runs (Only UnityMode)](#headless-runs-only-unitymode)
-- [Simulator Parameters Explanations](#simulator-parameters-explanations)
 - [Performance Testing (Linux only)](#performance-testing-linux-only)
+- [Testing Procedure](#testing-procedure)
+    * [System Tests](#system-tests)
+    * [Unit Tests](#unit-tests)
+- [Simulator Parameters Explanations](#simulator-parameters-explanations)
 - [Contributors](#contributors)
 
 # Getting started
@@ -242,6 +245,47 @@ Headless runs will start simulating immediately on the "**Fast as possible**" sp
 
 When in batch mode, the application will quit automatically when the scenario queue is empty.
 
+# Performance Testing (Linux only)
+This repository contains a [bash-script](PerformanceTest/perf.sh) for continuously logging memory usage, CPU utilization, and network activity.
+The script currently assumes that the network activity to be logged is happening on the docker0 interface.
+If you are not running anything in a container, please change the captured interface accordingly in the script.
+Memory use and CPU utilization is measured as system-wide measurements.
+
+The script is especially useful when measuring whether changes made to an exploration algorithm (or the MAES-tool itself) have reduced or increased resource usage.
+
+Open a terminal and run the script to start logging.
+The script checks for missing packages, and will abort if any are not found.
+Data is logged to separate .csv-files (values separated by whitespace), each with a name ending in network/cpu/memory.
+First data-entry on every line is always [Unix-Epoch](https://en.wikipedia.org/wiki/Unix_time), so it is easier to align the data.
+
+While the script is logging, it will prompt for entering in names of events.
+These can be used as "bookmarks" for interpreting the data at a later point, making it easier to determine at which epoch some event happened.
+The "bookmarks" are saved in a separate file.
+
+# Testing Procedure
+In order to assure functionality before any contributions some tests (unit and system tests) have been designed.
+For now, only the unit tests are automated.
+
+## System Tests
+The system test includes using both ROS and MAES, thus the entire system.
+The test can be used by using the following guide:
+1. Replace the content of [maes_config.yaml](maes-ros-slam-ws/src/maes_ros2_interface/maes_config.yaml) with the content of [maes_config_ros_system_test.yaml](maes-ros-slam-ws/src/maes_ros2_interface/maes_config_ros_system_test.yaml)
+2. Ensure that the [maes_robot_controller.py](maes-ros-slam-ws/src/maes_robot_controller/maes_robot_controller/maes_robot_controller.py) uses the default example frontier algorithm found in the main branch
+3. Colcon build the workspace and run it using the following command
+```bash
+ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py
+```
+4. Run MAES
+5. Press play in MAES
+
+A single robot will start exploring. The configuration has been shown to achieve about 99.9% after about 1400 ticks (2:20 seconds).
+The result can deviate with up to 10-15 seconds.
+If the test still yields these results after your code contribution, the system appears to be functioning correctly.
+
+
+## Unit Tests
+TODO: MAGNUS
+
 # Simulator Parameters Explanations
 Map Configuration:
 
@@ -317,22 +361,6 @@ MAES contains several settings that influences the behaviour of the simulation. 
 | Ticks Before Exploration Heat Map Cold       | Int    | The amount of ticks that need to pass without exploration before the exploration heat map will show that cell as completely cold.                                                                                                                                                                                                                                                                                                                                   |
 | Ticks Before Coverage Heat Map Cold          | Int    | The amount of ticks that need to pass without coverage before the coverage heat map will show that cell as completely cold.                                                                                                                                                                                                                                                                                                                                         |
 
-# Performance Testing (Linux only)
-This repository contains a [bash-script](PerformanceTest/perf.sh) for continuously logging memory usage, CPU utilization, and network activity.
-The script currently assumes that the network activity to be logged is happening on the docker0 interface.
-If you are not running anything in a container, please change the captured interface accordingly in the script.
-Memory use and CPU utilization is measured as system-wide measurements.
-
-The script is especially useful when measuring whether changes made to an exploration algorithm (or the MAES-tool itself) have reduced or increased resource usage.
-
-Open a terminal and run the script to start logging.
-The script checks for missing packages, and will abort if any are not found.
-Data is logged to separate .csv-files (values separated by whitespace), each with a name ending in network/cpu/memory.
-First data-entry on every line is always [Unix-Epoch](https://en.wikipedia.org/wiki/Unix_time), so it is easier to align the data.
-
-While the script is logging, it will prompt for entering in names of events.
-These can be used as "bookmarks" for interpreting the data at a later point, making it easier to determine at which epoch some event happened.
-The "bookmarks" are saved in a separate file.
 
 # Contributors
 
