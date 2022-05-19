@@ -287,7 +287,7 @@ def main(args=None):
 
             next_target = robot.global_costmap.costmap_index_to_pos(target_frontier_tile_index)
             next_target_costmap_index = target_frontier_tile_index
-
+            robot.deposit_tag("From tick {0}".format(robot.state.tick)) # Deposit tag every time a new target/goal is found
             robot.nav_to_pos(next_target.x, next_target.y)
         # If target found but not yet reached, i.e. it is still a frontier
         elif is_frontier(next_target_costmap_index, robot.global_costmap):
