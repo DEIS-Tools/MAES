@@ -227,6 +227,7 @@ class RobotController(Node):
 def main(args=None):
     rclpy.init(args=args)
 
+    # Initialise controller
     robot = RobotController()
     robot.wait_for_maes_to_start_simulation()
     '''
@@ -256,9 +257,9 @@ def main(args=None):
     Below is an example of a simple frontier algorithm. Feel free to delete
     '''
 
-    # Initialisation of logic variables for YOUR algorithm below here
-    next_target: Coord2D = None # Used for frontier example
-    next_target_costmap_index: int = None # Used for frontier example algorithm
+    # Declaration of logic variables
+    next_goal: Coord2D = None # Used for frontier example
+    next_goal_costmap_index: int = None # Used for frontier example algorithm
 
     # This method returns true if the tile is not itself unknown, but has 2 neighbors, that are unknown
     def is_frontier(map_index: int, costmap: MaesCostmap):
@@ -276,39 +277,32 @@ def main(args=None):
         rclpy.spin_once(robot)
 
         # If no target found
-        if next_target is None or robot.is_nav_complete():
+        if next_goal is None or robot.is_nav_complete():
             # Find index of first tile in costmap that is a frontier
-            target_frontier_tile_index = next((index for index, value in enumerate(robot.global_costmap.costmap.data) if is_frontier(index, robot.global_costmap)), None)
+            goal_frontier_tile_index = next((index for index, value in enumerate(robot.global_costmap.costmap.data) if is_frontier(index, robot.global_costmap)), None)
 
-            # No more frontiers found, just return
-            if target_frontier_tile_index is None:
+            # No more frontiers found, loop again
+            if goal_frontier_tile_index is None:
                 robot.logger.log_info("Robot with namespace {0} is has found no more frontiers".format(robot._topic_namespace_prefix))
                 continue
 
-            next_target = robot.global_costmap.costmap_index_to_pos(target_frontier_tile_index)
-            next_target_costmap_index = target_frontier_tile_index
+            next_goal = robot.global_costmap.costmap_index_to_pos(goal_frontier_tile_index)
+            next_goal_costmap_index = goal_frontier_tile_index
             robot.deposit_tag("From tick {0}".format(robot.state.tick)) # Deposit tag every time a new target/goal is found
-            robot.nav_to_pos(next_target.x, next_target.y)
+            robot.nav_to_pos(next_goal.x, next_goal.y)
         # If target found but not yet reached, i.e. it is still a frontier
-        elif is_frontier(next_target_costmap_index, robot.global_costmap):
+        elif is_frontier(next_goal_costmap_index, robot.global_costmap):
             # This section allows for logging feedback etc. e.g.
             # self.logger.log_info("Frontier value: {0}".format(self.global_costmap.costmap.data[self.next_target_costmap_index]))
             continue
         # If target is explored, i.e. next_target not None and not frontier
         else:
             robot.logger.log_info("Robot with namespace {0} explored its target at ({1},{2})".format(robot._topic_namespace_prefix,
-                                                                                                          next_target.x,
-                                                                                                          next_target.y))
-            next_target_costmap_index = None
-            next_target = None
+                                                                                                          next_goal.x,
+                                                                                                          next_goal.y))
+            next_goal_costmap_index = None
+            next_goal = None
             robot.cancel_nav()
-
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    robot.destroy_node()
-    rclpy.shutdown()
 
 
 if __name__ == '__main__':

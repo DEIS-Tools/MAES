@@ -114,8 +114,7 @@ The workspace (maes-ros-slam-ws) inside the MAES package is shared with the dock
 It is thus possible to change these files directly using your favorite editor or IDE.
 
 The logic controlling the behavior of the robots can be found in [maes_robot_controller.py](maes-ros-slam-ws/src/maes_robot_controller/maes_robot_controller/maes_robot_controller.py). 
-Actionservers, subscriptions and services are already setup and can be used inside the `logic_loop_callback` function to control the robot. 
-The `logic_loop_callback` function is called whenever a logic tick occurs in MAES.
+Actionservers, subscriptions and services are already setup and can be used in the main function to control the robot.
 
 The configuration of the ROS2 system can be changed by tuning parameters in [maes_config.yaml](maes-ros-slam-ws/src/maes_ros2_interface/maes_config.yaml) found inside the maes_ros2_interface package in the workspace.
 Note: The field-names must be written in [snake_case](https://en.wikipedia.org/wiki/Snake_case).
@@ -193,8 +192,7 @@ ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py use_rviz:=true
 10. Open Maes executable called MAES.x86_64
 
 The logic controlling the behavior of the robots can be found in [maes_robot_controller.py](maes-ros-slam-ws/src/maes_robot_controller/maes_robot_controller/maes_robot_controller.py).
-Actionservers, subscriptions and services are already setup and can be used inside the logic_loop function to control the robot.
-The logic_loop is called as a callback function whenever a logic tick occurs in MAES.
+Actionservers, subscriptions and services are already setup and can be used in the main function to control the robot.
 
 The configuration of the ROS2 system can be changed by tuning parameters in [maes_config.yaml](maes-ros-slam-ws/src/maes_ros2_interface/maes_config.yaml).
 found inside the maes_ros2_interface package in the workspace. Many fields have default values, which can be seen in [MaesYamlConfigLoader.cs](Assets/Scripts/MaesYamlConfigLoader.cs).
