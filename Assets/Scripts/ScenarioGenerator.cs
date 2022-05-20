@@ -306,8 +306,7 @@ namespace Maes {
                          seed: randomSeed,
                          hasFinishedSim: hasFinishedFunc,
                          mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
-                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
-                         new List<Vector2Int>(){new(13,13), new(15, 15)},
+                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                              map,
                              randomSeed,
                              numberOfRobots,
