@@ -211,8 +211,8 @@ namespace Maes.UI {
             if (GlobalSettings.IsRosMode) {
                 SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(Geometry.ToROSCoord(mouseWorldPosition));    
             } else if (SimulationManager.CurrentSimulation != null) {
-                var coord = SimulationManager.CurrentSimulation.WorldCoordinateToSlamCoordinate(mouseWorldPosition);
-                SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(coord!);
+                // var coord = SimulationManager.CurrentSimulation.WorldCoordinateToSlamCoordinate(mouseWorldPosition);
+                SimulationManager.simulationInfoUIController.UpdateMouseCoordinates(mouseWorldPosition!);
             }
 
             // If left mouse button has been clicked since last update()
