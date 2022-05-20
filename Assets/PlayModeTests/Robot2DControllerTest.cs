@@ -17,7 +17,7 @@ namespace PlayModeTests {
 
         private const int RandomSeed = 123;
         private Simulator _maes;
-        private RobotTestAlgorithm _testAlgorithm;
+        private TestingAlgorithm _testAlgorithm;
         private Simulation _simulation;
         private MonaRobot _robot;
 
@@ -28,23 +28,13 @@ namespace PlayModeTests {
 
         [SetUp]
         public void InitializeTestingSimulator() {
-            var mapConfiguration = new CaveMapConfig(randomSeed: RandomSeed, 
-                widthInTiles: 50, 
-                heightInTiles: 50, 
-                smoothingRuns: 4,
-                connectionPassagesWidth: 4, 
-                randomFillPercent: 0, 
-                wallThresholdSize: 10, 
-                roomThresholdSize: 10,
-                borderSize: 1);
-            var robotConstraints = new RobotConstraints(relativeMoveSpeed: _relativeMoveSpeed);
             var testingScenario = new SimulationScenario(RandomSeed,
-                mapSpawner: generator => generator.GenerateCaveMap(mapConfiguration),
+                mapSpawner: StandardTestingConfiguration.EmptyCaveMapSpawner(RandomSeed),
                 hasFinishedSim: simulation => false,
-                robotConstraints: robotConstraints,
+                robotConstraints: new RobotConstraints(relativeMoveSpeed: _relativeMoveSpeed),
                 robotSpawner: (map, spawner) => spawner.SpawnRobotsTogether( map, RandomSeed, 1, 
                     Vector2Int.zero, (robotSeed) => {
-                        var algorithm = new RobotTestAlgorithm();
+                        var algorithm = new TestingAlgorithm();
                         _testAlgorithm = algorithm;
                         return algorithm;
                     }));
@@ -53,34 +43,6 @@ namespace PlayModeTests {
             _maes.EnqueueScenario(testingScenario);
             _simulation = _maes.GetSimulationManager().CurrentSimulation;
             _robot = _simulation.Robots[0];
-        }
-
-        private class RobotTestAlgorithm : IExplorationAlgorithm {
-            public int Tick = 0;
-            public Robot2DController Controller;
-            public CustomUpdateFunction UpdateFunction;
-
-            public delegate void CustomUpdateFunction(int tick, Robot2DController controller);
-
-            private CustomUpdateFunction onUpdate;
-            public RobotTestAlgorithm() {
-                this.onUpdate = (_, __) => { };
-            }
-            public object SaveState() { throw new System.NotImplementedException(); }
-            public void RestoreState(object stateInfo) { }
-
-            public void UpdateLogic() {
-                UpdateFunction(Tick, Controller);
-                Tick++;
-            }
-
-            public void SetController(Robot2DController controller) {
-                this.Controller = controller;
-            }
-
-            public string GetDebugInfo() {
-                return "";
-            }
         }
 
         [TearDown]
