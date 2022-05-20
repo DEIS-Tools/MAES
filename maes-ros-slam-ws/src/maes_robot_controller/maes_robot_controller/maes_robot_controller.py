@@ -194,9 +194,9 @@ class RobotController(Node):
 
         # Quality of service profile for subscriptions
         qos_profile = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
+            reliability=ReliabilityPolicy.RELIABLE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=2
+            depth=1
         )
 
         def save_robot_state_callback(state: State):
