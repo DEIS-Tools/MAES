@@ -5,7 +5,7 @@ namespace PlayModeTests {
     public class TestingAlgorithm : IExplorationAlgorithm {
         public int Tick = 0;
         public Robot2DController Controller;
-        public CustomUpdateFunction UpdateFunction;
+        public CustomUpdateFunction UpdateFunction = (tick, controller) => { };
 
         public delegate void CustomUpdateFunction(int tick, Robot2DController controller);
 
