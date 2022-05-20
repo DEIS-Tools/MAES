@@ -4,6 +4,7 @@ using System.Linq;
 using Maes.ExplorationAlgorithm;
 using Maes.Map.MapGen;
 using Maes.Robot;
+using Maes.Utilities;
 using UnityEngine;
 using static Maes.Utilities.Geometry;
 
@@ -17,8 +18,68 @@ namespace Maes.Map
         public CommunicationManager CommunicationManager;
 
         public RobotConstraints RobotConstraints;
-        
 
+
+        public List<MonaRobot> SpawnRobotsAtPositions(List<Vector2Int> spawnPositions, SimulationMap<bool> collisionMap, int seed, int numberOfRobots, CreateAlgorithmDelegate createAlgorithmDelegate) {
+            List<MonaRobot> robots = new List<MonaRobot>();
+
+            // Ensure enough spawn positions were given
+            if (numberOfRobots != spawnPositions.Count)
+                throw new Exception($"Wrong number of spawn positions given relative to " +
+                                    $"number of robots. Expected: {numberOfRobots}, but got: {spawnPositions.Count}");
+            
+            // Ensure the same spawn position is not given twice
+            if (spawnPositions.Distinct().Count() != spawnPositions.Count)
+                throw new Exception(
+                    "Could not spawn robots. A spawn point is in the list of spawn points more than once");
+
+            // ROS uses a rotated coordinate system, and the spawn points are given in ROS Coordinates
+            if(GlobalSettings.IsRosMode) 
+                spawnPositions = spawnPositions.Select(pos => Geometry.FromROSCoord(pos)).ToList();
+
+            // Get all spawnable tiles. We cannot spawn adjacent to a wall
+            List<Vector2Int> possibleSpawnTiles = new List<Vector2Int>();
+            for (int x = 0; x < collisionMap.WidthInTiles; x++) {
+                for (int y = 0; y < collisionMap.HeightInTiles; y++) {
+                    if (collisionMap.GetTileByLocalCoordinate(x, y).IsTrueForAll(solid => !solid)) {
+                        possibleSpawnTiles.Add(new Vector2Int(x, y));
+                    }
+                    
+                }
+            }
+            
+            // Remove the edges to make sure the robots are not in a solid coarse tile
+            var edgeTiles = FindEdgeTiles(possibleSpawnTiles, true);
+            possibleSpawnTiles = possibleSpawnTiles.Except(edgeTiles).ToList();
+
+            // Offset suggested starting points
+            spawnPositions = spawnPositions.Select(pos => new Vector2Int(pos.x - (int)collisionMap.ScaledOffset.x,
+                                                pos.y - (int)collisionMap.ScaledOffset.y)).ToList();
+
+            // If any of the spawn positions are not possible, throw an exception
+            if (spawnPositions.Exists(sPos => !possibleSpawnTiles.Contains(sPos))) {
+                var illegalPos = spawnPositions.First(sPos => !possibleSpawnTiles.Contains(sPos));
+                throw new Exception($"Spawn position at ({illegalPos.x},{illegalPos.y}) is illegal. " +
+                                    $"It is likely inside a wall or out of bounds of the map");
+            }
+
+            int robotId = 0;
+            foreach (var spawnTile in spawnPositions) {
+                var robot = CreateRobot(
+                    x: spawnTile.x,
+                    y: spawnTile.y,
+                    relativeSize: RobotConstraints.AgentRelativeSize,
+                    robotId: robotId++,
+                    algorithm: createAlgorithmDelegate(seed + robotId),
+                    collisionMap: collisionMap,
+                    seed: seed + robotId
+                );
+                robots.Add(robot);
+            }
+
+            return robots;
+        }
+        
         /// <summary>
         /// Spawns the robots in the biggest room. For building type map this is usually the hall way.
         /// </summary>
