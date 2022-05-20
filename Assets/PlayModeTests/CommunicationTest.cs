@@ -35,8 +35,7 @@ namespace PlayModeTests {
         }
 
         private void InitSimulator(MapFactory mapFactory, 
-            RobotConstraints.SignalTransmissionProbability transmissionProbabilityFunc,
-            float transmissionCutoff,
+            RobotConstraints.SignalTransmissionSuccessCalculator transmissionSuccessCalculatorFunc,
             List<Vector2Int> robotSpawnPositions) {
             var testingScenario = new SimulationScenario(RandomSeed,
                 mapSpawner: mapFactory,
@@ -58,8 +57,7 @@ namespace PlayModeTests {
         [Test]
         public void Broadcast_GlobalCommunicationThroughWallsTest() {
             InitSimulator(StandardTestingConfiguration.EmptyCaveMapSpawner(RandomSeed), 
-                (distance, wallDistance) => 1.0f, 
-                0.1f, 
+                (distance, wallDistance) => true,
                 new List<Vector2Int>());
             
             
@@ -76,14 +74,11 @@ namespace PlayModeTests {
         public void Broadcast_1WallTileDetectedTest() {
             InitSimulator((generator => generator.CreateMapFromBitMap(GenerateMapWithHorizontalWallInMiddle(1))),
                 (distance, wallDistance) => {
-                    if (wallDistance > 0.1f) return 0f; // Always blocked by walls
-                    return 1.0f; // Always communicate when in line of sight
+                    if (wallDistance > 0.1f) return false; // Always blocked by walls
+                    return true; // Always communicate when in line of sight
                 }, 
-                0.5f, 
                 new List<Vector2Int>());
         }
-        
-        // TODO: fix communication function to true/false + report description
 
     }
 }

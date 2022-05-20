@@ -4,12 +4,9 @@ using JetBrains.Annotations;
 
 namespace Maes.Robot {
     public class RobotConstraints {
-        public delegate float SignalTransmissionProbability(float totalDistance, float distanceThroughWalls);
+        public delegate bool SignalTransmissionSuccessCalculator(float totalDistance, float distanceThroughWalls);
 
-        public readonly SignalTransmissionProbability calculateSignalTransmissionProbability;
-        // The cutoff (in units provided by the SignalTransmissionProbability function) at which signals will no
-        // longer be transmitted
-        public readonly float MinimumSignalTransmissionProbability;
+        public readonly SignalTransmissionSuccessCalculator IsTransmissionSuccessful;
 
         public readonly float SenseNearbyAgentsRange;
         public readonly bool SenseNearbyAgentsBlockedByWalls;
@@ -54,8 +51,7 @@ namespace Maes.Robot {
             float slamRayTraceRange=20f, 
             float relativeMoveSpeed=1f, 
             float agentRelativeSize=0.6f, 
-            SignalTransmissionProbability? calculateSignalTransmissionProbability = null, 
-            float minimumSignalTransmissionProbability = 0.9f, 
+            SignalTransmissionSuccessCalculator? calculateSignalTransmissionProbability = null,
             int? slamRayTraceCount = null) {
 
             SenseNearbyAgentsRange = senseNearbyAgentsRange;
@@ -75,8 +71,7 @@ namespace Maes.Robot {
             AgentRelativeSize = agentRelativeSize;
             
             // Communication/Broadcasting
-            this.calculateSignalTransmissionProbability = calculateSignalTransmissionProbability ?? ((distance, _) => 100.0f);
-            MinimumSignalTransmissionProbability = minimumSignalTransmissionProbability;
+            this.IsTransmissionSuccessful = calculateSignalTransmissionProbability ?? ((distance, _) => true);
         }
     }
 }
