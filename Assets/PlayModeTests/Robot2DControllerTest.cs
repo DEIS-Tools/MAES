@@ -15,6 +15,8 @@ namespace PlayModeTests {
         private const int RandomSeed = 123;
         private Simulator _maes;
         private RobotTestAlgorithm _testAlgorithm;
+        private Simulation _simulation;
+        private MonaRobot _robot;
 
         [SetUp]
         public void InitializeTestingSimulator() {
@@ -40,12 +42,20 @@ namespace PlayModeTests {
             
             _maes = Simulator.GetInstance();
             _maes.EnqueueScenario(testingScenario);
+            _simulation = _maes.GetSimulationManager().CurrentSimulation;
+            _robot = _simulation.Robots[0];
         }
 
         private class RobotTestAlgorithm : IExplorationAlgorithm {
             public int tick = 0;
             public Robot2DController _controller;
-            public float TargetMovementDistance = 5.0f;
+
+            public delegate void CustomUpdateFunction(int tick, Robot2DController controller);
+
+            private CustomUpdateFunction onUpdate;
+            public RobotTestAlgorithm(CustomUpdateFunction onUpdate) {
+                this.onUpdate = onUpdate;
+            }
             public object SaveState() { throw new System.NotImplementedException(); }
             public void RestoreState(object stateInfo) { }
 
@@ -64,21 +74,26 @@ namespace PlayModeTests {
             }
         }
 
+        [TearDown]
+        public void ClearSimulator() {
+            Simulator.Destroy();
+        }
+
         
         // Test that the robot is able to move the given distance
         [UnityTest]
-        [TestCase(1.0f)]
-        [TestCase(2.0f)]
-        [TestCase(5.0f)]
-        [TestCase(10.0f)]
+        [TestCase(1.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(2.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(5.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(10.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(20.0f, ExpectedResult = (IEnumerator) null)]
         public IEnumerator MoveTo_IsDistanceCorrectTest(float movementDistance) {
-            var simulation = _maes.GetSimulationManager().CurrentSimulation;
-            var robot = simulation.Robots[0];
+            
             _testAlgorithm.TargetMovementDistance = movementDistance;
-            var controller = robot.Controller;
+            var controller = _robot.Controller;
 
             // Register the starting position and calculate the expected position
-            var transform = robot.transform;
+            var transform = _robot.transform;
             var startingPosition = transform.position;
             var expectedEndingPosition = startingPosition + (controller.GetForwardDirectionVector() * movementDistance);
             
@@ -90,15 +105,28 @@ namespace PlayModeTests {
             }
             
             //  Wait 1 second (10 ticks) for the robot to stand completely still
-            var movementTaskEndTick = simulation.SimulatedLogicTicks;
+            var movementTaskEndTick = _simulation.SimulatedLogicTicks;
             const int ticksToWait = 10;
-            while (simulation.SimulatedLogicTicks < movementTaskEndTick + ticksToWait) yield return null;
+            while (_simulation.SimulatedLogicTicks < movementTaskEndTick + ticksToWait) yield return null;
 
-            var endingPosition = robot.transform.position;
-            const float MaximumDeviation = 0.1f;
+            // Assert that the actual final position approximately matches the expected final position
+            var endingPosition = _robot.transform.position;
+            const float maximumDeviation = 0.1f;
             var targetPositionDelta = (expectedEndingPosition - endingPosition).magnitude;
             Debug.Log($"Actual: {endingPosition}  vs  expected: {expectedEndingPosition}");
-            Assert.LessOrEqual(targetPositionDelta, MaximumDeviation);
+            Assert.LessOrEqual(targetPositionDelta, maximumDeviation);
+        }
+
+        [UnityTest]
+        [TestCase(1.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(2.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(5.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(10.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(20.0f, ExpectedResult = (IEnumerator) null)]
+        public IEnumerator Rotate_IsRotationCorrectAmount(float targetRotation) {
+            
+            yield return null;
+            
         }
     }
 }
