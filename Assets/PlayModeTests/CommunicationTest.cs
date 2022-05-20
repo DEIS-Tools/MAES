@@ -96,6 +96,35 @@ namespace PlayModeTests {
         }
         
         [Test(ExpectedResult = (IEnumerator) null)]
+        public IEnumerator Broadcast_TransmissionFailedTest() {
+            InitSimulator(StandardTestingConfiguration.EmptyCaveMapSpawner(RandomSeed), 
+                (distance, wallDistance) => false, // Always fail communication
+                new List<Vector2Int>(){new Vector2Int(2, 2), new Vector2Int(6, 6)});
+
+            string receivedMessage = null;
+            string sentMessage = "message sent between robots 1 and 2";
+            var algorithm1 = _robotTestAlgorithms[0];
+            var algorithm2 = _robotTestAlgorithms[1];
+            
+            algorithm1.UpdateFunction = (tick, controller) => {
+                if (tick == 0) controller.Broadcast(sentMessage);
+            };
+
+            algorithm2.UpdateFunction = (tick, controller) => {
+                var results = controller.ReceiveBroadcast();
+                if (results.Count != 0) receivedMessage = results[0] as string;
+            };
+            
+            _maes.StartSimulation();
+            // Wait until the message has been broadcast
+            while (_simulation.SimulatedLogicTicks < 2) {
+                yield return null;
+            }
+            
+            Assert.IsNull(receivedMessage);
+        }
+        
+        [Test(ExpectedResult = (IEnumerator) null)]
         public IEnumerator Broadcast_NoWallsCommunicationTest() {
             float foundWallDistance = float.PositiveInfinity;
             
