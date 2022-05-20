@@ -10,6 +10,9 @@ using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace PlayModeTests {
+    [TestFixture(1.0f)]
+    [TestFixture(1.5f)]
+    [TestFixture(0.5f)]
     public class Robot2DControllerTest {
 
         private const int RandomSeed = 123;
@@ -17,6 +20,11 @@ namespace PlayModeTests {
         private RobotTestAlgorithm _testAlgorithm;
         private Simulation _simulation;
         private MonaRobot _robot;
+
+        private float _relativeMoveSpeed;
+        public Robot2DControllerTest(float relativeMoveSpeed) {
+            _relativeMoveSpeed = relativeMoveSpeed;
+        }
 
         [SetUp]
         public void InitializeTestingSimulator() {
@@ -29,10 +37,11 @@ namespace PlayModeTests {
                 wallThresholdSize: 10, 
                 roomThresholdSize: 10,
                 borderSize: 1);
-            var robotConstraints = new RobotConstraints();
-            var testingScenario = new SimulationScenario(RandomSeed, 
+            var robotConstraints = new RobotConstraints(relativeMoveSpeed: _relativeMoveSpeed);
+            var testingScenario = new SimulationScenario(RandomSeed,
                 mapSpawner: generator => generator.GenerateCaveMap(mapConfiguration),
                 hasFinishedSim: simulation => false,
+                robotConstraints: robotConstraints,
                 robotSpawner: (map, spawner) => spawner.SpawnRobotsTogether( map, RandomSeed, 1, 
                     Vector2Int.zero, (robotSeed) => {
                         var algorithm = new RobotTestAlgorithm();
@@ -47,26 +56,26 @@ namespace PlayModeTests {
         }
 
         private class RobotTestAlgorithm : IExplorationAlgorithm {
-            public int tick = 0;
-            public Robot2DController _controller;
+            public int Tick = 0;
+            public Robot2DController Controller;
+            public CustomUpdateFunction UpdateFunction;
 
             public delegate void CustomUpdateFunction(int tick, Robot2DController controller);
 
             private CustomUpdateFunction onUpdate;
-            public RobotTestAlgorithm(CustomUpdateFunction onUpdate) {
-                this.onUpdate = onUpdate;
+            public RobotTestAlgorithm() {
+                this.onUpdate = (_, __) => { };
             }
             public object SaveState() { throw new System.NotImplementedException(); }
             public void RestoreState(object stateInfo) { }
 
             public void UpdateLogic() {
-                if (tick == 0) 
-                    _controller.Move(TargetMovementDistance);
-                tick++;
+                UpdateFunction(Tick, Controller);
+                Tick++;
             }
 
             public void SetController(Robot2DController controller) {
-                this._controller = controller;
+                this.Controller = controller;
             }
 
             public string GetDebugInfo() {
@@ -88,8 +97,9 @@ namespace PlayModeTests {
         [TestCase(10.0f, ExpectedResult = (IEnumerator) null)]
         [TestCase(20.0f, ExpectedResult = (IEnumerator) null)]
         public IEnumerator MoveTo_IsDistanceCorrectTest(float movementDistance) {
-            
-            _testAlgorithm.TargetMovementDistance = movementDistance;
+            _testAlgorithm.UpdateFunction = (tick, controller) => {
+                if (tick == 0) controller.Move(movementDistance);
+            };
             var controller = _robot.Controller;
 
             // Register the starting position and calculate the expected position
@@ -100,7 +110,7 @@ namespace PlayModeTests {
             _maes.StartSimulation();
             
             // Wait until the robot has started and completed the movement task
-            while (_testAlgorithm.tick < 10 || _testAlgorithm._controller.GetStatus() != RobotStatus.Idle) {
+            while (_testAlgorithm.Tick < 10 || _testAlgorithm.Controller.GetStatus() != RobotStatus.Idle) {
                 yield return null;
             }
             
@@ -119,14 +129,40 @@ namespace PlayModeTests {
 
         [UnityTest]
         [TestCase(1.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(-1.0f, ExpectedResult = (IEnumerator) null)]
         [TestCase(2.0f, ExpectedResult = (IEnumerator) null)]
         [TestCase(5.0f, ExpectedResult = (IEnumerator) null)]
         [TestCase(10.0f, ExpectedResult = (IEnumerator) null)]
         [TestCase(20.0f, ExpectedResult = (IEnumerator) null)]
-        public IEnumerator Rotate_IsRotationCorrectAmount(float targetRotation) {
+        [TestCase(-20.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(180.0f, ExpectedResult = (IEnumerator) null)]
+        [TestCase(-180.0f, ExpectedResult = (IEnumerator) null)]
+        public IEnumerator Rotate_RotatesCorrectAmountOfDegrees(float degreesToRotate) {
+            _testAlgorithm.UpdateFunction = (tick, controller) => { if(tick == 1) controller.Rotate(degreesToRotate); };
+
+            // Register the starting position and calculate the expected position
+            var transform = _robot.transform;
+            var startingRotation = transform.rotation.eulerAngles.z;
+            var expectedAngle = startingRotation + degreesToRotate;
+            while (expectedAngle < 0) expectedAngle += 360;
+            expectedAngle %= 360;
             
-            yield return null;
+            _maes.StartSimulation();
+
+            // Wait until the robot has started and completed the movement task
+            while (_testAlgorithm.Tick < 10 || _testAlgorithm.Controller.GetStatus() != RobotStatus.Idle) 
+                yield return null;
+            //  Wait 1 second (10 ticks) for the robot to stand completely still
+            var movementTaskEndTick = _simulation.SimulatedLogicTicks;
+            const int ticksToWait = 10;
+            while (_simulation.SimulatedLogicTicks < movementTaskEndTick + ticksToWait) yield return null;
             
+            // Assert that the actual final rotation approximately matches the expected angle
+            var actualAngle = _robot.transform.rotation.eulerAngles.z;
+            const float maximumDeviationDegrees = 0.5f;
+            var targetPositionDelta = Mathf.Abs(expectedAngle - actualAngle);
+            Debug.Log($"Actual final angle: {actualAngle}  vs  expected angle: {expectedAngle}");
+            Assert.LessOrEqual(targetPositionDelta, maximumDeviationDegrees);
         }
     }
 }

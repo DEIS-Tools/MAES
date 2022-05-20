@@ -45,7 +45,7 @@ namespace Maes.Robot {
         // Indicates whether the robot has entered a new collision since the previous logic update
         private bool _newCollisionSinceLastUpdate = false;
 
-        // When the robot enters a collision (such as with a wall) the robot will only be notified of the
+        // When the robot enters a collision (such as with a wall) Unity will only notify of the
         // collision upon initial impact. If the robot continues to drive into the wall,
         // no further collision notifications will be received. To counteract this problem, the controller will 
         // reissue the collision notification if the collision flag is not cleared and the robot is following an
@@ -296,7 +296,6 @@ namespace Maes.Robot {
 
         // Returns a list of all environment tags that are within sensor range
         public List<RelativeObject<EnvironmentTag>> ReadNearbyTags() {
-            
             var tags = CommunicationManager.ReadNearbyTags(_robot);
             return tags.Select(tag => ToRelativePosition(tag.MapPosition, tag)).ToList();
         }
