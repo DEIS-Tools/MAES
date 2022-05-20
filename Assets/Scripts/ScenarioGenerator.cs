@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Maes.ExplorationAlgorithm;
 using Maes.ExplorationAlgorithm.BrickAndMortar;
 using Maes.ExplorationAlgorithm.RandomBallisticWalk;
@@ -88,7 +89,34 @@ namespace Maes {
                          seed: seed,
                          numberOfRobots: numberOfRobots,
                          (seed) => new Ros2Algorithm());
-                 } else if (yamlConfig.RobotSpawnConfig.SpawnTogether != null) {
+                 } else if (yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals != null) {
+                     if (yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals.Count() !=
+                         yamlConfig.RobotSpawnConfig.spawnAtPositionsYVals.Count())
+                         throw new Exception("Number of position x values does not match number of position y values");
+                     var positions = new List<Vector2Int>();
+                     for (int index = 0; index < yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals.Count(); index++) {
+                         positions.Add(new Vector2Int(yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals[index], 
+                             yamlConfig.RobotSpawnConfig.spawnAtPositionsYVals[index]));
+                     }
+                     
+                     robotSpawner = (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
+                         spawnPositions: positions,
+                         collisionMap: map,
+                         seed: seed,
+                         numberOfRobots: numberOfRobots,
+                         createAlgorithmDelegate: (seed) => new Ros2Algorithm()
+                     );
+                 }
+                 else if (yamlConfig.RobotSpawnConfig.SpawnAtHallwayEnds != null) { // Spawn_at_hallway_ends
+                     robotSpawner = (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                         collisionMap: map,
+                         seed: seed,
+                         numberOfRobots: numberOfRobots,
+                         createAlgorithmDelegate: (seed) => new Ros2Algorithm()
+                     );
+                 }
+                 // If nothing given, just spawn the robots together
+                 else {
                      Vector2Int? suggestedStartingPoint = yamlConfig.RobotSpawnConfig.SpawnTogether.HasSuggestedStartingPoint 
                          ? yamlConfig.RobotSpawnConfig.SpawnTogether.SuggestedStartingPointAsVector 
                          : null;
@@ -100,14 +128,7 @@ namespace Maes {
                          createAlgorithmDelegate: (seed) => new Ros2Algorithm()
                      );
                  }
-                 else { // Spawn_at_hallway_ends
-                     robotSpawner = (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
-                         collisionMap: map,
-                         seed: seed,
-                         numberOfRobots: numberOfRobots,
-                         createAlgorithmDelegate: (seed) => new Ros2Algorithm()
-                     );
-                 }
+                 
                  scenarios.Enqueue(new SimulationScenario(
                      seed: 0,
                      hasFinishedSim: shouldEndSim,

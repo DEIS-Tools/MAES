@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -155,9 +156,13 @@ namespace Maes.YamlConfig {
             public bool? BiggestRoom { get; set; } = null;
             public SpawnTogetherType SpawnTogether { get; set; } = null;
             public bool? SpawnAtHallwayEnds { get; set; } = null;
+            public int[] spawnAtPositionsXVals { get; set; } = null;
+            public int[] spawnAtPositionsYVals { get; set; } = null;
 
             public override string ToString() {
-                return $"{nameof(BiggestRoom)}: {BiggestRoom}, {nameof(SpawnTogether)}: {SpawnTogether}, {nameof(SpawnAtHallwayEnds)}: {SpawnAtHallwayEnds}";
+                return $"{nameof(BiggestRoom)}: {BiggestRoom}, {nameof(SpawnTogether)}: {SpawnTogether}, " +
+                       $"{nameof(SpawnAtHallwayEnds)}: {SpawnAtHallwayEnds}, {nameof(spawnAtPositionsXVals)}: " +
+                       $"{spawnAtPositionsXVals}, {nameof(spawnAtPositionsYVals)}: {spawnAtPositionsYVals}";
             }
         }
 
