@@ -292,7 +292,8 @@ namespace Maes.Map {
         }
 
         /// <summary>
-        /// Converts the <see cref="Vector2"/> given by <see cref="GetApproximatePosition"/> to the tile in which the robot is currently positioned.
+        /// Converts the <see cref="Vector2"/> given by <see cref="GetApproximatePosition"/> to the tile in
+        /// which the robot is currently positioned.
         /// </summary>
         public Vector2Int GetCurrentTile() {
             var robotPosition = GetApproximatePosition();

@@ -1,0 +1,23 @@
+{
+    "name": "CustomScriptsAssembly",
+    "rootNamespace": "",
+    "references": [
+        "GUID:bfd99b683f8b1eac1b2bc616755ef0b1",
+        "GUID:acf5d101701ab1987b7babf0fae71e0a",
+        "GUID:625bfc588fb96c74696858f2c467e978",
+        "GUID:5db6cbfd5d0e86a46862a70f4b4067f2",
+        "GUID:ba58c43074cf72549aa2ac5937dae44b",
+        "GUID:b3f49edfedc855a48aa1a9e5d3cba438",
+        "GUID:b1ef917f7a8a86a4eb639ec2352edbf8",
+        "GUID:465c1207fffb96245a352265e7622205"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

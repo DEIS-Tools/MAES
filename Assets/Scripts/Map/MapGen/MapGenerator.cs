@@ -486,7 +486,7 @@ namespace Maes.Map.MapGen {
         /// <summary>
         /// Method for creating a map from an array of ints {0, 1}.
         /// </summary>
-        public SimulationMap<bool> CreateMapFromBitMap(int[,] bitmap, float wallHeight, int borderSize) {
+        public SimulationMap<bool> CreateMapFromBitMap(int[,] bitmap, float wallHeight=2.0f, int borderSize=1) {
             // Clear and destroy objects from previous map
             clearMap();
 
