@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using static Maes.Map.MapGen.BitMapTypes;
 using Quaternion = UnityEngine.Quaternion;
@@ -489,22 +490,34 @@ namespace Maes.Map.MapGen {
             // Clear and destroy objects from previous map
             clearMap();
 
-            bitmap = CreateBorderedMap(bitmap, bitmap.GetLength(0), bitmap.GetLength(1), borderSize);
-            var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(0, 0, bitmap);
+            // TODO: If the border size is less than two, sometimes the mesh is generated with wierd invisible walls
+            // Can be reproduced by having a map with a line with a width of 2 going through the middle and splitting the map
+            // and having a border size smaller than 2. The collider also covers the outside of the map, when the bug happens.
+            borderSize = Math.Max(2, borderSize);
             
+            // Add border around map
+            var borderedMap = CreateBorderedMap(bitmap, bitmap.GetLength(0), bitmap.GetLength(1), borderSize);
+            
+            // Get rooms needed for mesh creation
+            var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(0, 0, borderedMap);
+            
+            // The rooms should now reflect their relative shifted positions after adding borders round map.
+            survivingRooms.ForEach(r => r.OffsetCoordsBy(borderSize, borderSize));
+
+            // Create mesh
             MeshGenerator meshGen = GetComponent<MeshGenerator>();
-            var collisionMap = meshGen.GenerateMesh(bitmap, wallHeight,
+            var collisionMap = meshGen.GenerateMesh(cleanedMap.Clone() as int[,], wallHeight,
                 true, survivingRooms);
 
             // Rotate to fit 2D view
             plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
-            ResizePlaneToFitMap(bitmap.GetLength(0), bitmap.GetLength(1));
+            ResizePlaneToFitMap(bitmap.GetLength(1), bitmap.GetLength(0));
             MovePlaneAndWallRoofToFitWallHeight(wallHeight);
             
             return collisionMap;
         }
 
-        private SimulationMap<bool> CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 3.0f) {
+        private SimulationMap<bool> CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 2.0f) {
             // Fill map with random walls and empty tiles (Looks kinda like a QR code)
             var randomlyFilledMap = CreateRandomFillMap(caveConfig);
 

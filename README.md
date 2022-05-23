@@ -276,8 +276,8 @@ ros2 launch maes_ros2_interface maes_ros2_multi_robot_launch.py
 4. Run MAES
 5. Press play in MAES
 
-A single robot will start exploring. The configuration has been shown to achieve about 99.9% after about 1400 ticks (2:20 seconds).
-The result can deviate with up to 10-15 seconds.
+A single robot will start exploring. The configuration has been shown to achieve about 99.9% after about 1480 ticks (2:28 seconds).
+The result can deviate with up to 10 seconds.
 If the test still yields these results after your code contribution, the system appears to be functioning correctly.
 
 
