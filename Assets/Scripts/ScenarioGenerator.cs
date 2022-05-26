@@ -238,7 +238,7 @@ namespace Maes {
          /// Generates the scenarios used for the YouTube video recordings.
          /// </summary>
         public static Queue<SimulationScenario> GenerateYoutubeVideoScenarios() {
-             var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
+             // var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
              Queue<SimulationScenario> scenarios = new Queue<SimulationScenario>();
              var numberOfRobots = 2;
              var maxRunTime = 60 * Minute;
@@ -295,31 +295,31 @@ namespace Maes {
                  };
 
                  foreach (var (createAlgorithmDelegate, algorithmName) in algorithmsAndFileNames) {
-                     // scenarios.Enqueue(new SimulationScenario(
-                     //     seed: randomSeed,
-                     //     hasFinishedSim: hasFinishedFunc,
-                     //     mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
-                     //     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
-                     //         map,
-                     //         randomSeed,
-                     //         numberOfRobots,
-                     //         createAlgorithmDelegate),
-                     //     robotConstraints: robotConstraints,
-                     //     $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
-                     // ));
                      scenarios.Enqueue(new SimulationScenario(
                          seed: randomSeed,
                          hasFinishedSim: hasFinishedFunc,
-                         mapSpawner: (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f, 1),
-                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                         mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                              map,
                              randomSeed,
                              numberOfRobots,
-                             new Vector2Int(0, 0),
                              createAlgorithmDelegate),
                          robotConstraints: robotConstraints,
-                         $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                         $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
                      ));
+                     // scenarios.Enqueue(new SimulationScenario(
+                     //     seed: randomSeed,
+                     //     hasFinishedSim: hasFinishedFunc,
+                     //     mapSpawner: (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f, 1),
+                     //     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                     //         map,
+                     //         randomSeed,
+                     //         numberOfRobots,
+                     //         new Vector2Int(0, 0),
+                     //         createAlgorithmDelegate),
+                     //     robotConstraints: robotConstraints,
+                     //     $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                     // ));
                  }
              }
 
