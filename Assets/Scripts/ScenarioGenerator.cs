@@ -26,21 +26,24 @@ namespace Maes {
              var numberOfRobots = yamlConfig.NumberOfRobots;
              
              // End criteria
-             SimulationEndCriteriaDelegate shouldEndSim;
-             if (yamlConfig.EndCriteria.CoveragePercent != null) {
-                 // End at coverage achieved
-                 shouldEndSim = (simulation) => (simulation.ExplorationTracker
-                     .CoverageProportion > yamlConfig.EndCriteria.CoveragePercent);
+             SimulationEndCriteriaDelegate shouldEndSim = simulation => false;
+             if (yamlConfig.EndCriteria != null) {
+                 if (yamlConfig.EndCriteria.CoveragePercent != null) {
+                     // End at coverage achieved
+                     shouldEndSim = (simulation) => (simulation.ExplorationTracker
+                         .CoverageProportion > yamlConfig.EndCriteria.CoveragePercent);
+                 }
+                 else if (yamlConfig.EndCriteria.ExplorationPercent != null) {
+                     // End at exploration achieved
+                     shouldEndSim = (simulation) => (simulation.ExplorationTracker
+                         .ExploredProportion > yamlConfig.EndCriteria.ExplorationPercent);
+                 }
+                 else if (yamlConfig.EndCriteria.Tick != null){
+                     // End at tick
+                     shouldEndSim = (simulation) => (simulation.SimulatedLogicTicks >= yamlConfig.EndCriteria.Tick);
+                 }
              }
-             else if (yamlConfig.EndCriteria.ExplorationPercent != null) {
-                 // End at exploration achieved
-                 shouldEndSim = (simulation) => (simulation.ExplorationTracker
-                     .ExploredProportion > yamlConfig.EndCriteria.ExplorationPercent);
-             }
-             else {
-                 // End at tick
-                 shouldEndSim = (simulation) => (simulation.SimulatedLogicTicks >= yamlConfig.EndCriteria.Tick);
-             }
+             
 
              var constraints = new RobotConstraints(
                  senseNearbyAgentsRange: yamlConfig.RobotConstraints.SenseNearbyAgentsRange,
@@ -66,68 +69,78 @@ namespace Maes {
              );
 
              foreach (var seed in yamlConfig.RandomSeeds) {
-                 MapFactory mapSpawner = null;
-                 if (yamlConfig.Map.CustomMapFilename != null) {
-                     // Load custom map from file
-                     var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent(yamlConfig.Map.CustomMapFilename);
-                     mapSpawner = (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, yamlConfig.Map.WallHeight, yamlConfig.Map.BorderSize);
-                 } else if (yamlConfig.Map.CaveConfig != null) { 
-                     // Generate Cave Map
-                     var caveConfig = new CaveMapConfig(yamlConfig, seed);
-                     mapSpawner = (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, yamlConfig.Map.WallHeight);
-                 } else {  
-                     // Building type
-                     var buildingConfig = new BuildingMapConfig(yamlConfig, seed);
-                     mapSpawner = (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, yamlConfig.Map.WallHeight);
-                 }
-
-
-                 RobotFactory robotSpawner = null;
-                 if (yamlConfig.RobotSpawnConfig.BiggestRoom != null) {
-                     robotSpawner = (map, robotSpawner) => robotSpawner.SpawnRobotsInBiggestRoom(
-                         collisionMap: map,
-                         seed: seed,
-                         numberOfRobots: numberOfRobots,
-                         (seed) => new Ros2Algorithm());
-                 } else if (yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals != null) {
-                     if (yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals.Count() !=
-                         yamlConfig.RobotSpawnConfig.spawnAtPositionsYVals.Count())
-                         throw new Exception("Number of position x values does not match number of position y values");
-                     var positions = new List<Vector2Int>();
-                     for (int index = 0; index < yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals.Count(); index++) {
-                         positions.Add(new Vector2Int(yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals[index], 
-                             yamlConfig.RobotSpawnConfig.spawnAtPositionsYVals[index]));
+                 MapFactory mapSpawner = generator => generator.GenerateCaveMap(new CaveMapConfig(0));
+                 if (yamlConfig.Map != null) {
+                     if (yamlConfig.Map.CustomMapFilename != null) {
+                         // Load custom map from file
+                         var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent(yamlConfig.Map.CustomMapFilename);
+                         mapSpawner = (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, yamlConfig.Map.WallHeight, yamlConfig.Map.BorderSize);
+                     } else if (yamlConfig.Map.CaveConfig != null) { 
+                         // Generate Cave Map
+                         var caveConfig = new CaveMapConfig(yamlConfig, seed);
+                         mapSpawner = (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, yamlConfig.Map.WallHeight);
+                     } else if (yamlConfig.Map.BuildingConfig != null){  
+                         // Building type
+                         var buildingConfig = new BuildingMapConfig(yamlConfig, seed);
+                         mapSpawner = (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, yamlConfig.Map.WallHeight);
                      }
+                 }
+                 
+                 // Default value 
+                 RobotFactory robotSpawner = (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                     collisionMap: map,
+                     seed: seed,
+                     numberOfRobots: numberOfRobots,
+                     suggestedStartingPoint: new Vector2Int(0,0),
+                     (seed) => new Ros2Algorithm());
+                 if (yamlConfig.RobotSpawnConfig != null) {
+                     if (yamlConfig.RobotSpawnConfig.BiggestRoom != null) {
+                         robotSpawner = (map, robotSpawner) => robotSpawner.SpawnRobotsInBiggestRoom(
+                             collisionMap: map,
+                             seed: seed,
+                             numberOfRobots: numberOfRobots,
+                             (seed) => new Ros2Algorithm());
+                     } else if (yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals != null) {
+                         if (yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals.Count() !=
+                             yamlConfig.RobotSpawnConfig.spawnAtPositionsYVals.Count())
+                             throw new Exception("Number of position x values does not match number of position y values");
+                         var positions = new List<Vector2Int>();
+                         for (int index = 0; index < yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals.Count(); index++) {
+                             positions.Add(new Vector2Int(yamlConfig.RobotSpawnConfig.spawnAtPositionsXVals[index], 
+                                 yamlConfig.RobotSpawnConfig.spawnAtPositionsYVals[index]));
+                         }
                      
-                     robotSpawner = (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
-                         spawnPositions: positions,
-                         collisionMap: map,
-                         seed: seed,
-                         numberOfRobots: numberOfRobots,
-                         createAlgorithmDelegate: (seed) => new Ros2Algorithm()
-                     );
+                         robotSpawner = (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
+                             spawnPositions: positions,
+                             collisionMap: map,
+                             seed: seed,
+                             numberOfRobots: numberOfRobots,
+                             createAlgorithmDelegate: (seed) => new Ros2Algorithm()
+                         );
+                     }
+                     else if (yamlConfig.RobotSpawnConfig.SpawnAtHallwayEnds != null) { // Spawn_at_hallway_ends
+                         robotSpawner = (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
+                             collisionMap: map,
+                             seed: seed,
+                             numberOfRobots: numberOfRobots,
+                             createAlgorithmDelegate: (seed) => new Ros2Algorithm()
+                         );
+                     }
+                     // If nothing given, just spawn the robots together
+                     else if (yamlConfig.RobotSpawnConfig.SpawnTogether != null){
+                         Vector2Int? suggestedStartingPoint = yamlConfig.RobotSpawnConfig.SpawnTogether.HasSuggestedStartingPoint 
+                             ? yamlConfig.RobotSpawnConfig.SpawnTogether.SuggestedStartingPointAsVector 
+                             : null;
+                         robotSpawner = (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                             collisionMap: map,
+                             seed: seed,
+                             numberOfRobots: numberOfRobots,
+                             suggestedStartingPoint: suggestedStartingPoint,
+                             createAlgorithmDelegate: (seed) => new Ros2Algorithm()
+                         );
+                     }
                  }
-                 else if (yamlConfig.RobotSpawnConfig.SpawnAtHallwayEnds != null) { // Spawn_at_hallway_ends
-                     robotSpawner = (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
-                         collisionMap: map,
-                         seed: seed,
-                         numberOfRobots: numberOfRobots,
-                         createAlgorithmDelegate: (seed) => new Ros2Algorithm()
-                     );
-                 }
-                 // If nothing given, just spawn the robots together
-                 else {
-                     Vector2Int? suggestedStartingPoint = yamlConfig.RobotSpawnConfig.SpawnTogether.HasSuggestedStartingPoint 
-                         ? yamlConfig.RobotSpawnConfig.SpawnTogether.SuggestedStartingPointAsVector 
-                         : null;
-                     robotSpawner = (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                         collisionMap: map,
-                         seed: seed,
-                         numberOfRobots: numberOfRobots,
-                         suggestedStartingPoint: suggestedStartingPoint,
-                         createAlgorithmDelegate: (seed) => new Ros2Algorithm()
-                     );
-                 }
+                 
                  
                  scenarios.Enqueue(new SimulationScenario(
                      seed: 0,

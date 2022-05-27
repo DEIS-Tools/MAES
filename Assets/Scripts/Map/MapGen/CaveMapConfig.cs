@@ -52,7 +52,7 @@ namespace Maes.Map.MapGen {
             int randomFillPercent=45, 
             int wallThresholdSize=10, 
             int roomThresholdSize=10,
-            int borderSize=1, 
+            int borderSize=2, 
             int neighbourWallsNeededToStayWall = 4) {
             // Only fill percent between and including 0 to 100 are allowed
             if (0 > randomFillPercent || randomFillPercent >= 100) {
