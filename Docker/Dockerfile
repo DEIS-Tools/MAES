@@ -1,8 +1,7 @@
-FROM osrf/ros:galactic-desktop
+FROM ros:galactic
 
-RUN apt update && apt install tmux ros-galactic-navigation2 ros-galactic-nav2-bringup openssh-server sudo -y
+RUN apt update && apt install tmux ros-galactic-navigation2 ros-galactic-nav2-bringup ros-galactic-rviz2 openssh-server vim nano sudo -y
 RUN apt update && apt upgrade -y
-RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
 # Create a maes-user that shares UID/GID with default ubuntu-user.
 # If the UID does not match the user from the host system, the Unity Editor will hang indefinitely
