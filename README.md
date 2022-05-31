@@ -67,20 +67,24 @@ ROSMode has been tested to work with the Galactic release of ROS2.
 1. Install Docker https://docs.docker.com/get-docker/ (On Windows 10 we recommend using the WSL2 backend for Docker)
 2. Download MAES package and extract (TODO)
 3. Open terminal in the root of the MAES Package
-4. Build image from package with the following command
+4. Pull our docker image with the following command (x86_64 architecture only)
 ```bash
-docker build --force-rm -t ros4maes -f Docker/Dockerfile .
+docker pull aaumaes/ros4maes
 ```
-5. Spinup container either with RVIZ visualisation or not.
+**or**, build the image locally with the following command (x86_64 and arm64v8)
+```bash
+docker build --force-rm -t aaumaes/ros4maes -f Docker/Dockerfile .
+```
+5. Spinup a container either with RVIZ visualisation or not.
 
 5.1a Without RVIZ (Works on Windows, macOS and Linux)
 ```bash
 docker run --rm -it \
--p 10000:10000 \
--p 10022:22 \
--v $(pwd)/maes-ros-slam-ws:/home/maes-user/code \
---name ros4maes \
-ros4maes
+  -p 10000:10000 \
+  -p 10022:22 \
+  -v "$(pwd)"/maes-ros-slam-ws:/home/maes-user/code \
+  --name ros4maes \
+  aaumaes/ros4maes
 ```
 5.1b With RVIZ (Only tested on Ubuntu 20.04, 21.04, 21.10 and 22.04. Possible workaround for Windows 10 [here](#rviz-visualisation-in-windows-10))
 ```bash
@@ -90,11 +94,11 @@ xhost +local:docker
 docker run --rm -it \
   -p 10000:10000 \
   -p 10022:22 \
-  -v $(pwd)/maes-ros-slam-ws:/home/maes-user/code \
+  -v "$(pwd)"/maes-ros-slam-ws:/home/maes-user/code \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   --env=DISPLAY \
   --name ros4maes \
-  ros4maes
+  aaumaes/ros4maes
 ```
 6. Launch multiple robots with following command
 
@@ -149,10 +153,10 @@ export DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0.0
 docker run --rm -it \
   -p 10000:10000 \
   -p 10022:22 \
-  -v $(pwd)/maes-ros-slam-ws:/home/maes-user/code \
+  -v "$(pwd)"/maes-ros-slam-ws:/home/maes-user/code \
   -e DISPLAY \
   --name ros4maes \
-  ros4maes
+  aaumaes/ros4maes
 ```
 
 

@@ -8,6 +8,9 @@ command -v bmon   &> /dev/null || report_missing_executable "bmon" "sudo apt-get
 command -v sed    &> /dev/null || report_missing_executable "sed" "sudo apt-get install sed"
 command -v gawk   &> /dev/null || report_missing_executable "awk" "sudo apt-get install gawk"
 command -v free   &> /dev/null || report_missing_executable "free" "sudo apt-get install procps"
+
+# The following two commands are only strictly necessary when testing performance for MAES in ROSMode using docker as the ROS environment.
+# You can comment these out if you are measuring performance of something else...
 command -v docker &> /dev/null || report_missing_executable "docker" "wget -O - https://get.docker.com | sh"
 command -v xhost  &> /dev/null || report_missing_executable "xhost" "sudo apt-get install x11-xserver-utils"
 
@@ -19,9 +22,11 @@ fi
 
 # Logs network activity on a specific interface, in this case docker0 (all traffic going to/from docker containers). 
 function log_network () {
-    echo "Epoch BytesReceived/sec BytesTransmitted/sec" >> $NETWORK_FILE_NAME
+    echo "Epoch KilobytesReceived/sec KilobytesTransmitted/sec" >> $NETWORK_FILE_NAME
     bmon -p docker0 -r 1 -o format:fmt='$(attr:rxrate:bytes) $(attr:txrate:bytes)\n' \
-        | while read line; do echo "`date +%s` $line" >> $NETWORK_FILE_NAME; done;
+        | while read line; do 
+            awk -v file_name=$NETWORK_FILE_NAME '{FS=" "} {printf("%d %.2f %.2f\n", systime(), $1/1000, $2/1000) >> file_name; fflush(stdout)}' ; 
+        done;
 }
 
 # Logs overall CPU utilization
@@ -42,7 +47,7 @@ function log_memory () {
         | grep --line-buffered "Mem:" \
         | grep --line-buffered -Eo "[0-9]+$" \
         | while read line; do
-            awk -v file_name=$MEMORY_FILE_NAME -v line=$line -v total=$TOTAL_MEMORY 'BEGIN { printf ("%d %d %.2f\n", systime(), line, 100 - ((line / total) * 100)) >> file_name}';
+            awk -v file_name=$MEMORY_FILE_NAME -v line=$line -v total=$TOTAL_MEMORY 'BEGIN { printf ("%d %d %.2f\n", systime(), total - line, 100 - ((line / total) * 100)) >> file_name}';
           done;
 }
 
