@@ -291,6 +291,12 @@ While the script is logging, it will prompt for entering in names of events.
 These can be used as "bookmarks" for interpreting the data at a later point, making it easier to determine at which epoch some event happened.
 The "bookmarks" are saved in a separate file.
 
+# Adding Dependencies to MAES
+NOTE: If you add new external dependencies to the MAES code, you must ensure that the assembly definitions for these dependencies are referenced in the [CustomScriptsAssembly](Assets/Scripts/CustomScriptsAssembly.asmdef) found in the Assets/Scripts folder.
+This can be done via the unity editor.
+
+If you do not add the dependencies to this assembly file the program and the unit tests will not compile.
+
 # Testing Procedure
 In order to assure functionality before any contributions some tests (unit and system tests) have been designed.
 For now, only the unit tests are automated.
@@ -313,7 +319,15 @@ If the test still yields these results after your code contribution, the system 
 
 
 ## Unit Tests
-TODO: MAGNUS
+The unit tests uses the Unity framework and splits tests into two categories: Edit Mode tests and Play Mode tests.
+
+Edit mode tests resemble traditional unit tests and run independently of the simulator.
+These tests can be found in the [EditTests](Assets/EditTests) folder.
+
+Play mode tests on the other hand run along side a unity instance of the simulator. This allows for testing of features that require the simulator to run while testing.
+These tests can be found in the [PlayModeTests](Assets/PlayModeTests) folder.
+
+To run these test go into the unity editor -> Window -> General -> Test Runner.
 
 # Simulator Parameters Explanations
 Map Configuration:
