@@ -90,7 +90,7 @@ namespace PlayModeTests {
             var startingPosition = transform.position;
             var expectedEndingPosition = startingPosition + (controller.GetForwardDirectionVector() * movementDistance);
             
-            _maes.StartSimulation();
+            _maes.PresPlayButton();
             
             // Wait until the robot has started and completed the movement task
             while (_testAlgorithm.Tick < 10 || _testAlgorithm.Controller.GetStatus() != RobotStatus.Idle) {
@@ -130,7 +130,7 @@ namespace PlayModeTests {
             while (expectedAngle < 0) expectedAngle += 360;
             expectedAngle %= 360;
             
-            _maes.StartSimulation();
+            _maes.PresPlayButton();
 
             // Wait until the robot has started and completed the movement task
             while (_testAlgorithm.Tick < 10 || _testAlgorithm.Controller.GetStatus() != RobotStatus.Idle) 

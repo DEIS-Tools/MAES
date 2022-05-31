@@ -69,8 +69,7 @@ namespace Maes {
             EnqueueScenarios(generatedScenarios);
             if (Application.isBatchMode) {
                 _simulationManager.AttemptSetPlayState(SimulationPlayState.FastAsPossible);
-            } 
-            if (!GlobalSettings.IsRosMode) StartSimulation();
+            }
         }
 
         public void EnqueueScenario(SimulationScenario scenario) {
@@ -81,7 +80,7 @@ namespace Maes {
                 _simulationManager.EnqueueScenario(simulationScenario);
         }
         
-        public void StartSimulation() {
+        public void PresPlayButton() {
             if (_simulationManager.PlayState == SimulationPlayState.Play)
                 throw new InvalidOperationException("Cannot start simulation when it is already in play mode");
             if (!_simulationManager.HasActiveScenario())
