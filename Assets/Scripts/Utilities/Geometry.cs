@@ -12,6 +12,14 @@ namespace Maes.Utilities {
             //
             // return Mathf.Sqrt(Mathf.Pow(xDelta, 2f) + Mathf.Pow(yDelta, 2f));
         }
+        
+        public static Vector2Int FromROSCoord(Vector2Int RosPosition) {
+            return new Vector2Int(-RosPosition.x, -RosPosition.y);
+        }
+
+        public static Vector2 FromROSCoord(Vector3 RosPosition) {
+            return new Vector2(-RosPosition.x, -RosPosition.y);
+        }
 
         public static Vector2 ToROSCoord(Vector3 MapPosition) {
             // Map position is robots position in the tile grid. NOT world position / game object position

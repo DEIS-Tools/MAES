@@ -52,7 +52,7 @@ namespace Maes.Utilities.Files {
                 for (int x = 0; x < width; x++) {
                     var line = stream.ReadLine()!;
                     var pixelValue = int.Parse(line.Trim());
-                    var bitmapValue = pixelValue > 0 ? BitMapTypes.ROOM_TYPE : BitMapTypes.WALL_TYPE;
+                    var bitmapValue = pixelValue < 125 ? BitMapTypes.WALL_TYPE : BitMapTypes.ROOM_TYPE;
                     data[x, height - y - 1] = bitmapValue;
                     debugString += " " + bitmapValue;
                 }

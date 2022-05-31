@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -60,10 +61,10 @@ namespace Maes.YamlConfig {
             
         [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
         public class MaesConfigType {
-            public int[] RandomSeeds { get; set; }
-            public int NumberOfRobots { get; set; }
-            public GlobalSettingsType GlobalSettings { get; set; }
-            public RobotConstraintsType RobotConstraints { get; set; }
+            public int[] RandomSeeds { get; set; } = new[] { 0 };
+            public int NumberOfRobots { get; set; } = 1;
+            public GlobalSettingsType GlobalSettings { get; set; } = new GlobalSettingsType();
+            public RobotConstraintsType RobotConstraints { get; set; } = new RobotConstraintsType();
             public EndCriteriaType EndCriteria { get; set; }
             public RobotSpawnConfigType RobotSpawnConfig { get; set; }
 
@@ -107,19 +108,19 @@ namespace Maes.YamlConfig {
             
         [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
         public class RobotConstraintsType {
-            public float BroadcastRange { get; set; }
-            public bool BroadcastBlockedByWalls { get; set; }
-            public float SenseNearbyAgentsRange { get; set; }
-            public bool SenseNearbyAgentsBlockedByWalls { get; set; }
-            public bool AutomaticallyUpdateSlam { get; set; }
-            public int SlamUpdateIntervalInTicks { get; set; }
-            public int SlamSyncIntervalInTicks { get; set; }
-            public float SlamPositionInaccuracy { get; set; }
-            public bool DistributeSlam { get; set; }
-            public float EnvironmentTagReadRange { get; set; }
-            public float SlamRaytraceRange { get; set; }
-            public float RelativeMoveSpeed { get; set; }
-            public float AgentRelativeSize { get; set; }
+            public float BroadcastRange { get; set; } = 20f;
+            public bool BroadcastBlockedByWalls { get; set; } = false;
+            public float SenseNearbyAgentsRange { get; set; } = 20f;
+            public bool SenseNearbyAgentsBlockedByWalls { get; set; } = true;
+            public bool AutomaticallyUpdateSlam { get; set; } = true;
+            public int SlamUpdateIntervalInTicks { get; set; } = 10;
+            public int SlamSyncIntervalInTicks { get; set; } = 10;
+            public float SlamPositionInaccuracy { get; set; } = 0.0f;
+            public bool DistributeSlam { get; set; } = false;
+            public float EnvironmentTagReadRange { get; set; } = 2f;
+            public float SlamRaytraceRange { get; set; } = 10f;
+            public float RelativeMoveSpeed { get; set; } = 1f;
+            public float AgentRelativeSize { get; set; } = 0.6f;
 
             public override string ToString() {
                 return $"{nameof(BroadcastRange)}: {BroadcastRange}, {nameof(BroadcastBlockedByWalls)}: {BroadcastBlockedByWalls}, {nameof(SenseNearbyAgentsRange)}: {SenseNearbyAgentsRange}, {nameof(SenseNearbyAgentsBlockedByWalls)}: {SenseNearbyAgentsBlockedByWalls}, {nameof(AutomaticallyUpdateSlam)}: {AutomaticallyUpdateSlam}, {nameof(SlamUpdateIntervalInTicks)}: {SlamUpdateIntervalInTicks}, {nameof(SlamSyncIntervalInTicks)}: {SlamSyncIntervalInTicks}, {nameof(SlamPositionInaccuracy)}: {SlamPositionInaccuracy}, {nameof(DistributeSlam)}: {DistributeSlam}, {nameof(EnvironmentTagReadRange)}: {EnvironmentTagReadRange}, {nameof(SlamRaytraceRange)}: {SlamRaytraceRange}, {nameof(RelativeMoveSpeed)}: {RelativeMoveSpeed}, {nameof(AgentRelativeSize)}: {AgentRelativeSize}";
@@ -155,9 +156,13 @@ namespace Maes.YamlConfig {
             public bool? BiggestRoom { get; set; } = null;
             public SpawnTogetherType SpawnTogether { get; set; } = null;
             public bool? SpawnAtHallwayEnds { get; set; } = null;
+            public int[] spawnAtPositionsXVals { get; set; } = null;
+            public int[] spawnAtPositionsYVals { get; set; } = null;
 
             public override string ToString() {
-                return $"{nameof(BiggestRoom)}: {BiggestRoom}, {nameof(SpawnTogether)}: {SpawnTogether}, {nameof(SpawnAtHallwayEnds)}: {SpawnAtHallwayEnds}";
+                return $"{nameof(BiggestRoom)}: {BiggestRoom}, {nameof(SpawnTogether)}: {SpawnTogether}, " +
+                       $"{nameof(SpawnAtHallwayEnds)}: {SpawnAtHallwayEnds}, {nameof(spawnAtPositionsXVals)}: " +
+                       $"{spawnAtPositionsXVals}, {nameof(spawnAtPositionsYVals)}: {spawnAtPositionsYVals}";
             }
         }
 
@@ -187,10 +192,10 @@ namespace Maes.YamlConfig {
         }
 
         public class MapType {
-            public float WallHeight { get; set; }
-            public int WidthInTiles { get; set; }
-            public int HeightInTiles { get; set; }
-            public int BorderSize { get; set; } = 1;
+            public float WallHeight { get; set; } = 2f;
+            public int WidthInTiles { get; set; } = 30;
+            public int HeightInTiles { get; set; } = 30;
+            public int BorderSize { get; set; } = 2;
             public BuildingConfigType BuildingConfig { get; set; } = null;
             public CaveConfigType CaveConfig { get; set; } = null;
 

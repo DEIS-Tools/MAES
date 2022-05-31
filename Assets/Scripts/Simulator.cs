@@ -24,6 +24,14 @@ namespace Maes {
         public static Simulator GetInstance() {
             return _instance ??= new Simulator();
         }
+
+        // Clears the singleton instance and removes the simulator game object
+        public static void Destroy() {
+            if (_instance != null) {
+                Object.Destroy(_instance._maesGameObject);
+                _instance = null;
+            }
+        }
         
         /// <summary>
         /// This method is used to start the simulation in a predefined configuration that will change depending on
@@ -61,6 +69,10 @@ namespace Maes {
 
 
             _simulationManager.AttemptSetPlayState(SimulationPlayState.Play);
+        }
+
+        public SimulationManager GetSimulationManager() {
+            return _simulationManager;
         }
     }
 }

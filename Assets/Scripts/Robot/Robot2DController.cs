@@ -45,7 +45,7 @@ namespace Maes.Robot {
         // Indicates whether the robot has entered a new collision since the previous logic update
         private bool _newCollisionSinceLastUpdate = false;
 
-        // When the robot enters a collision (such as with a wall) the robot will only be notified of the
+        // When the robot enters a collision (such as with a wall) Unity will only notify of the
         // collision upon initial impact. If the robot continues to drive into the wall,
         // no further collision notifications will be received. To counteract this problem, the controller will 
         // reissue the collision notification if the collision flag is not cleared and the robot is following an
@@ -158,12 +158,17 @@ namespace Maes.Robot {
                 ApplyWheelForce(directive);
         }
 
+        // The robot is rotated relative to Unity's coordinate system, so 'up' is actually forward for the robot
+        public Vector3 GetForwardDirectionVector() {
+            return _transform.up;
+        }
+
         // Applies force at the positions of the wheels to create movement using physics simulation
         private void ApplyWheelForce(MovementDirective directive) {
             var leftPosition = _leftWheel.position;
             var rightPosition = _rightWheel.position;
 
-            var forward = _transform.up;
+            var forward = GetForwardDirectionVector();
 
             // Force changes depending on whether the robot is rotating or accelerating
             var force = MoveForce;
@@ -266,10 +271,9 @@ namespace Maes.Robot {
             var info = new StringBuilder();
             var approxPosition = SlamMap.ApproximatePosition;
             info.Append($"id: {this._robot.id}\n");
+            info.AppendLine($"Current task: {CurrentTask?.GetType()}");
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
-            info.AppendLine($"Current task: {CurrentTask?.GetType()}");
-            info.Append($"Slam position: {approxPosition.x.ToString("#.0")}, {approxPosition.y.ToString("#.0")}\n");
             info.Append($"Slam tile: {SlamMap.GetCurrentPositionSlamTile()}\n");
             info.Append($"Coarse tile: {SlamMap.GetCoarseMap().FromSlamMapCoordinate(SlamMap.GetCurrentPositionSlamTile())}\n");
             info.Append($"Is colliding: {IsCurrentlyColliding()}");
@@ -292,7 +296,6 @@ namespace Maes.Robot {
 
         // Returns a list of all environment tags that are within sensor range
         public List<RelativeObject<EnvironmentTag>> ReadNearbyTags() {
-            
             var tags = CommunicationManager.ReadNearbyTags(_robot);
             return tags.Select(tag => ToRelativePosition(tag.MapPosition, tag)).ToList();
         }

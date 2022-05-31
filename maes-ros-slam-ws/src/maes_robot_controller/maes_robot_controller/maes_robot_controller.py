@@ -14,6 +14,7 @@ from geometry_msgs.msg import Pose, PoseStamped, TransformStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import NavigateThroughPoses, NavigateToPose
+from nav2_msgs.action._navigate_to_pose import NavigateToPose_Feedback
 from nav2_msgs.msg import *
 from nav_msgs.msg import OccupancyGrid
 from rclpy import Future
@@ -42,8 +43,8 @@ class RobotController(Node):
 
         # Register fields for navigation
         self.nav_goal_handle = None
-        self.nav_result_future = None
-        self.nav_feedback = None
+        self.nav_result_future: Future = None
+        self.nav_feedback: NavigateToPose_Feedback = None
         self.nav_status = None
 
         # Interface to use global costmap for nagivation
@@ -61,87 +62,17 @@ class RobotController(Node):
         self._broadcast_srv = None
         self._deposit_env_tag_srv = None
         # Navigation action client
-        self._nav_to_pose_client = None
+        self._nav_to_pose_client: ActionClient = None
         self._register_subs_srvs_actions()  # Assign to variables
 
-        # Initialisation of logic variables for YOUR algorithm below here
-        self.next_target: Coord2D = None # Used for frontier example
-        self.next_target_costmap_index: int = None # Used for frontier example algorithm
+        self.state: State = None
 
-    def logic_loop_callback(self, state: State):
-        '''
-        This function is called every time the robot receives a new state msg from MAES
-        Use this function to express the logic that makes the robot move.
 
-        INSTRUCTIONS:
-        Print to ROS Terminal (there exists info, error, warn, debug tags):
-        self.logger.log_info("From maes_robot_controller.py")
-
-        Movement using Nav2:
-        self.nav_to_pos(0,0)
-        self.cancel_nav()
-        self.is_nav_complete() -> Bool
-        self.nav_feedback // Contains feedback from current navigation
-        self.robot_position.transform.translation.x // Get position x
-        self.robot_position.transform.translation.y // Get position y
-
-        Use services:
-        self.broadcast_msg(msg="Testing broadcasting")
-        self.deposit_tag(tag_msg="Content of env_tag")
-
-        Use robot state from MAES:
-        state.tick // Get current logic tick from MAES. With default settings a tick lasts for 0.1 seconds
-
-        Below is an example of a simple frontier algorithm. Feel free to delete
-        '''
-
-        # This method returns true if the tile is not itself unknown, but has 2 neighbors, that are unknown
-        def is_frontier(map_index: int, costmap: MaesCostmap):
-            # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
-            # It is itself unknown
-            if costmap.costmap.data[map_index] == -1:
-                return False
-            # It is itself a wall
-            if costmap.costmap.data[map_index] >= 65:
-                return False
-
-            return costmap.has_at_least_n_unknown_neighbors(index=map_index, n=2)
-
-        # This algorithm requires costmap, thus don't do anything unless we have received the first costmap
-        if self.global_costmap.costmap is None:
-            self.logger.log_debug("Robot with namespace {0} has no global map".format(self._topic_namespace_prefix))
-            return
-
-        # If no target found
-        if self.next_target is None:
-            # Find index of first tile in costmap that is a frontier
-            target_frontier_tile_index = next((index for index, value in enumerate(self.global_costmap.costmap.data) if is_frontier(index, self.global_costmap)), None)
-
-            # No more frontiers found, just return
-            if target_frontier_tile_index is None:
-                self.logger.log_info("Robot with namespace {0} is has found no more frontiers".format(self._topic_namespace_prefix))
-                return
-
-            self.next_target = self.global_costmap.costmap_index_to_pos(target_frontier_tile_index)
-            self.next_target_costmap_index = target_frontier_tile_index
-            self.deposit_tag("From tick: {0}".format(state.tick))
-            self.nav_to_pos(self.next_target.x, self.next_target.y)
-            self.logger.log_info("Robot with namespace {0} found new target at ({1},{2})".format(self._topic_namespace_prefix,
-                                                                                                 self.next_target.x,
-                                                                                                 self.next_target.y))
-        # If target found but not yet reached, i.e. it is still a frontier
-        elif is_frontier(self.next_target_costmap_index, self.global_costmap):
-            # This section allows for logging feedback etc. e.g.
-            # self.logger.log_info("Frontier value: {0}".format(self.global_costmap.costmap.data[self.next_target_costmap_index]))
-            return
-        # If target is explored, i.e. next_target not None and not frontier
-        else:
-            self.logger.log_info("Robot with namespace {0} explored its target at ({1},{2})".format(self._topic_namespace_prefix,
-                                                                                                    self.next_target.x,
-                                                                                                    self.next_target.y))
-            self.next_target_costmap_index = None
-            self.next_target = None
-            self.cancel_nav()
+    def wait_for_maes_to_start_simulation(self):
+        while self.state is None or self.global_costmap.costmap is None:
+            self.logger.log_info("Waiting for MAES simulation to start...")
+            time.sleep(0.1) # A tick in MAES is 0.1 seconds
+            rclpy.spin_once(self)
 
     def nav_to_pos(self, pose_x, pose_y):
         goal_pose = PoseStamped()
@@ -184,17 +115,18 @@ class RobotController(Node):
 
         send_goal_future = self._nav_to_pose_client.send_goal_async(goal_msg, _feedback_callback)
 
-        def _action_server_response_callback(future: Future):
-            self.nav_goal_handle = future.result()
+        rclpy.spin_until_future_complete(self, send_goal_future)
+        self.nav_goal_handle = send_goal_future.result()
 
-            if not self.nav_goal_handle.accepted:
-                self.logger.log_error('Goal was rejected!')
-                return False
+        if not self.nav_goal_handle.accepted:
+            self.logger.log_error('Goal to ' + str(pose.pose.position.x) + ' ' +str(pose.pose.position.y) + 'was '
+                                                                                                            'rejected!')
+            return False
 
-            self.nav_result_future = self.nav_goal_handle.get_result_async()
+        self.nav_result_future = self.nav_goal_handle.get_result_async()
+        return True
 
-        # Call function and assign goal handle etc. when action server accepts the goal
-        send_goal_future.add_done_callback(_action_server_response_callback)
+
 
     def cancel_nav(self):
         if self.nav_result_future is None:
@@ -203,24 +135,36 @@ class RobotController(Node):
         if self.nav_result_future:
             self.logger.log_info('Canceling current goal.')
             future = self.nav_goal_handle.cancel_goal_async()
-            # rclpy.spin_until_future_complete(self, future)
+            rclpy.spin_until_future_complete(self, future)
         return
 
     def is_nav_complete(self):
         if not self.nav_result_future:
             # task was cancelled or completed
+            self.logger.log_info('Nav result future is None,. Task was cancelled or completed')
             return True
-        rclpy.spin_until_future_complete(self, self.nav_result_future, timeout_sec=0.10)
+
+
+        rclpy.spin_until_future_complete(self, self.nav_result_future, timeout_sec=0.1)
         if self.nav_result_future.result():
             self.nav_status = self.nav_result_future.result().status
             if self.nav_status != GoalStatus.STATUS_SUCCEEDED:
-                self.logger.log_info('Goal with failed with status code: {0}'.format(self.nav_status))
+                goal_status_dict = {
+                    0: 'UNKNOWN',
+                    1: 'ACCEPTED',
+                    2: 'EXECUTING',
+                    3: 'CANCELING',
+                    4: 'SUCCEEDED',
+                    5: 'CANCELED',
+                    6: 'ABORTED',
+                }
+                GoalStatus.get_fields_and_field_types()
+                self.logger.log_info('Goal failed with status with reason: {0}'.format(goal_status_dict[self.nav_status]))
                 return True
         else:
             # Timed out, still processing, not complete yet
             return False
 
-        self.logger.log_info('Goal succeeded!')
         return True
 
     def _register_subs_srvs_actions(self):
@@ -250,15 +194,18 @@ class RobotController(Node):
 
         # Quality of service profile for subscriptions
         qos_profile = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
+            reliability=ReliabilityPolicy.RELIABLE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=2
+            depth=1
         )
+
+        def save_robot_state_callback(state: State):
+            self.state = state
 
         # Create subscribers
         self._state_sub = self.create_subscription(msg_type=State,
                                                    topic=state_topic,
-                                                   callback=self.logic_loop_callback,
+                                                   callback=save_robot_state_callback,
                                                    qos_profile=qos_profile)
         self._global_costmap_sub = self.create_subscription(msg_type=OccupancyGrid,
                                                             topic=global_costmap_2d_topic,
@@ -276,20 +223,86 @@ class RobotController(Node):
                                                 callback=save_robot_position_callback,
                                                 qos_profile=qos_profile)
 
+
 def main(args=None):
     rclpy.init(args=args)
 
-    controller = RobotController()
-    # DO NOT put robot logic here.
-    # Robot logic should go in function logic_loop_callback found in this file.
+    # Initialise controller
+    robot = RobotController()
+    robot.wait_for_maes_to_start_simulation()
+    '''
+    INSTRUCTIONS:
+    Print to ROS Terminal (there exists info, error, warn, debug tags):
+    robot.logger.log_info("From maes_robot_controller.py")
 
-    rclpy.spin(controller)
+    Movement using Nav2:
+    robot.nav_to_pos(0,0)
+    robot.cancel_nav()
+    robot.is_nav_complete() -> Bool
+    robot.nav_feedback // Contains feedback from current navigation
+    robot.robot_position.transform.translation.x // Get position x
+    robot.robot_position.transform.translation.y // Get position y
 
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    controller.destroy_node()
-    rclpy.shutdown()
+    Use services:
+    robot.broadcast_msg(msg="Testing broadcasting")
+    robot.deposit_tag(tag_msg="Content of env_tag")
+
+    Use robot state from MAES:
+    robot.state.tick // Get current logic tick from MAES. With default settings a tick lasts for 0.1 seconds
+
+    If you want a loop that runs until killed by the terminal, use the following
+    while rclpy.ok():
+        rclpy.spin_once(robot)
+
+    Below is an example of a simple frontier algorithm. Feel free to delete
+    '''
+
+    # Declaration of logic variables
+    next_goal: Coord2D = None # Used for frontier example
+    next_goal_costmap_index: int = None # Used for frontier example algorithm
+
+    # This method returns true if the tile is not itself unknown, but has 2 neighbors, that are unknown
+    def is_frontier(map_index: int, costmap: MaesCostmap):
+        # -1 = unknown, 0 = certain to be open, 100 = certain to be obstacle
+        # It is itself unknown
+        if costmap.costmap.data[map_index] == -1:
+            return False
+        # It is itself a wall
+        if costmap.costmap.data[map_index] >= 65:
+            return False
+
+        return costmap.has_at_least_n_unknown_neighbors(index=map_index, n=2)
+
+    while rclpy.ok():
+        rclpy.spin_once(robot)
+
+        # If no target found
+        if next_goal is None or robot.is_nav_complete():
+            # Find index of first tile in costmap that is a frontier
+            goal_frontier_tile_index = next((index for index, value in enumerate(robot.global_costmap.costmap.data) if is_frontier(index, robot.global_costmap)), None)
+
+            # No more frontiers found, loop again
+            if goal_frontier_tile_index is None:
+                robot.logger.log_info("Robot with namespace {0} is has found no more frontiers".format(robot._topic_namespace_prefix))
+                continue
+
+            next_goal = robot.global_costmap.costmap_index_to_pos(goal_frontier_tile_index)
+            next_goal_costmap_index = goal_frontier_tile_index
+            robot.deposit_tag("From tick {0}".format(robot.state.tick)) # Deposit tag every time a new target/goal is found
+            robot.nav_to_pos(next_goal.x, next_goal.y)
+        # If target found but not yet reached, i.e. it is still a frontier
+        elif is_frontier(next_goal_costmap_index, robot.global_costmap):
+            # This section allows for logging feedback etc. e.g.
+            # self.logger.log_info("Frontier value: {0}".format(self.global_costmap.costmap.data[self.next_target_costmap_index]))
+            continue
+        # If target is explored, i.e. next_target not None and not frontier
+        else:
+            robot.logger.log_info("Robot with namespace {0} explored its target at ({1},{2})".format(robot._topic_namespace_prefix,
+                                                                                                          next_goal.x,
+                                                                                                          next_goal.y))
+            next_goal_costmap_index = None
+            next_goal = None
+            robot.cancel_nav()
 
 
 if __name__ == '__main__':
@@ -322,6 +335,10 @@ class MaesLogger:
 class Coord2D:
     x: float
     y: float
+
+    def distance_to(self, pose: TransformStamped):
+        pose_point = [pose.transform.translation.x, pose.transform.translation.y]
+        return math.dist([self.x, self.y], pose_point)
 
 
 class MaesCostmap:

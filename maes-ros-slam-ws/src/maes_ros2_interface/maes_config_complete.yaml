@@ -1,0 +1,57 @@
+# This file contains all possible fields for configuring MAES in ROSMode
+random_seeds: [0] # Currently, only supports a single seed for a single run
+number_of_robots: 1
+global_settings: # Advanced fields for changing simulator behavior. Use with caution.
+  logic_ticks_delta_millis: 100
+  physics_ticks_per_logic_update: 10
+  draw_communication: true
+  should_write_csv_results: true # Enable to create statistics file from run
+  statistics_result_path: "" # defaults to same dir as executable (Also if left empty)
+  ticks_per_stats_snapshot: 10
+  populate_adjacency_and_comm_groups_every_tick: false
+  ticks_before_exploration_heatmap_cold: 2400 # 10 * 60 * 4
+  ticks_before_coverage_heatmap_cold: 2400 # 10 * 60 * 4
+robot_constraints:
+  broadcast_range: 20
+  broadcast_blocked_by_walls: true
+  sense_nearby_agents_range: 6.0
+  sense_nearby_agents_blocked_by_walls: true
+  automatically_update_slam: true
+  slam_update_interval_in_ticks: 10 # Ros2 uses its own slam map building
+  slam_sync_interval_in_ticks: 10 # The map is not yet shared in ROS due to slam_toolbox not yet being ready
+  slam_position_inaccuracy: 0.2 # /tf messages from maes do not yet use inaccuracy
+  distribute_slam: false # Not distributed in ros2, only in maes locally
+  environment_tag_read_range: 10.0
+  slam_raytrace_range: 10.0
+  relative_move_speed: 1.0
+  agent_relative_size: 0.6 # Value in ]0.0-1.0] relative to a tile in the maes generated maps
+end_criteria: # If this is not included, the simulation will not automatically stop and generate statistics files
+  coverage_percent: 99.5
+  # exploration_percent: 99.5
+  # tick: 100
+robot_spawn_config:
+  biggest_room: true
+    # spawn_together:
+    # suggested_starting_point_x: 0
+  # suggested_starting_point_y: 0
+  # spawn_at_hallway_ends: true
+map:
+  wall_height: 2.0 # Must be bigger greater than 2. Otherwise, just cosmetic
+  width_in_tiles: 30
+  height_in_tiles: 30
+  border_size: 2 # Border around map. Only cosmetic. Must be at least 1
+  # NOTE: Include either cave_config, building_config or custom map
+  building_config:
+    hall_width: 4
+    max_hall_in_percent: 20 # How much of the map should consist of hallways?
+    min_room_side_length: 6 # The shortest allowed wall length of a room
+    door_width: 2 # Width of the doors interconnecting the rooms
+    door_padding: 2 # Minimum distance from the edge of a wall to the start of a door. Requirement: min_room_side_length >= 2 * door_padding + door_width
+    room_split_chance: 85 # Lower value gives bigger rooms
+#  cave_config:
+#    smoothing_runs: 4 # Works best with 4, or optionally 3 or 5
+#    connection_passage_width: 4 # The width of the interconnections between rooms in the cave
+#    random_fill_percent: 43 # Works best in the range 30-50%
+#    wall_threshold_size: 10 # Smallest group of isolated wall tiles allowed to remain in the map
+#    room_threshold_size: 10 # Smallest room allowed to remain in the map
+#  custom_map_filename: 'map.pgm' # Remember to set width and height to the resolution width and height of the custom map

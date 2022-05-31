@@ -13,7 +13,7 @@ namespace Maes {
             var scenario = new SimulationScenario(123, mapSpawner: generator => generator.GenerateCaveMap(caveConfig));
             simulator.EnqueueScenario(scenario);
             
-            simulator.StartSimulation();
+            // simulator.StartSimulation(); // Instantly enter play mode
         }
     }
 }
