@@ -1,6 +1,6 @@
 # Contributing
 
-When contributing to this repository, please first discuss the change you wish to make via issue.
+When contributing to this repository, please first discuss the change you wish to make via [Issues](https://github.com/MalteZA/MAES/issues).
 
 Please note we have a code of conduct, please follow it in all your interactions with the project.
 
