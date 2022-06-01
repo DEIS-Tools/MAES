@@ -23,7 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Maes.ExplorationAlgorithm;
-using Maes.Map.MapGen;
+using Maes.Map;
 using Maes.Robot;
 using Maes.Utilities;
 using UnityEngine;

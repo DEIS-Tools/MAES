@@ -28,7 +28,7 @@ namespace Maes.Map {
     
     /// This type holds all environment tags deposited by robots in the simulated environment 
     /// This map is represented as a 2D array of tiles to make lookup faster
-    public class EnvironmentTaggingMap {
+    internal class EnvironmentTaggingMap {
         
         // Each tile in the map is a list of tags that are positioned within the bounds of that tile
         private List<EnvironmentTag>[,] _tagLists;

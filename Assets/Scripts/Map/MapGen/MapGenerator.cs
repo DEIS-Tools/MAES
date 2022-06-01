@@ -59,7 +59,7 @@ namespace Maes.Map.MapGen {
                 (bitMapHeight / 10f) + padding);
         }
 
-        public void clearMap() {
+        internal void clearMap() {
             meshGenerator.ClearMesh();
         }
 

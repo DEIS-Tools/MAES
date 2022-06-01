@@ -81,7 +81,7 @@ namespace Maes.Map {
         }
         
         // Returns the cells of the tile at the given coordinate along with index of the first cell
-        public (int, List<TCell>) GetTileCellsByWorldCoordinate(Vector2 worldCoord) {
+        private (int, List<TCell>) GetTileCellsByWorldCoordinate(Vector2 worldCoord) {
             var localCoord = WorldCoordinateToCoarseTileCoordinate(worldCoord);
             int triangleOffset = ((int) localCoord.x) * 8 + ((int) localCoord.y) * WidthInTiles * 8;
             return (triangleOffset, _tiles[(int) localCoord.x, (int) localCoord.y].GetTriangles());
@@ -90,27 +90,27 @@ namespace Maes.Map {
         
         /// <param name="worldCoordinate">A coordinate that is within the bounds of the mini-tile in world space</param>
         /// <returns> the pair of triangles that make up the 'mini-tile' at the given world location</returns>
-        public ((int, TCell), (int, TCell)) GetMiniTileTrianglesByWorldCoordinates(Vector2 worldCoordinate) {
+        internal ((int, TCell), (int, TCell)) GetMiniTileTrianglesByWorldCoordinates(Vector2 worldCoordinate) {
             var localCoordinate = WorldCoordinateToCoarseTileCoordinate(worldCoordinate);
             return GetMiniTilesByCoarseTileCoordinate(localCoordinate);
         }
 
         // Returns the triangle cell at the given world position
-        public TCell GetCell(Vector2 coordinate) {
+        private TCell GetCell(Vector2 coordinate) {
             var localCoordinate = WorldCoordinateToCoarseTileCoordinate(coordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             return tile.GetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f);
         }
 
         // Assigns the given value to the triangle cell at the given coordinate
-        public void SetCell(Vector2 coordinate, TCell newCell) {
+        void SetCell(Vector2 coordinate, TCell newCell) {
             var localCoordinate = WorldCoordinateToCoarseTileCoordinate(coordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             tile.SetTriangleCellByCoordinateDecimals(localCoordinate.x % 1.0f, localCoordinate.y % 1.0f, newCell);
         }
 
         // Returns the index of triangle cell at the given world position
-        public int GetTriangleIndex(Vector2 coordinate) {
+        internal int GetTriangleIndex(Vector2 coordinate) {
             var localCoordinate = WorldCoordinateToCoarseTileCoordinate(coordinate);
             var tile = _tiles[(int) localCoordinate.x, (int) localCoordinate.y];
             var triangleIndexOffset = ((int) localCoordinate.x) * 8 + ((int) localCoordinate.y) * WidthInTiles * 8;
@@ -119,7 +119,7 @@ namespace Maes.Map {
         }
 
         // Takes a world coordinates and removes the offset and scale to translate it to a local map coordinate
-        public Vector2 WorldCoordinateToCoarseTileCoordinate(Vector2 worldCoordinate) {
+        Vector2 WorldCoordinateToCoarseTileCoordinate(Vector2 worldCoordinate) {
             var localCoordinate = (worldCoordinate - ScaledOffset);
             if (!IsWithinLocalMapBounds(localCoordinate)) {
                 throw new ArgumentException("The given coordinate " + localCoordinate
@@ -133,12 +133,12 @@ namespace Maes.Map {
         
         // Takes a world coordinates and removes the offset and scale to translate it to a local map coordinate
         // This unsafe version may return a coordinate that is outside the bounds of the map
-        public Vector2 WorldCoordinateToLocalMapCoordinateUnsafe(Vector2 worldCoordinate) {
+        Vector2 WorldCoordinateToLocalMapCoordinateUnsafe(Vector2 worldCoordinate) {
             return worldCoordinate - ScaledOffset;
         }
 
         // Checks that the given coordinate is within the local map bounds
-        private bool IsWithinLocalMapBounds(Vector2 localCoordinates) {
+        bool IsWithinLocalMapBounds(Vector2 localCoordinates) {
             return localCoordinates.x >= 0.0f && localCoordinates.x < WidthInTiles
                                               && localCoordinates.y >= 0.0f && localCoordinates.y < HeightInTiles;
         }
