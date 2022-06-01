@@ -28,7 +28,7 @@ using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Maes.UI {
-    internal class SimulationInfoUIController : MonoBehaviour {
+    public class SimulationInfoUIController : MonoBehaviour {
         public Image ExplorationBarMask, CoverageBarMask;
         public Text ProgressPercentageText, CoveragePercentageText;
         public Text ExplorationRateText;

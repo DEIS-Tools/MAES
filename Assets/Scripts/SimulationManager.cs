@@ -34,13 +34,13 @@ namespace Maes {
         public GameObject SimulationPrefab;
         private Queue<SimulationScenario> _scenarios = new Queue<SimulationScenario>();
 
-        internal SimulationSpeedController UISpeedController;
+        public SimulationSpeedController UISpeedController;
         public GameObject UIControllerDebugTitle;
         public GameObject UIControllerDebugInfo;
         public Text SimulationStatusText;
         private int _physicsTicksSinceUpdate = 0;
 
-        internal SimulationInfoUIController simulationInfoUIController;
+        public SimulationInfoUIController simulationInfoUIController;
 
         private SimulationScenario _currentScenario;
         public Simulation CurrentSimulation;

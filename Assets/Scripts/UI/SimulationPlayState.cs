@@ -20,7 +20,7 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 namespace Maes.UI {
-    internal enum SimulationPlayState {
+    public enum SimulationPlayState {
         Paused = 0,
         Play = 1,
         FastForward = 2,
