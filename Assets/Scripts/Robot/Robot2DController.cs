@@ -43,7 +43,7 @@ namespace Maes.Robot {
 
         private MonaRobot _robot;
         private RobotStatus _currentStatus = RobotStatus.Idle;
-        protected ITask? CurrentTask;
+        private ITask? CurrentTask;
 
         internal CommunicationManager CommunicationManager { get; set; }
         public SlamMap SlamMap { get; set; }

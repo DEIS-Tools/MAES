@@ -20,7 +20,7 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 namespace Maes.Robot.Task {
-    public interface ITask {
+    internal interface ITask {
         MovementDirective GetNextDirective();
         bool IsCompleted();
     }

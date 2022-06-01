@@ -23,7 +23,7 @@ using System;
 using UnityEngine;
 
 namespace Maes.Robot {
-    public class MovementDirective {
+    internal class MovementDirective {
         public readonly float LeftWheelSpeed;
         public readonly float RightWheelSpeed;
         

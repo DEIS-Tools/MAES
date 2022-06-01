@@ -24,7 +24,7 @@ using UnityEngine;
 
 namespace Maes.Robot.Task {
     // Represents a task to rotate the robot by a given amount of degrees
-    public class FiniteRotationTask : ITask {
+    internal class FiniteRotationTask : ITask {
         private readonly float _degreesToRotate;
         private readonly float _startingAngle;
 
