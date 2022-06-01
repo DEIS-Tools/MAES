@@ -50,8 +50,8 @@ namespace Maes {
         public bool HasSelectedRobot() => _selectedRobot != null;
         [CanBeNull] private VisibleTagInfoHandler _selectedTag;
         public bool HasSelectedTag() => _selectedTag != null;
-        public ExplorationTracker ExplorationTracker { get; private set; }
-        public CommunicationManager _communicationManager;
+        internal ExplorationTracker ExplorationTracker { get; set; }
+        internal CommunicationManager _communicationManager;
 
         // The debugging visualizer provides 
         private DebuggingVisualizer _debugVisualizer = new DebuggingVisualizer();

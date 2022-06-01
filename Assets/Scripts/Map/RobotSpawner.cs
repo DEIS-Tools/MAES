@@ -36,7 +36,7 @@ namespace Maes.Map
 
         public GameObject robotPrefab;
 
-        public CommunicationManager CommunicationManager;
+        internal CommunicationManager CommunicationManager;
 
         public RobotConstraints RobotConstraints;
 

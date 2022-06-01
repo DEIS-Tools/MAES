@@ -26,7 +26,7 @@ using UnityEngine;
 using static Maes.Statistics.ExplorationTracker;
 
 namespace Maes.Statistics {
-    public class StatisticsCSVWriter {
+    internal class StatisticsCSVWriter {
         private readonly Simulation _simulation;
         private readonly List<SnapShot<float>> _coverSnapShots;
         private readonly List<SnapShot<float>> _exploreSnapshots;

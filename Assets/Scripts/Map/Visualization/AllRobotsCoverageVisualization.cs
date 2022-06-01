@@ -25,7 +25,7 @@ using Maes.Statistics;
 using UnityEngine;
 
 namespace Maes.Map.Visualization {
-    public class AllRobotsCoverageVisualization : VisualizationMode {
+    internal class AllRobotsCoverageVisualization : VisualizationMode {
         
         private SimulationMap<ExplorationCell> _explorationMap;
         private HashSet<(int, ExplorationCell)> _newlyCoveredCells = new HashSet<(int, ExplorationCell)>();
