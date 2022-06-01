@@ -694,14 +694,6 @@ namespace Maes.ExplorationAlgorithm.SSB {
                    $"\nBacktracking target: {_backtrackTarget}";
         }
 
-        public object SaveState() {
-            throw new System.NotImplementedException();
-        }
-
-        public void RestoreState(object stateInfo) {
-            throw new System.NotImplementedException();
-        }
-        
         // Represents a request to broadcast all available backtracking points found by this robot
         private class RequestMessage: ISsbBroadcastMessage {
 

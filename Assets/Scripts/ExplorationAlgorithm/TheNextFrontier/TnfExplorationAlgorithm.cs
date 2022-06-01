@@ -445,15 +445,6 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
             sb.AppendLine(_nextTileInPath != null ? $"Current movement target: {_nextTileInPath.End}" : "");
             return sb.ToString();
         }
-
-
-        // FUTURE WORK
-        public object SaveState() {
-            throw new System.NotImplementedException();
-        }
-
-        public void RestoreState(object stateInfo) {
-            throw new System.NotImplementedException();
-        }
+        
     }
 }

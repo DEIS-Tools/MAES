@@ -62,13 +62,5 @@ namespace Maes.ExplorationAlgorithm.RandomBallisticWalk {
         public string GetDebugInfo() {
             return "";
         }
-
-        public object SaveState() {
-            throw new System.NotImplementedException();
-        }
-
-        public void RestoreState(object stateInfo) {
-            throw new System.NotImplementedException();
-        }
     }
 }

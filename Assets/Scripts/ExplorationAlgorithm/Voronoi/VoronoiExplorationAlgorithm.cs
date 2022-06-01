@@ -593,17 +593,6 @@ namespace Maes.ExplorationAlgorithm.Voronoi {
                 .First(k => k.RobotId == this._robotController.GetRobotID());
         }
         
-        
-        public object SaveState() {
-            throw new System.NotImplementedException();
-        }
-
-        public void RestoreState(object stateInfo) {
-            throw new System.NotImplementedException();
-        }
-        
-        
-
         public string GetDebugInfo() {
             var info = new StringBuilder();
 

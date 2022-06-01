@@ -241,13 +241,6 @@ namespace Maes.ExplorationAlgorithm {
             var y = myPosition.y + (o.Distance * Mathf.Sin(Mathf.Deg2Rad * ((o.RelativeAngle + globalAngle) % 360)));
             return new Vector2(x, y);
         }
-
-        public object SaveState() {
-            return null;
-        }
-
-        public void RestoreState(object stateInfo) {
-            return;
-        }
+        
     }
 }
