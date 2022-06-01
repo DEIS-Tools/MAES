@@ -28,7 +28,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Maes {
-    public class Tooltip : MonoBehaviour {
+    internal class Tooltip : MonoBehaviour {
         private Text _text;
         private RectTransform _backgroundTransform;
         private static Tooltip _instance;

@@ -24,7 +24,7 @@ using UnityEngine;
 
 namespace Unity.Robotics.Core
 {
-    public static class Clock
+    internal static class Clock
     {
         // Since UnityScaled is the default Unity Time mode, we'll use that for this project
         // None of the other time modes are fully validated and guaranteed to be without issues

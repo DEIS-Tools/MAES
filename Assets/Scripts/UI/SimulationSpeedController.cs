@@ -23,7 +23,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Maes.UI {
-    public class SimulationSpeedController : MonoBehaviour {
+    internal class SimulationSpeedController : MonoBehaviour {
         public SimulationManager simulationManager;
         public Button pauseButton;
         public Button playButton;

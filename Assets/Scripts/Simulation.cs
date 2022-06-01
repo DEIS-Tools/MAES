@@ -56,7 +56,7 @@ namespace Maes {
         // The debugging visualizer provides 
         private DebuggingVisualizer _debugVisualizer = new DebuggingVisualizer();
 
-        public SimulationInfoUIController SimInfoUIController;
+        internal SimulationInfoUIController SimInfoUIController;
 
         // Sets up the simulation by generating the map and spawning the robots
         public void SetScenario(SimulationScenario scenario) {

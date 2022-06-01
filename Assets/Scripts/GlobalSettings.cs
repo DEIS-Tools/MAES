@@ -34,7 +34,7 @@ using Maes.YamlConfig;
 namespace Maes {
 
     // This class contains all settings related to an instance of an simulation
-    public static class GlobalSettings {
+    internal static class GlobalSettings {
         private static readonly string ConfigFileName;
 
         // Times per second that robot logic is updated

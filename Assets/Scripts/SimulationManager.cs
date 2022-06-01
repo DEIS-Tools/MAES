@@ -34,13 +34,13 @@ namespace Maes {
         public GameObject SimulationPrefab;
         private Queue<SimulationScenario> _scenarios = new Queue<SimulationScenario>();
 
-        public SimulationSpeedController UISpeedController;
+        internal SimulationSpeedController UISpeedController;
         public GameObject UIControllerDebugTitle;
         public GameObject UIControllerDebugInfo;
         public Text SimulationStatusText;
         private int _physicsTicksSinceUpdate = 0;
 
-        public SimulationInfoUIController simulationInfoUIController;
+        internal SimulationInfoUIController simulationInfoUIController;
 
         private SimulationScenario _currentScenario;
         public Simulation CurrentSimulation;
@@ -49,7 +49,7 @@ namespace Maes {
         public GameObject RosClockPrefab;
         public GameObject RosVisualizerPrefab;
 
-        public SimulationPlayState PlayState { get; } = SimulationPlayState.Paused;
+        internal SimulationPlayState PlayState { get; } = SimulationPlayState.Paused;
         private int _logicTicksCurrentSim = 0;
 
         // Runs once when starting the program
@@ -95,7 +95,7 @@ namespace Maes {
             Instantiate(RosVisualizerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
         }
 
-        public SimulationPlayState AttemptSetPlayState(SimulationPlayState targetState) {
+        internal SimulationPlayState AttemptSetPlayState(SimulationPlayState targetState) {
             if (targetState == _playState) return _playState;
 
             if (_currentScenario == null) {
