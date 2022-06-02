@@ -47,7 +47,7 @@ namespace Maes.Map.MapGen {
 
         public readonly int borderSize;
 
-        public BuildingMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
+        internal BuildingMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
             randomSeed: seed,
             widthInTiles: config.Map.WidthInTiles,
             heightInTiles: config.Map.HeightInTiles,

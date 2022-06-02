@@ -29,7 +29,7 @@ using UnityEngine;
 
 namespace Unity.Robotics.SlamExample
 {
-    class TransformTreeNode
+    internal class TransformTreeNode
     {
         public readonly GameObject SceneObject;
         public readonly List<TransformTreeNode> Children;

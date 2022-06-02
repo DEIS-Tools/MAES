@@ -34,7 +34,7 @@ using Unity.Robotics.ROSTCPConnector.ROSGeometry;
 using Unity.Robotics.SlamExample;
 using UnityEngine;
 
-public class ROSTransformTreePublisher : MonoBehaviour
+internal class ROSTransformTreePublisher : MonoBehaviour
 {
     const string k_TfTopic = "/tf";
     

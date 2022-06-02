@@ -25,7 +25,7 @@ using RosMessageTypes.BuiltinInterfaces;
 
 namespace Unity.Robotics.Core
 {
-    public readonly struct TimeStamp
+    internal readonly struct TimeStamp
     {
         public const double k_NanosecondsInSecond = 1e9f;
 

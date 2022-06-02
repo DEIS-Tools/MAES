@@ -49,7 +49,7 @@ namespace Maes {
         public GameObject RosClockPrefab;
         public GameObject RosVisualizerPrefab;
 
-        public SimulationPlayState PlayState { get; } = SimulationPlayState.Paused;
+        internal SimulationPlayState PlayState { get; } = SimulationPlayState.Paused;
         private int _logicTicksCurrentSim = 0;
 
         // Runs once when starting the program
@@ -95,7 +95,7 @@ namespace Maes {
             Instantiate(RosVisualizerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
         }
 
-        public SimulationPlayState AttemptSetPlayState(SimulationPlayState targetState) {
+        internal SimulationPlayState AttemptSetPlayState(SimulationPlayState targetState) {
             if (targetState == _playState) return _playState;
 
             if (_currentScenario == null) {

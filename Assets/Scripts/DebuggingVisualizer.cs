@@ -25,7 +25,7 @@ using Maes.Robot;
 using UnityEngine;
 
 namespace Maes {
-    public class DebuggingVisualizer : ISimulationUnit {
+    internal class DebuggingVisualizer : ISimulationUnit {
         
         private Queue<CommunicationLink> _links = new Queue<CommunicationLink>();
         private Color _linkColor = new Color(50f / 255f, 120f / 255f, 255f / 255f);

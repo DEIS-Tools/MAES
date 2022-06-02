@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ad8cf01110e54df290b36a418e91285, type: 3}
   m_Name: GeometryCompassSettings
   m_EditorClassIdentifier: 
-  m_ZAxisDirection: 0
+  m_ZAxisDirection: 3

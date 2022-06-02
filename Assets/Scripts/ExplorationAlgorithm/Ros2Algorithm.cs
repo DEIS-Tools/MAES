@@ -42,7 +42,7 @@ using UnityEngine.PlayerLoop;
 using UnityEngine.UIElements;
 
 namespace Maes.ExplorationAlgorithm {
-    public class Ros2Algorithm : IExplorationAlgorithm {
+    internal class Ros2Algorithm : IExplorationAlgorithm {
         private Robot2DController _controller;
         private ROSConnection _ros;
         private string _robotRosId; // e.g. robot0

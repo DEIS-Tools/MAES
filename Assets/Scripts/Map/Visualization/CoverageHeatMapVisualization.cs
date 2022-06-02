@@ -26,7 +26,7 @@ using Maes.Statistics;
 using UnityEngine;
 
 namespace Maes.Map.Visualization {
-    public class CoverageHeatMapVisualization : VisualizationMode {
+    internal class CoverageHeatMapVisualization : VisualizationMode {
 
         private SimulationMap<ExplorationCell> _explorationMap;
         private int _logicTicksBeforeCold = GlobalSettings.TicksBeforeCoverageHeatMapCold;

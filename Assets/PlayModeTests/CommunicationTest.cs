@@ -107,7 +107,7 @@ namespace PlayModeTests {
                 if (results.Count != 0) receivedMessage = results[0] as string;
             };
             
-            _maes.PresPlayButton();
+            _maes.PressPlayButton();
             // Wait until the message has been broadcast
             while (_simulation.SimulatedLogicTicks < 2) {
                 yield return null;
@@ -136,7 +136,7 @@ namespace PlayModeTests {
                 if (results.Count != 0) receivedMessage = results[0] as string;
             };
             
-            _maes.PresPlayButton();
+            _maes.PressPlayButton();
             // Wait until the message has been broadcast
             while (_simulation.SimulatedLogicTicks < 2) {
                 yield return null;
@@ -156,7 +156,7 @@ namespace PlayModeTests {
                 },
                 new List<Vector2Int>() {new Vector2Int(-10, -10), new Vector2Int(10, 10)});
             
-            _maes.PresPlayButton();
+            _maes.PressPlayButton();
             // Wait until the message has been broadcast
             while (_simulation.SimulatedLogicTicks < 2) {
                 yield return null;
@@ -185,7 +185,7 @@ namespace PlayModeTests {
                 },
                 new List<Vector2Int>() {firstRobotPosition, secondRobotPosition});
             
-            _maes.PresPlayButton();
+            _maes.PressPlayButton();
             // Wait until the message has been broadcast
             while (_simulation.SimulatedLogicTicks < 2) {
                 yield return null;
@@ -212,7 +212,7 @@ namespace PlayModeTests {
                     },
                 new List<Vector2Int>() { new Vector2Int(0, -2), new Vector2Int(0, 3 + wallThickness)});
             
-            _maes.PresPlayButton();
+            _maes.PressPlayButton();
             // Wait until the message has been broadcast
             while (_simulation.SimulatedLogicTicks < 5) {
                 yield return null;

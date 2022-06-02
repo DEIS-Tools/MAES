@@ -25,7 +25,7 @@ using UnityEngine.UI;
 
 namespace Maes.UI {
     [RequireComponent(typeof(Button))]
-    public class UIMovementButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
+    internal class UIMovementButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
         public enum Direction {
             Forwards,
             Backwards,

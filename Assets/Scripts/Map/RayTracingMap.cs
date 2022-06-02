@@ -25,7 +25,7 @@ using Maes.Utilities;
 using UnityEngine;
 
 namespace Maes.Map {
-    public class RayTracingMap<TCell> {
+    internal class RayTracingMap<TCell> {
         public readonly SimulationMap<TCell> _map;
         private readonly RayTracingTriangle[] _traceableTriangles;
 

@@ -22,7 +22,7 @@
 using UnityEngine;
 
 namespace Maes.Robot.Task {
-    public class MovementTask : ITask {
+    internal class MovementTask : ITask {
         public float ForceMultiplier;
 
         public MovementTask(float forceMultiplier) {
