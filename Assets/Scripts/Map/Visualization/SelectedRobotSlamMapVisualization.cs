@@ -24,7 +24,7 @@ using Maes.Robot;
 using Maes.Statistics;
 
 namespace Maes.Map.Visualization {
-    public class SelectedRobotSlamMapVisualization : VisualizationMode{
+    internal class SelectedRobotSlamMapVisualization : VisualizationMode{
         
         private SimulationMap<ExplorationCell> _explorationMap;
         private Robot2DController _robot;

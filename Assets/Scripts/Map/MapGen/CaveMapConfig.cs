@@ -53,7 +53,7 @@ namespace Maes.Map.MapGen {
 
         public readonly int neighbourWallsNeededToStayWall;
 
-        public CaveMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
+        internal CaveMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
             randomSeed: seed,
             widthInTiles: config.Map.WidthInTiles,
             heightInTiles: config.Map.HeightInTiles,

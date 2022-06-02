@@ -26,7 +26,7 @@ using Unity.Robotics.ROSTCPConnector.MessageGeneration;
 using Unity.Robotics.ROSTCPConnector.ROSGeometry;
 using UnityEngine;
 
-public static class TransformExtensions
+internal static class TransformExtensions
 {
 
     public static TransformMsg ToROSTransform(this Transform tfUnity) {

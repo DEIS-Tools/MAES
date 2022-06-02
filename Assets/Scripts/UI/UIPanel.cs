@@ -23,7 +23,7 @@ using UnityEngine;
 
 namespace Maes.UI {
     [RequireComponent(typeof(RectTransform))]
-    public class UIPanel : MonoBehaviour {
+    internal class UIPanel : MonoBehaviour {
         public CameraController cameraController;
 
         void Start() {

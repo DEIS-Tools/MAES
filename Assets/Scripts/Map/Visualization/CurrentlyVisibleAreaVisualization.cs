@@ -25,7 +25,7 @@ using Maes.Statistics;
 using UnityEngine;
 
 namespace Maes.Map.Visualization {
-    public class CurrentlyVisibleAreaVisualization : VisualizationMode {
+    internal class CurrentlyVisibleAreaVisualization : VisualizationMode {
         
         private SimulationMap<ExplorationCell> _explorationMap;
         private Robot2DController _selectedRobot;

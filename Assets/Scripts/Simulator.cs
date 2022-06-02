@@ -80,7 +80,7 @@ namespace Maes {
                 _simulationManager.EnqueueScenario(simulationScenario);
         }
         
-        public void PresPlayButton() {
+        public void PressPlayButton() {
             if (_simulationManager.PlayState == SimulationPlayState.Play)
                 throw new InvalidOperationException("Cannot start simulation when it is already in play mode");
             if (!_simulationManager.HasActiveScenario())

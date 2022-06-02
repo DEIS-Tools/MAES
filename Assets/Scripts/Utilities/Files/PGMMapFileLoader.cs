@@ -26,7 +26,7 @@ using Maes.Map.MapGen;
 using UnityEngine;
 
 namespace Maes.Utilities.Files {
-    public class PgmMapFileLoader {
+    internal class PgmMapFileLoader {
 
         [CanBeNull]
         public static int[,] LoadMapFromFileIfPresent(string fileName) {

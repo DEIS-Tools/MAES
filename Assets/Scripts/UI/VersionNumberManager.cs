@@ -25,7 +25,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Maes.UI {
-    public class VersionNumberManager: MonoBehaviour {
+    internal class VersionNumberManager: MonoBehaviour {
         
         private void Start() {
             UpdateVersionNumberText();

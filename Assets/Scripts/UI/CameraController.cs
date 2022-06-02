@@ -28,7 +28,7 @@ using UnityEngine.Serialization;
 // ReSharper disable ConvertIfStatementToNullCoalescingAssignment
 
 namespace Maes.UI {
-    public class CameraController : MonoBehaviour {
+    internal class CameraController : MonoBehaviour {
         public static CameraController singletonInstance;
         public Transform movementTransform;
 

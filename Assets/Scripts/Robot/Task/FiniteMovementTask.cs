@@ -23,7 +23,7 @@ using System;
 using UnityEngine;
 
 namespace Maes.Robot.Task {
-    public class FiniteMovementTask : ITask {
+    internal class FiniteMovementTask : ITask {
         private readonly float _targetDistance;
         private readonly Transform _robotTransform;
         private readonly bool _reverse;
