@@ -82,7 +82,7 @@ MonoBehaviour:
   MapGenerator: {fileID: 2784910510821208126}
   RobotSpawner: {fileID: 2368756380866914998}
   explorationVisualizer: {fileID: 5596846004080017636}
-  SimInfoUIController: {fileID: 0}
+  Robots: []
 --- !u!1001 &8097070573020329166
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -247,6 +247,10 @@ PrefabInstance:
       propertyPath: innerWalls3D
       value: 
       objectReference: {fileID: 2784910510588487757}
+    - target: {fileID: 6267725986478517707, guid: 89bcf64a7e9cd4fcbab9ee3161c549a7, type: 3}
+      propertyPath: _meshGenerator
+      value: 
+      objectReference: {fileID: 2784910510821208124}
     - target: {fileID: 6267725987320665256, guid: 89bcf64a7e9cd4fcbab9ee3161c549a7, type: 3}
       propertyPath: m_Layer
       value: 3
@@ -305,6 +309,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6267725987322426808, guid: 89bcf64a7e9cd4fcbab9ee3161c549a7, type: 3}
   m_PrefabInstance: {fileID: 8097070573877108213}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2784910510821208124 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6267725986478517705, guid: 89bcf64a7e9cd4fcbab9ee3161c549a7, type: 3}
+  m_PrefabInstance: {fileID: 8097070573877108213}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ceea915d2f74452ca2449b05efafc33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &2784910510821208125 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6267725986478517704, guid: 89bcf64a7e9cd4fcbab9ee3161c549a7, type: 3}
