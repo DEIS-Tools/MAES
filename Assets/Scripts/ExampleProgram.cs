@@ -32,7 +32,7 @@ namespace Maes {
             var simulator = Simulator.GetInstance();
             
             
-            simulator.DefaultStart(true);
+            simulator.DefaultStart(false);
             // Setup configuration for a scenario
             //var caveConfig = new CaveMapConfig(123, widthInTiles: 75, heightInTiles: 75);
             //var scenario = new SimulationScenario(123, mapSpawner: generator => generator.GenerateCaveMap(caveConfig));
