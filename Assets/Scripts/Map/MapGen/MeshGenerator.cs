@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Maes.Map.MapGen {
-    public class MeshGenerator : MonoBehaviour {
+    internal class MeshGenerator : MonoBehaviour {
         /**
 	 * Uses the marching squares algorithm to smooth out
 	 * the grid and create a continuous wall around the rooms 
