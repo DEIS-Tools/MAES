@@ -74,14 +74,6 @@ namespace Maes.Robot {
                 Controller.NotifyCollisionExit();
         }
 
-        public object SaveState() {
-            throw new System.NotImplementedException();
-        }
-
-        public void RestoreState(object stateInfo) {
-            throw new System.NotImplementedException();
-        }
-
         public void OnMouseDown() {
             CameraController.singletonInstance.movementTransform = transform;
             OnRobotSelected(this);

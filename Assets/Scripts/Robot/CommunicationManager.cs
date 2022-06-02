@@ -220,14 +220,6 @@ namespace Maes.Robot {
             // No physics update needed
         }
 
-        public object SaveState() {
-            throw new System.NotImplementedException();
-        }
-
-        public void RestoreState(object stateInfo) {
-            throw new System.NotImplementedException();
-        }
-
         private void PopulateAdjacencyMatrix() {
             if (_adjacencyMatrix != null)
                 return;

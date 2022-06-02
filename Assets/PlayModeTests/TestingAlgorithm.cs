@@ -34,9 +34,7 @@ namespace PlayModeTests {
         public TestingAlgorithm() {
             this.onUpdate = (_, __) => { };
         }
-        public object SaveState() { throw new System.NotImplementedException(); }
-        public void RestoreState(object stateInfo) { }
-
+        
         public void UpdateLogic() {
             UpdateFunction(Tick, Controller);
             Tick++;

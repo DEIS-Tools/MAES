@@ -113,14 +113,6 @@ namespace Maes.Robot {
             this._isCurrentlyColliding = false;
         }
 
-        public object SaveState() {
-            throw new System.NotImplementedException();
-        }
-
-        public void RestoreState(object stateInfo) {
-            throw new System.NotImplementedException();
-        }
-
         public void UpdateMotorPhysics() {
             // Calculate movement delta between current and last physics tick
             var leftWheelVelocityVector = _leftWheel.transform.position - _previousLeftWheelPosition ?? Vector3.zero;

@@ -22,7 +22,7 @@
 using System;
 
 namespace Maes {
-    internal interface ISimulationUnit : ISavable<Object> {
+    internal interface ISimulationUnit {
         public void LogicUpdate();
 
         public void PhysicsUpdate();

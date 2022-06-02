@@ -127,15 +127,6 @@ namespace Maes {
             return res;
         }
 
-        // ----- Future work -------
-        public object SaveState() {
-            throw new NotImplementedException();
-        }
-
-        public void RestoreState(object stateInfo) {
-            throw new NotImplementedException();
-        }
-
         public void UpdateDebugInfo() {
             if (_selectedRobot != null) {
                 if (GlobalSettings.IsRosMode) {

@@ -107,14 +107,6 @@ namespace Maes {
 
         public void LogicUpdate() { }
 
-        public object SaveState() {
-            throw new System.NotImplementedException();
-        }
-
-        public void RestoreState(object stateInfo) {
-            throw new System.NotImplementedException();
-        }
-
         public void HideAllTags() {
             foreach (var tag in _environmentTags) {
                 tag.SetVisibility(false);
