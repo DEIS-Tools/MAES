@@ -37,7 +37,7 @@ namespace Maes.Map.MapGen {
         public Transform innerWalls3D;
         public Transform wallRoof;
 
-        private MeshGenerator _meshGenerator;
+        public MeshGenerator _meshGenerator;
 
         // Variable used for drawing gizmos on selection for debugging.
         private int[,] mapToDraw = null;
@@ -59,7 +59,7 @@ namespace Maes.Map.MapGen {
                 (bitMapHeight / 10f) + padding);
         }
 
-        internal void clearMap() {
+        public void clearMap() {
             _meshGenerator.ClearMesh();
         }
 
