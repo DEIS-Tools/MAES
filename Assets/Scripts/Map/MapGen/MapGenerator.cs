@@ -37,7 +37,11 @@ namespace Maes.Map.MapGen {
         public Transform innerWalls3D;
         public Transform wallRoof;
 
-        public MeshGenerator _meshGenerator;
+        internal MeshGenerator _meshGenerator;
+
+        private void Awake() {
+            _meshGenerator = GetComponent<MeshGenerator>();
+        }
 
         // Variable used for drawing gizmos on selection for debugging.
         private int[,] mapToDraw = null;
