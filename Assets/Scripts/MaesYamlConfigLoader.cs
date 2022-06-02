@@ -56,7 +56,6 @@ namespace Maes.YamlConfig {
             }
 
             var stream = new StreamReader(ConfigFileName);
-            Debug.Log("Before deserializer");
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(UnderscoredNamingConvention.Instance)
                 .Build(); 
