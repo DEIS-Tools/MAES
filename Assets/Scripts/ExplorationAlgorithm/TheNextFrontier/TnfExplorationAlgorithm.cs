@@ -64,7 +64,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
         private int Beta { get; }
 
         private List<Frontier> _frontiers;
-        private List<CommunicationManager.SensedObject<int>> _lastSeenNeighbours;
+        private List<SensedObject<int>> _lastSeenNeighbours;
 
         private Vector2 _robotPos = new Vector2(0, 0);
         private Vector2Int _robotPosInt = new Vector2Int(0, 0);

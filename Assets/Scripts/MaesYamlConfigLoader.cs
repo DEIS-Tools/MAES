@@ -31,7 +31,7 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace Maes.YamlConfig {
-    public static class MaesYamlConfigLoader {
+    internal static class MaesYamlConfigLoader {
 
         private static MaesConfigType PreloadedConfig = null;
         

@@ -23,7 +23,7 @@ namespace Maes.Robot.Task {
     
     /// Represents a task where the force application at each wheel may be controlled individually
     /// This allows for rotation while moving ahead 
-    public class InfiniteDifferentialMovementTask : ITask {
+    internal class InfiniteDifferentialMovementTask : ITask {
 
         private float _leftWheelForce = 0f;
         private float _rightWheelForce = 0f;

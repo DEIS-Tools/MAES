@@ -24,15 +24,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Maes.Map.MapGen {
-    public class MeshGenerator : MonoBehaviour {
+    internal class MeshGenerator : MonoBehaviour {
         /**
 	 * Uses the marching squares algorithm to smooth out
 	 * the grid and create a continuous wall around the rooms 
 	 */
-        public SquareGrid squareGrid2D;
+        private SquareGrid squareGrid2D;
         // Since the squares have an index and this index is depending on the 
         // order of the vertices, we have to include an additional grid for 3D.
-        public SquareGrid squareGrid3D;
+        private SquareGrid squareGrid3D;
 
         // The inner walls, that the robots can collide with
         public MeshFilter innerWalls3D;
@@ -69,7 +69,7 @@ namespace Maes.Map.MapGen {
         
         private const int WALL_TYPE = 1, ROOM_TYPE = 0;
 
-        public void ClearMesh() {
+        internal void ClearMesh() {
             squareGrid2D = null;
             squareGrid3D = null;
             Destroy(innerWalls3D.gameObject.GetComponent<MeshCollider>());
@@ -89,7 +89,7 @@ namespace Maes.Map.MapGen {
             checkedVertices3D.Clear();
         }
 
-        public SimulationMap<bool> GenerateMesh(int[,] map, float wallHeight,
+        internal SimulationMap<bool> GenerateMesh(int[,] map, float wallHeight,
             bool disableCornerRounding, List<Room> rooms) {
 
             // Generate grid of squares containing control nodes and between nodes 
@@ -233,7 +233,7 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        void Generate2DColliders() {
+        private void Generate2DColliders() {
             // remove colliders from last build
             EdgeCollider2D[] currentColliders = gameObject.GetComponents<EdgeCollider2D>();
             for (int i = 0; i < currentColliders.Length; i++) {
@@ -256,7 +256,7 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        void CreateWallMesh(float wallHeight, bool isMesh3D) {
+        private void CreateWallMesh(float wallHeight, bool isMesh3D) {
             // Assigns outline vertices to list variable "outlines"
             // An outline is a wall either around an island of walls inside a room
             // or the walls around a room.
@@ -322,7 +322,7 @@ namespace Maes.Map.MapGen {
         // states.
         // Find the states in this image: http://jamie-wong.com/2014/08/19/metaballs-and-marching-squares/#MathJax-Element-15-Frame
         // removeRoundedCorners simply ignores case 1, 2, 4, 7, 8, 11, 13, 14 by using a center point to square off the edges
-        void TriangulateSquare(Square square, bool isMesh3D, bool removeRoundedCorners = false) {
+        private void TriangulateSquare(Square square, bool isMesh3D, bool removeRoundedCorners = false) {
             switch (square.configuration) {
                 case 0:
                     break;
@@ -430,7 +430,7 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        void MeshFromPoints(bool isMesh3D, params Node[] points) {
+        private void MeshFromPoints(bool isMesh3D, params Node[] points) {
             AssignIndexesToVertices(points, isMesh3D);
 
             if (points.Length >= 3)
@@ -443,7 +443,7 @@ namespace Maes.Map.MapGen {
                 CreateTriangle(points[0], points[4], points[5], isMesh3D);
         }
 
-        void AssignIndexesToVertices(Node[] points, bool isMesh3D) {
+        private void AssignIndexesToVertices(Node[] points, bool isMesh3D) {
             for (int i = 0; i < points.Length; i++) {
                 if (points[i].vertexIndex == -1) {
                     points[i].vertexIndex = isMesh3D ? vertices3D.Count : vertices2D.Count;
@@ -459,7 +459,7 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        void CreateTriangle(Node a, Node b, Node c, bool isMesh3D) {
+        private void CreateTriangle(Node a, Node b, Node c, bool isMesh3D) {
             var triangles = isMesh3D ? triangles3D : triangles2D;
 
             triangles.Add(a.vertexIndex);
@@ -473,7 +473,7 @@ namespace Maes.Map.MapGen {
             AddTriangleToDictionary(triangle.vertexIndexC, triangle, isMesh3D);
         }
 
-        void AddTriangleToDictionary(int vertexIndexKey, Triangle triangle, bool isMesh3D) {
+        private void AddTriangleToDictionary(int vertexIndexKey, Triangle triangle, bool isMesh3D) {
             var triangleDictionary = isMesh3D ? triangleDictionary3D : triangleDictionary2D;
             
             if (triangleDictionary.ContainsKey(vertexIndexKey)) {
@@ -486,7 +486,7 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        void CalculateMeshOutlines(bool isMesh3D) {
+        private void CalculateMeshOutlines(bool isMesh3D) {
             var vertices = isMesh3D ? vertices3D : vertices2D;
             var outlines = isMesh3D ? outlines3D : outlines2D;
             var checkedVertices = isMesh3D ? checkedVertices3D : checkedVertices2D;
@@ -507,7 +507,7 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        void FollowOutline(int vertexIndex, int outlineIndex, bool isMesh3D) {
+        private void FollowOutline(int vertexIndex, int outlineIndex, bool isMesh3D) {
             if (isMesh3D) {
                 outlines3D[outlineIndex].Add(vertexIndex);
                 checkedVertices3D.Add(vertexIndex);
@@ -530,7 +530,7 @@ namespace Maes.Map.MapGen {
             
         }
 
-        int GetConnectedOutlineVertex(int vertexIndex, bool isMesh3D) {
+        private int GetConnectedOutlineVertex(int vertexIndex, bool isMesh3D) {
             List<Triangle> trianglesContainingVertex = isMesh3D ? triangleDictionary3D[vertexIndex] : triangleDictionary2D[vertexIndex];
 
             for (int i = 0; i < trianglesContainingVertex.Count; i++) {
@@ -550,7 +550,7 @@ namespace Maes.Map.MapGen {
             return -1;
         }
 
-        bool IsOutlineEdge(int vertexA, int vertexB, bool isMesh3D) {
+        private bool IsOutlineEdge(int vertexA, int vertexB, bool isMesh3D) {
             // The inner walls made up of triangles are recognized based on the
             // number of triangles shared between the two vertices. The outer ones only have 1 in common.
             List<Triangle> trianglesContainingVertexA = isMesh3D ? triangleDictionary3D[vertexA] :  triangleDictionary2D[vertexA];
@@ -568,7 +568,7 @@ namespace Maes.Map.MapGen {
             return sharedTriangleCount == 1;
         }
 
-        struct Triangle {
+        private struct Triangle {
             public int vertexIndexA;
             public int vertexIndexB;
             public int vertexIndexC;
@@ -595,7 +595,7 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        public class SquareGrid {
+        internal class SquareGrid {
             public Square[,] squares;
             public readonly float XOffset, YOffset;
 
@@ -633,7 +633,7 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        public class Square {
+        internal class Square {
             // This class is used in the marching squares algorithm.
             // Control nodes can be either on or off
             public ControlNode topLeft, topRight, bottomRight, bottomLeft;
@@ -676,7 +676,7 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        public class Node {
+        internal class Node {
             public Vector3 position;
             public int vertexIndex = -1;
 
@@ -685,7 +685,7 @@ namespace Maes.Map.MapGen {
             }
         }
 
-        public class ControlNode : Node {
+        internal class ControlNode : Node {
             public bool isWall;
             public Node above, right;
 

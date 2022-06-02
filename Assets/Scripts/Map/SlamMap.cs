@@ -52,9 +52,9 @@ namespace Maes.Map {
         private Random random;
         
         // Low resolution map
-        public CoarseGrainedMap CoarseMap;
+        internal CoarseGrainedMap CoarseMap;
         // Low resolution map only considering what is visible now
-        public VisibleTilesCoarseMap VisibleTilesCoarseMap;
+        internal VisibleTilesCoarseMap VisibleTilesCoarseMap;
 
 
         public SlamMap(SimulationMap<bool> collisionMap, RobotConstraints robotConstraints, int randomSeed) {

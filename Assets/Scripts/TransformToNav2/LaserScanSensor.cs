@@ -29,7 +29,7 @@ using UnityEngine;
 using Unity.Robotics.ROSTCPConnector;
 using UnityEngine.Serialization;
 
-public class LaserScanSensor : MonoBehaviour
+internal class LaserScanSensor : MonoBehaviour
 {
     public string ScanTopic = "/scan";
     [FormerlySerializedAs("TimeBetweenScansSeconds")]

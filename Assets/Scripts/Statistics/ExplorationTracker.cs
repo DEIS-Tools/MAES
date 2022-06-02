@@ -29,7 +29,7 @@ using Maes.Utilities;
 using UnityEngine;
 
 namespace Maes.Statistics {
-    public class ExplorationTracker {
+    internal class ExplorationTracker {
 
         private CoverageCalculator _coverageCalculator;
         

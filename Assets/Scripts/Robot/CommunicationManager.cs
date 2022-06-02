@@ -29,9 +29,27 @@ using UnityEngine;
 using Vector2 = UnityEngine.Vector2;
 
 namespace Maes.Robot {
+    public readonly struct SensedObject<T> {
+        public readonly float Distance;
+        public readonly float Angle;
+        public readonly T item;
+
+        public SensedObject(float distance, float angle, T t) {
+            this.Distance = distance;
+            this.Angle = angle;
+            this.item = t;
+        }
+
+        public Vector2 GetRelativePosition(Vector2 myPosition, float globalAngle) {
+            var x = myPosition.x + (Distance * Mathf.Cos(Mathf.Deg2Rad * ((Angle + globalAngle) % 360)));
+            var y = myPosition.y + (Distance * Mathf.Sin(Mathf.Deg2Rad * ((Angle + globalAngle) % 360)));
+            return new Vector2(x, y);
+        }
+    }
+    
     // Messages sent through this class will be subject to communication range and line of sight.
     // Communication is non-instantaneous. Messages will be received by other robots after one logic tick. 
-    public class CommunicationManager : ISimulationUnit {
+    internal class CommunicationManager : ISimulationUnit {
         private RobotConstraints _robotConstraints;
         private DebuggingVisualizer _visualizer;
 
@@ -84,24 +102,6 @@ namespace Maes.Robot {
                 TransmissionSuccessful = transmissionSuccess;
             }
 
-        }
-
-        public readonly struct SensedObject<T> {
-            public readonly float Distance;
-            public readonly float Angle;
-            public readonly T item;
-
-            public SensedObject(float distance, float angle, T t) {
-                this.Distance = distance;
-                this.Angle = angle;
-                this.item = t;
-            }
-
-            public Vector2 GetRelativePosition(Vector2 myPosition, float globalAngle) {
-                var x = myPosition.x + (Distance * Mathf.Cos(Mathf.Deg2Rad * ((Angle + globalAngle) % 360)));
-                var y = myPosition.y + (Distance * Mathf.Sin(Mathf.Deg2Rad * ((Angle + globalAngle) % 360)));
-                return new Vector2(x, y);
-            }
         }
 
         public CommunicationManager(SimulationMap<bool> collisionMap, RobotConstraints robotConstraints,

@@ -26,7 +26,7 @@ using RosMessageTypes.BuiltinInterfaces;
 using RosMessageTypes.Rosgraph;
 using Unity.Robotics.Core;
 
-public class ROSClockPublisher : MonoBehaviour
+internal class ROSClockPublisher : MonoBehaviour
 {
     [SerializeField]
     Clock.ClockMode m_ClockMode;

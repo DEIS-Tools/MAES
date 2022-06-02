@@ -24,7 +24,7 @@ using UnityEngine.UI;
 
 namespace Maes.UI
 {
-    public class StatisticsUIController : MonoBehaviour
+    internal class StatisticsUIController : MonoBehaviour
     {
         public Image Mask;
         public Text ProgressPercentageText;

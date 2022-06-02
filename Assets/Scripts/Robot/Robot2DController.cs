@@ -43,9 +43,9 @@ namespace Maes.Robot {
 
         private MonaRobot _robot;
         private RobotStatus _currentStatus = RobotStatus.Idle;
-        protected ITask? CurrentTask;
+        private ITask? CurrentTask;
 
-        public CommunicationManager CommunicationManager { get; set; }
+        internal CommunicationManager CommunicationManager { get; set; }
         public SlamMap SlamMap { get; set; }
 
         // Returns the counterclockwise angle in degrees between the forward orientation of the robot and the x-axis
@@ -320,9 +320,9 @@ namespace Maes.Robot {
             return new RelativeObject<T>(distance, angle, item);
         }
 
-        public List<CommunicationManager.SensedObject<int>> SenseNearbyRobots() {
+        public List<SensedObject<int>> SenseNearbyRobots() {
             return CommunicationManager.SenseNearbyRobots(_robot.id)
-                .Select(e => new CommunicationManager.SensedObject<int>(
+                .Select(e => new SensedObject<int>(
                     e.Distance, 
                     Vector2.SignedAngle(this._robot.transform.up, 
                                                 new Vector2(Mathf.Cos(e.Angle * Mathf.Deg2Rad), 

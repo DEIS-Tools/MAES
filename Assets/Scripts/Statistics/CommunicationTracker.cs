@@ -28,7 +28,7 @@ using static Maes.Robot.CommunicationManager;
 using static Maes.Statistics.ExplorationTracker;
 
 namespace Maes.Statistics {
-    public class CommunicationTracker {
+    internal class CommunicationTracker {
         public readonly Dictionary<int, SnapShot<bool>> InterconnectionSnapShot = new Dictionary<int, SnapShot<bool>>();
         public readonly Dictionary<int, SnapShot<float>> BiggestClusterPercentageSnapshots = new Dictionary<int, SnapShot<float>>();
         public Dictionary<(int, int), CommunicationInfo> AdjacencyMatrixRef;
