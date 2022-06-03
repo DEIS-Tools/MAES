@@ -9,18 +9,17 @@ Welcome to a docker-container running:
 *                                                               *
  ***************************************************************
 
-The most basic commands, such as 'source /opt/<>/whatever.sh' and
-such have already been executed, and the first initial 'colcon 
-build' has been run. Any error-messages during the build should
-be visible above this message.
+The most basic commands, such as 'source /opt/ros/$ROS_DISTRO/setup.sh' and
+such have already been executed, and the first initial 'colcon build' has 
+been run. Any error-messages during the build should be visible above this 
+message.
 
-Any changes you make in the /home/dev_ws/code directory will per-
-sist. Changes to other files will be reset whenever the contain-
-er stops.
+Any changes you make in the ~/code directory will persist. 
+Changes to other files will be reset whenever the container stops.
 
-An ssh-server has been startet on localhost, and should be acces-
-sible on port 10022 if you have followed the suggested starting
-command (login = maes-user:maes (sudo-pw = root))
+An ssh-server has been startet on localhost, and should be accessible on 
+port 10022 if you have followed the suggested starting command.
+  (login = maes-user:maes (sudo-pw = root))
 
 Have fun!
 

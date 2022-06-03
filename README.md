@@ -98,8 +98,8 @@ ROSMode has been tested to work with the Galactic release of ROS2.
  
 ### ROSMode with Docker
 1. Install Docker https://docs.docker.com/get-docker/ (On Windows 10 we recommend using the WSL2 backend for Docker)
-2. Download MAES package and extract (TODO)
-3. Open terminal in the root of the MAES Package
+2. Download MAES package from our [releases-page](https://github.com/MalteZA/MAES/releases), and extract the content to an empty folder
+3. Open a terminal in the root of this folder
 4. Pull our docker image with the following command (x86_64 architecture only)
 ```bash
 docker pull aaumaes/ros4maes
