@@ -30,27 +30,21 @@ namespace Maes.Map.MapGen
         {
             var caveGenerator = gameObject.AddComponent<CaveGenerator>();
             caveGenerator.Init(caveConfig, wallHeight);
-            var result = caveGenerator.GenerateCaveMap();
-            Destroy(caveGenerator);
-            return result;
+            return caveGenerator.GenerateCaveMap();
         }
         
         public SimulationMap<bool> GenerateMap(BuildingMapConfig buildingConfig, float wallHeight = 2.0f)
         {
             var buildingGenerator = gameObject.AddComponent<BuildingGenerator>(); 
             buildingGenerator.Init(buildingConfig, wallHeight);
-            var result = buildingGenerator.GenerateBuildingMap();
-            Destroy(buildingGenerator);
-            return result;
+            return buildingGenerator.GenerateBuildingMap();
         }
 
         public SimulationMap<bool> GenerateMap(int[,] bitmap, float wallHeight = 2.0f, int borderSize = 1)
         {
             var bitMapGenerator = gameObject.AddComponent<BitMapGenerator>();
             bitMapGenerator.Init(bitmap, wallHeight, borderSize);
-            var result = bitMapGenerator.CreateMapFromBitMap();
-            Destroy(bitMapGenerator);
-            return result;
+            return bitMapGenerator.CreateMapFromBitMap();
         }
     }
 }
