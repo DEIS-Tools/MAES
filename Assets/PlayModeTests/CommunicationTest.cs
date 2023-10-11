@@ -204,7 +204,7 @@ namespace PlayModeTests {
         public IEnumerator Broadcast_WallDistanceIsApproximatelyCorrect(int wallThickness) {
             float foundWallDistance = float.PositiveInfinity;
             InitSimulator(
-                generator => generator.CreateMapFromBitMap(GenerateMapWithHorizontalWallInMiddle(wallThickness), borderSize: 2),
+                generator => generator.GenerateMap(GenerateMapWithHorizontalWallInMiddle(wallThickness), borderSize: 2),
                     transmissionSuccessCalculatorFunc: 
                     (distance, wallDistance) => {
                         foundWallDistance = wallDistance;

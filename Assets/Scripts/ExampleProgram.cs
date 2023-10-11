@@ -23,18 +23,48 @@ using System;
 using Maes.ExplorationAlgorithm.RandomBallisticWalk;
 using Maes.Map;
 using Maes.Map.MapGen;
+using Maes.Utilities.Files;
 using UnityEngine;
 
 namespace Maes {
     internal class ExampleProgram : MonoBehaviour {
         private void Start() {
+            const int randomSeed = 123;
+            const int height = 100;
+            const int width = 100;
+            var buildingConfig = new BuildingMapConfig(
+                randomSeed,
+                width,
+                height,
+                20,
+                4,
+                6,
+                2,
+                2,
+                85,
+                1);
+            var caveConfig = new CaveMapConfig(
+                randomSeed,
+                width,
+                height,
+                4,
+                4,
+                45,
+                10,
+                10,
+                1);
+            var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
+
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
             
             // Setup configuration for a scenario
-            var caveConfig = new CaveMapConfig(123, widthInTiles: 75, heightInTiles: 75);
-            var scenario = new SimulationScenario(123, mapSpawner: generator => generator.GenerateCaveMap(caveConfig));
-            simulator.EnqueueScenario(scenario);
+            var scenarioCave = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(caveConfig));
+            var scenarioBuilding = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(buildingConfig));
+            var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
+            simulator.EnqueueScenario(scenarioCave);
+            simulator.EnqueueScenario(scenarioBuilding);
+            simulator.EnqueueScenario(scenarioBitMap);
         
             simulator.PressPlayButton(); // Instantly enter play mode
         }

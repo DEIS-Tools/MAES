@@ -31,7 +31,7 @@ namespace Maes
 {
     
     // A function that generates, initializes and returns a world map
-    public delegate SimulationMap<bool> MapFactory(MapGenerator generator);
+    public delegate SimulationMap<bool> MapFactory(MapSpawner generator);
     // A function that spawns and returns a group of robots
     public delegate List<MonaRobot> RobotFactory(SimulationMap<bool> map, RobotSpawner spawner);
     
@@ -62,7 +62,7 @@ namespace Maes
             Seed = seed;
             HasFinishedSim = hasFinishedSim ?? (simulation => simulation.ExplorationTracker.ExploredProportion > 0.99f || simulation.SimulatedLogicTicks > 3600 * 10);
             // Default to generating a cave map when no map generator is specified
-            MapSpawner = mapSpawner ?? (generator => generator.GenerateCaveMap(new CaveMapConfig(seed)));
+            MapSpawner = mapSpawner ?? (generator => generator.GenerateMap(new CaveMapConfig(seed)));
             RobotSpawner = robotSpawner ?? ((map, spawner) => spawner.SpawnRobotsTogether( map, seed, 2, 
                 Vector2Int.zero, (robotSeed) => new RandomExplorationAlgorithm(robotSeed)));
             RobotConstraints = robotConstraints ?? new RobotConstraints();

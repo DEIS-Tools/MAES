@@ -22,6 +22,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static Maes.Map.MapGen.BitMapTypes;
 
 namespace Maes.Map.MapGen {
     internal class MeshGenerator : MonoBehaviour {
@@ -67,16 +68,14 @@ namespace Maes.Map.MapGen {
                  "Enabling this can impact performance of map generation by up to 2x")]
         public bool include3DCollider = true;
         
-        private const int WALL_TYPE = 1, ROOM_TYPE = 0;
-
         internal void ClearMesh() {
             squareGrid2D = null;
             squareGrid3D = null;
             Destroy(innerWalls3D.gameObject.GetComponent<MeshCollider>());
-            innerWalls3D.mesh.Clear();
+            innerWalls3D.sharedMesh?.Clear();
             Destroy(innerWalls2D.gameObject.GetComponent<MeshCollider>());
-            innerWalls2D.mesh.Clear();
-            wallRoof.mesh.Clear();
+            innerWalls2D.sharedMesh?.Clear();
+            wallRoof.sharedMesh?.Clear();
             vertices2D.Clear();
             vertices3D.Clear();
             triangles2D.Clear();

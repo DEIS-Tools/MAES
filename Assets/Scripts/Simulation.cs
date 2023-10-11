@@ -38,7 +38,7 @@ namespace Maes {
         public int SimulatedPhysicsTicks { get; private set; } = 0;
         public float SimulateTimeSeconds { get; private set; } = 0;
 
-        public MapGenerator MapGenerator;
+        public MapSpawner MapGenerator;
         public RobotSpawner RobotSpawner;
         public ExplorationVisualizer explorationVisualizer;
 
@@ -61,7 +61,8 @@ namespace Maes {
         // Sets up the simulation by generating the map and spawning the robots
         public void SetScenario(SimulationScenario scenario) {
             _scenario = scenario;
-            _collisionMap = scenario.MapSpawner(MapGenerator);
+            var mapInstance = Instantiate(MapGenerator, transform);
+            _collisionMap = scenario.MapSpawner(mapInstance);
             
             _communicationManager = new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
             RobotSpawner.CommunicationManager = _communicationManager;

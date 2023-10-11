@@ -35,7 +35,7 @@ namespace PlayModeTests {
                 wallThresholdSize: 10, 
                 roomThresholdSize: 10,
                 borderSize: 1);
-            return (generator => generator.GenerateCaveMap(mapConfiguration, 2f));
+            return (generator => generator.GenerateMap(mapConfiguration, 2f));
         }
 
     }
