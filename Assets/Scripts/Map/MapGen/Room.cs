@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Maes.Utilities.Geometry;
+using static Maes.Map.MapGen.TileTypes;
 
 namespace Maes.Map.MapGen {
     public class Room : IComparable<Room> {
@@ -52,8 +53,8 @@ namespace Maes.Map.MapGen {
                 tilesAsArray[tile.x, tile.y] = true;
                 for (int x = tile.x - 1; x <= tile.x + 1; x++) {
                     for (int y = tile.y - 1; y <= tile.y + 1; y++) {
-                        if (x == tile.x || y == tile.y) {
-                            if (map[x, y] == BitMapTypes.WALL_TYPE) {
+                        if ((x == tile.x || y == tile.y) && IsInMapRange(x,y,map)) {
+                            if (map[x, y] == WALL_TYPE) {
                                 edgeTiles.Add(tile);
                             }
                         }
@@ -61,7 +62,12 @@ namespace Maes.Map.MapGen {
                 }
             }
 
-            this.isHallWay = map[tiles[0].x, tiles[0].y] == BitMapTypes.HALL_TYPE;
+            this.isHallWay = map[tiles[0].x, tiles[0].y] == HALL_TYPE;
+        }
+
+        private bool IsInMapRange(int x, int y, int[,] map)
+        {
+            return x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1);
         }
 
         public bool IsWithinRangeOf(Room other, int range) {

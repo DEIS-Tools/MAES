@@ -35,24 +35,11 @@ namespace Maes {
             var buildingConfig = new BuildingMapConfig(
                 randomSeed,
                 width,
-                height,
-                20,
-                4,
-                6,
-                2,
-                2,
-                85,
-                1);
+                height);
             var caveConfig = new CaveMapConfig(
                 randomSeed,
                 width,
-                height,
-                4,
-                4,
-                45,
-                10,
-                10,
-                1);
+                height);
             var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
 
             // Get/instantiate simulation prefab
@@ -62,9 +49,9 @@ namespace Maes {
             var scenarioCave = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(caveConfig));
             var scenarioBuilding = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(buildingConfig));
             var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
-            simulator.EnqueueScenario(scenarioCave);
             simulator.EnqueueScenario(scenarioBuilding);
             simulator.EnqueueScenario(scenarioBitMap);
+            simulator.EnqueueScenario(scenarioCave);
         
             simulator.PressPlayButton(); // Instantly enter play mode
         }

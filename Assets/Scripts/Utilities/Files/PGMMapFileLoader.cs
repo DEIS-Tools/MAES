@@ -24,6 +24,7 @@ using System.IO;
 using JetBrains.Annotations;
 using Maes.Map.MapGen;
 using UnityEngine;
+using static Maes.Map.MapGen.TileTypes;
 
 namespace Maes.Utilities.Files {
     internal class PgmMapFileLoader {
@@ -73,7 +74,7 @@ namespace Maes.Utilities.Files {
                 for (int x = 0; x < width; x++) {
                     var line = stream.ReadLine()!;
                     var pixelValue = int.Parse(line.Trim());
-                    var bitmapValue = pixelValue < 125 ? BitMapTypes.WALL_TYPE : BitMapTypes.ROOM_TYPE;
+                    var bitmapValue = pixelValue < 125 ? WALL_TYPE : ROOM_TYPE;
                     data[x, height - y - 1] = bitmapValue;
                     debugString += " " + bitmapValue;
                 }

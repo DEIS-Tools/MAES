@@ -22,7 +22,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Maes.Map.MapGen.BitMapTypes;
+using static Maes.Map.MapGen.TileTypes;
 
 
 namespace Maes.Map.MapGen

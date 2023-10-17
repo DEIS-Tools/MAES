@@ -22,7 +22,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static Maes.Map.MapGen.BitMapTypes;
+using static Maes.Map.MapGen.TileTypes;
 
 namespace Maes.Map.MapGen {
     internal class MeshGenerator : MonoBehaviour {

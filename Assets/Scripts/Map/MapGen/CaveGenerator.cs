@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static Maes.Map.MapGen.BitMapTypes;
+using static Maes.Map.MapGen.TileTypes;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
-
 
 namespace Maes.Map.MapGen
 {
@@ -52,13 +51,14 @@ namespace Maes.Map.MapGen
             {
                 smoothedMap = SmoothMap(smoothedMap, caveConfig);
             }
-
+                
             var smoothedMapWithoutNarrowCorridors = WallOffNarrowCorridors(smoothedMap);
 
             // Clean up regions smaller than threshold for both walls and rooms.
             var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(caveConfig.wallThresholdSize,
                 caveConfig.roomThresholdSize,
                 smoothedMapWithoutNarrowCorridors);
+
             // Connect all rooms to main (the biggest) room
             var connectedMap = ConnectAllRoomsToMainRoom(survivingRooms, cleanedMap, caveConfig);
 
@@ -158,18 +158,13 @@ namespace Maes.Map.MapGen
                 {
                     newMap[x, y] = WALL_TYPE;
                     // enqueue neighbours to be checked again
-                    tilesToCheck.Enqueue((x - 1, y + 1)); // Top left
-                    tilesToCheck.Enqueue((x, y + 1)); // Top
-                    tilesToCheck.Enqueue((x + 1, y + 1)); // Top right
-                    tilesToCheck.Enqueue((x - 1, y)); // Left
-                    tilesToCheck.Enqueue((x + 1, y)); // Right
-                    tilesToCheck.Enqueue((x - 1, y - 1)); // Bottom left
-                    tilesToCheck.Enqueue((x, y - 1)); // bottom
-                    tilesToCheck.Enqueue((x + 1, y - 1)); // Bottom right
+                    for (int neighborX = x-1; neighborX < x+1; neighborX++)
+                        for (int neighborY = y-1; neighborY < y+1; neighborY++)
+                            if (IsInMapRange(neighborX, neighborY, newMap))
+                                tilesToCheck.Enqueue((neighborX,neighborY));
                 }
-
             }
-
+            
             return newMap;
         }
 
@@ -347,6 +342,7 @@ namespace Maes.Map.MapGen
         {
             return new Vector3(-width / 2 + .5f + tile.x, 2, -height / 2 + .5f + tile.y);
         }
+
         int[,] CreateRandomFillMap(CaveMapConfig config)
         {
             int[,] randomFillMap = new int[config.bitMapWidth, config.bitMapHeight];
@@ -381,7 +377,7 @@ namespace Maes.Map.MapGen
                 {
                     int neighbourWallTiles = GetSurroundingWallCount(x, y, map);
 
-                    if (neighbourWallTiles > config.neighbourWallsNeededToStayWall)
+                    if (neighbourWallTiles >= config.neighbourWallsNeededToStayWall)
                         smoothedMap[x, y] = WALL_TYPE;
                     else if (neighbourWallTiles < config.neighbourWallsNeededToStayWall)
                         smoothedMap[x, y] = ROOM_TYPE;
@@ -400,9 +396,9 @@ namespace Maes.Map.MapGen
                 {
                     if (IsInMapRange(neighbourX, neighbourY, map))
                     {
-                        if (neighbourX != gridX || neighbourY != gridY)
+                        if ((neighbourX != gridX && neighbourY != gridY) && map[neighbourX, neighbourY] == WALL_TYPE)
                         {
-                            wallCount += map[neighbourX, neighbourY];
+                            wallCount += 1;
                         }
                     }
                     else

@@ -20,7 +20,12 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 namespace Maes.Map.MapGen {
-    internal static class BitMapTypes {
-        internal const int WALL_TYPE = 1, ROOM_TYPE = 0, HALL_TYPE = 2;
+    internal static class TileTypes {
+        internal const int ROOM_TYPE = 0, HALL_TYPE = 1, WALL_TYPE = 2, CONCRETE_WALL_TYPE = 3, WOOD_WALL_TYPE = 4, METAL_WALL_TYPE = 5;
+        /* attenuation:
+         Concrete = 8-15 dB | 2.4GHz/1.3GHz
+         Wood     =    3 dB | 2.4GHz
+         Metal    =   26 dB | 815MHz
+         */
     }
 }

@@ -68,13 +68,13 @@ namespace Maes.Map.MapGen {
         public CaveMapConfig(
             int randomSeed,
             int widthInTiles=50, int heightInTiles=50, 
-            int smoothingRuns=4,
+            int smoothingRuns=3,
             int connectionPassagesWidth=4, 
-            int randomFillPercent=45, 
-            int wallThresholdSize=10, 
-            int roomThresholdSize=10,
+            int randomFillPercent=50, 
+            int wallThresholdSize=5, 
+            int roomThresholdSize=5,
             int borderSize=2, 
-            int neighbourWallsNeededToStayWall = 4) {
+            int neighbourWallsNeededToStayWall = 3) {
             // Only fill percent between and including 0 to 100 are allowed
             if (0 > randomFillPercent || randomFillPercent >= 100) {
                 throw new ArgumentOutOfRangeException("randomFillPercent must be between 0 and 100");

@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 using Random = System.Random;
-using static Maes.Map.MapGen.BitMapTypes;
+using static Maes.Map.MapGen.TileTypes;
 
 namespace Maes.Map.MapGen
 {
@@ -102,10 +102,10 @@ namespace Maes.Map.MapGen
                         int biggestYValue, smallestYValue;
 
                         // The maxima of x and y are needed to isolate the coordinates for each line of wall
-                        smallestXValue = sharedWallTiles.Aggregate((agg, next) => next.x < agg.x ? next : agg).x;
-                        biggestXValue = sharedWallTiles.Aggregate((agg, next) => next.x > agg.x ? next : agg).x;
-                        smallestYValue = sharedWallTiles.Aggregate((agg, next) => next.y < agg.y ? next : agg).y;
-                        biggestYValue = sharedWallTiles.Aggregate((agg, next) => next.y > agg.y ? next : agg).y;
+                        smallestXValue = sharedWallTiles.Min(tile => tile.x);
+                        biggestXValue = sharedWallTiles.Max(tile => tile.x);
+                        smallestYValue = sharedWallTiles.Min(tile => tile.y);
+                        biggestYValue = sharedWallTiles.Max(tile => tile.y);
 
                         List<Vector2Int> line;
                         int maxDoors = random.Next(1, 4);
