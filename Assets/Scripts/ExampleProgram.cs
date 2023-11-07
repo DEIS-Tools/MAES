@@ -20,7 +20,9 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
-using Maes.ExplorationAlgorithm.RandomBallisticWalk;
+using System.Collections;
+using System.Collections.Generic;
+using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
 using Maes.Map.MapGen;
 using Maes.Utilities.Files;
@@ -59,7 +61,16 @@ namespace Maes {
             var simulator = Simulator.GetInstance();
             
             // Setup configuration for a scenario
-            var scenarioCave = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(caveConfig));
+            var scenarioCave = new SimulationScenario(
+                seed: randomSeed, 
+                mapSpawner: generator => generator.GenerateMap(caveConfig),
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                    map,
+                    randomSeed,
+                    2,
+                    new Vector2Int(0, 0),
+                    (seed) => new TnfExplorationAlgorithm(1, 2, seed)
+                ));
             var scenarioBuilding = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(buildingConfig));
             var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
             simulator.EnqueueScenario(scenarioCave);

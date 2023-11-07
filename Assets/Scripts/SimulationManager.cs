@@ -32,8 +32,9 @@ namespace Maes {
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 
         public GameObject SimulationPrefab;
-        private Queue<SimulationScenario> _scenarios = new Queue<SimulationScenario>();
+        public Queue<SimulationScenario> _scenarios = new Queue<SimulationScenario>();
 
+        public Queue<SimulationScenario> _initialScenarios = new Queue<SimulationScenario>();
         public SimulationSpeedController UISpeedController;
         public GameObject UIControllerDebugTitle;
         public GameObject UIControllerDebugInfo;
@@ -42,7 +43,7 @@ namespace Maes {
 
         public SimulationInfoUIController simulationInfoUIController;
 
-        private SimulationScenario _currentScenario;
+        public SimulationScenario _currentScenario;
         public Simulation CurrentSimulation;
         private GameObject _simulationGameObject;
         
@@ -163,8 +164,10 @@ namespace Maes {
         private bool UpdateSimulation() {
             if (_currentScenario != null && _currentScenario.HasFinishedSim(CurrentSimulation)) {
                 if (GlobalSettings.ShouldWriteCSVResults && _currentScenario.HasFinishedSim(CurrentSimulation))
-                    CreateStatisticsFile();
-                RemoveCurrentSimulation();
+                    //CreateStatisticsFile();
+                if (_scenarios.Count != 0) { //If last simulation, let us keep looking around in it
+                    RemoveCurrentSimulation();
+                }
             }
 
             if (_currentScenario == null) {
@@ -236,9 +239,9 @@ namespace Maes {
         }
 
         public void EnqueueScenario(SimulationScenario simulationScenario) {
-            if (HasActiveScenario()) 
+            if (HasActiveScenario()) {
                 _scenarios.Enqueue(simulationScenario);
-            else // This is the first scenario, initialize it immediately 
+            } else // This is the first scenario, initialize it immediately 
                 CreateSimulation(simulationScenario);
         }
 
