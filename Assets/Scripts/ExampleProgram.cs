@@ -67,7 +67,7 @@ namespace Maes {
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                     map,
                     randomSeed,
-                    2,
+                    5,
                     new Vector2Int(0, 0),
                     (seed) => new TnfExplorationAlgorithm(1, 2, seed)
                 ));

@@ -44,6 +44,7 @@ public class RestartRemakeContoller : MonoBehaviour
     }
 
     private void RestartCurrentScenario() {
+        simulationManager.AttemptSetPlayState(Maes.UI.SimulationPlayState.Play); //Avoids a crash when restarting during pause
         Queue<SimulationScenario> newScenariosQueue = new Queue<SimulationScenario>();
         newScenariosQueue.Enqueue(simulationManager._currentScenario);
         simulationManager.RemoveCurrentSimulation();
@@ -61,6 +62,7 @@ public class RestartRemakeContoller : MonoBehaviour
 
     }
     private void RestartAllScenarios() {
+        simulationManager.AttemptSetPlayState(Maes.UI.SimulationPlayState.Play); //Avoids a crash when restarting during pause
         Queue<SimulationScenario> tempScenariosQueue = new Queue<SimulationScenario>();
         foreach (var scenario in simulationManager._initialScenarios){
             tempScenariosQueue.Enqueue(scenario);
