@@ -66,7 +66,7 @@ namespace Maes {
                 UIControllerDebugTitle.SetActive(false);
                 UIControllerDebugInfo.SetActive(false);
             }
-            UISpeedController.UpdateButtonsUI(PlayState);
+            UISpeedController.UpdateButtonsUI(SimulationPlayState.Play);
         }
 
         public void RemoveFastForwardButtonsFromControlPanel() {

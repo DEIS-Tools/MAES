@@ -69,13 +69,23 @@ namespace Maes {
                     randomSeed,
                     5,
                     new Vector2Int(0, 0),
-                    (seed) => new TnfExplorationAlgorithm(1, 2, seed)
+                    (seed) => new TnfExplorationAlgorithm(1, 10, seed)
                 ));
-            var scenarioBuilding = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(buildingConfig));
-            var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
+                
+            var scenarioBuilding = new SimulationScenario(
+                seed: randomSeed, 
+                mapSpawner: generator => generator.GenerateMap(buildingConfig), 
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                    map,
+                    randomSeed,
+                    5,
+                    new Vector2Int(0, 0),
+                    (seed) => new TnfExplorationAlgorithm(1, 10, seed)
+                ));
+            //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
             simulator.EnqueueScenario(scenarioCave);
-            simulator.EnqueueScenario(scenarioBuilding);
-            simulator.EnqueueScenario(scenarioBitMap);
+            //simulator.EnqueueScenario(scenarioBuilding);
+            //simulator.EnqueueScenario(scenarioBitMap);
         
             simulator.PressPlayButton(); // Instantly enter play mode
         }
