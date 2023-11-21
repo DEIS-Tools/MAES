@@ -104,12 +104,11 @@ namespace Maes {
                     randomSeed,
                     5,
                     new Vector2Int(0, 0),
-                    (seed) => new TnfExplorationAlgorithm(1, 10, seed)                    
-                ),
-                robotConstraints: robotConstraints);
+                    (seed) => new TnfExplorationAlgorithm(1, 10, seed)
+                ));
             //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
             simulator.EnqueueScenario(scenarioCave);
-            simulator.EnqueueScenario(scenarioBuilding);
+            //simulator.EnqueueScenario(scenarioBuilding);
             //simulator.EnqueueScenario(scenarioBitMap);
         
             simulator.PressPlayButton(); // Instantly enter play mode
