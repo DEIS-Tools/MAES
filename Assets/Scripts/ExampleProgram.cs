@@ -20,11 +20,12 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
-using Maes.ExplorationAlgorithm.RandomBallisticWalk;
+using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
 using Maes.Map.MapGen;
 using Maes.Utilities.Files;
 using UnityEngine;
+using Maes.Robot;
 
 namespace Maes {
     internal class ExampleProgram : MonoBehaviour {
@@ -55,16 +56,61 @@ namespace Maes {
                 1);
             var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
 
+            var robotConstraints = new RobotConstraints(
+                senseNearbyAgentsRange: 5f,
+                senseNearbyAgentsBlockedByWalls: true,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f,
+                distributeSlam: false,
+                environmentTagReadRange: 4.0f,
+                slamRayTraceRange: 7f,
+                relativeMoveSpeed: 1f,
+                agentRelativeSize: 0.6f,
+                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) => {
+                    // Blocked by walls
+                    if (distanceThroughWalls > 0) {
+                        return false;
+                    }
+                    // Max distance 15.0f
+                    else if (15.0f < distanceTravelled) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            );
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
             
             // Setup configuration for a scenario
-            var scenarioCave = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(caveConfig));
-            var scenarioBuilding = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(buildingConfig));
-            var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
+            var scenarioCave = new SimulationScenario(
+                seed: randomSeed, 
+                mapSpawner: generator => generator.GenerateMap(caveConfig),
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                    map,
+                    randomSeed,
+                    5,
+                    new Vector2Int(0, 0),
+                    (seed) => new TnfExplorationAlgorithm(1, 10, seed)
+                ));
+                
+            var scenarioBuilding = new SimulationScenario(
+                seed: randomSeed, 
+                mapSpawner: generator => generator.GenerateMap(buildingConfig), 
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                    map,
+                    randomSeed,
+                    5,
+                    new Vector2Int(0, 0),
+                    (seed) => new TnfExplorationAlgorithm(1, 10, seed)                    
+                ),
+                robotConstraints: robotConstraints);
+            //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
             simulator.EnqueueScenario(scenarioCave);
             simulator.EnqueueScenario(scenarioBuilding);
-            simulator.EnqueueScenario(scenarioBitMap);
+            //simulator.EnqueueScenario(scenarioBitMap);
         
             simulator.PressPlayButton(); // Instantly enter play mode
         }

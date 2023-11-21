@@ -20,6 +20,7 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Maes.Map;
@@ -79,6 +80,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
         private readonly System.Random _random;
         private bool _isCommunicating;
         private int _ticksSpentColliding;
+        private List<(int, Vector2)> _currentDestinations = new List<(int, Vector2)>{};
 
 
         private class Frontier {
@@ -154,8 +156,23 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
             return sum;
         }
 
+        private float FrontierCoordinationFactor(Frontier frontier) {
+            if (_currentDestinations.Count <= 0) {
+                return 0;
+            }
+            var sum = 0f;
+
+            foreach (var destination in _currentDestinations) {
+                var destinationCoordinates = destination.Item2;
+                var normalizerConstant = _frontiers.Max(f => f.cells.Select(c => Vector2.Distance(destinationCoordinates, c.Item1)).Max());
+                sum += WavefrontNormalized(frontier, destinationCoordinates, normalizerConstant);
+            }
+            _currentDestinations.Clear();
+            return sum;
+        }
+
         private float UtilityFunction(Frontier frontier, float normalizerConstant) {
-            return InformationFactor(frontier) + DistanceFactor(frontier, _robotPos, normalizerConstant) - CoordinationFactor(frontier);
+            return InformationFactor(frontier) + DistanceFactor(frontier, _robotPos, normalizerConstant) - CoordinationFactor(frontier) - (FrontierCoordinationFactor(frontier) * 1f);
         }
 
         public void UpdateLogic() {
@@ -167,7 +184,13 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
                 if (_lastSeenNeighbours.Any()) {
                     _robotController.StopCurrentTask();
                     _isCommunicating = true;
-                    _robotController.Broadcast((_robotController.GetSlamMap(), _robotController.GetRobotID()));
+                    if (_path != null && _path.Count > 0) {
+                        PathStep lastStep = _path.Last.Value;
+                        _robotController.Broadcast((_robotController.GetSlamMap(), _robotController.GetRobotID(), (Vector2) lastStep.End));
+                    }
+                    else {
+                        _robotController.Broadcast((_robotController.GetSlamMap(), _robotController.GetRobotID(), _robotPos));
+                    }
                 }
                 _logicTicksSinceLastCommunication++;
                 return;
@@ -264,12 +287,18 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
             }
             var newMaps = new List<SlamMap> {_robotController.GetSlamMap() as SlamMap};
             foreach (var package in received) {
-                var pack = ((ISlamAlgorithm, int)) package;
+                var pack = ((ISlamAlgorithm, int, Vector2)) package;
                 newMaps.Add(pack.Item1 as SlamMap);
+                if (_currentDestinations.Any(dict => dict.Item1 == pack.Item2)){
+                    var index = _currentDestinations.FindIndex(dict => dict.Item1 == pack.Item2);
+                    _currentDestinations[index] = (pack.Item2, pack.Item3);
+                } else {
+                    _currentDestinations.Add((pack.Item2, pack.Item3));
+                }
             }
 
             // Largest Robot ID synchronizes to save on Simulator CPU time
-            if (!received.Cast<(ISlamAlgorithm, int)>().Any(p => p.Item2 > _robotId)) {
+            if (!received.Cast<(ISlamAlgorithm, int, Vector2)>().Any(p => p.Item2 > _robotId)) {
                 SlamMap.Synchronize(newMaps);
             }
             if (_robotTnfStatus == TnfStatus.OutOfFrontiers) {
