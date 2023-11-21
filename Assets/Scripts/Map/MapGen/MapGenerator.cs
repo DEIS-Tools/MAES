@@ -22,63 +22,61 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Maes.Map.MapGen.TileTypes;
 
 
 namespace Maes.Map.MapGen
 {
-    //TODO: https://stackoverflow.com/questions/49182521/unity3d-add-component-to-prefab-in-resource
     public abstract class MapGenerator : MonoBehaviour
     {
-        protected Transform _plane;
-        protected Transform _innerWalls2D;
-        protected Transform _innerWalls3D;
-        protected Transform _wallRoof;
+        protected Transform Plane;
+        protected Transform InnerWalls2D;
+        protected Transform InnerWalls3D;
+        protected Transform WallRoof;
         private MeshGenerator _meshGenerator;
 
         // Variable used for drawing gizmos on selection for debugging.
-        protected int[,] mapToDraw = null;
+        protected Tile[,] MapToDraw = null;
 
         public void Awake()
         {
-            _plane = GameObject.Find("CaveFloor").GetComponent<Transform>();
-            _innerWalls2D = GameObject.Find("InnerWalls2D").GetComponent<Transform>();
-            _innerWalls3D = GameObject.Find("InnerWalls3D").GetComponent<Transform>();
-            _wallRoof = GameObject.Find("WallRoof").GetComponent<Transform>();
+            Plane = GameObject.Find("CaveFloor").GetComponent<Transform>();
+            InnerWalls2D = GameObject.Find("InnerWalls2D").GetComponent<Transform>();
+            InnerWalls3D = GameObject.Find("InnerWalls3D").GetComponent<Transform>();
+            WallRoof = GameObject.Find("WallRoof").GetComponent<Transform>();
             _meshGenerator = GetComponent<MeshGenerator>();
         }
 
         protected void MovePlaneAndWallRoofToFitWallHeight(float wallHeight)
         {
-            Vector3 newPosition = _wallRoof.position;
+            var newPosition = WallRoof.position;
             newPosition.z = -wallHeight;
-            _wallRoof.position = newPosition;
+            WallRoof.position = newPosition;
 
-            newPosition = _innerWalls2D.position;
+            newPosition = InnerWalls2D.position;
             newPosition.z = -wallHeight;
-            _innerWalls2D.position = newPosition;
+            InnerWalls2D.position = newPosition;
         }
 
         protected void ResizePlaneToFitMap(int bitMapHeight, int bitMapWidth, float padding = 0.1f)
         {
             // Resize plane below cave to fit size
-            _plane.localScale = new Vector3(((bitMapWidth) / 10f) + padding,
+            Plane.localScale = new Vector3(((bitMapWidth) / 10f) + padding,
                 1,
                 (bitMapHeight / 10f) + padding);
         }
 
-        protected void clearMap()
+        protected void ClearMap()
         {
             _meshGenerator.ClearMesh();
         }
 
-        protected int[,] CreateBorderedMap(int[,] map, int width, int height, int borderSize)
+        protected Tile[,] CreateBorderedMap(Tile[,] map, int width, int height, int borderSize)
         {
-            int[,] borderedMap = new int[width + (borderSize * 2), height + (borderSize * 2)];
+            var borderedMap = new Tile[width + (borderSize * 2), height + (borderSize * 2)];
 
-            for (int x = 0; x < borderedMap.GetLength(0); x++)
+            for (var x = 0; x < borderedMap.GetLength(0); x++)
             {
-                for (int y = 0; y < borderedMap.GetLength(1); y++)
+                for (var y = 0; y < borderedMap.GetLength(1); y++)
                 {
                     if (x >= borderSize && x < width + borderSize && y >= borderSize && y < height + borderSize)
                     {
@@ -86,34 +84,34 @@ namespace Maes.Map.MapGen
                     }
                     else
                     {
-                        borderedMap[x, y] = WALL_TYPE;
+                        borderedMap[x, y] = Tile.GetRandomWall();
                     }
                 }
             }
 
             return borderedMap;
         }
-        protected List<List<Vector2Int>> GetRegions(int[,] map, params int[] tileTypes)
+        protected List<List<Vector2Int>> GetRegions(Tile[,] map, params TileType[] tileTypes)
         {
-            List<List<Vector2Int>> regions = new List<List<Vector2Int>>();
+            var regions = new List<List<Vector2Int>>();
             // Flags if a given coordinate has already been accounted for
             // 1 = yes, 0 = no
-            int[,] mapFlags = new int[map.GetLength(0), map.GetLength(1)];
-            int counted = 1, notCounted = 0;
+            var mapFlags = new int[map.GetLength(0), map.GetLength(1)];
+            const int counted = 1, notCounted = 0;
 
-            for (int x = 0; x < map.GetLength(0); x++)
+            for (var x = 0; x < map.GetLength(0); x++)
             {
-                for (int y = 0; y < map.GetLength(1); y++)
+                for (var y = 0; y < map.GetLength(1); y++)
                 {
-                    if (mapFlags[x, y] == notCounted && tileTypes.Contains(map[x, y]))
-                    {
-                        List<Vector2Int> newRegion = GetRegionTiles(x, y, map);
-                        regions.Add(newRegion);
+                    if (mapFlags[x, y] != notCounted || !tileTypes.Contains(map[x, y].Type)) 
+                        continue;
 
-                        foreach (Vector2Int tile in newRegion)
-                        {
-                            mapFlags[tile.x, tile.y] = counted;
-                        }
+                    var newRegion = GetRegionTiles(x, y, map);
+                    regions.Add(newRegion);
+
+                    foreach (var tile in newRegion)
+                    {
+                        mapFlags[tile.x, tile.y] = counted;
                     }
                 }
             }
@@ -125,72 +123,65 @@ namespace Maes.Map.MapGen
         // For example if it starts at some point, that is an empty room tile
         // if will return all room tiles connected (in this region).
         // This is a similar algorithm to the one used in MS Paint for filling.
-        protected List<Vector2Int> GetRegionTiles(int startX, int startY, int[,] map)
+        protected List<Vector2Int> GetRegionTiles(int startX, int startY, Tile[,] map)
         {
-            List<Vector2Int> tiles = new List<Vector2Int>();
-            int[,] mapFlags = new int[map.GetLength(0), map.GetLength(1)];
-            int counted = 1, notCounted = 0;
-            int tileType = map[startX, startY];
+            var tiles = new List<Vector2Int>();
+            var mapFlags = new int[map.GetLength(0), map.GetLength(1)];
+            const int counted = 1;
+            const int notCounted = 0;
+            var tileType = map[startX, startY].Type;
 
-            Queue<Vector2Int> queue = new Queue<Vector2Int>();
+            var queue = new Queue<Vector2Int>();
             queue.Enqueue(new Vector2Int(startX, startY));
             mapFlags[startX, startY] = counted;
 
             while (queue.Count > 0)
             {
-                Vector2Int tile = queue.Dequeue();
+                var tile = queue.Dequeue();
                 tiles.Add(tile);
 
-                for (int x = tile.x - 1; x <= tile.x + 1; x++)
+                for (var x = tile.x - 1; x <= tile.x + 1; x++)
                 {
-                    for (int y = tile.y - 1; y <= tile.y + 1; y++)
+                    for (var y = tile.y - 1; y <= tile.y + 1; y++)
                     {
-                        if (IsInMapRange(x, y, map) && (y == tile.y || x == tile.x))
-                        {
-                            if (mapFlags[x, y] == notCounted && map[x, y] == tileType)
-                            {
-                                mapFlags[x, y] = counted;
-                                queue.Enqueue(new Vector2Int(x, y));
-                            }
-                        }
+                        if (!IsInMapRange(x, y, map) || (y != tile.y && x != tile.x)) 
+                            continue;
+                        if (mapFlags[x, y] != notCounted || map[x, y].Type != tileType) 
+                            continue;
+                        mapFlags[x, y] = counted;
+                        queue.Enqueue(new Vector2Int(x, y));
                     }
                 }
             }
 
             return tiles;
         }
-        protected bool IsInMapRange(int x, int y, int[,] map)
+        protected bool IsInMapRange(int x, int y, Tile[,] map)
         {
             return x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1);
         }
 
-        protected (List<Room> surviningRooms, int[,] map) RemoveRoomsAndWallsBelowThreshold(int wallThreshold, int roomThreshold,
-            int[,] map)
+        protected (List<Room> surviningRooms, Tile[,] map) RemoveRoomsAndWallsBelowThreshold(int wallThreshold, int roomThreshold,
+            Tile[,] map)
         {
-            var cleanedMap = map.Clone() as int[,];
-            List<List<Vector2Int>> wallRegions = GetRegions(cleanedMap, WALL_TYPE);
+            var cleanedMap = map.Clone() as Tile[,];
+            var wallRegions = GetRegions(cleanedMap, Tile.Walls());
 
-            foreach (List<Vector2Int> wallRegion in wallRegions)
+            foreach (var tile in wallRegions.Where(wallRegion => wallRegion.Count < wallThreshold).SelectMany(wallRegion => wallRegion))
             {
-                if (wallRegion.Count < wallThreshold)
-                {
-                    foreach (Vector2Int tile in wallRegion)
-                    {
-                        cleanedMap[tile.x, tile.y] = ROOM_TYPE;
-                    }
-                }
+                cleanedMap![tile.x, tile.y] = new Tile(TileType.Room);
             }
 
-            List<List<Vector2Int>> roomRegions = GetRegions(cleanedMap, ROOM_TYPE);
-            List<Room> survivingRooms = new List<Room>();
+            var roomRegions = GetRegions(cleanedMap, TileType.Room);
+            var survivingRooms = new List<Room>();
 
-            foreach (List<Vector2Int> roomRegion in roomRegions)
+            foreach (var roomRegion in roomRegions)
             {
                 if (roomRegion.Count < roomThreshold)
                 {
-                    foreach (Vector2Int tile in roomRegion)
+                    foreach (var tile in roomRegion)
                     {
-                        cleanedMap[tile.x, tile.y] = WALL_TYPE;
+                        cleanedMap![tile.x, tile.y] = Tile.GetRandomWall();
                     }
                 }
                 else
@@ -203,43 +194,38 @@ namespace Maes.Map.MapGen
         }
 
         // Draw the gizmo of the map for debugging purposes.
-        private void drawMap(int[,] map)
+        private void DrawMap(Tile[,] map)
         {
-            if (mapToDraw != null)
+            if (MapToDraw == null) 
+                return;
+
+            var width = map.GetLength(0);
+            var height = map.GetLength(1);
+
+            for (var x = 0; x < width; x++)
             {
-                int width = map.GetLength(0);
-                int height = map.GetLength(1);
-
-                for (int x = 0; x < width; x++)
+                for (var y = 0; y < height; y++)
                 {
-                    for (int y = 0; y < height; y++)
+                    Gizmos.color = map[x, y].Type switch
                     {
-                        switch (map[x, y])
-                        {
-                            case WALL_TYPE:
-                                Gizmos.color = Color.black;
-                                break;
-                            case ROOM_TYPE:
-                                Gizmos.color = Color.white;
-                                break;
-                            case HALL_TYPE:
-                                Gizmos.color = Color.gray;
-                                break;
-                            default:
-                                Gizmos.color = Color.red;
-                                break;
-                        }
+                        TileType.Wall => Color.black,
+                        TileType.Room => Color.white,
+                        TileType.Hall => Color.gray,
+                        TileType.Concrete => Color.yellow,
+                        TileType.Wood => Color.green,
+                        TileType.Metal => Color.red,
+                        _ => Color.blue
+                    };
 
-                        Vector3 pos = new Vector3(-width / 2 + x + .5f, 0, -height / 2 + y + .5f);
-                        Gizmos.DrawCube(pos, Vector3.one);
-                    }
+                    var pos = new Vector3(-width / 2 + x + .5f, 0, -height / 2 + y + .5f);
+                    Gizmos.DrawCube(pos, Vector3.one);
                 }
             }
         }
 
         private void OnDrawGizmosSelected()
         {
-            drawMap(mapToDraw);
+            DrawMap(MapToDraw);
         }
     }
 }

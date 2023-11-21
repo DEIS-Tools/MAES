@@ -49,9 +49,9 @@ namespace Maes {
             var scenarioCave = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(caveConfig));
             var scenarioBuilding = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(buildingConfig));
             var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
+            simulator.EnqueueScenario(scenarioCave);
             simulator.EnqueueScenario(scenarioBuilding);
             simulator.EnqueueScenario(scenarioBitMap);
-            simulator.EnqueueScenario(scenarioCave);
         
             simulator.PressPlayButton(); // Instantly enter play mode
         }

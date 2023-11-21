@@ -31,6 +31,7 @@ namespace Maes.Robot {
 
         public readonly float SenseNearbyAgentsRange;
         public readonly bool SenseNearbyAgentsBlockedByWalls;
+        public readonly bool MaterialCommunication;
 
         // SLAM
         public readonly bool AutomaticallyUpdateSlam;
@@ -73,10 +74,12 @@ namespace Maes.Robot {
             float relativeMoveSpeed=1f, 
             float agentRelativeSize=0.6f, 
             SignalTransmissionSuccessCalculator? calculateSignalTransmissionProbability = null,
-            int? slamRayTraceCount = null) {
+            int? slamRayTraceCount = null,
+            bool materialCommunication = true) {
 
             SenseNearbyAgentsRange = senseNearbyAgentsRange;
             SenseNearbyAgentsBlockedByWalls = senseNearbyAgentsBlockedByWalls;
+            MaterialCommunication = materialCommunication;
 
             // SLAM
             AutomaticallyUpdateSlam = automaticallyUpdateSlam;
@@ -92,7 +95,8 @@ namespace Maes.Robot {
             AgentRelativeSize = agentRelativeSize;
             
             // Communication/Broadcasting
-            this.IsTransmissionSuccessful = calculateSignalTransmissionProbability ?? ((distance, _) => true);
+            IsTransmissionSuccessful = calculateSignalTransmissionProbability ?? ((distance, _) => true);
+
         }
     }
 }

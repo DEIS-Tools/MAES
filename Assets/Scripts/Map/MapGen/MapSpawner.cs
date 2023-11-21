@@ -40,7 +40,7 @@ namespace Maes.Map.MapGen
             return buildingGenerator.GenerateBuildingMap();
         }
 
-        public SimulationMap<bool> GenerateMap(int[,] bitmap, float wallHeight = 2.0f, int borderSize = 1)
+        public SimulationMap<bool> GenerateMap(Tile[,] bitmap, float wallHeight = 2.0f, int borderSize = 1)
         {
             var bitMapGenerator = gameObject.AddComponent<BitMapGenerator>();
             bitMapGenerator.Init(bitmap, wallHeight, borderSize);

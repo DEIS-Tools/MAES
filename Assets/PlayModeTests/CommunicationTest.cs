@@ -22,6 +22,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Maes;
+using Maes.Map.MapGen;
 using Maes.Robot;
 using NUnit.Framework;
 using UnityEngine;
@@ -35,15 +36,15 @@ namespace PlayModeTests {
         private Simulation _simulation;
         private List<TestingAlgorithm> _robotTestAlgorithms;
 
-        private int[,] GenerateMapWithHorizontalWallInMiddle(int wallThicknessInTiles) {
-            int[,] bitmap = new int[MapWidth, MapHeight];
+        private Tile[,] GenerateMapWithHorizontalWallInMiddle(int wallThicknessInTiles) {
+            Tile[,] bitmap = new Tile[MapWidth, MapHeight];
             int firstWallRowY = MapHeight / 2;
             int lastWallRowY = firstWallRowY + wallThicknessInTiles;
             
             for (int x = 0; x < MapWidth; x++) {
                 for (int y = 0; y < MapHeight; y++) {
                     var isSolid = y >= firstWallRowY && y <= lastWallRowY - 1;
-                    bitmap[x, y] = isSolid ? 1 : 0;
+                    bitmap[x, y] = isSolid ? new Tile(TileType.Wall) : new Tile(TileType.Room);
                 }
             }
 

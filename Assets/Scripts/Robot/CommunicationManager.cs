@@ -54,10 +54,10 @@ namespace Maes.Robot {
         private DebuggingVisualizer _visualizer;
 
         // Messages that will sent during the next logic update
-        private List<Message> _queuedMessages = new List<Message>();
+        private List<Message> _queuedMessages = new();
         
         // Messages that were sent last tick and can now be read 
-        private List<Message> _readableMessages = new List<Message>();
+        private List<Message> _readableMessages = new();
 
         private readonly RayTracingMap<bool> _rayTracingMap;
         private List<MonaRobot> _robots;

@@ -5,24 +5,25 @@ namespace Maes.Map.MapGen
 {
     public class BitMapGenerator : MapGenerator
     {
-        private int[,] _bitmap;
+        private Tile[,] _bitmap;
         private float _wallHeight;
         private int _borderSize;
 
-        public void Init(int[,] bitmap, float wallHeight = 2.0f, int borderSize = 1)
+        public void Init(Tile[,] bitmap, float wallHeight = 2.0f, int borderSize = 1)
         {
             _bitmap = bitmap;
             _wallHeight = wallHeight;
             _borderSize = borderSize;
         }
 
+        /// TODO: Update this to new format
         /// <summary>
         /// Method for creating a map from an array of ints {0, 1}.
         /// </summary>
         public SimulationMap<bool> CreateMapFromBitMap()
         {
             // Clear and destroy objects from previous map
-            clearMap();
+            ClearMap();
 
             // TODO: If the border size is less than two, sometimes the mesh is generated with wierd invisible walls
             // Can be reproduced by having a map with a line with a width of 2 going through the middle and splitting the map
@@ -40,11 +41,11 @@ namespace Maes.Map.MapGen
 
             // Create mesh
             MeshGenerator meshGen = GetComponent<MeshGenerator>();
-            var collisionMap = meshGen.GenerateMesh(cleanedMap.Clone() as int[,], _wallHeight,
+            var collisionMap = meshGen.GenerateMesh(cleanedMap.Clone() as Tile[,], _wallHeight,
                 true, survivingRooms);
 
             // Rotate to fit 2D view
-            _plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
+            Plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
             ResizePlaneToFitMap(_bitmap.GetLength(1), _bitmap.GetLength(0));
             MovePlaneAndWallRoofToFitWallHeight(_wallHeight);
 

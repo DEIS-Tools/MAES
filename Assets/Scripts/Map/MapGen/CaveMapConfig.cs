@@ -70,7 +70,7 @@ namespace Maes.Map.MapGen {
             int widthInTiles=50, int heightInTiles=50, 
             int smoothingRuns=3,
             int connectionPassagesWidth=4, 
-            int randomFillPercent=50, 
+            int randomFillPercent=60, 
             int wallThresholdSize=5, 
             int roomThresholdSize=5,
             int borderSize=2, 
