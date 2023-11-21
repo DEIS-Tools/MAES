@@ -74,10 +74,12 @@ namespace Maes {
 
         public void EnqueueScenario(SimulationScenario scenario) {
             _simulationManager.EnqueueScenario(scenario);
+            _simulationManager._initialScenarios.Enqueue(scenario);
         }
         public void EnqueueScenarios(IEnumerable<SimulationScenario> scenario) {
-            foreach (var simulationScenario in scenario)
+            foreach (var simulationScenario in scenario) {
                 _simulationManager.EnqueueScenario(simulationScenario);
+            }
         }
         
         public void PressPlayButton() {
