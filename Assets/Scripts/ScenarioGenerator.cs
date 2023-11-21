@@ -225,6 +225,7 @@ namespace Maes {
                         1);
                     var buildingConfig = new BuildingMapConfig(
                         randomSeed,
+                        1,
                         width,
                         height,
                         20,
@@ -312,6 +313,7 @@ namespace Maes {
                      1);
                  var buildingConfig = new BuildingMapConfig(
                      randomSeed,
+                     1,
                      width,
                      height,
                      20,
@@ -342,17 +344,17 @@ namespace Maes {
                          $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
                      ));
                      // scenarios.Enqueue(new SimulationScenario(
-                     //     seed: randomSeed,
+                     //     seed: RandomSeed,
                      //     hasFinishedSim: hasFinishedFunc,
                      //     mapSpawner: (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f, 1),
                      //     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                      //         map,
-                     //         randomSeed,
+                     //         RandomSeed,
                      //         numberOfRobots,
                      //         new Vector2Int(0, 0),
                      //         createAlgorithmDelegate),
                      //     robotConstraints: robotConstraints,
-                     //     $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                     //     $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + RandomSeed
                      // ));
                  }
              }
@@ -475,6 +477,7 @@ namespace Maes {
                         1);
                     var buildingConfig = new BuildingMapConfig(
                         randomSeed,
+                        1,
                         width,
                         height,
                         20,

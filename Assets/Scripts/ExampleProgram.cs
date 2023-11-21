@@ -34,6 +34,7 @@ namespace Maes {
             const int width = 100;
             var buildingConfig = new BuildingMapConfig(
                 randomSeed,
+                3,
                 width,
                 height);
             var caveConfig = new CaveMapConfig(
@@ -49,8 +50,8 @@ namespace Maes {
             var scenarioCave = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(caveConfig));
             var scenarioBuilding = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(buildingConfig));
             var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
-            simulator.EnqueueScenario(scenarioCave);
             simulator.EnqueueScenario(scenarioBuilding);
+            simulator.EnqueueScenario(scenarioCave);
             simulator.EnqueueScenario(scenarioBitMap);
         
             simulator.PressPlayButton(); // Instantly enter play mode

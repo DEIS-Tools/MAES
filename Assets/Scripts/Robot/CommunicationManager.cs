@@ -145,6 +145,7 @@ namespace Maes.Robot {
         }
 
         private CommunicationInfo RayTraceCommunication(Vector2 pos1, Vector2 pos2) {
+            //TODO add attenuation here probably and figure out raytracemap
             var distance = Vector2.Distance(pos1, pos2);
             var angle = Vector2.Angle(Vector2.right, pos2 - pos1);
             // If p1.y > p2.y then angle should be 360 minus the angle difference between the vectors

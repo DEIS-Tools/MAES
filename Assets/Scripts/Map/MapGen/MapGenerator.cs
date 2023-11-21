@@ -73,7 +73,7 @@ namespace Maes.Map.MapGen
         protected Tile[,] CreateBorderedMap(Tile[,] map, int width, int height, int borderSize)
         {
             var borderedMap = new Tile[width + (borderSize * 2), height + (borderSize * 2)];
-
+            var tile = Tile.GetRandomWall();
             for (var x = 0; x < borderedMap.GetLength(0); x++)
             {
                 for (var y = 0; y < borderedMap.GetLength(1); y++)
@@ -84,7 +84,7 @@ namespace Maes.Map.MapGen
                     }
                     else
                     {
-                        borderedMap[x, y] = Tile.GetRandomWall();
+                        borderedMap[x, y] = tile;
                     }
                 }
             }
@@ -179,9 +179,10 @@ namespace Maes.Map.MapGen
             {
                 if (roomRegion.Count < roomThreshold)
                 {
+                    var tileType = Tile.GetRandomWall();
                     foreach (var tile in roomRegion)
                     {
-                        cleanedMap![tile.x, tile.y] = Tile.GetRandomWall();
+                        cleanedMap![tile.x, tile.y] = tileType;
                     }
                 }
                 else

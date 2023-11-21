@@ -205,6 +205,7 @@ namespace Maes.YamlConfig {
             public uint DoorWidth { get; set; } = 2;
             public int DoorPadding { get; set; } = 2;
             public uint RoomSplitChance { get; set; } = 85;
+            public int WallThickness { get; set; } = 1;
 
             public override string ToString() {
                 return $"{nameof(MaxHallInPercent)}: {MaxHallInPercent}, {nameof(MinRoomSideLength)}: {MinRoomSideLength}, {nameof(DoorWidth)}: {DoorWidth}, {nameof(DoorPadding)}: {DoorPadding}, {nameof(RoomSplitChance)}: {RoomSplitChance}";

@@ -29,13 +29,14 @@ namespace Maes.Map.MapGen
             // Clear and destroy objects from previous map
             ClearMap();
 
-            var random = new Random(_config.randomSeed);
+            var random = new Random(_config.RandomSeed);
+            Tile.Rand = random;
 
-            var emptyMap = GenerateEmptyMap(_config.bitMapWidth, _config.bitMapHeight);
+            var emptyMap = GenerateEmptyMap(_config.BitMapWidth, _config.BitMapHeight);
 
             var mapWithHalls = GenerateMapWithHalls(emptyMap, _config, random);
 
-            var mapWithWallsAroundRooms = AddWallAroundRoomRegions(mapWithHalls);
+            var mapWithWallsAroundRooms = AddWallAroundRoomRegions(mapWithHalls, _config.WallThickness);
 
             var mapWithRooms = GenerateRoomsBetweenHalls(mapWithWallsAroundRooms, _config, random);
 
@@ -47,13 +48,13 @@ namespace Maes.Map.MapGen
 
             var connectedMap = ConnectRoomsWithDoors(rooms, closedHallwayMap, random, _config);
 
-            var borderedMap = CreateBorderedMap(connectedMap, _config.bitMapWidth, _config.bitMapHeight, _config.borderSize);
+            var borderedMap = CreateBorderedMap(connectedMap, _config.BitMapWidth, _config.BitMapHeight, _config.BorderSize);
 
             // For debugging
             // mapToDraw = borderedMap;
 
             // The rooms should now reflect their relative shifted positions after adding borders round map.
-            rooms.ForEach(r => r.OffsetCoordsBy(_config.borderSize, _config.borderSize));
+            rooms.ForEach(r => r.OffsetCoordsBy(_config.BorderSize, _config.BorderSize));
             var meshGen = GetComponent<MeshGenerator>();
             var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as Tile[,], _wallHeight, true,
                 rooms);
@@ -61,7 +62,7 @@ namespace Maes.Map.MapGen
             // Rotate to fit 2D view
             Plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
 
-            ResizePlaneToFitMap(_config.bitMapHeight, _config.bitMapWidth);
+            ResizePlaneToFitMap(_config.BitMapHeight, _config.BitMapWidth);
 
             MovePlaneAndWallRoofToFitWallHeight(_wallHeight);
 
@@ -95,8 +96,8 @@ namespace Maes.Map.MapGen
                         continue;
 
                     // If they share any wall, they must be adjacent
-                    var sharedWallTiles = connectedRoom.GetSharedWallTiles(nonConnectedRoom);
-                    if (sharedWallTiles.Count <= 0) 
+                    var sharedWallTiles = connectedRoom.GetSharedWallTiles(nonConnectedRoom, config.WallThickness);
+                    if (sharedWallTiles.Count <= 0)
                         continue;
 
                     // The maxima of x and y are needed to isolate the coordinates for each line of wall
@@ -109,7 +110,7 @@ namespace Maes.Map.MapGen
                     if (smallestYValue == biggestYValue || smallestXValue == biggestXValue)
                         maxDoors = 1;
                     var doorsMade = 0;
-                    var doorPadding = config.doorPadding;
+                    var doorPadding = config.DoorPadding;
 
                     if (doorsMade >= maxDoors)
                         continue;
@@ -117,13 +118,13 @@ namespace Maes.Map.MapGen
                     // A shared wall with the smallest y value
                     // A shared line/wall in the bottom
                     var line = sharedWallTiles.FindAll(c => c.y == smallestYValue).ToList();
-                    if (line.Count > config.doorWidth + (doorPadding * 2))
+                    if (line.Count > config.DoorWidth + (doorPadding * 2))
                     {
                         line.Sort((c1, c2) => c1.x - c2.x); // Ascending order
                         var doorStartingIndex = random.Next(0 + doorPadding,
-                            (line.Count - 1) - (int)config.doorWidth - doorPadding);
+                            (line.Count - 1) - (int)config.DoorWidth - doorPadding);
                         var doorStartingPoint = line[doorStartingIndex];
-                        for (var i = 0; i < config.doorWidth; i++)
+                        for (var i = 0; i < config.DoorWidth; i++)
                         {
                             connectedMap![doorStartingPoint.x + i, doorStartingPoint.y] = new Tile(TileType.Room);
                         }
@@ -136,13 +137,13 @@ namespace Maes.Map.MapGen
                     // Shared wall with the biggest y value
                     // A shared line/wall in the top
                     line = sharedWallTiles.FindAll(c => c.y == biggestYValue).ToList();
-                    if (line.Count > config.doorWidth + (doorPadding * 2))
+                    if (line.Count > config.DoorWidth + (doorPadding * 2))
                     {
                         line.Sort((c1, c2) => c1.x - c2.x); // Ascending order
                         var doorStartingIndex = random.Next(0 + doorPadding,
-                            (line.Count - 1) - (int)config.doorWidth - doorPadding);
+                            (line.Count - 1) - (int)config.DoorWidth - doorPadding);
                         var doorStartingPoint = line[doorStartingIndex];
-                        for (var i = 0; i < config.doorWidth; i++)
+                        for (var i = 0; i < config.DoorWidth; i++)
                         {
                             connectedMap![doorStartingPoint.x + i, doorStartingPoint.y] = new Tile(TileType.Room);
                         }
@@ -155,13 +156,13 @@ namespace Maes.Map.MapGen
                     // A shared wall with the smallest x value
                     // A shared line/wall on the left
                     line = sharedWallTiles.FindAll(c => c.x == smallestXValue).ToList();
-                    if (line.Count > config.doorWidth + (doorPadding * 2))
+                    if (line.Count > config.DoorWidth + (doorPadding * 2))
                     {
                         line.Sort((c1, c2) => c1.y - c2.y); // Ascending order
                         var doorStartingIndex = random.Next(0 + doorPadding,
-                            (line.Count - 1) - (int)config.doorWidth - doorPadding);
+                            (line.Count - 1) - (int)config.DoorWidth - doorPadding);
                         var doorStartingPoint = line[doorStartingIndex];
-                        for (var i = 0; i < config.doorWidth; i++)
+                        for (var i = 0; i < config.DoorWidth; i++)
                         {
                             connectedMap![doorStartingPoint.x, doorStartingPoint.y + i] = new Tile(TileType.Room);
                         }
@@ -174,13 +175,13 @@ namespace Maes.Map.MapGen
                     // A shared wall with the biggest x value
                     // A shared line/wall on the right
                     line = sharedWallTiles.FindAll(c => c.x == biggestXValue).ToList();
-                    if (line.Count > config.doorWidth + (doorPadding * 2))
+                    if (line.Count > config.DoorWidth + (doorPadding * 2))
                     {
                         line.Sort((c1, c2) => c1.y - c2.y); // Ascending order
                         var doorStartingIndex = random.Next(0 + doorPadding,
-                            (line.Count - 1) - (int)config.doorWidth - doorPadding);
+                            (line.Count - 1) - (int)config.DoorWidth - doorPadding);
                         var doorStartingPoint = line[doorStartingIndex];
-                        for (var i = 0; i < config.doorWidth; i++)
+                        for (var i = 0; i < config.DoorWidth; i++)
                         {
                             connectedMap![doorStartingPoint.x, doorStartingPoint.y + i] = new Tile(TileType.Room);
                         }
@@ -204,13 +205,14 @@ namespace Maes.Map.MapGen
 
             // Sort by first tiletype = Hall, then size
             // Descending order. Hallway > other room types
-            rooms.Sort((o1, o2) => {
+            rooms.Sort((o1, o2) =>
+            {
                 var o1x = o1.tiles[0].x;
                 var o1y = o1.tiles[0].y;
                 var o2x = o2.tiles[0].x;
                 var o2y = o2.tiles[0].y;
-                
-                if (map[o1x, o1y] == map[o2x, o2y]) 
+
+                if (map[o1x, o1y] == map[o2x, o2y])
                     return o2.roomSize - o1.roomSize;
                 if (map[o1x, o1y].Type == TileType.Hall && map[o2x, o2y].Type != TileType.Hall)
                     return -1;
@@ -232,14 +234,14 @@ namespace Maes.Map.MapGen
 
             var mapWidth = map!.GetLength(0);
             var mapHeight = map.GetLength(1);
-
+            var tileType = Tile.GetRandomWall();
             for (var x = 0; x < mapWidth; x++)
             {
                 for (var y = 0; y < mapHeight; y++)
                 {
                     if (x == mapWidth - 1 || x == 0 || y == 0 || y == mapHeight - 1)
                     {
-                        map[x, y] = new Tile(TileType.Wall);
+                        map[x, y] = tileType;
                     }
                 }
             }
@@ -266,7 +268,7 @@ namespace Maes.Map.MapGen
             bool splitOnXAxis, bool forceSplit, Random random)
         {
             // Check if we want to split. This allows for different size rooms
-            var shouldSplit = random.Next(0, 100) <= config.roomSplitChancePercent;
+            var shouldSplit = random.Next(0, 100) <= config.RoomSplitChancePercent;
 
             if (!shouldSplit && !forceSplit)
                 return;
@@ -276,14 +278,14 @@ namespace Maes.Map.MapGen
             // We either use the x axis or y axis as starting point
             var coordinates = splitOnXAxis ? roomRegion.Select(coordinate => coordinate.x).ToList() : roomRegion.Select(coordinate => coordinate.y).ToList();
 
-            // Filter out coords that would be too close to the edges to allow for 2 rooms side by side according to config.minRoomSideLength
+            // Filter out coords that would be too close to the edges to allow for 2 rooms side by side according to config.MinRoomSideLength
             var smallestValue = coordinates.Max();
             var biggestValue = coordinates.Min();
 
             // +1 to allow for wall between room spaces
             var filteredCoordinates = coordinates.FindAll(x =>
-                x + config.minRoomSideLength < biggestValue - config.minRoomSideLength && // Right side
-                x > smallestValue + config.minRoomSideLength
+                x + config.MinRoomSideLength < biggestValue - config.MinRoomSideLength && // Right side
+                x > smallestValue + config.MinRoomSideLength
             );
 
             // If no possible split on the current axis is possible, try the other one with guaranteed split
@@ -302,19 +304,20 @@ namespace Maes.Map.MapGen
             var selectedIndex = random.Next(filteredCoordinates.Count);
             var wallStartCoordinate = filteredCoordinates[selectedIndex];
 
+            var tileType = Tile.GetRandomWall();
             // Create wall
             if (splitOnXAxis)
             {
                 foreach (var c in roomRegion.Where(c => c.x == wallStartCoordinate))
                 {
-                    map[c.x, c.y] = new Tile(TileType.Wall);
+                    map[c.x, c.y] = tileType;
                 }
             }
             else
             {
                 foreach (var c in roomRegion.Where(c => c.y == wallStartCoordinate))
                 {
-                    map[c.x, c.y] = new Tile(TileType.Wall);
+                    map[c.x, c.y] = tileType;
                 }
             }
 
@@ -339,7 +342,7 @@ namespace Maes.Map.MapGen
             SplitRoomRegion(map, newRegion2, config, !splitOnXAxis, false, random);
         }
 
-        private Tile[,] AddWallAroundRoomRegions(Tile[,] oldMap)
+        private Tile[,] AddWallAroundRoomRegions(Tile[,] oldMap, int wallThickness)
         {
             var mapWithRoomWalls = oldMap.Clone() as Tile[,];
             var roomRegions = GetRegions(mapWithRoomWalls, TileType.Room);
@@ -351,13 +354,22 @@ namespace Maes.Map.MapGen
                 var biggestX = region.Select(coordinate => coordinate.x).Max();
                 var smallestY = region.Select(coordinate => coordinate.y).Min();
                 var biggestY = region.Select(coordinate => coordinate.y).Max();
+                var tile = Tile.GetRandomWall();
+                var innerTile = Tile.GetRandomWall();
 
-                foreach (var coordinate in region.Where(coordinate => coordinate.x == smallestX || 
-                                                                      coordinate.x == biggestX || 
-                                                                      coordinate.y == smallestY || 
-                                                                      coordinate.y == biggestY))
+                for (var i = 0; i < wallThickness; i++)
                 {
-                    mapWithRoomWalls![coordinate.x, coordinate.y] = new Tile(TileType.Wall);
+                    foreach (var coordinate in region.Where(coordinate => coordinate.x == smallestX + i ||
+                                                                          coordinate.x == biggestX - i ||
+                                                                          coordinate.y == smallestY + i ||
+                                                                          coordinate.y == biggestY - i))
+                    {
+                        if (!IsInMapRange(coordinate.x,coordinate.y,mapWithRoomWalls)) continue;
+                        if (i == 0 || i == wallThickness)
+                            mapWithRoomWalls![coordinate.x, coordinate.y] = tile;
+                        else
+                            mapWithRoomWalls![coordinate.x, coordinate.y] = innerTile;
+                    }
                 }
             }
 
@@ -370,7 +382,7 @@ namespace Maes.Map.MapGen
 
             // Rotate 90 degrees every time a hallway is generated
             var usingXAxis = true;
-            while (GetHallPercentage(mapWithHalls) < config.maxHallInPercent)
+            while (GetHallPercentage(mapWithHalls) < config.MaxHallInPercent)
             {
                 // We always split the currently biggest room
                 var roomRegions = GetRegions(mapWithHalls, TileType.Room);
@@ -385,14 +397,13 @@ namespace Maes.Map.MapGen
                 var biggestValue = sortedCoords[^1];
 
                 // Plus 2 to allow for inner walls in the room spaces
-                var filteredCoords = 
-                    sortedCoords.FindAll(x => x + config.minRoomSideLength + 2 < biggestValue - config.minRoomSideLength + 2 && // Right side
-                                              x > smallestValue + config.minRoomSideLength + 2
-                );
+                var filteredCoords =
+                    sortedCoords.FindAll(x => x + config.MinRoomSideLength + 2 < biggestValue - config.MinRoomSideLength + 2 && // Right side
+                                              x > smallestValue + config.MinRoomSideLength + 2);
 
                 if (filteredCoords.Count == 0)
                 {
-                    Debug.Log("The maxHallInPercent of " + config.maxHallInPercent + " could not be achieved.");
+                    Debug.Log("The MaxHallInPercent of " + config.MaxHallInPercent + " could not be achieved.");
                     break;
                 }
 
@@ -403,7 +414,7 @@ namespace Maes.Map.MapGen
                 if (usingXAxis)
                 {
                     // Fill with hall tiles
-                    foreach (var c in biggestRoom.Where(c => hallStartCoordinate <= c.x && c.x < hallStartCoordinate + config.hallWidth))
+                    foreach (var c in biggestRoom.Where(c => hallStartCoordinate <= c.x && c.x < hallStartCoordinate + config.HallWidth))
                     {
                         mapWithHalls![c.x, c.y] = new Tile(TileType.Hall);
                     }
@@ -413,7 +424,7 @@ namespace Maes.Map.MapGen
                 else
                 {
                     // Fill with hall tiles
-                    foreach (var c in biggestRoom.Where(c => hallStartCoordinate <= c.y && c.y < hallStartCoordinate + config.hallWidth))
+                    foreach (var c in biggestRoom.Where(c => hallStartCoordinate <= c.y && c.y < hallStartCoordinate + config.HallWidth))
                     {
                         mapWithHalls![c.x, c.y] = new Tile(TileType.Hall);
                     }

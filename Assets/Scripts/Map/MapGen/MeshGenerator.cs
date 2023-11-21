@@ -170,12 +170,14 @@ namespace Maes.Map.MapGen
             };
             var subMesh = 0;
             wallRoofMesh.subMeshCount = Materials.Count;
+            //var triangles = new List<int>();
             foreach (var (_, indices) in _triangles2D)
             {
+                //triangles.AddRange(indices);
                 wallRoofMesh.SetTriangles(indices, subMesh);
                 subMesh++;
             }
-
+            //wallRoofMesh.SetTriangles(triangles.ToArray(), subMesh);
             WallRoofRenderer.materials = Materials.ToArray();
 
             // Apply mesh to wall roof
