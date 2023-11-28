@@ -36,19 +36,8 @@ namespace Maes.Map.MapGen
 
     public class Tile
     {
-        private static Random _rand;
 
-        public static Random Rand
-        {
-            get => _rand;
-            set
-            {
-                if (_rand != null)
-                    throw new Exception("Cannot set seed twice");
-                _rand = value;
-            }
-
-        }
+        public static Random Rand { get; set; }
         //todo add attenuation for air and water
         private static readonly Dictionary<TileType, int> _attenuationDictionary = new()
         {
@@ -75,7 +64,7 @@ namespace Maes.Map.MapGen
                 throw new Exception("Random is not set");
 
             var typeValues = Enum.GetValues(typeof(TileType));
-            var randomWallInt = _rand.Next((int)TileType.Concrete, typeValues.Length);
+            var randomWallInt = Rand.Next((int)TileType.Concrete, typeValues.Length);
             return new Tile((TileType)typeValues.GetValue(randomWallInt));
         }
 

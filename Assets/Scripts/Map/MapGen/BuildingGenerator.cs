@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Random = System.Random;
@@ -9,6 +10,7 @@ namespace Maes.Map.MapGen
     {
         private BuildingMapConfig _config;
         private float _wallHeight;
+        private List<Room> _debugRooms;
 
         public void Init(BuildingMapConfig config, float wallHeight = 2.0f)
         {
@@ -45,7 +47,6 @@ namespace Maes.Map.MapGen
             // Rooms and halls sorted according to biggest hall first. Biggest hall set to main room.
             // If both rooms are halls, sort according to size
             var rooms = GetSortedRooms(closedHallwayMap);
-
             var connectedMap = ConnectRoomsWithDoors(rooms, closedHallwayMap, random, _config);
 
             var borderedMap = CreateBorderedMap(connectedMap, _config.BitMapWidth, _config.BitMapHeight, _config.BorderSize);
@@ -77,9 +78,11 @@ namespace Maes.Map.MapGen
             var connectedRooms = new List<Room>();
             var nonConnectedRooms = new List<Room>();
 
+            var wallThickness = config.WallThickness;
+
             foreach (var room in sortedRooms)
             {
-                if (room.isAccessibleFromMainRoom)
+                if (room.IsAccessibleFromMainRoom)
                     connectedRooms.Add(room);
                 else
                     nonConnectedRooms.Add(room);
@@ -96,13 +99,13 @@ namespace Maes.Map.MapGen
                         continue;
 
                     // If they share any wall, they must be adjacent
-                    var sharedWallTiles = connectedRoom.GetSharedWallTiles(nonConnectedRoom, config.WallThickness);
+                    var sharedWallTiles = connectedRoom.GetSharedWallTiles(nonConnectedRoom, wallThickness);
                     if (sharedWallTiles.Count <= 0)
                         continue;
 
                     // The maxima of x and y are needed to isolate the coordinates for each line of wall
-                    var smallestXValue = sharedWallTiles.Min(tile => tile.x);
                     var biggestXValue = sharedWallTiles.Max(tile => tile.x);
+                    var smallestXValue = sharedWallTiles.Min(tile => tile.x);
                     var smallestYValue = sharedWallTiles.Min(tile => tile.y);
                     var biggestYValue = sharedWallTiles.Max(tile => tile.y);
 
@@ -110,7 +113,7 @@ namespace Maes.Map.MapGen
                     if (smallestYValue == biggestYValue || smallestXValue == biggestXValue)
                         maxDoors = 1;
                     var doorsMade = 0;
-                    var doorPadding = config.DoorPadding;
+                    var doorPadding = Math.Max(config.DoorPadding, wallThickness);
 
                     if (doorsMade >= maxDoors)
                         continue;
@@ -125,9 +128,8 @@ namespace Maes.Map.MapGen
                             (line.Count - 1) - (int)config.DoorWidth - doorPadding);
                         var doorStartingPoint = line[doorStartingIndex];
                         for (var i = 0; i < config.DoorWidth; i++)
-                        {
-                            connectedMap![doorStartingPoint.x + i, doorStartingPoint.y] = new Tile(TileType.Room);
-                        }
+                            for (var j = 0; j < wallThickness; j++)
+                                connectedMap![doorStartingPoint.x + i, doorStartingPoint.y + j] = new Tile(TileType.Room);
 
                         Room.ConnectRooms(connectedRoom, nonConnectedRoom);
                         if (++doorsMade >= maxDoors)
@@ -144,9 +146,8 @@ namespace Maes.Map.MapGen
                             (line.Count - 1) - (int)config.DoorWidth - doorPadding);
                         var doorStartingPoint = line[doorStartingIndex];
                         for (var i = 0; i < config.DoorWidth; i++)
-                        {
-                            connectedMap![doorStartingPoint.x + i, doorStartingPoint.y] = new Tile(TileType.Room);
-                        }
+                            for (var j = -1; j < wallThickness; j++)
+                                connectedMap![doorStartingPoint.x + i, doorStartingPoint.y - j] = new Tile(TileType.Room);
 
                         Room.ConnectRooms(connectedRoom, nonConnectedRoom);
                         if (++doorsMade >= maxDoors)
@@ -163,9 +164,8 @@ namespace Maes.Map.MapGen
                             (line.Count - 1) - (int)config.DoorWidth - doorPadding);
                         var doorStartingPoint = line[doorStartingIndex];
                         for (var i = 0; i < config.DoorWidth; i++)
-                        {
-                            connectedMap![doorStartingPoint.x, doorStartingPoint.y + i] = new Tile(TileType.Room);
-                        }
+                            for (var j = 0; j < wallThickness; j++)
+                                connectedMap![doorStartingPoint.x + j, doorStartingPoint.y + i] = new Tile(TileType.Room);
 
                         Room.ConnectRooms(connectedRoom, nonConnectedRoom);
                         if (++doorsMade >= maxDoors)
@@ -182,9 +182,8 @@ namespace Maes.Map.MapGen
                             (line.Count - 1) - (int)config.DoorWidth - doorPadding);
                         var doorStartingPoint = line[doorStartingIndex];
                         for (var i = 0; i < config.DoorWidth; i++)
-                        {
-                            connectedMap![doorStartingPoint.x, doorStartingPoint.y + i] = new Tile(TileType.Room);
-                        }
+                            for (var j = -1; j < wallThickness; j++)
+                                connectedMap![doorStartingPoint.x - j, doorStartingPoint.y + i] = new Tile(TileType.Room);
 
                         Room.ConnectRooms(connectedRoom, nonConnectedRoom);
                     }
@@ -207,23 +206,23 @@ namespace Maes.Map.MapGen
             // Descending order. Hallway > other room types
             rooms.Sort((o1, o2) =>
             {
-                var o1x = o1.tiles[0].x;
-                var o1y = o1.tiles[0].y;
-                var o2x = o2.tiles[0].x;
-                var o2y = o2.tiles[0].y;
+                var o1x = o1.Tiles[0].x;
+                var o1y = o1.Tiles[0].y;
+                var o2x = o2.Tiles[0].x;
+                var o2y = o2.Tiles[0].y;
 
                 if (map[o1x, o1y] == map[o2x, o2y])
-                    return o2.roomSize - o1.roomSize;
+                    return o2.RoomSize - o1.RoomSize;
                 if (map[o1x, o1y].Type == TileType.Hall && map[o2x, o2y].Type != TileType.Hall)
                     return -1;
                 if (map[o1x, o1y].Type != TileType.Hall && map[o2x, o2y].Type == TileType.Hall)
                     return 1;
 
-                return o2.roomSize - o1.roomSize;
+                return o2.RoomSize - o1.RoomSize;
             });
             // This should now be the biggest hallway
-            rooms[0].isMainRoom = true;
-            rooms[0].isAccessibleFromMainRoom = true;
+            rooms[0].IsMainRoom = true;
+            rooms[0].IsAccessibleFromMainRoom = true;
 
             return rooms;
         }
@@ -364,7 +363,7 @@ namespace Maes.Map.MapGen
                                                                           coordinate.y == smallestY + i ||
                                                                           coordinate.y == biggestY - i))
                     {
-                        if (!IsInMapRange(coordinate.x,coordinate.y,mapWithRoomWalls)) continue;
+                        if (!IsInMapRange(coordinate.x, coordinate.y, mapWithRoomWalls)) continue;
                         if (i == 0 || i == wallThickness)
                             mapWithRoomWalls![coordinate.x, coordinate.y] = tile;
                         else
@@ -470,4 +469,5 @@ namespace Maes.Map.MapGen
         }
 
     }
+
 }

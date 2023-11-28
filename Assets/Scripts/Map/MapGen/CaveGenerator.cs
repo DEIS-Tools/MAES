@@ -156,8 +156,8 @@ namespace Maes.Map.MapGen
         {
             var connectedMap = map.Clone() as Tile[,];
             survivingRooms.Sort();
-            survivingRooms[0].isMainRoom = true;
-            survivingRooms[0].isAccessibleFromMainRoom = true;
+            survivingRooms[0].IsMainRoom = true;
+            survivingRooms[0].IsAccessibleFromMainRoom = true;
 
             return ConnectClosestRooms(survivingRooms, connectedMap, config.connectionPassagesWidth);
         }
@@ -171,7 +171,7 @@ namespace Maes.Map.MapGen
 
             foreach (var room in allRooms)
             {
-                if (room.isAccessibleFromMainRoom)
+                if (room.IsAccessibleFromMainRoom)
                     roomListB.Add(room);
                 else
                     roomListA.Add(room);
@@ -189,9 +189,9 @@ namespace Maes.Map.MapGen
             {
                 foreach (var roomB in roomListB.Where(roomB => roomA != roomB && !roomA.IsConnected(roomB)))
                 {
-                    foreach (var tileA in roomA.edgeTiles)
+                    foreach (var tileA in roomA.EdgeTiles)
                     {
-                        foreach (var tileB in roomB.edgeTiles)
+                        foreach (var tileB in roomB.EdgeTiles)
                         {
                             var distanceBetweenRooms =
                                 (int)(Mathf.Pow(tileA.x - tileB.x, 2) + Mathf.Pow(tileA.y - tileB.y, 2));

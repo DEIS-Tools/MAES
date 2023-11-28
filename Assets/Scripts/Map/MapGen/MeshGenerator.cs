@@ -171,15 +171,15 @@ namespace Maes.Map.MapGen
             var subMesh = 0;
             wallRoofMesh.subMeshCount = Materials.Count;
             //var triangles = new List<int>();
-            foreach (var (_, indices) in _triangles2D)
+            foreach (var (type, indices) in _triangles2D)
             {
                 //triangles.AddRange(indices);
                 wallRoofMesh.SetTriangles(indices, subMesh);
                 subMesh++;
             }
-            //wallRoofMesh.SetTriangles(triangles.ToArray(), subMesh);
+            _gizmoWallVertices = _vertices2D;
+            _gizmoWallTriangles = _triangles2D;
             WallRoofRenderer.materials = Materials.ToArray();
-
             // Apply mesh to wall roof
             WallRoof.mesh = wallRoofMesh;
         }
@@ -391,7 +391,6 @@ namespace Maes.Map.MapGen
 
             // Debug variables
             _gizmoWallVertices = wallVertices;
-            _gizmoWallTriangles = wallTriangles;
 
 
             innerWallsMesh.vertices = wallVertices.Select(vertex => vertex.Position).ToArray();

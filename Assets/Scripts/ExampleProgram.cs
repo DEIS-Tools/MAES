@@ -71,10 +71,10 @@ namespace Maes {
                     (seed) => new TnfExplorationAlgorithm(1, 10, seed)
                 ));
             //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
-            simulator.EnqueueScenario(scenarioCave);
-            //simulator.EnqueueScenario(scenarioBuilding);
+            //simulator.EnqueueScenario(scenarioCave);
+            simulator.EnqueueScenario(scenarioBuilding);
             //simulator.EnqueueScenario(scenarioBitMap);
-        
+
             simulator.PressPlayButton(); // Instantly enter play mode
         }
     }

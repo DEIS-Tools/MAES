@@ -120,7 +120,7 @@ namespace Maes.Map
             var biggestRoom = collisionMap.rooms[0];
             
             // We need to peel off two layers of edges to make sure, that no robot is on a partly covered tile
-            var roomWithoutEdgeTiles = biggestRoom.tiles.Except(biggestRoom.edgeTiles).ToList();
+            var roomWithoutEdgeTiles = biggestRoom.Tiles.Except(biggestRoom.EdgeTiles).ToList();
             var secondLayerOfEdgesTiles = FindEdgeTiles(roomWithoutEdgeTiles, true);
             var possibleSpawnTiles = roomWithoutEdgeTiles.Except(secondLayerOfEdgesTiles).ToList();
 
@@ -260,10 +260,10 @@ namespace Maes.Map
         public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, CreateAlgorithmDelegate createAlgorithmDelegate) {
             var robots = new List<MonaRobot>();
 
-            var hallWays = collisionMap.rooms.FindAll(r => r.isHallWay).ToList();
+            var hallWays = collisionMap.rooms.FindAll(r => r.IsHallWay).ToList();
             List<Vector2Int> possibleSpawnTiles = new List<Vector2Int>();
             foreach (var hallWay in hallWays) {
-                possibleSpawnTiles.AddRange(hallWay.tiles.Except(hallWay.edgeTiles));
+                possibleSpawnTiles.AddRange(hallWay.Tiles.Except(hallWay.EdgeTiles));
             }
 
             possibleSpawnTiles.Sort((c1, c2) => {
