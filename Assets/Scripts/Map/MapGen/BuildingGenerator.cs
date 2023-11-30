@@ -355,16 +355,22 @@ namespace Maes.Map.MapGen
                 var biggestY = region.Select(coordinate => coordinate.y).Max();
                 var tile = Tile.GetRandomWall();
                 var innerTile = Tile.GetRandomWall();
+                while (innerTile.Type == tile.Type)
+                    innerTile = Tile.GetRandomWall();
 
                 for (var i = 0; i < wallThickness; i++)
                 {
-                    foreach (var coordinate in region.Where(coordinate => coordinate.x == smallestX + i ||
-                                                                          coordinate.x == biggestX - i ||
-                                                                          coordinate.y == smallestY + i ||
-                                                                          coordinate.y == biggestY - i))
+                    var box = region.Where(coordinate => coordinate.x == smallestX + i ||
+                                                                 coordinate.x == biggestX - i ||
+                                                                 coordinate.y == smallestY + i ||
+                                                                 coordinate.y == biggestY - i &&
+                                                                 coordinate.y >= smallestY + i && coordinate.y <= biggestY + i &&
+                                                                 coordinate.x >= smallestX + i && coordinate.x <= biggestX + i);
+
+                    foreach (var coordinate in box)
                     {
                         if (!IsInMapRange(coordinate.x, coordinate.y, mapWithRoomWalls)) continue;
-                        if (i == 0 || i == wallThickness)
+                        if (i == 0 || i == wallThickness - 1)
                             mapWithRoomWalls![coordinate.x, coordinate.y] = tile;
                         else
                             mapWithRoomWalls![coordinate.x, coordinate.y] = innerTile;

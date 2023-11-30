@@ -141,7 +141,6 @@ namespace Maes.Map.MapGen
             }
 
             CreateRoofMesh();
-
             CreateWallMesh(wallHeight, false);
 
             if (Include3DCollider)
@@ -170,15 +169,16 @@ namespace Maes.Map.MapGen
             };
             var subMesh = 0;
             wallRoofMesh.subMeshCount = Materials.Count;
-            //var triangles = new List<int>();
-            foreach (var (type, indices) in _triangles2D)
+
+            foreach (var (_, indices) in _triangles2D)
             {
-                //triangles.AddRange(indices);
                 wallRoofMesh.SetTriangles(indices, subMesh);
                 subMesh++;
             }
-            _gizmoWallVertices = _vertices2D;
-            _gizmoWallTriangles = _triangles2D;
+
+            //_gizmoWallTriangles = _triangles2D;
+            //_gizmoWallVertices = _vertices2D;
+
             WallRoofRenderer.materials = Materials.ToArray();
             // Apply mesh to wall roof
             WallRoof.mesh = wallRoofMesh;
@@ -309,7 +309,6 @@ namespace Maes.Map.MapGen
             CalculateMeshOutlines(isMesh3D);
 
             var wallVertices = new List<Node>();
-            var roofVertices = new List<Node>();
             var wallTriangles = new Dictionary<TileType, List<int>>();
             var innerWallsMesh = new Mesh();
 
@@ -321,10 +320,19 @@ namespace Maes.Map.MapGen
                 {
                     var topLeft = outline[i];
                     var topRight = outline[i + 1];
+                    var wallTypes = new[] { topLeft, topRight }.Where(x => Tile.IsWall(x.Type)).ToList();
+                    if (wallTypes.Count() == 1)
+                    {
+                        topLeft.Type = wallTypes[0].Type;
+                        topRight.Type = wallTypes[0].Type;
+                    }
+
                     // The wall stick out in different axes depending on 2D or 3D.
                     var direction = isMesh3D ? Vector3.up : Vector3.back;
                     var bottomLeft = new Node(topLeft, topLeft.Position - direction * wallHeight);
                     var bottomRight = new Node(topRight, topRight.Position - direction * wallHeight);
+
+
 
                     // Create section of the wall currently being made
                     // as viewed from inside the room looked at the wall
@@ -332,16 +340,7 @@ namespace Maes.Map.MapGen
                     wallVertices.Add(topRight); // top right (1)
                     wallVertices.Add(bottomLeft); // bottom left (2)
                     wallVertices.Add(bottomRight); // bottom right (3)
-
                 }
-                ////roof?
-                //for (var i = 2; i < outline.Count-1; i++)
-                //{
-                //    roofVertices.Add(outline[i - 2]);
-                //    roofVertices.Add(outline[i - 1]);
-                //    roofVertices.Add(outline[i]);
-                //    roofVertices.Add(outline[i + 1]);
-                //}
             }
 
             var wallIndexType = new Dictionary<TileType, List<int>>();
@@ -353,15 +352,6 @@ namespace Maes.Map.MapGen
                 else
                     wallIndexType[type] = new List<int> { i };
             }
-
-            //for (var i = 0 + wallVertices.Count; i < roofVertices.Count; i++)
-            //{
-            //    var type = roofVertices[i].Type;
-            //    if (wallIndexType.ContainsKey(type))
-            //        wallIndexType[type].Add(i);
-            //    else
-            //        wallIndexType[type] = new List<int> { i };
-            //}
 
             var startVertexIndex = 0;
             foreach (var (type, vertexIndices) in wallIndexType)
@@ -380,18 +370,15 @@ namespace Maes.Map.MapGen
                     wallTriangles[type].Add(i + 3); // Bottom Right
                     wallTriangles[type].Add(i + 1); // Top right
                     wallTriangles[type].Add(i + 0); // Top left
-
                 }
-
                 startVertexIndex += vertexIndices.Count;
             }
 
             innerWallsMesh.subMeshCount = wallIndexType.Keys.Count;
-
-
+            
             // Debug variables
             _gizmoWallVertices = wallVertices;
-
+            _gizmoWallTriangles = wallTriangles;
 
             innerWallsMesh.vertices = wallVertices.Select(vertex => vertex.Position).ToArray();
 
@@ -701,8 +688,9 @@ namespace Maes.Map.MapGen
                 VertexB = b;
                 VertexC = c;
 
-                var type = TileType.Room;
-                if (Tile.IsWall(a.Type) || Tile.IsWall(b.Type) || Tile.IsWall(c.Type))
+                var types = new List<TileType> { a.Type, b.Type, c.Type };
+                var type = types.Max();
+                if (!Tile.IsWall(type) && (Tile.IsWall(a.Type) || Tile.IsWall(b.Type) || Tile.IsWall(c.Type)))
                 {
                     if (Tile.IsWall(a.Type)) type = a.Type;
                     else if (Tile.IsWall(b.Type)) type = b.Type;
@@ -712,7 +700,6 @@ namespace Maes.Map.MapGen
                     b.Type = type;
                     c.Type = type;
                 }
-
                 Type = type;
 
                 _vertices = new Node[3];
