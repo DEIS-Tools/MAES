@@ -23,22 +23,29 @@
 using System;
 using JetBrains.Annotations;
 
-namespace Maes.Robot {
-    public class RobotConstraints {
+namespace Maes.Robot
+{
+    public class RobotConstraints
+    {
         public delegate bool SignalTransmissionSuccessCalculator(float totalDistance, float distanceThroughWalls);
 
-        public readonly SignalTransmissionSuccessCalculator IsTransmissionSuccessful;
+        public SignalTransmissionSuccessCalculator IsTransmissionSuccessful { get; }
 
-        public readonly float SenseNearbyAgentsRange;
-        public readonly bool SenseNearbyAgentsBlockedByWalls;
-        public readonly bool MaterialCommunication;
+        public float SenseNearbyAgentsRange { get; }
+        public bool SenseNearbyAgentsBlockedByWalls { get; }
+        public bool MaterialCommunication { get; }
+        // Given in MHz
+        public int Frequency { get; }
+        // In dBm
+        public int TransmitPower { get; }
+        public int ReceiverSensitivity { get; }
 
         // SLAM
-        public readonly bool AutomaticallyUpdateSlam;
-        public readonly int SlamUpdateIntervalInTicks;
-        public readonly int SlamSynchronizeIntervalInTicks;
-        public readonly float SlamPositionInaccuracy;
-        public readonly bool DistributeSlam;
+        public bool AutomaticallyUpdateSlam { get; }
+        public int SlamUpdateIntervalInTicks { get; }
+        public int SlamSynchronizeIntervalInTicks { get; }
+        public float SlamPositionInaccuracy { get; }
+        public bool DistributeSlam { get; }
 
 
         // *** Ray cast range and count affects both exploration progress and the slam map ***
@@ -46,40 +53,49 @@ namespace Maes.Robot {
         // The amount of traces shot out, higher trace count will result in a more complete map
         // The smaller the ray cast range the lower amount of traces is needed
         // If ray cast count is left unspecified, a default amount will be calculated from the ray cast rang
-        public readonly int? SlamRayTraceCount;
+        public int? SlamRayTraceCount { get; }
 
         // SLAM ray trace range
-        public readonly float SlamRayTraceRange;
+        public float SlamRayTraceRange { get; }
 
         // Environment tagging
-        public readonly float EnvironmentTagReadRange;
+        public float EnvironmentTagReadRange { get; }
 
         // Movement
         // 1.0f is default. A bigger map with bigger doors would make the robot "feel" slower. It is thus not 
         // a speed value in e.g. km/h .
-        public readonly float RelativeMoveSpeed;
-        public readonly float AgentRelativeSize;
+        public float RelativeMoveSpeed { get; }
+        public float AgentRelativeSize { get; }
 
 
         public RobotConstraints(
-            float senseNearbyAgentsRange=20f,
-            bool senseNearbyAgentsBlockedByWalls=true, 
-            bool automaticallyUpdateSlam=true, 
-            int slamUpdateIntervalInTicks=10,
-            int slamSynchronizeIntervalInTicks=10, 
-            float slamPositionInaccuracy=0.2f, 
-            bool distributeSlam=false,
-            float environmentTagReadRange=2f, 
-            float slamRayTraceRange=20f, 
-            float relativeMoveSpeed=1f, 
-            float agentRelativeSize=0.6f, 
+            float senseNearbyAgentsRange = 20f,
+            bool senseNearbyAgentsBlockedByWalls = true,
+            bool automaticallyUpdateSlam = true,
+            int slamUpdateIntervalInTicks = 10,
+            int slamSynchronizeIntervalInTicks = 10,
+            float slamPositionInaccuracy = 0.2f,
+            bool distributeSlam = false,
+            float environmentTagReadRange = 2f,
+            float slamRayTraceRange = 20f,
+            float relativeMoveSpeed = 1f,
+            float agentRelativeSize = 0.6f,
             SignalTransmissionSuccessCalculator? calculateSignalTransmissionProbability = null,
             int? slamRayTraceCount = null,
-            bool materialCommunication = true) {
+            bool materialCommunication = true,
+            int frequency = 2400,
+            int transmitPower = 15,
+            int receiverSensitivity = 5)
+        {
 
             SenseNearbyAgentsRange = senseNearbyAgentsRange;
             SenseNearbyAgentsBlockedByWalls = senseNearbyAgentsBlockedByWalls;
+
+            // Materials
             MaterialCommunication = materialCommunication;
+            Frequency = frequency;
+            TransmitPower = transmitPower;
+            ReceiverSensitivity = receiverSensitivity;
 
             // SLAM
             AutomaticallyUpdateSlam = automaticallyUpdateSlam;
@@ -89,11 +105,11 @@ namespace Maes.Robot {
             SlamRayTraceRange = slamRayTraceRange;
             SlamRayTraceCount = slamRayTraceCount;
             DistributeSlam = distributeSlam;
-            
+
             EnvironmentTagReadRange = environmentTagReadRange;
             RelativeMoveSpeed = relativeMoveSpeed;
             AgentRelativeSize = agentRelativeSize;
-            
+
             // Communication/Broadcasting
             IsTransmissionSuccessful = calculateSignalTransmissionProbability ?? ((distance, _) => true);
 

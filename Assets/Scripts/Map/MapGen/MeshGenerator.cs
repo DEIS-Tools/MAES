@@ -101,7 +101,7 @@ namespace Maes.Map.MapGen
             _checkedVertices3D.Clear();
         }
 
-        internal SimulationMap<bool> GenerateMesh(Tile[,] map, float wallHeight,
+        internal SimulationMap<Tile> GenerateMesh(Tile[,] map, float wallHeight,
             bool disableCornerRounding, List<Room> rooms)
         {
             InnerWallsRenderer2D.materials = Materials.ToArray();
@@ -184,13 +184,13 @@ namespace Maes.Map.MapGen
             WallRoof.mesh = wallRoofMesh;
         }
 
-        public SimulationMap<bool> GenerateCollisionMap(SquareGrid squareGrid, Vector3 offset,
+        public SimulationMap<Tile> GenerateCollisionMap(SquareGrid squareGrid, Vector3 offset,
             bool removeRoundedCorners, List<Room> rooms)
         {
             var width = squareGrid.Squares.GetLength(0);
             var height = squareGrid.Squares.GetLength(1);
             // Create a bool type SimulationMap with default value of false in all cells
-            var collisionMap = new SimulationMap<bool>(() => false, width, height, offset, rooms);
+            var collisionMap = new SimulationMap<Tile>(() => new Tile(TileType.Room), width, height, offset, rooms);
 
             for (var x = 0; x < width; x++)
             {
@@ -207,7 +207,7 @@ namespace Maes.Map.MapGen
             return collisionMap;
         }
 
-        private static void AdaptCollisionMapTile(SimulationMapTile<bool> tile, Square square, bool removeRoundedCorners)
+        private static void AdaptCollisionMapTile(SimulationMapTile<Tile> tile, Square square, bool removeRoundedCorners)
         {
             int[] triangles = { };
             switch (square.Configuration)
@@ -271,7 +271,7 @@ namespace Maes.Map.MapGen
 
             foreach (var index in triangles)
             {
-                tile.SetCellValue(index, true);
+                tile.SetCellValue(index, new Tile(square.Center.Type));
             }
         }
 
@@ -795,9 +795,9 @@ namespace Maes.Map.MapGen
                     bottomLeft.Type,
                     bottomRight.Type,
                 };
-                var maxtype = types.Max();
+                var maxType = types.Max();
 
-                Center = new Node(new Vector3(centerX, topLeft.Position.y, centerZ), maxtype);
+                Center = new Node(new Vector3(centerX, topLeft.Position.y, centerZ), maxType);
 
                 // There are only 16 possible configurations
                 // Consider them in binary xxxx

@@ -28,7 +28,7 @@ namespace Maes.Map.MapGen
             Tile.Rand = new Random(_caveConfig.randomSeed);
         }
 
-        public SimulationMap<bool> GenerateCaveMap()
+        public SimulationMap<Tile> GenerateCaveMap()
         {
             // Clear and destroy objects from previous map
             ClearMap();
@@ -42,7 +42,7 @@ namespace Maes.Map.MapGen
             return collisionMap;
         }
 
-        private SimulationMap<bool> CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 2.0f)
+        private SimulationMap<Tile> CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 2.0f)
         {
             // Fill map with random walls and empty tiles (Looks kinda like a QR code)
             var randomlyFilledMap = CreateRandomFillMap(caveConfig);

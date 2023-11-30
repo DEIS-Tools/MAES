@@ -26,7 +26,7 @@ namespace Maes.Map.MapGen
         /// <param name="wallHeight">A lower height can make it easier to see the robots. Must be a positive value.</param>
         /// <returns> A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles as
         /// used in the Marching Squares Algorithm.</returns>
-        public SimulationMap<bool> GenerateBuildingMap()
+        public SimulationMap<Tile> GenerateBuildingMap()
         {
             // Clear and destroy objects from previous map
             ClearMap();

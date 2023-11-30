@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
 using Maes.Map.MapGen;
+using Maes.Robot;
 using Maes.Utilities.Files;
 using UnityEngine;
 
@@ -32,8 +33,8 @@ namespace Maes {
     internal class ExampleProgram : MonoBehaviour {
         private void Start() {
             const int randomSeed = 123;
-            const int height = 100;
-            const int width = 100;
+            const int height = 50;
+            const int width = 50;
             var buildingConfig = new BuildingMapConfig(
                 randomSeed,
                 3,
@@ -50,6 +51,7 @@ namespace Maes {
             
             // Setup configuration for a scenario
             var scenarioCave = new SimulationScenario(
+                hasFinishedSim: (sim) => sim.ExplorationTracker.ExploredProportion > 0.5f,
                 seed: randomSeed, 
                 mapSpawner: generator => generator.GenerateMap(caveConfig),
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
@@ -72,6 +74,7 @@ namespace Maes {
                 ));
             //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
             //simulator.EnqueueScenario(scenarioCave);
+            simulator.EnqueueScenario(scenarioBuilding);
             simulator.EnqueueScenario(scenarioBuilding);
             //simulator.EnqueueScenario(scenarioBitMap);
 

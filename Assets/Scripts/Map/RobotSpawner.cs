@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Maes.ExplorationAlgorithm;
 using Maes.Map;
+using Maes.Map.MapGen;
 using Maes.Robot;
 using Maes.Utilities;
 using UnityEngine;
@@ -41,7 +42,7 @@ namespace Maes.Map
         public RobotConstraints RobotConstraints;
 
 
-        public List<MonaRobot> SpawnRobotsAtPositions(List<Vector2Int> spawnPositions, SimulationMap<bool> collisionMap, int seed, int numberOfRobots, CreateAlgorithmDelegate createAlgorithmDelegate) {
+        public List<MonaRobot> SpawnRobotsAtPositions(List<Vector2Int> spawnPositions, SimulationMap<Tile> collisionMap, int seed, int numberOfRobots, CreateAlgorithmDelegate createAlgorithmDelegate) {
             List<MonaRobot> robots = new List<MonaRobot>();
 
             // Ensure enough spawn positions were given
@@ -62,7 +63,7 @@ namespace Maes.Map
             List<Vector2Int> possibleSpawnTiles = new List<Vector2Int>();
             for (int x = 0; x < collisionMap.WidthInTiles; x++) {
                 for (int y = 0; y < collisionMap.HeightInTiles; y++) {
-                    if (collisionMap.GetTileByLocalCoordinate(x, y).IsTrueForAll(solid => !solid)) {
+                    if (collisionMap.GetTileByLocalCoordinate(x, y).IsTrueForAll(tile => !Tile.IsWall(tile.Type))) {
                         possibleSpawnTiles.Add(new Vector2Int(x, y));
                     }
                     
@@ -110,7 +111,7 @@ namespace Maes.Map
         /// <param name="createAlgorithmDelegate">Used to inject the exploration algorithm into the robot controller</param>
         /// <returns>List of all robot game objects.</returns>
         /// <exception cref="ArgumentException">If not enough open tiles for the requested number of robots.</exception>
-        public List<MonaRobot> SpawnRobotsInBiggestRoom(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, CreateAlgorithmDelegate createAlgorithmDelegate) {
+        public List<MonaRobot> SpawnRobotsInBiggestRoom(SimulationMap<Tile> collisionMap, int seed, int numberOfRobots, CreateAlgorithmDelegate createAlgorithmDelegate) {
             List<MonaRobot> robots = new List<MonaRobot>();
 
             // Sort by room size
@@ -164,14 +165,14 @@ namespace Maes.Map
         /// <param name="createAlgorithmDelegate">Used to inject the exploration algorithm into the robot controller</param>
         /// <returns>List of all robot game objects.</returns>
         /// <exception cref="ArgumentException">If not enough open tiles for the requested number of robots.</exception>
-        public List<MonaRobot> SpawnRobotsTogether(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, Vector2Int? suggestedStartingPoint, CreateAlgorithmDelegate createAlgorithmDelegate) {
+        public List<MonaRobot> SpawnRobotsTogether(SimulationMap<Tile> collisionMap, int seed, int numberOfRobots, Vector2Int? suggestedStartingPoint, CreateAlgorithmDelegate createAlgorithmDelegate) {
             List<MonaRobot> robots = new List<MonaRobot>();
             // Get all spawnable tiles. We cannot spawn adjacent to a wall
             List<Vector2Int> possibleSpawnTiles = new List<Vector2Int>();
 
             for (int x = 0; x < collisionMap.WidthInTiles; x++) {
                 for (int y = 0; y < collisionMap.HeightInTiles; y++) {
-                    if (collisionMap.GetTileByLocalCoordinate(x, y).IsTrueForAll(solid => !solid)) {
+                    if (collisionMap.GetTileByLocalCoordinate(x, y).IsTrueForAll(tile => !Tile.IsWall(tile.Type))) {
                         possibleSpawnTiles.Add(new Vector2Int(x, y));
                     }
                     
@@ -188,10 +189,8 @@ namespace Maes.Map
             suggestedStartingPoint = new Vector2Int(suggestedStartingPoint.Value.x - (int)collisionMap.ScaledOffset.x,
                     suggestedStartingPoint.Value.y - (int)collisionMap.ScaledOffset.y);
 
-            possibleSpawnTiles.Sort((c1, c2) => {
-                return ManhattanDistance(c1, suggestedStartingPoint.Value) -
-                       ManhattanDistance(c2, suggestedStartingPoint.Value);
-            });
+            possibleSpawnTiles.Sort((c1, c2) => ManhattanDistance(c1, suggestedStartingPoint.Value) -
+                                                ManhattanDistance(c2, suggestedStartingPoint.Value));
             
             
             // Flooding algorithm to find next tiles from neighbors
@@ -257,7 +256,7 @@ namespace Maes.Map
         /// <param name="numberOfRobots">How many robots should be created. The map may not fit all robots, which would throw an exception</param>
         /// <param name="createAlgorithmDelegate">Used to inject the exploration algorithm into the robot controller</param>
         /// <returns>List of all robot game objects.</returns>
-        public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<bool> collisionMap, int seed, int numberOfRobots, CreateAlgorithmDelegate createAlgorithmDelegate) {
+        public List<MonaRobot> SpawnAtHallWayEnds(SimulationMap<Tile> collisionMap, int seed, int numberOfRobots, CreateAlgorithmDelegate createAlgorithmDelegate) {
             var robots = new List<MonaRobot>();
 
             var hallWays = collisionMap.rooms.FindAll(r => r.IsHallWay).ToList();
@@ -306,7 +305,7 @@ namespace Maes.Map
         }
 
         private MonaRobot CreateRobot(float x, float y, float relativeSize, int robotId,
-            IExplorationAlgorithm algorithm, SimulationMap<bool> collisionMap, int seed) {
+            IExplorationAlgorithm algorithm, SimulationMap<Tile> collisionMap, int seed) {
             var robotID = robotId;
             var robotGameObject = Instantiate(robotPrefab, parent: transform);
             robotGameObject.name = $"robot{robotId}";

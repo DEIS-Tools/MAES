@@ -26,21 +26,21 @@ namespace Maes.Map.MapGen
 {
     public class MapSpawner: MonoBehaviour
     {
-        public SimulationMap<bool> GenerateMap(CaveMapConfig caveConfig, float wallHeight = 2.0f)
+        public SimulationMap<Tile> GenerateMap(CaveMapConfig caveConfig, float wallHeight = 2.0f)
         {
             var caveGenerator = gameObject.AddComponent<CaveGenerator>();
             caveGenerator.Init(caveConfig, wallHeight);
             return caveGenerator.GenerateCaveMap();
         }
         
-        public SimulationMap<bool> GenerateMap(BuildingMapConfig buildingConfig, float wallHeight = 2.0f)
+        public SimulationMap<Tile> GenerateMap(BuildingMapConfig buildingConfig, float wallHeight = 2.0f)
         {
             var buildingGenerator = gameObject.AddComponent<BuildingGenerator>(); 
             buildingGenerator.Init(buildingConfig, wallHeight);
             return buildingGenerator.GenerateBuildingMap();
         }
 
-        public SimulationMap<bool> GenerateMap(Tile[,] bitmap, float wallHeight = 2.0f, int borderSize = 1)
+        public SimulationMap<Tile> GenerateMap(Tile[,] bitmap, float wallHeight = 2.0f, int borderSize = 1)
         {
             var bitMapGenerator = gameObject.AddComponent<BitMapGenerator>();
             bitMapGenerator.Init(bitmap, wallHeight, borderSize);

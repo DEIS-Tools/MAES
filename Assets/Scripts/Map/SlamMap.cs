@@ -22,6 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Maes.Map.MapGen;
 using Maes.Map.PathFinding;
 using Maes.Robot;
 using Maes.Utilities;
@@ -36,8 +37,8 @@ namespace Maes.Map {
         
         private SlamTileStatus[,] _tiles;
         public Dictionary<Vector2Int, SlamTileStatus> _currentlyVisibleTiles;
-        public HashSet<int> _currentlyVisibleTriangles = new HashSet<int>();
-        private SimulationMap<bool> _collisionMap;
+        public HashSet<int> _currentlyVisibleTriangles = new();
+        private SimulationMap<Tile> _collisionMap;
         private IPathFinder _pathFinder;
         
         private readonly Vector2 _offset;
@@ -57,7 +58,7 @@ namespace Maes.Map {
         internal VisibleTilesCoarseMap VisibleTilesCoarseMap;
 
 
-        public SlamMap(SimulationMap<bool> collisionMap, RobotConstraints robotConstraints, int randomSeed) {
+        public SlamMap(SimulationMap<Tile> collisionMap, RobotConstraints robotConstraints, int randomSeed) {
             _collisionMap = collisionMap;
             _robotConstraints = robotConstraints;
             _randomSeed = randomSeed;

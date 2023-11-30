@@ -31,9 +31,9 @@ namespace Maes
 {
     
     // A function that generates, initializes and returns a world map
-    public delegate SimulationMap<bool> MapFactory(MapSpawner generator);
+    public delegate SimulationMap<Tile> MapFactory(MapSpawner generator);
     // A function that spawns and returns a group of robots
-    public delegate List<MonaRobot> RobotFactory(SimulationMap<bool> map, RobotSpawner spawner);
+    public delegate List<MonaRobot> RobotFactory(SimulationMap<Tile> map, RobotSpawner spawner);
     
     // A function that returns true if the given simulation has been completed
     public delegate bool SimulationEndCriteriaDelegate(Simulation simulation);

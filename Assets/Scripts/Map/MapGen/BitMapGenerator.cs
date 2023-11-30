@@ -20,7 +20,7 @@ namespace Maes.Map.MapGen
         /// <summary>
         /// Method for creating a map from an array of ints {0, 1}.
         /// </summary>
-        public SimulationMap<bool> CreateMapFromBitMap()
+        public SimulationMap<Tile> CreateMapFromBitMap()
         {
             // Clear and destroy objects from previous map
             ClearMap();
