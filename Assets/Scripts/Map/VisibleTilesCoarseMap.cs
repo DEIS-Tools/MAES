@@ -105,11 +105,11 @@ namespace Maes.Map {
         }
         
         // Returns the status of the given tile (Solid, Open or Unseen)
-        public SlamMap.SlamTileStatus GetTileStatus(Vector2Int localCoordinate, bool optismistic = false) {
+        public SlamMap.SlamTileStatus GetTileStatus(Vector2Int localCoordinate, bool optimistic = false) {
             var slamCoord = ToSlamMapCoordinate(localCoordinate);
 
             var status = _slamMap.GetStatusOfTile(slamCoord);
-            if (optismistic) {
+            if (optimistic) {
                 status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right));
                 status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up));
                 status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right + Vector2Int.up));    
