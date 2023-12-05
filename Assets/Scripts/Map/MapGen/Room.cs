@@ -85,7 +85,6 @@ namespace Maes.Map.MapGen
         {
             var outsideTiles = new List<Vector2Int>();
             // Add tiles surrounding the room, going a tile further with each step
-            //todo rooms are not necessarily square meaning we have to go through every edge/tile not just the outer corners
             foreach (var tile in Tiles)
                 for (var x = -wallThickness; x < wallThickness; x++)
                     for (var y = -wallThickness; y < wallThickness; y++)

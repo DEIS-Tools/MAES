@@ -9,19 +9,15 @@ namespace Maes.Map.MapGen
         private float _wallHeight;
         private int _borderSize;
 
-        public void Init(Tile[,] bitmap, float wallHeight = 2.0f, int borderSize = 1)
+        /// <summary>
+        /// Method for creating a map from a 2D array of Tiles.
+        /// </summary>
+        public SimulationMap<Tile> CreateMapFromBitMap(Tile[,] bitmap, float wallHeight = 2.0f, int borderSize = 1)
         {
             _bitmap = bitmap;
             _wallHeight = wallHeight;
             _borderSize = borderSize;
-        }
 
-        /// TODO: Update this to new format
-        /// <summary>
-        /// Method for creating a map from an array of ints {0, 1}.
-        /// </summary>
-        public SimulationMap<Tile> CreateMapFromBitMap()
-        {
             // Clear and destroy objects from previous map
             ClearMap();
 

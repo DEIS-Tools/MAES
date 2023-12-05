@@ -13,7 +13,6 @@ namespace Maes.Map.MapGen
         private CaveMapConfig _caveConfig;
         private float _wallHeight;
 
-        /// TODO: Update this to new format
         /// <summary>
         /// Generates a cave map using the unity game objects Plane, InnerWalls and WallRoof.
         /// </summary>
@@ -21,15 +20,11 @@ namespace Maes.Map.MapGen
         /// <param name="wallHeight">A smaller wall height can make it easier to see the robots. Must be a positive value.</param>
         /// <returns> A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles as
         /// used in the Marching Squares Algorithm.</returns>
-        public void Init(CaveMapConfig config, float wallHeight = 2.0f)
+        public SimulationMap<Tile> GenerateCaveMap(CaveMapConfig config, float wallHeight = 2.0f)
         {
             _caveConfig = config;
             _wallHeight = wallHeight;
             Tile.Rand = new Random(_caveConfig.RandomSeed);
-        }
-
-        public SimulationMap<Tile> GenerateCaveMap()
-        {
             // Clear and destroy objects from previous map
             ClearMap();
 

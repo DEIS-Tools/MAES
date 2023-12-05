@@ -88,8 +88,8 @@ namespace Maes.Robot
             int? slamRayTraceCount = null,
             bool materialCommunication = true,
             uint frequency = 2400,
-            float transmitPower = 15,
-            float receiverSensitivity = 5,
+            float transmitPower = 90,
+            float receiverSensitivity = 0,
             Dictionary<uint, Dictionary<TileType, float>>? attenuationDictionary = null)
         {
 
