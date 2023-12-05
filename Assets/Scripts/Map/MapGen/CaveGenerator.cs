@@ -25,7 +25,7 @@ namespace Maes.Map.MapGen
         {
             _caveConfig = config;
             _wallHeight = wallHeight;
-            Tile.Rand = new Random(_caveConfig.randomSeed);
+            Tile.Rand = new Random(_caveConfig.RandomSeed);
         }
 
         public SimulationMap<Tile> GenerateCaveMap()
@@ -35,7 +35,7 @@ namespace Maes.Map.MapGen
 
             var collisionMap = CreateCaveMapWithMesh(_caveConfig, _wallHeight);
 
-            ResizePlaneToFitMap(_caveConfig.bitMapHeight, _caveConfig.bitMapWidth);
+            ResizePlaneToFitMap(_caveConfig.BitMapHeight, _caveConfig.BitMapWidth);
 
             MovePlaneAndWallRoofToFitWallHeight(_wallHeight);
 
@@ -50,7 +50,7 @@ namespace Maes.Map.MapGen
             // Use smoothing runs to make sense of the noise
             // f.x. walls can only stay walls, if they have at least N neighbouring walls
             var smoothedMap = randomlyFilledMap;
-            for (var i = 0; i < caveConfig.smoothingRuns; i++)
+            for (var i = 0; i < caveConfig.SmoothingRuns; i++)
             {
                 smoothedMap = SmoothMap(smoothedMap, caveConfig);
             }
@@ -58,22 +58,22 @@ namespace Maes.Map.MapGen
             var smoothedMapWithoutNarrowCorridors = WallOffNarrowCorridors(smoothedMap);
 
             // Clean up regions smaller than threshold for both walls and rooms.
-            var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(caveConfig.wallThresholdSize,
-                caveConfig.roomThresholdSize,
+            var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(caveConfig.WallThresholdSize,
+                caveConfig.RoomThresholdSize,
                 smoothedMapWithoutNarrowCorridors);
 
             // Connect all rooms to main (the biggest) room
             var connectedMap = ConnectAllRoomsToMainRoom(survivingRooms, cleanedMap, caveConfig);
 
             // Ensure a border around the map
-            var borderedMap = CreateBorderedMap(connectedMap, caveConfig.bitMapWidth, caveConfig.bitMapHeight,
-                caveConfig.borderSize);
+            var borderedMap = CreateBorderedMap(connectedMap, caveConfig.BitMapWidth, caveConfig.BitMapHeight,
+                caveConfig.BorderSize);
 
             // Draw gizmo of map for debugging. Will draw the map in Scene upon selection.
             // MapToDraw = borderedMap;
 
             // The rooms should now reflect their relative shifted positions after adding borders round map.
-            survivingRooms.ForEach(r => r.OffsetCoordsBy(caveConfig.borderSize, caveConfig.borderSize));
+            survivingRooms.ForEach(r => r.OffsetCoordsBy(caveConfig.BorderSize, caveConfig.BorderSize));
 
             var meshGen = GetComponent<MeshGenerator>();
             var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as Tile[,], wallHeight,
@@ -159,7 +159,7 @@ namespace Maes.Map.MapGen
             survivingRooms[0].IsMainRoom = true;
             survivingRooms[0].IsAccessibleFromMainRoom = true;
 
-            return ConnectClosestRooms(survivingRooms, connectedMap, config.connectionPassagesWidth);
+            return ConnectClosestRooms(survivingRooms, connectedMap, config.ConnectionPassagesWidth);
         }
 
         private Tile[,] ConnectClosestRooms(List<Room> allRooms, Tile[,] map, int passageWidth)
@@ -321,17 +321,17 @@ namespace Maes.Map.MapGen
 
         private static Tile[,] CreateRandomFillMap(CaveMapConfig config)
         {
-            var randomFillMap = new Tile[config.bitMapWidth, config.bitMapHeight];
-            var pseudoRandom = new Random(config.randomSeed);
+            var randomFillMap = new Tile[config.BitMapWidth, config.BitMapHeight];
+            var pseudoRandom = new Random(config.RandomSeed);
 
-            for (var x = 0; x < config.bitMapWidth; x++)
+            for (var x = 0; x < config.BitMapWidth; x++)
             {
-                for (var y = 0; y < config.bitMapHeight; y++)
+                for (var y = 0; y < config.BitMapHeight; y++)
                 {
-                    if (x == 0 || x == config.bitMapWidth - 1 || y == 0 || y == config.bitMapHeight - 1)
+                    if (x == 0 || x == config.BitMapWidth - 1 || y == 0 || y == config.BitMapHeight - 1)
                         randomFillMap[x, y] = Tile.GetRandomWall();
                     else
-                        randomFillMap[x, y] = pseudoRandom.Next(0, 100) < config.randomFillPercent
+                        randomFillMap[x, y] = pseudoRandom.Next(0, 100) < config.RandomFillPercent
                             ? Tile.GetRandomWall()
                             : new Tile(TileType.Room);
                 }
@@ -343,13 +343,13 @@ namespace Maes.Map.MapGen
         private Tile[,] SmoothMap(Tile[,] map, CaveMapConfig config)
         {
             var smoothedMap = map.Clone() as Tile[,];
-            for (var x = 0; x < config.bitMapWidth; x++)
+            for (var x = 0; x < config.BitMapWidth; x++)
             {
-                for (var y = 0; y < config.bitMapHeight; y++)
+                for (var y = 0; y < config.BitMapHeight; y++)
                 {
                     var (neighborWallTiles, neighborWallType) = GetSurroundingWallCount(x, y, map);
 
-                    if (neighborWallTiles >= config.neighbourWallsNeededToStayWall)
+                    if (neighborWallTiles >= config.NeighbourWallsNeededToStayWall)
                         smoothedMap![x, y] = new Tile(neighborWallType);
                     else
                         smoothedMap![x, y] = new Tile(TileType.Room);

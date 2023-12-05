@@ -21,7 +21,9 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
+using Maes.Map.MapGen;
 
 namespace Maes.Robot
 {
@@ -35,10 +37,12 @@ namespace Maes.Robot
         public bool SenseNearbyAgentsBlockedByWalls { get; }
         public bool MaterialCommunication { get; }
         // Given in MHz
-        public int Frequency { get; }
+        public uint Frequency { get; }
         // In dBm
-        public int TransmitPower { get; }
-        public int ReceiverSensitivity { get; }
+        public float TransmitPower { get; }
+        public float ReceiverSensitivity { get; }
+        // Dictionary with outer key being frequency in MHz and inner being the materials for the attenuation data
+        public Dictionary<uint, Dictionary<TileType, float>> AttenuationDictionary { get; set; }
 
         // SLAM
         public bool AutomaticallyUpdateSlam { get; }
@@ -83,9 +87,10 @@ namespace Maes.Robot
             SignalTransmissionSuccessCalculator? calculateSignalTransmissionProbability = null,
             int? slamRayTraceCount = null,
             bool materialCommunication = true,
-            int frequency = 2400,
-            int transmitPower = 15,
-            int receiverSensitivity = 5)
+            uint frequency = 2400,
+            float transmitPower = 15,
+            float receiverSensitivity = 5,
+            Dictionary<uint, Dictionary<TileType, float>>? attenuationDictionary = null)
         {
 
             SenseNearbyAgentsRange = senseNearbyAgentsRange;
@@ -96,6 +101,37 @@ namespace Maes.Robot
             Frequency = frequency;
             TransmitPower = transmitPower;
             ReceiverSensitivity = receiverSensitivity;
+
+            AttenuationDictionary = attenuationDictionary ?? new Dictionary<uint, Dictionary<TileType, float>>
+            {
+                [1300] = new() //1300 MHz
+                {
+                    [TileType.Room] = 0f,
+                    [TileType.Hall] = 0f,
+                    [TileType.Wall] = 0f,
+                    [TileType.Concrete] = 13f,
+                    [TileType.Wood] = 5.1f,
+                    [TileType.Brick] = 4.5f
+                },
+                [2400] = new() //2.4 GHz
+                {
+                    [TileType.Room] = 0f,
+                    [TileType.Hall] = 0f,
+                    [TileType.Wall] = 0f,
+                    [TileType.Concrete] = 15f,
+                    [TileType.Wood] = 6.7f,
+                    [TileType.Brick] = 5.5f
+                },
+                [5200] = new() //5.2 GHz
+                {
+                    [TileType.Room] = 0f,
+                    [TileType.Hall] = 0f,
+                    [TileType.Wall] = 0f,
+                    [TileType.Concrete] = 23f,
+                    [TileType.Wood] = 14f,
+                    [TileType.Brick] = 15f
+                }
+            };
 
             // SLAM
             AutomaticallyUpdateSlam = automaticallyUpdateSlam;

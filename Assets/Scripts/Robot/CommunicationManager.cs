@@ -165,14 +165,14 @@ namespace Maes.Robot {
                 else regularCellsTraveledThrough++;
 
                 if (_robotConstraints.MaterialCommunication) 
-                    signalStrength -= tile.Attenuation;
+                    signalStrength -= _robotConstraints.AttenuationDictionary[_robotConstraints.Frequency][tile.Type];
 
                 return true;
             });
             return CreateCommunicationInfo(angle, wallsTraveledThrough, regularCellsTraveledThrough, distance, signalStrength);
         }
 
-        private CommunicationInfo CreateCommunicationInfo(float angle, int wallsCellsPassedThrough, int regularCellsPassedThrough, float distance, int signalStrength) {
+        private CommunicationInfo CreateCommunicationInfo(float angle, int wallsCellsPassedThrough, int regularCellsPassedThrough, float distance, float signalStrength) {
             var totalCells = wallsCellsPassedThrough + regularCellsPassedThrough;
             var distanceTraveledThroughWalls = ((float) wallsCellsPassedThrough / (float) totalCells)  * distance;
             // todo add signal loss depending on distance, dependent on frequency. look into ECC-33, ITU, and Hata–Okumura models.

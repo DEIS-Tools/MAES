@@ -20,6 +20,7 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
+using System.Collections.Generic;
 using Maes.YamlConfig;
 
 namespace Maes.Map.MapGen {
@@ -59,7 +60,6 @@ namespace Maes.Map.MapGen {
             roomSplitChancePercent: config.Map.BuildingConfig.RoomSplitChance,
             borderSize: config.Map.BorderSize
             ) {
-            
         }
         
         public BuildingMapConfig(
@@ -70,7 +70,8 @@ namespace Maes.Map.MapGen {
             uint doorWidth=2, 
             int doorPadding=2, 
             uint roomSplitChancePercent=85,
-            int borderSize=1) {
+            int borderSize=1)
+            {
             if ((2 * doorPadding + doorWidth) > minRoomSideLength) {
                 throw new ArgumentOutOfRangeException(
                     "Door width cannot be bigger than the smallest side lenght of rooms plus two times DoorPadding");

@@ -860,7 +860,7 @@ namespace Maes.Map.MapGen
                     TileType.Hall => Color.gray,
                     TileType.Wood => Color.green,
                     TileType.Concrete => Color.yellow,
-                    TileType.Metal => Color.red,
+                    TileType.Brick => Color.red,
                     _ => Color.blue
                 };
 
@@ -871,7 +871,7 @@ namespace Maes.Map.MapGen
                 //    TileType.Hall => Color.gray,
                 //    TileType.Concrete => Color.yellow,
                 //    TileType.Wood => Color.green,
-                //    TileType.Metal => Color.red,
+                //    TileType.Brick => Color.red,
                 //    _ => Color.blue
                 //};
 

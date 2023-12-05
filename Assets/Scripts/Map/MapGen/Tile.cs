@@ -31,31 +31,19 @@ namespace Maes.Map.MapGen
         Wall,
         Concrete,
         Wood,
-        Metal
+        Brick
     }
 
     public class Tile
     {
 
         public static Random Rand { get; set; }
-        //todo add attenuation for air and water
-        private static readonly Dictionary<TileType, int> _attenuationDictionary = new()
-        {
-            [TileType.Room] = 0,
-            [TileType.Hall] = 0,
-            [TileType.Wall] = 0,
-            [TileType.Concrete] = 8, // 8-15 2.4GHz/1.3GHz
-            [TileType.Wood] = 3, // 2.4GHz
-            [TileType.Metal] = 26 // 815MHz
-        };
-
+        
         public TileType Type { get; }
-        public int Attenuation { get; }
 
         public Tile(TileType type)
         {
             Type = type;
-            Attenuation = _attenuationDictionary[type];
         }
 
         public static Tile GetRandomWall()

@@ -20,38 +20,42 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
+using System.Collections.Generic;
 using Maes.YamlConfig;
 
-namespace Maes.Map.MapGen {
-    public struct CaveMapConfig {
+namespace Maes.Map.MapGen
+{
+    public struct CaveMapConfig
+    {
         // CollisionMap size is always +1 larger in both axis
         // due to the marching squares algorithm using 4 points per square
-        public readonly int widthInTiles;
-        public readonly int heightInTiles;
-        public readonly int bitMapWidth;
-        public readonly int bitMapHeight;
+        public int WidthInTiles { get; }
+        public int HeightInTiles { get; }
+        public int BitMapWidth { get; }
+        public int BitMapHeight { get; }
 
-        public readonly int randomSeed;
+        public int RandomSeed { get; }
 
         // How many runs of smoothing to get from QR code like noise to groups of room or wall tiles.
-        public readonly int smoothingRuns;
+        public int SmoothingRuns { get; }
 
         // How wide should the passages made by the connection algorithm be
-        public readonly int connectionPassagesWidth;
+        public int ConnectionPassagesWidth { get; }
 
         // How much of the room should be filled with walls.
-        public readonly int randomFillPercent;
+        public int RandomFillPercent { get; }
 
         // Minimum number of wall tiles in a group to not delete them in processing
-        public readonly int wallThresholdSize;
+        public int WallThresholdSize { get; }
 
         // Minimum number of rooms tiles in a group to not delete them in processing
-        public readonly int roomThresholdSize;
+        public int RoomThresholdSize { get; }
 
         // Border size (Assured walls on the edges)
-        public readonly int borderSize;
+        public int BorderSize { get; }
 
-        public readonly int neighbourWallsNeededToStayWall;
+        public int NeighbourWallsNeededToStayWall { get; }
+
 
         internal CaveMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
             randomSeed: seed,
@@ -62,42 +66,48 @@ namespace Maes.Map.MapGen {
             randomFillPercent: config.Map.CaveConfig.RandomFillPercent,
             wallThresholdSize: config.Map.CaveConfig.WallThresholdSize,
             roomThresholdSize: config.Map.CaveConfig.RoomThresholdSize,
-            borderSize: config.Map.BorderSize) {
+            borderSize: config.Map.BorderSize)
+        {
         }
-        
+
         public CaveMapConfig(
             int randomSeed,
-            int widthInTiles=50, int heightInTiles=50, 
-            int smoothingRuns=3,
-            int connectionPassagesWidth=4, 
-            int randomFillPercent=60, 
-            int wallThresholdSize=5, 
-            int roomThresholdSize=5,
-            int borderSize=2, 
-            int neighbourWallsNeededToStayWall = 3) {
+            int widthInTiles = 50, int heightInTiles = 50,
+            int smoothingRuns = 3,
+            int connectionPassagesWidth = 4,
+            int randomFillPercent = 60,
+            int wallThresholdSize = 5,
+            int roomThresholdSize = 5,
+            int borderSize = 2,
+            int neighbourWallsNeededToStayWall = 3,
+            Dictionary<uint, Dictionary<TileType, float>> attenuationDictionary = null)
+        {
             // Only fill percent between and including 0 to 100 are allowed
-            if (0 > randomFillPercent || randomFillPercent >= 100) {
-                throw new ArgumentOutOfRangeException("randomFillPercent must be between 0 and 100");
+            if (0 > randomFillPercent || randomFillPercent >= 100)
+            {
+                throw new ArgumentOutOfRangeException("RandomFillPercent must be between 0 and 100");
             }
 
-            if (smoothingRuns < 0) {
-                throw new ArgumentOutOfRangeException("smoothingRuns must be a positive integer or 0");
+            if (smoothingRuns < 0)
+            {
+                throw new ArgumentOutOfRangeException("SmoothingRuns must be a positive integer or 0");
             }
 
 
-            this.widthInTiles = widthInTiles;
-            this.heightInTiles = heightInTiles;
-            this.bitMapWidth = widthInTiles + 1 - (borderSize * 2);
-            this.bitMapHeight = heightInTiles + 1 - (borderSize * 2);
+            WidthInTiles = widthInTiles;
+            HeightInTiles = heightInTiles;
+            BitMapWidth = widthInTiles + 1 - (borderSize * 2);
+            BitMapHeight = heightInTiles + 1 - (borderSize * 2);
 
-            this.randomSeed = randomSeed;
-            this.smoothingRuns = smoothingRuns;
-            this.connectionPassagesWidth = connectionPassagesWidth;
-            this.randomFillPercent = randomFillPercent;
-            this.wallThresholdSize = wallThresholdSize;
-            this.roomThresholdSize = roomThresholdSize;
-            this.borderSize = borderSize;
-            this.neighbourWallsNeededToStayWall = neighbourWallsNeededToStayWall;
+            RandomSeed = randomSeed;
+            SmoothingRuns = smoothingRuns;
+            ConnectionPassagesWidth = connectionPassagesWidth;
+            RandomFillPercent = randomFillPercent;
+            WallThresholdSize = wallThresholdSize;
+            RoomThresholdSize = roomThresholdSize;
+            BorderSize = borderSize;
+
+            NeighbourWallsNeededToStayWall = neighbourWallsNeededToStayWall;
         }
     }
 }
