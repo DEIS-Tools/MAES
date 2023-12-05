@@ -176,10 +176,10 @@ namespace Maes.Map.MapGen
                 subMesh++;
             }
 
-            //_gizmoWallTriangles = _triangles2D;
-            //_gizmoWallVertices = _vertices2D;
-
             WallRoofRenderer.materials = Materials.ToArray();
+
+            wallRoofMesh.RecalculateNormals();
+
             // Apply mesh to wall roof
             WallRoof.mesh = wallRoofMesh;
         }
@@ -388,6 +388,7 @@ namespace Maes.Map.MapGen
                 innerWallsMesh.SetTriangles(wallTriangles[type], subMeshIndex);
                 subMeshIndex++;
             }
+            innerWallsMesh.RecalculateNormals();
 
             if (isMesh3D)
             {
