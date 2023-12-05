@@ -25,44 +25,32 @@ using System.Collections.Generic;
 using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
 using Maes.Map.MapGen;
+using Maes.Robot;
 using Maes.Utilities.Files;
 using UnityEngine;
 
-namespace Maes {
-    internal class ExampleProgram : MonoBehaviour {
-        private void Start() {
+namespace Maes
+{
+    internal class ExampleProgram : MonoBehaviour
+    {
+        private void Start()
+        {
             const int randomSeed = 123;
-            const int height = 100;
-            const int width = 100;
-            var buildingConfig = new BuildingMapConfig(
-                randomSeed,
-                width,
-                height,
-                20,
-                4,
-                6,
-                2,
-                2,
-                85,
-                1);
+            const int height = 50;
+            const int width = 50;
             var caveConfig = new CaveMapConfig(
                 randomSeed,
                 width,
-                height,
-                4,
-                4,
-                45,
-                10,
-                10,
-                1);
+                height);
             var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
 
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
-            
+
             // Setup configuration for a scenario
             var scenarioCave = new SimulationScenario(
-                seed: randomSeed, 
+                hasFinishedSim: (sim) => sim.ExplorationTracker.ExploredProportion > 0.5f,
+                seed: randomSeed,
                 mapSpawner: generator => generator.GenerateMap(caveConfig),
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                     map,
@@ -71,22 +59,31 @@ namespace Maes {
                     new Vector2Int(0, 0),
                     (seed) => new TnfExplorationAlgorithm(1, 10, seed)
                 ));
-                
-            var scenarioBuilding = new SimulationScenario(
-                seed: randomSeed, 
-                mapSpawner: generator => generator.GenerateMap(buildingConfig), 
-                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                    map,
-                    randomSeed,
-                    5,
-                    new Vector2Int(0, 0),
-                    (seed) => new TnfExplorationAlgorithm(1, 10, seed)
-                ));
-            //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
-            simulator.EnqueueScenario(scenarioCave);
-            //simulator.EnqueueScenario(scenarioBuilding);
-            //simulator.EnqueueScenario(scenarioBitMap);
-        
+            for (var i = 0; i < 10; i++)
+            {
+                var buildingConfig = new BuildingMapConfig(
+                    randomSeed+i,
+                    3,
+                    100,
+                    100);
+
+                var scenarioBuilding = new SimulationScenario(
+                    hasFinishedSim: sim => sim.ExplorationTracker.ExploredProportion > 0.3f || sim.SimulatedLogicTicks > 360,
+                    seed: randomSeed+i,
+                    mapSpawner: generator => generator.GenerateMap(buildingConfig),
+                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                        map,
+                        randomSeed+i,
+                        5,
+                        new Vector2Int(0, 0),
+                        (seed) => new TnfExplorationAlgorithm(1, 10, seed)
+                    ));
+                //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
+                //simulator.EnqueueScenario(scenarioCave);
+                simulator.EnqueueScenario(scenarioBuilding);
+                //simulator.EnqueueScenario(scenarioBitMap);
+            }
+
             simulator.PressPlayButton(); // Instantly enter play mode
         }
     }

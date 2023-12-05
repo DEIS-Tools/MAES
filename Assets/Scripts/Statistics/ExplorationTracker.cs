@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Maes.Map;
+using Maes.Map.MapGen;
 using Maes.Map.Visualization;
 using Maes.Robot;
 using Maes.Utilities;
@@ -34,7 +35,7 @@ namespace Maes.Statistics {
         private CoverageCalculator _coverageCalculator;
         
         // The low-resolution collision map used to create the smoothed map that robots are navigating 
-        private SimulationMap<bool> _collisionMap;
+        private SimulationMap<Tile> _collisionMap;
         private ExplorationVisualizer _explorationVisualizer;
 
         private SimulationMap<ExplorationCell> _explorationMap;
@@ -76,15 +77,15 @@ namespace Maes.Statistics {
             }
         }
 
-        public ExplorationTracker(SimulationMap<bool> collisionMap, ExplorationVisualizer explorationVisualizer, RobotConstraints constraints) {
+        public ExplorationTracker(SimulationMap<Tile> collisionMap, ExplorationVisualizer explorationVisualizer, RobotConstraints constraints) {
             var explorableTriangles = 0;
             _collisionMap = collisionMap;
             _explorationVisualizer = explorationVisualizer;
             _constraints = constraints;
-            _explorationMap = collisionMap.FMap(isCellSolid => {
-                if (!isCellSolid)
+            _explorationMap = collisionMap.FMap(tile => {
+                if (!Tile.IsWall(tile.Type))
                     explorableTriangles++;
-                return new ExplorationCell(isExplorable: !isCellSolid);
+                return new ExplorationCell(isExplorable: !Tile.IsWall(tile.Type));
             });
             _currentVisualizationMode = new AllRobotsExplorationVisualization(_explorationMap);
             _totalExplorableTriangles = explorableTriangles;

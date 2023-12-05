@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using static Maes.Map.MapGen.BitMapTypes;
 using Quaternion = UnityEngine.Quaternion;
+using Random = System.Random;
 using Vector3 = UnityEngine.Vector3;
-
 
 namespace Maes.Map.MapGen
 {
@@ -16,39 +16,36 @@ namespace Maes.Map.MapGen
         /// <summary>
         /// Generates a cave map using the unity game objects Plane, InnerWalls and WallRoof.
         /// </summary>
-        /// <param name="caveConfig">Determines how the cave map should look</param>
+        /// <param name="config">Determines how the cave map should look</param>
         /// <param name="wallHeight">A smaller wall height can make it easier to see the robots. Must be a positive value.</param>
         /// <returns> A SimulationMap represents a map of square tiles, where each tile is divided into 8 triangles as
         /// used in the Marching Squares Algorithm.</returns>
-        public void Init(CaveMapConfig config, float wallHeight = 2.0f)
+        public SimulationMap<Tile> GenerateCaveMap(CaveMapConfig config, float wallHeight = 2.0f)
         {
             _caveConfig = config;
             _wallHeight = wallHeight;
-        }
-
-        public SimulationMap<bool> GenerateCaveMap()
-        {
+            Tile.Rand = new Random(_caveConfig.RandomSeed);
             // Clear and destroy objects from previous map
-            clearMap();
+            ClearMap();
 
             var collisionMap = CreateCaveMapWithMesh(_caveConfig, _wallHeight);
 
-            ResizePlaneToFitMap(_caveConfig.bitMapHeight, _caveConfig.bitMapWidth);
+            ResizePlaneToFitMap(_caveConfig.BitMapHeight, _caveConfig.BitMapWidth);
 
             MovePlaneAndWallRoofToFitWallHeight(_wallHeight);
 
             return collisionMap;
         }
 
-        private SimulationMap<bool> CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 2.0f)
+        private SimulationMap<Tile> CreateCaveMapWithMesh(CaveMapConfig caveConfig, float wallHeight = 2.0f)
         {
             // Fill map with random walls and empty tiles (Looks kinda like a QR code)
             var randomlyFilledMap = CreateRandomFillMap(caveConfig);
 
             // Use smoothing runs to make sense of the noise
             // f.x. walls can only stay walls, if they have at least N neighbouring walls
-            int[,] smoothedMap = randomlyFilledMap;
-            for (int i = 0; i < caveConfig.smoothingRuns; i++)
+            var smoothedMap = randomlyFilledMap;
+            for (var i = 0; i < caveConfig.SmoothingRuns; i++)
             {
                 smoothedMap = SmoothMap(smoothedMap, caveConfig);
             }
@@ -56,248 +53,217 @@ namespace Maes.Map.MapGen
             var smoothedMapWithoutNarrowCorridors = WallOffNarrowCorridors(smoothedMap);
 
             // Clean up regions smaller than threshold for both walls and rooms.
-            var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(caveConfig.wallThresholdSize,
-                caveConfig.roomThresholdSize,
+            var (survivingRooms, cleanedMap) = RemoveRoomsAndWallsBelowThreshold(caveConfig.WallThresholdSize,
+                caveConfig.RoomThresholdSize,
                 smoothedMapWithoutNarrowCorridors);
+
             // Connect all rooms to main (the biggest) room
             var connectedMap = ConnectAllRoomsToMainRoom(survivingRooms, cleanedMap, caveConfig);
 
             // Ensure a border around the map
-            var borderedMap = CreateBorderedMap(connectedMap, caveConfig.bitMapWidth, caveConfig.bitMapHeight,
-                caveConfig.borderSize);
+            var borderedMap = CreateBorderedMap(connectedMap, caveConfig.BitMapWidth, caveConfig.BitMapHeight,
+                caveConfig.BorderSize);
 
             // Draw gizmo of map for debugging. Will draw the map in Scene upon selection.
-            // mapToDraw = borderedMap;
+            // MapToDraw = borderedMap;
 
             // The rooms should now reflect their relative shifted positions after adding borders round map.
-            survivingRooms.ForEach(r => r.OffsetCoordsBy(caveConfig.borderSize, caveConfig.borderSize));
+            survivingRooms.ForEach(r => r.OffsetCoordsBy(caveConfig.BorderSize, caveConfig.BorderSize));
 
-            MeshGenerator meshGen = GetComponent<MeshGenerator>();
-            var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as int[,], wallHeight,
+            var meshGen = GetComponent<MeshGenerator>();
+            var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as Tile[,], wallHeight,
                 false, survivingRooms);
 
             // Rotate to fit 2D view
-            _plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
+            Plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
 
             return collisionMap;
         }
 
         /**
-     * In order to make sure, that all algorithms can traverse all tiles the following must hold:
-     * - Every tile has 1 horizontal neighbour to each side, or 2 in either direction
-     * - Every tile has 1 vertical neighbour to each side, or 2 in either direction
-     * - Every tile has at least one diagonal neighbor on the line from bottom left to top right and top left to bottom right.
-     * This is due to some algorithms (e.g. B&M) assuming that any partially covered tile is completely covered
-     * This assumption leads to some narrow corridors traversable.
-     * If we block the corridors with walls in this function, the algorithm will consider them two separate rooms later on
-     * which will cause the algorithm to create a corridor of width n between them. This ensures traversability of all tiles. 
-     */
-        int[,] WallOffNarrowCorridors(int[,] map)
+         * In order to make sure, that all algorithms can traverse all tiles the following must hold:
+         * - Every tile has 1 horizontal neighbour to each side, or 2 in either direction
+         * - Every tile has 1 vertical neighbour to each side, or 2 in either direction
+         * - Every tile has at least one diagonal neighbor on the line from bottom left to top right and top left to bottom right.
+         * This is due to some algorithms (e.g. B&M) assuming that any partially covered tile is completely covered
+         * This assumption leads to some narrow corridors traversable.
+         * If we block the corridors with walls in this function, the algorithm will consider them two separate rooms later on
+         * which will cause the algorithm to create a corridor of width n between them. This ensures traversability of all tiles. 
+         */
+        private Tile[,] WallOffNarrowCorridors(Tile[,] map)
         {
-            var newMap = map.Clone() as int[,];
-            Queue<(int, int)> tilesToCheck = new Queue<(int, int)>();
+            var newMap = map.Clone() as Tile[,];
+            var tilesToCheck = new Queue<(int, int)>();
 
             // Populate queue with all tiles
-            for (int x = 0; x < newMap.GetLength(0); x++)
+            for (var x = 0; x < newMap!.GetLength(0); x++)
             {
-                for (int y = 0; y < newMap.GetLength(1); y++)
+                for (var y = 0; y < newMap.GetLength(1); y++)
                 {
-                    if (newMap[x, y] == ROOM_TYPE)
+                    if (newMap[x, y].Type == TileType.Room)
                         tilesToCheck.Enqueue((x, y));
                 }
             }
 
             while (tilesToCheck.Count > 0)
             {
-                var tile = tilesToCheck.Dequeue();
-                var x = tile.Item1;
-                var y = tile.Item2;
-                if (newMap[x, y] == WALL_TYPE)
+                var (x, y) = tilesToCheck.Dequeue();
+                if (Tile.IsWall(newMap[x, y].Type))
                     continue;
 
-                bool makeSolid = false;
                 // Check 3 tiles horizontally
-                bool horisontalClear = false;
-                if ((IsInMapRange(x - 1, y, newMap) && newMap[x - 1, y] == ROOM_TYPE) &&
-                    (IsInMapRange(x + 1, y, newMap) && newMap[x + 1, y] == ROOM_TYPE))
-                    horisontalClear = true;
-                if ((IsInMapRange(x + 1, y, newMap) && newMap[x + 1, y] == ROOM_TYPE) &&
-                    (IsInMapRange(x + 2, y, newMap) && newMap[x + 2, y] == ROOM_TYPE))
-                    horisontalClear = true;
-                if ((IsInMapRange(x - 1, y, newMap) && newMap[x - 1, y] == ROOM_TYPE) &&
-                    (IsInMapRange(x - 2, y, newMap) && newMap[x - 2, y] == ROOM_TYPE))
-                    horisontalClear = true;
+                var horizontalClear = 
+                    IsInMapRange(x - 1, y, newMap) && newMap[x - 1, y].Type == TileType.Room && IsInMapRange(x + 1, y, newMap) && newMap[x + 1, y].Type == TileType.Room || 
+                    IsInMapRange(x + 1, y, newMap) && newMap[x + 1, y].Type == TileType.Room && IsInMapRange(x + 2, y, newMap) && newMap[x + 2, y].Type == TileType.Room || 
+                    IsInMapRange(x - 1, y, newMap) && newMap[x - 1, y].Type == TileType.Room && IsInMapRange(x - 2, y, newMap) && newMap[x - 2, y].Type == TileType.Room;
 
                 // Check 3 tiles vertically
-                bool verticalClear = false;
-                if ((IsInMapRange(x, y - 1, newMap) && newMap[x, y - 1] == ROOM_TYPE) &&
-                    (IsInMapRange(x, y + 1, newMap) && newMap[x, y + 1] == ROOM_TYPE))
-                    verticalClear = true;
-                if ((IsInMapRange(x, y + 1, newMap) && newMap[x, y + 1] == ROOM_TYPE) &&
-                    (IsInMapRange(x, y + 2, newMap) && newMap[x, y + 2] == ROOM_TYPE))
-                    verticalClear = true;
-                if ((IsInMapRange(x, y - 1, newMap) && newMap[x, y - 1] == ROOM_TYPE) &&
-                    (IsInMapRange(x, y - 2, newMap) && newMap[x, y - 2] == ROOM_TYPE))
-                    verticalClear = true;
+                var verticalClear =
+                    IsInMapRange(x, y - 1, newMap) && newMap[x, y - 1].Type == TileType.Room && IsInMapRange(x, y + 1, newMap) && newMap[x, y + 1].Type == TileType.Room ||
+                    IsInMapRange(x, y + 1, newMap) && newMap[x, y + 1].Type == TileType.Room && IsInMapRange(x, y + 2, newMap) && newMap[x, y + 2].Type == TileType.Room ||
+                    IsInMapRange(x, y - 1, newMap) && newMap[x, y - 1].Type == TileType.Room && IsInMapRange(x, y - 2, newMap) && newMap[x, y - 2].Type == TileType.Room;
 
                 // Check 2 tiles from bottom left to top right clear
-                bool bottomLeftToTopRightClear = false;
-                if ((IsInMapRange(x - 1, y - 1, newMap) && newMap[x - 1, y - 1] == ROOM_TYPE))
-                    bottomLeftToTopRightClear = true;
-                if ((IsInMapRange(x + 1, y + 1, newMap) && newMap[x + 1, y + 1] == ROOM_TYPE))
-                    bottomLeftToTopRightClear = true;
+                var bottomLeftToTopRightClear =
+                    IsInMapRange(x - 1, y - 1, newMap) && newMap[x - 1, y - 1].Type == TileType.Room ||
+                    IsInMapRange(x + 1, y + 1, newMap) && newMap[x + 1, y + 1].Type == TileType.Room;
 
                 // Check 2 tiles from top left to bottom right clear
-                bool topLeftToBottomRightClear = false;
-                if ((IsInMapRange(x - 1, y + 1, newMap) && newMap[x - 1, y + 1] == ROOM_TYPE))
-                    topLeftToBottomRightClear = true;
-                if ((IsInMapRange(x + 1, y - 1, newMap) && newMap[x + 1, y - 1] == ROOM_TYPE))
-                    topLeftToBottomRightClear = true;
+                var topLeftToBottomRightClear =
+                    IsInMapRange(x - 1, y + 1, newMap) && newMap[x - 1, y + 1].Type == TileType.Room ||
+                    IsInMapRange(x + 1, y - 1, newMap) && newMap[x + 1, y - 1].Type == TileType.Room;
 
-                if (!(horisontalClear && verticalClear && bottomLeftToTopRightClear && topLeftToBottomRightClear))
-                {
-                    newMap[x, y] = WALL_TYPE;
-                    // enqueue neighbours to be checked again
-                    tilesToCheck.Enqueue((x - 1, y + 1)); // Top left
-                    tilesToCheck.Enqueue((x, y + 1)); // Top
-                    tilesToCheck.Enqueue((x + 1, y + 1)); // Top right
-                    tilesToCheck.Enqueue((x - 1, y)); // Left
-                    tilesToCheck.Enqueue((x + 1, y)); // Right
-                    tilesToCheck.Enqueue((x - 1, y - 1)); // Bottom left
-                    tilesToCheck.Enqueue((x, y - 1)); // bottom
-                    tilesToCheck.Enqueue((x + 1, y - 1)); // Bottom right
-                }
+                if (horizontalClear && verticalClear && bottomLeftToTopRightClear && topLeftToBottomRightClear)
+                    continue;
 
+                newMap[x, y] = Tile.GetRandomWall();
+                // enqueue neighbours to be checked again
+                for (var neighborX = x - 1; neighborX < x + 1; neighborX++)
+                    for (var neighborY = y - 1; neighborY < y + 1; neighborY++)
+                        if (IsInMapRange(neighborX, neighborY, newMap))
+                            tilesToCheck.Enqueue((neighborX, neighborY));
             }
 
             return newMap;
         }
 
-        private int[,] ConnectAllRoomsToMainRoom(List<Room> survivingRooms, int[,] map, CaveMapConfig config)
+        private Tile[,] ConnectAllRoomsToMainRoom(List<Room> survivingRooms, Tile[,] map, CaveMapConfig config)
         {
-            var connectedMap = map.Clone() as int[,];
+            var connectedMap = map.Clone() as Tile[,];
             survivingRooms.Sort();
-            survivingRooms[0].isMainRoom = true;
-            survivingRooms[0].isAccessibleFromMainRoom = true;
+            survivingRooms[0].IsMainRoom = true;
+            survivingRooms[0].IsAccessibleFromMainRoom = true;
 
-            return ConnectClosestRooms(survivingRooms, connectedMap, config.connectionPassagesWidth);
+            return ConnectClosestRooms(survivingRooms, connectedMap, config.ConnectionPassagesWidth);
         }
 
-        private int[,] ConnectClosestRooms(List<Room> allRooms, int[,] map, int passageWidth)
+        private Tile[,] ConnectClosestRooms(List<Room> allRooms, Tile[,] map, int passageWidth)
         {
-            int[,] connectedMap = map.Clone() as int[,];
-            List<Room> roomListA = new List<Room>();
-            List<Room> roomListB = new List<Room>();
+            var connectedMap = map.Clone() as Tile[,];
+            var roomListA = new List<Room>();
+            var roomListB = new List<Room>();
 
 
-            foreach (Room room in allRooms)
+            foreach (var room in allRooms)
             {
-                if (room.isAccessibleFromMainRoom)
-                {
+                if (room.IsAccessibleFromMainRoom)
                     roomListB.Add(room);
-                }
                 else
-                {
                     roomListA.Add(room);
-                }
             }
 
 
-            int bestDistance = 0;
-            Vector2Int bestTileA = new Vector2Int();
-            Vector2Int bestTileB = new Vector2Int();
-            Room bestRoomA = new Room();
-            Room bestRoomB = new Room();
-            bool possibleConnectionFound = false;
+            var bestDistance = 0;
+            var bestTileA = new Vector2Int();
+            var bestTileB = new Vector2Int();
+            var bestRoomA = new Room();
+            var bestRoomB = new Room();
+            var possibleConnectionFound = false;
 
-            foreach (Room roomA in roomListA)
+            foreach (var roomA in roomListA)
             {
-                foreach (Room roomB in roomListB)
+                foreach (var roomB in roomListB.Where(roomB => roomA != roomB && !roomA.IsConnected(roomB)))
                 {
-                    if (roomA == roomB || roomA.IsConnected(roomB))
+                    foreach (var tileA in roomA.EdgeTiles)
                     {
-                        continue;
-                    }
-
-                    for (int tileIndexA = 0; tileIndexA < roomA.edgeTiles.Count; tileIndexA++)
-                    {
-                        for (int tileIndexB = 0; tileIndexB < roomB.edgeTiles.Count; tileIndexB++)
+                        foreach (var tileB in roomB.EdgeTiles)
                         {
-                            Vector2Int tileA = roomA.edgeTiles[tileIndexA];
-                            Vector2Int tileB = roomB.edgeTiles[tileIndexB];
-                            int distanceBetweenRooms =
+                            var distanceBetweenRooms =
                                 (int)(Mathf.Pow(tileA.x - tileB.x, 2) + Mathf.Pow(tileA.y - tileB.y, 2));
 
-                            if (distanceBetweenRooms < bestDistance || !possibleConnectionFound)
-                            {
-                                bestDistance = distanceBetweenRooms;
-                                possibleConnectionFound = true;
-                                bestTileA = tileA;
-                                bestTileB = tileB;
-                                bestRoomA = roomA;
-                                bestRoomB = roomB;
-                            }
+                            if (distanceBetweenRooms >= bestDistance && possibleConnectionFound) 
+                                continue;
+
+                            bestDistance = distanceBetweenRooms;
+                            possibleConnectionFound = true;
+                            bestTileA = tileA;
+                            bestTileB = tileB;
+                            bestRoomA = roomA;
+                            bestRoomB = roomB;
                         }
                     }
                 }
             }
 
-            if (possibleConnectionFound)
-            {
-                CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB, connectedMap, passageWidth);
-                connectedMap = ConnectClosestRooms(allRooms, connectedMap, passageWidth);
-            }
+            if (!possibleConnectionFound) 
+                return connectedMap;
+
+            CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB, connectedMap, passageWidth);
+            connectedMap = ConnectClosestRooms(allRooms, connectedMap, passageWidth);
 
             return connectedMap;
         }
 
-        void CreatePassage(Room roomA, Room roomB, Vector2Int tileA, Vector2Int tileB, int[,] map, int passageWidth)
+        void CreatePassage(Room roomA, Room roomB, Vector2Int tileA, Vector2Int tileB, Tile[,] map, int passageWidth)
         {
             Room.ConnectRooms(roomA, roomB);
-            // Debug.DrawLine (CoordToWorldPoint (tileA), CoordToWorldPoint (tileB), Color.green, 10);
+            //Debug.DrawLine(CoordToWorldPoint(tileA, map.GetLength(0), map.GetLength(1)),
+            //    CoordToWorldPoint(tileB, map.GetLength(0), map.GetLength(1)), 
+            //    Color.green,
+            //    100);
 
-            List<Vector2Int> line = GetLine(tileA, tileB);
-            foreach (Vector2Int c in line)
+            var line = GetLine(tileA, tileB);
+            foreach (var c in line)
             {
                 MakeRoomOfLine(c, passageWidth, map);
             }
         }
 
-        private void MakeRoomOfLine(Vector2Int c, int r, int[,] map)
+        private void MakeRoomOfLine(Vector2Int c, int r, Tile[,] map)
         {
-            for (int x = -r; x <= r; x++)
+            for (var x = -r; x <= r; x++)
             {
-                for (int y = -r; y <= r; y++)
+                for (var y = -r; y <= r; y++)
                 {
-                    if (x * x + y * y <= r * r)
+                    if (x * x + y * y > r * r) 
+                        continue;
+
+                    var drawX = c.x + x;
+                    var drawY = c.y + y;
+                    if (IsInMapRange(drawX, drawY, map))
                     {
-                        int drawX = c.x + x;
-                        int drawY = c.y + y;
-                        if (IsInMapRange(drawX, drawY, map))
-                        {
-                            map[drawX, drawY] = ROOM_TYPE;
-                        }
+                        map[drawX, drawY] = new Tile(TileType.Room);
                     }
                 }
             }
         }
 
-        private List<Vector2Int> GetLine(Vector2Int from, Vector2Int to)
+        private static List<Vector2Int> GetLine(Vector2Int from, Vector2Int to)
         {
-            List<Vector2Int> line = new List<Vector2Int>();
+            var line = new List<Vector2Int>();
 
-            int x = from.x;
-            int y = from.y;
+            var x = from.x;
+            var y = from.y;
 
-            int dx = to.x - from.x;
-            int dy = to.y - from.y;
+            var dx = to.x - from.x;
+            var dy = to.y - from.y;
 
-            bool inverted = false;
-            int step = Math.Sign(dx);
-            int gradientStep = Math.Sign(dy);
+            var inverted = false;
+            var step = Math.Sign(dx);
+            var gradientStep = Math.Sign(dy);
 
-            int longest = Mathf.Abs(dx);
-            int shortest = Mathf.Abs(dy);
+            var longest = Mathf.Abs(dx);
+            var shortest = Mathf.Abs(dy);
 
             if (longest < shortest)
             {
@@ -309,8 +275,8 @@ namespace Maes.Map.MapGen
                 gradientStep = Math.Sign(dx);
             }
 
-            int gradientAccumulation = longest / 2;
-            for (int i = 0; i < longest; i++)
+            var gradientAccumulation = longest / 2;
+            for (var i = 0; i < longest; i++)
             {
                 line.Add(new Vector2Int(x, y));
 
@@ -324,19 +290,19 @@ namespace Maes.Map.MapGen
                 }
 
                 gradientAccumulation += shortest;
-                if (gradientAccumulation >= longest)
-                {
-                    if (inverted)
-                    {
-                        x += gradientStep;
-                    }
-                    else
-                    {
-                        y += gradientStep;
-                    }
+                if (gradientAccumulation < longest) 
+                    continue;
 
-                    gradientAccumulation -= longest;
+                if (inverted)
+                {
+                    x += gradientStep;
                 }
+                else
+                {
+                    y += gradientStep;
+                }
+
+                gradientAccumulation -= longest;
             }
 
             return line;
@@ -345,74 +311,77 @@ namespace Maes.Map.MapGen
         // Just used be drawing a line for debugging
         private Vector3 CoordToWorldPoint(Vector2Int tile, int width, int height)
         {
-            return new Vector3(-width / 2 + .5f + tile.x, 2, -height / 2 + .5f + tile.y);
+            return new Vector3(-width / 2 + .5f + tile.x, -height / 2 + .5f + tile.y, 2);
         }
-        int[,] CreateRandomFillMap(CaveMapConfig config)
-        {
-            int[,] randomFillMap = new int[config.bitMapWidth, config.bitMapHeight];
-            System.Random pseudoRandom = new System.Random(config.randomSeed);
 
-            for (int x = 0; x < config.bitMapWidth; x++)
+        private static Tile[,] CreateRandomFillMap(CaveMapConfig config)
+        {
+            var randomFillMap = new Tile[config.BitMapWidth, config.BitMapHeight];
+            var pseudoRandom = new Random(config.RandomSeed);
+
+            for (var x = 0; x < config.BitMapWidth; x++)
             {
-                for (int y = 0; y < config.bitMapHeight; y++)
+                for (var y = 0; y < config.BitMapHeight; y++)
                 {
-                    if (x == 0 || x == config.bitMapWidth - 1 || y == 0 || y == config.bitMapHeight - 1)
-                    {
-                        randomFillMap[x, y] = WALL_TYPE;
-                    }
+                    if (x == 0 || x == config.BitMapWidth - 1 || y == 0 || y == config.BitMapHeight - 1)
+                        randomFillMap[x, y] = Tile.GetRandomWall();
                     else
-                    {
-                        randomFillMap[x, y] = (pseudoRandom.Next(0, 100) < config.randomFillPercent)
-                            ? WALL_TYPE
-                            : ROOM_TYPE;
-                    }
+                        randomFillMap[x, y] = pseudoRandom.Next(0, 100) < config.RandomFillPercent
+                            ? Tile.GetRandomWall()
+                            : new Tile(TileType.Room);
                 }
             }
 
             return randomFillMap;
         }
 
-        int[,] SmoothMap(int[,] map, CaveMapConfig config)
+        private Tile[,] SmoothMap(Tile[,] map, CaveMapConfig config)
         {
-            var smoothedMap = map.Clone() as int[,];
-            for (int x = 0; x < config.bitMapWidth; x++)
+            var smoothedMap = map.Clone() as Tile[,];
+            for (var x = 0; x < config.BitMapWidth; x++)
             {
-                for (int y = 0; y < config.bitMapHeight; y++)
+                for (var y = 0; y < config.BitMapHeight; y++)
                 {
-                    int neighbourWallTiles = GetSurroundingWallCount(x, y, map);
+                    var (neighborWallTiles, neighborWallType) = GetSurroundingWallCount(x, y, map);
 
-                    if (neighbourWallTiles > config.neighbourWallsNeededToStayWall)
-                        smoothedMap[x, y] = WALL_TYPE;
-                    else if (neighbourWallTiles < config.neighbourWallsNeededToStayWall)
-                        smoothedMap[x, y] = ROOM_TYPE;
+                    if (neighborWallTiles >= config.NeighbourWallsNeededToStayWall)
+                        smoothedMap![x, y] = new Tile(neighborWallType);
+                    else
+                        smoothedMap![x, y] = new Tile(TileType.Room);
                 }
             }
 
             return smoothedMap;
         }
 
-        int GetSurroundingWallCount(int gridX, int gridY, int[,] map)
+        private (int, TileType) GetSurroundingWallCount(int gridX, int gridY, Tile[,] map)
         {
-            int wallCount = 0;
-            for (int neighbourX = gridX - 1; neighbourX <= gridX + 1; neighbourX++)
+            var wallCount = 0;
+            var wallTypes = new Dictionary<TileType,int>();
+            for (var neighborX = gridX - 1; neighborX <= gridX + 1; neighborX++)
             {
-                for (int neighbourY = gridY - 1; neighbourY <= gridY + 1; neighbourY++)
+                for (var neighborY = gridY - 1; neighborY <= gridY + 1; neighborY++)
                 {
-                    if (IsInMapRange(neighbourX, neighbourY, map))
+                    if (IsInMapRange(neighborX, neighborY, map))
                     {
-                        if (neighbourX != gridX || neighbourY != gridY)
-                        {
-                            wallCount += map[neighbourX, neighbourY];
-                        }
+                        if ((neighborX == gridX || neighborY == gridY) || !Tile.IsWall(map[neighborX, neighborY].Type))
+                            continue;
+                        wallCount += 1;
+                        wallTypes[map[neighborX, neighborY].Type] = wallTypes.GetValueOrDefault(map[neighborX, neighborY].Type)+1;
                     }
                     else
                     {
                         wallCount++;
+                        var tile = Tile.GetRandomWall();
+                        wallTypes[tile.Type] = wallTypes.GetValueOrDefault(tile.Type)+1;
                     }
+
                 }
             }
+            
+            var mostCommonType = wallCount > 0 ? wallTypes.Aggregate((l,r) => l.Value > r.Value ? l : r).Key : TileType.Room;
 
-            return wallCount;
+            return (wallCount, mostCommonType);
         }
     }
 }
