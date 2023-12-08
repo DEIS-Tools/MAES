@@ -244,8 +244,8 @@ namespace Maes.Map {
         public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false, bool beOptimistic = true) {
             var approxPosition = GetApproximatePosition();
             return beOptimistic 
-                ? _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this) 
-                : _aStar.GetPath(Vector2Int.RoundToInt(approxPosition), target, this);
+                ? _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this, acceptPartialPaths = true) 
+                : _aStar.GetPath(Vector2Int.RoundToInt(approxPosition), target, this, acceptPartialPaths = true);
         }
         
         /// <summary>
@@ -287,7 +287,7 @@ namespace Maes.Map {
         /// Calculates, and returns, a path from the robots current position to the target. Will reduce the path to a list of <see cref="PathStep"/>s.
         /// </summary>
         public List<PathStep>? GetTnfPathAsPathSteps(Vector2Int target) {
-            var path = GetPath(target, beOptimistic: false);
+            var path = GetPath(target, beOptimistic: true, acceptPartialPaths: true);
             return path == null
                 ? null
                 : _aStar.PathToSteps(path, 0f);
