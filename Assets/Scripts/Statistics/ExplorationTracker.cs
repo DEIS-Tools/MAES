@@ -63,7 +63,9 @@ namespace Maes.Statistics {
 
         public List<SnapShot<float>> _coverSnapshots = new List<SnapShot<float>>();
         public List<SnapShot<float>> _exploreSnapshots = new List<SnapShot<float>>();
-
+        public List<SnapShot<float>> _distanceSnapshots = new List<SnapShot<float>>();
+        private float mostRecentDistance;
+        
         private VisualizationMode _currentVisualizationMode;
 
         public struct SnapShot<TValue> {
@@ -98,8 +100,26 @@ namespace Maes.Statistics {
         public void CreateSnapShot() {
             _coverSnapshots.Add(new SnapShot<float>(_currentTick, CoverageProportion * 100));
             _exploreSnapshots.Add(new SnapShot<float>(_currentTick, ExploredProportion * 100));
+            _distanceSnapshots.Add(new SnapShot<float>(_currentTick, mostRecentDistance));
         }
 
+        private float calculateAverageDistance(List<MonaRobot> robots){
+            List<float> averages = new List<float>();
+            float average = 0;
+            float sum = 0;
+            foreach (var robot in robots) {
+                var robotPosition = robot.transform.position;
+                foreach (var otherRobot in robots){
+                    var otherRobotPosition = otherRobot.transform.position;
+                    averages.Add((float)Math.Sqrt(Math.Pow(robotPosition.x - otherRobotPosition.x, 2) + Math.Pow(robotPosition.y - otherRobotPosition.y, 2) + Math.Pow(robotPosition.z - otherRobotPosition.z, 2)));
+                }
+            }
+            foreach (var number in averages) {
+                sum += number;
+            }
+            average = sum / averages.Count;
+            return average;
+        }
         private void UpdateCoverageStatus(MonaRobot robot) {
             var newlyCoveredCells = new List<(int, ExplorationCell)> {};
             var robotPos = robot.transform.position;
@@ -128,7 +148,10 @@ namespace Maes.Statistics {
             PerformRayTracing(robots, shouldUpdateSlamMap);
 
             // In the first tick, the robot does not have a position in the slam map.
-            if (!_isFirstTick) foreach (var robot in robots) UpdateCoverageStatus(robot);
+            if (!_isFirstTick) {
+                foreach (var robot in robots) UpdateCoverageStatus(robot);
+                calculateAverageDistance(robots);
+            } 
             else _isFirstTick = false;
 
             if (_constraints.AutomaticallyUpdateSlam) {

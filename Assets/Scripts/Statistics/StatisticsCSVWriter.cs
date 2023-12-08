@@ -29,7 +29,8 @@ namespace Maes.Statistics {
     internal class StatisticsCSVWriter {
         private readonly Simulation _simulation;
         private readonly List<SnapShot<float>> _coverSnapShots;
-        private readonly List<SnapShot<float>> _exploreSnapshots;
+        private readonly List<SnapShot<float>> _exploreSnapShots;
+        private readonly List<SnapShot<float>> _distanceSnapShots;
         private readonly Dictionary<int, SnapShot<bool>> _allAgentsConnectedSnapShots;
         public readonly Dictionary<int, SnapShot<float>> _biggestClusterPercentageSnapShots;
         private string path;
@@ -37,13 +38,14 @@ namespace Maes.Statistics {
 
         public StatisticsCSVWriter(Simulation simulation, string fileNameWithoutExtension) {
             _coverSnapShots = simulation.ExplorationTracker._coverSnapshots;
-            _exploreSnapshots = simulation.ExplorationTracker._exploreSnapshots;
+            _exploreSnapShots = simulation.ExplorationTracker._exploreSnapshots;
+            _distanceSnapShots = simulation.ExplorationTracker._distanceSnapshots;
             _allAgentsConnectedSnapShots = simulation._communicationManager.CommunicationTracker.InterconnectionSnapShot;
             _biggestClusterPercentageSnapShots = simulation._communicationManager.CommunicationTracker.BiggestClusterPercentageSnapshots;
             
             _simulation = simulation;
             var resultForFileName =
-                $"e{(int)_exploreSnapshots[_exploreSnapshots.Count - 1].Value}-c{(int)_coverSnapShots[_coverSnapShots.Count - 1].Value}";
+                $"e{(int)_exploreSnapShots[_exploreSnapShots.Count - 1].Value}-c{(int)_coverSnapShots[_coverSnapShots.Count - 1].Value}";
             path = GlobalSettings.StatisticsOutPutPath + fileNameWithoutExtension + "-" + resultForFileName + ".csv";
         }
 
@@ -53,10 +55,10 @@ namespace Maes.Statistics {
             for (int i = 0; i < _coverSnapShots.Count; i++) {
                 var tick = _coverSnapShots[i].Tick;
                 var coverage = "" + _coverSnapShots[i].Value;
-                var explore = "" +_exploreSnapshots[i].Value;
-
+                var explore = "" +_exploreSnapShots[i].Value;
+                var distance = ""+_distanceSnapShots[i].Value;
                 StringBuilder line = new StringBuilder();
-                line.Append($"{"" + tick}{separator}{coverage}{separator}{explore}{separator}");
+                line.Append($"{"" + tick}{separator}{coverage}{separator}{explore}{separator}{distance}{separator}");
                 if (_allAgentsConnectedSnapShots.ContainsKey(tick)) {
                     var allAgentsInterconnectedString = _allAgentsConnectedSnapShots[tick].Value ? "" + 1 : "" + 0;
                     line.Append($"{allAgentsInterconnectedString}");
@@ -65,7 +67,7 @@ namespace Maes.Statistics {
                 if (_biggestClusterPercentageSnapShots.ContainsKey(tick)) {
                     line.Append($"{_biggestClusterPercentageSnapShots[tick].Value}");
                 }
-
+                
                 csv.AppendLine(line.ToString());
             }
             

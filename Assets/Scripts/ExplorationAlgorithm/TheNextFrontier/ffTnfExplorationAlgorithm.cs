@@ -31,7 +31,7 @@ using Maes.Utilities;
 using UnityEngine;
 
 namespace Maes.ExplorationAlgorithm.TheNextFrontier {
-    public class TnfExplorationAlgorithm : IExplorationAlgorithm {
+    public class FfTnfExplorationAlgorithm : IExplorationAlgorithm { //This whole thing should probably just be an option or subclass of normal tnf, this is bad code
         private static class Gaussian {
             private const float A = 5f, B = .5f, C = .1f; // Magnitude, Mean, and Spread.
             private const float Alpha = -1 / (C * C * 2);
@@ -94,7 +94,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
             public float UtilityValue { get; set; }
         }
         
-        public TnfExplorationAlgorithm(int alpha, int beta, int randomSeed) {
+        public FfTnfExplorationAlgorithm(int alpha, int beta, int randomSeed) {
             Alpha = alpha;
             Beta = beta;
             _robotTnfStatus = TnfStatus.AwaitNextFrontier;
@@ -156,8 +156,23 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
             return sum;
         }
 
+        private float FrontierCoordinationFactor(Frontier frontier) {
+            if (_currentDestinations.Count <= 0) {
+                return 0;
+            }
+            var sum = 0f;
+
+            foreach (var destination in _currentDestinations) {
+                var destinationCoordinates = destination.Item2;
+                var normalizerConstant = _frontiers.Max(f => f.cells.Select(c => Vector2.Distance(destinationCoordinates, c.Item1)).Max());
+                sum += WavefrontNormalized(frontier, destinationCoordinates, normalizerConstant);
+            }
+            _currentDestinations.Clear();
+            return sum;
+        }
+
         private float UtilityFunction(Frontier frontier, float normalizerConstant) {
-            return InformationFactor(frontier) + DistanceFactor(frontier, _robotPos, normalizerConstant) - CoordinationFactor(frontier);
+            return InformationFactor(frontier) + DistanceFactor(frontier, _robotPos, normalizerConstant) - CoordinationFactor(frontier) - (FrontierCoordinationFactor(frontier) * 1f);
         }
 
         public void UpdateLogic() {
