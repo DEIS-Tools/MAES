@@ -43,7 +43,7 @@ namespace Maes {
         public ExplorationVisualizer explorationVisualizer;
 
         private SimulationScenario _scenario;
-        private SimulationMap<bool> _collisionMap;
+        private SimulationMap<Tile> _collisionMap;
         public List<MonaRobot> Robots;
 
         [CanBeNull] private MonaRobot _selectedRobot;

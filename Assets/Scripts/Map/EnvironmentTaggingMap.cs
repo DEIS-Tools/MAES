@@ -22,6 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Maes.Map.MapGen;
 using UnityEngine;
 
 namespace Maes.Map {
@@ -36,7 +37,7 @@ namespace Maes.Map {
         private int _widthInTiles, _heightInTiles;
         private Vector2 offset;
 
-        public EnvironmentTaggingMap(SimulationMap<bool> collisionMap) {
+        public EnvironmentTaggingMap(SimulationMap<Tile> collisionMap) {
             this._widthInTiles = collisionMap.WidthInTiles;
             this._heightInTiles = collisionMap.HeightInTiles;
             this.offset = collisionMap.ScaledOffset;

@@ -130,16 +130,16 @@ namespace Maes.Map {
         /// Returns SLAM status of a given tile. Aggregates with neighbours up, right, and up+right (to compensate for half resolution).
         /// </summary>
         /// <param name="localCoordinate">To coarse-grained coordinate to get the status of.</param>
-        /// <param name="optismistic"><br/>
+        /// <param name="optimistic"><br/>
         /// <li>if <b>true</b>, uses <see cref="AggregateStatusOptimistic"/> to get status on neighbours.</li><br/>
         /// <li>if <b>false</b>, uses <see cref="AggregateStatusPessimistic"/> to get status on neighbours.</li>
         /// </param>
         /// <returns>the aggregates status of the tile as a <see cref="SlamMap.SlamTileStatus"/>.</returns>
-        public SlamMap.SlamTileStatus GetTileStatus(Vector2Int localCoordinate, bool optismistic = false) {
+        public SlamMap.SlamTileStatus GetTileStatus(Vector2Int localCoordinate, bool optimistic = false) {
             var slamCoord = ToSlamMapCoordinate(localCoordinate);
 
             var status = _slamMap.GetStatusOfTile(slamCoord);
-            if (optismistic) {
+            if (optimistic) {
                 status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right));
                 status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up));
                 status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right + Vector2Int.up));
@@ -297,7 +297,7 @@ namespace Maes.Map {
         public bool IsSolid(Vector2Int coordinate) {
             if (_excludedTiles.Contains(coordinate))
                 return true;
-            var tileStatus = GetTileStatus(coordinate, optismistic: false);
+            var tileStatus = GetTileStatus(coordinate, optimistic: false);
             return tileStatus != SlamMap.SlamTileStatus.Open;
         }
 

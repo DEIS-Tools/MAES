@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 532054841618787824}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -60,8 +60,7 @@ MeshRenderer:
   m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 4e5b4ec9ab436472ebcbd13c4736dc16, type: 2}
+  m_Materials: []
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -110,7 +109,7 @@ Transform:
   m_GameObject: {fileID: 6267725986360238118}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -143,8 +142,7 @@ MeshRenderer:
   m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 4e5b4ec9ab436472ebcbd13c4736dc16, type: 2}
+  m_Materials: []
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -215,10 +213,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ceea915d2f74452ca2449b05efafc33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  innerWalls3D: {fileID: 6267725987322426809}
-  innerWalls2D: {fileID: 7158191038681757733}
-  wallRoof: {fileID: 6267725986360238117}
-  include3DCollider: 1
+  InnerWalls3D: {fileID: 6267725987322426809}
+  InnerWalls2D: {fileID: 7158191038681757733}
+  InnerWallsRenderer3D: {fileID: 6267725987322426806}
+  InnerWallsRenderer2D: {fileID: 1227545400565598016}
+  WallRoof: {fileID: 6267725986360238117}
+  WallRoofRenderer: {fileID: 6267725986360238116}
+  Materials:
+  - {fileID: 2100000, guid: e9a1893d4339b8d4491de78238bfcd19, type: 2}
+  - {fileID: 2100000, guid: 4f9fba080a4896e47bbf47147814940d, type: 2}
+  - {fileID: 2100000, guid: 5e8ed97749e472a4c9123bc956cf671c, type: 2}
+  Include3DCollider: 0
 --- !u!114 &5448115849239720796
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -258,9 +263,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6267725987320665256}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 10, y: 1, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6267725986478517704}
@@ -408,8 +413,7 @@ MeshRenderer:
   m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 4e5b4ec9ab436472ebcbd13c4736dc16, type: 2}
+  m_Materials: []
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

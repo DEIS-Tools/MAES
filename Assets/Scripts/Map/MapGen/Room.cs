@@ -25,116 +25,77 @@ using System.Linq;
 using UnityEngine;
 using static Maes.Utilities.Geometry;
 
-namespace Maes.Map.MapGen {
-    public class Room : IComparable<Room> {
-        public List<Vector2Int> tiles;
+namespace Maes.Map.MapGen
+{
+    public class Room : IComparable<Room>
+    {
+        public List<Vector2Int> Tiles { get; set; }
 
-        public bool[,] tilesAsArray; // If true, it is contained in room
+        public bool[,] TilesAsArray { get; set; } // If true, it is contained in room
         // The tiles next to the walls surrounding the room
-        public List<Vector2Int> edgeTiles;
-        public List<Room> connectedRooms;
-        public int roomSize;
-        public bool isAccessibleFromMainRoom;
-        public bool isMainRoom;
-        public bool isHallWay;
+        public List<Vector2Int> EdgeTiles { get; set; }
+        public List<Room> ConnectedRooms { get; set; }
+        public int RoomSize { get; set; }
+        public bool IsAccessibleFromMainRoom { get; set; }
+        public bool IsMainRoom { get; set; }
+        public bool IsHallWay { get; set; }
 
-        public Room() {
+        public Room()
+        {
         }
 
-        public Room(List<Vector2Int> roomTiles, int[,] map) {
-            tiles = roomTiles;
-            roomSize = tiles.Count;
-            connectedRooms = new List<Room>();
-            tilesAsArray = new bool[map.GetLength(0), map.GetLength(1)];
+        public Room(List<Vector2Int> roomTiles, Tile[,] map)
+        {
+            Tiles = roomTiles;
+            RoomSize = Tiles.Count;
+            ConnectedRooms = new List<Room>();
+            TilesAsArray = new bool[map.GetLength(0), map.GetLength(1)];
 
-            edgeTiles = new List<Vector2Int>();
-            foreach (Vector2Int tile in tiles) {
-                tilesAsArray[tile.x, tile.y] = true;
-                for (int x = tile.x - 1; x <= tile.x + 1; x++) {
-                    for (int y = tile.y - 1; y <= tile.y + 1; y++) {
-                        if (x == tile.x || y == tile.y) {
-                            if (map[x, y] == BitMapTypes.WALL_TYPE) {
-                                edgeTiles.Add(tile);
-                            }
-                        }
+            EdgeTiles = new List<Vector2Int>();
+            foreach (var tile in Tiles)
+            {
+                TilesAsArray[tile.x, tile.y] = true;
+                for (var x = tile.x - 1; x <= tile.x + 1; x++)
+                {
+                    for (var y = tile.y - 1; y <= tile.y + 1; y++)
+                    {
+                        if ((x != tile.x && y != tile.y) || !IsInMapRange(x, y, map))
+                            continue;
+                        if (Tile.IsWall(map[x, y].Type))
+                            EdgeTiles.Add(tile);
                     }
                 }
             }
 
-            this.isHallWay = map[tiles[0].x, tiles[0].y] == BitMapTypes.HALL_TYPE;
+            EdgeTiles = EdgeTiles.Distinct().ToList();
+            IsHallWay = map[Tiles[0].x, Tiles[0].y].Type == TileType.Hall;
         }
 
-        public bool IsWithinRangeOf(Room other, int range) {
-            foreach (var tile in this.edgeTiles) {
-                foreach (var oTile in other.edgeTiles) {
-                    if(ManhattanDistance(tile, oTile) <= range)
-                        return true;
-                }
-            }
-
-            return false;
+        private static bool IsInMapRange<T>(int x, int y, T[,] map)
+        {
+            return x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1);
         }
 
-        public List<Vector2Int> GetWallSurroundingRoom(int wallThickness = 1) {
-            var surroundingWalls = new HashSet<Vector2Int>();
-
-            int smallestXValue, biggestXValue;
-            int smallestYValue, biggestYValue;
-            
-            /*smallestXValue = tiles.Aggregate((agg, next) => next.x < agg.x ? next : agg).x;
-            biggestXValue = tiles.Aggregate((agg, next) => next.x > agg.x ? next : agg).x;
-            smallestYValue = tiles.Aggregate((agg, next) => next.y < agg.y ? next : agg).y;
-            biggestYValue = tiles.Aggregate((agg, next) => next.y > agg.y ? next : agg).y;*/
-            smallestXValue = tiles.Min(e => e.x);
-            biggestXValue = tiles.Max(e => e.x);
-            smallestYValue = tiles.Min(e => e.y);
-            biggestYValue = tiles.Max(e => e.y);
-
-            for (int x = smallestXValue - wallThickness; x <= biggestXValue + wallThickness; x++) {
-                for (int y = smallestYValue - wallThickness; y <= biggestYValue + wallThickness; y++) {
-                    // Check if neighbours are within tiles && this is not in tiles
-                    var c = new Vector2Int(x, y);
-                    bool isSurroundingWall = false;
-                    // If any neighbor is within our tiles, we are part of the surrounding wall
-                    for (int xn = x - wallThickness; xn <= x + wallThickness; xn++) {
-                        for (int yn = y - wallThickness; yn <= y + wallThickness; yn++) {
-                            // Is within bounds of map
-                            if ((0 <= xn && xn < tilesAsArray.GetLength(0)) && (0 <= yn && yn < tilesAsArray.GetLength(1))) {
-                                if (tilesAsArray[xn, yn] == true) // if contained in tiles
-                                    isSurroundingWall = true;
-                            }
-                        }
-                    }
-                    if(isSurroundingWall)
-                        surroundingWalls.Add(c);
-
-                    // If it is between the edge tiles, i.e. in the middle, continue!
-                    /*if ((smallestXValue <= x && x <= biggestXValue) && (smallestYValue <= y && y <= biggestYValue))
-                        continue;
-                    
-                    c = new Coord(x, y);
-                    surroundingWalls.Add(c);*/
-                }
-            }
-
-            /*for (int x = smallestXValue - wallThickness; x <= biggestXValue + wallThickness; x++) {
-                for (int y = smallestYValue - wallThickness; y <= biggestYValue + wallThickness; y++) {
-                    // If adjacent with a tile, but not in tiles
-                    var c = new Coord(x, y);
-                    foreach (var t in this.edgeTiles) {
-                        // It must not be part of the room, but adjacent to a tile in the room
-                        if (c.IsAdjacentTo(t) && !this.tiles.Contains(c)) {
-                            surroundingWalls.Add(c);
-                        }
-                    }
-                }
-            }*/
-
-            return surroundingWalls.ToList();
+        public bool IsWithinRangeOf(Room other, int range)
+        {
+            return EdgeTiles.Any(tile => other.EdgeTiles.Any(oTile => ManhattanDistance(tile, oTile) <= range));
         }
 
-        public List<Vector2Int> GetSharedWallTiles(Room other, int wallThickness = 1) {
-            var walls = this.GetWallSurroundingRoom(wallThickness);
+        public List<Vector2Int> GetWallSurroundingRoom(int wallThickness = 1)
+        {
+            var outsideTiles = new List<Vector2Int>();
+            // Add tiles surrounding the room, going a tile further with each step
+            foreach (var tile in Tiles)
+                for (var x = -wallThickness; x < wallThickness; x++)
+                    for (var y = -wallThickness; y < wallThickness; y++)
+                        outsideTiles.Add(new Vector2Int(tile.x+x, tile.y+y));
+
+            return outsideTiles.Where(vec => IsInMapRange(vec.x, vec.y, TilesAsArray)).Distinct().ToList();
+        }
+
+        public List<Vector2Int> GetSharedWallTiles(Room other, int wallThickness = 1)
+        {
+            var walls = GetWallSurroundingRoom(wallThickness);
             var otherWalls = other.GetWallSurroundingRoom(wallThickness);
 
             var intersect = walls.Intersect(otherWalls).ToList();
@@ -142,53 +103,54 @@ namespace Maes.Map.MapGen {
             return intersect;
         }
 
-        public void SetAccessibleFromMainRoom() {
-            if (!isAccessibleFromMainRoom) {
-                isAccessibleFromMainRoom = true;
-                foreach (Room connectedRoom in connectedRooms) {
-                    connectedRoom.SetAccessibleFromMainRoom();
-                }
+        public void SetAccessibleFromMainRoom()
+        {
+            if (IsAccessibleFromMainRoom)
+                return;
+            IsAccessibleFromMainRoom = true;
+            foreach (var connectedRoom in ConnectedRooms)
+            {
+                connectedRoom.SetAccessibleFromMainRoom();
             }
         }
 
-        public static void ConnectRooms(Room roomA, Room roomB) {
-            if (roomA.isAccessibleFromMainRoom) {
+        public static void ConnectRooms(Room roomA, Room roomB)
+        {
+            if (roomA.IsAccessibleFromMainRoom)
+            {
                 roomB.SetAccessibleFromMainRoom();
             }
-            else if (roomB.isAccessibleFromMainRoom) {
+            else if (roomB.IsAccessibleFromMainRoom)
+            {
                 roomA.SetAccessibleFromMainRoom();
             }
 
-            roomA.connectedRooms.Add(roomB);
-            roomB.connectedRooms.Add(roomA);
+            roomA.ConnectedRooms.Add(roomB);
+            roomB.ConnectedRooms.Add(roomA);
         }
 
-        public bool IsConnected(Room otherRoom) {
-            return connectedRooms.Contains(otherRoom);
+        public bool IsConnected(Room otherRoom)
+        {
+            return ConnectedRooms.Contains(otherRoom);
         }
 
-        public int CompareTo(Room otherRoom) {
-            return otherRoom.roomSize.CompareTo(roomSize);
+        public int CompareTo(Room otherRoom)
+        {
+            return otherRoom.RoomSize.CompareTo(RoomSize);
         }
 
-        public int RoomSizeExcludingEdgeTiles() {
-            return tiles.Count - edgeTiles.Count;
+        public int RoomSizeExcludingEdgeTiles()
+        {
+            return Tiles.Count - EdgeTiles.Count;
         }
 
-        public void OffsetCoordsBy(int x, int y) {
-            var newTiles = new List<Vector2Int>();
-            var newEdgeTiles = new List<Vector2Int>();
+        public void OffsetCoordsBy(int x, int y)
+        {
+            var newTiles = Tiles.Select(t => new Vector2Int(t.x + x, t.y + y)).ToList();
+            var newEdgeTiles = EdgeTiles.Select(t => new Vector2Int(t.x + x, t.y + y)).ToList();
 
-            foreach (var t in tiles) {
-                newTiles.Add(new Vector2Int(t.x + x, t.y + y));
-            }
-
-            foreach (var t in edgeTiles) {
-                newEdgeTiles.Add(new Vector2Int(t.x + x, t.y + y));
-            }
-
-            this.tiles = newTiles;
-            this.edgeTiles = newEdgeTiles;
+            Tiles = newTiles;
+            EdgeTiles = newEdgeTiles;
         }
     }
 }
