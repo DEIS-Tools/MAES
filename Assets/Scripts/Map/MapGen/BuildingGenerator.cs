@@ -72,7 +72,7 @@ namespace Maes.Map.MapGen
             var connectedRooms = new List<Room>();
             var nonConnectedRooms = new List<Room>();
 
-            var wallThickness = config.WallThickness;
+            var wallThickness = config.WallThickness+1;
 
             foreach (var room in sortedRooms)
             {
