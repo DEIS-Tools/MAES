@@ -20,14 +20,13 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
 using Maes.Map.MapGen;
 using Maes.Robot;
 using Maes.Utilities.Files;
 using UnityEngine;
+using Maes.Robot;
 
 namespace Maes
 {
@@ -44,6 +43,31 @@ namespace Maes
                 height);
             var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
 
+            var robotConstraints = new RobotConstraints(
+                senseNearbyAgentsRange: 5f,
+                senseNearbyAgentsBlockedByWalls: true,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 10,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f,
+                distributeSlam: false,
+                environmentTagReadRange: 4.0f,
+                slamRayTraceRange: 7f,
+                relativeMoveSpeed: 1f,
+                agentRelativeSize: 0.6f,
+                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) => {
+                    // Blocked by walls
+                    if (distanceThroughWalls > 0) {
+                        return false;
+                    }
+                    // Max distance 15.0f
+                    else if (15.0f < distanceTravelled) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            );
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
 
