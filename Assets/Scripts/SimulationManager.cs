@@ -164,7 +164,7 @@ namespace Maes {
         private bool UpdateSimulation() {
             if (_currentScenario != null && _currentScenario.HasFinishedSim(CurrentSimulation)) {
                 if (GlobalSettings.ShouldWriteCSVResults && _currentScenario.HasFinishedSim(CurrentSimulation))
-                    //CreateStatisticsFile();
+                    CreateStatisticsFile();
                 if (_scenarios.Count != 0) { //If last simulation, let us keep looking around in it
                     RemoveCurrentSimulation();
                 }

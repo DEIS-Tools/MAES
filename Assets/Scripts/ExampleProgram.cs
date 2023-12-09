@@ -92,7 +92,6 @@ namespace Maes
                     100);
 
                 var scenarioBuilding = new SimulationScenario(
-                    hasFinishedSim: sim => sim.ExplorationTracker.ExploredProportion > 0.3f || sim.SimulatedLogicTicks > 360,
                     seed: randomSeed+i,
                     mapSpawner: generator => generator.GenerateMap(buildingConfig),
                     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
