@@ -151,7 +151,7 @@ namespace Maes.Statistics {
             // In the first tick, the robot does not have a position in the slam map.
             if (!_isFirstTick) {
                 foreach (var robot in robots) UpdateCoverageStatus(robot);
-                calculateAverageDistance(robots);
+                mostRecentDistance = calculateAverageDistance(robots);
             } 
             else _isFirstTick = false;
 

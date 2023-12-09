@@ -66,8 +66,8 @@ namespace Maes
             RobotSpawner = robotSpawner ?? ((map, spawner) => spawner.SpawnRobotsTogether( map, seed, 2, 
                 Vector2Int.zero, (robotSeed) => new RandomExplorationAlgorithm(robotSeed)));
             RobotConstraints = robotConstraints ?? new RobotConstraints();
-            StatisticsFileName = statisticsFileName ?? $"statistics_{DateTime.Now.ToShortDateString().Replace('/','-')} " +
-                $"_{DateTime.Now.ToShortTimeString().Replace(' ','-')}";
+            StatisticsFileName = statisticsFileName ?? $"statistics_{DateTime.Now.ToShortDateString().Replace('/','-')}" +
+                $"_{DateTime.Now.ToLongTimeString().Replace(' ','-').Replace(':','-')}";
             
         }
         
