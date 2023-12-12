@@ -25,6 +25,7 @@ using Maes.Map.MapGen;
 using Maes.Statistics;
 using NUnit.Framework;
 using UnityEngine;
+using Random = System.Random;
 
 namespace EditTests {
     public class CoverageCalculatorTest {
@@ -32,7 +33,7 @@ namespace EditTests {
         private CoverageCalculator _coverageCalculator;
         private SimulationMap<Tile> _collisionMap;
         private SimulationMap<ExplorationCell> _explorationMap;
-
+        private const int RandomSeed = 123;
         private const int Width=50, Height=50;
 
         [SetUp]
@@ -45,6 +46,7 @@ namespace EditTests {
         // Generates a collision map where only the edge tiles are solid
         private static SimulationMap<Tile> GenerateCollisionMap() {
             SimulationMapTile<Tile>[,] tiles = new SimulationMapTile<Tile>[Width, Height];
+            Tile.Rand = new Random(RandomSeed);
             var wall = Tile.GetRandomWall();
             for (int x = 0; x < Width; x++) {
                 for (int y = 0; y < Height; y++) {
