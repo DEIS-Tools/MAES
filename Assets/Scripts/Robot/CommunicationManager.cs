@@ -94,13 +94,15 @@ namespace Maes.Robot {
             public readonly int WallsCellsPassedThrough;
             public readonly int RegularCellsPassedThrough;
             public readonly bool TransmissionSuccessful;
+            public readonly float SignalStrength;
 
-            public CommunicationInfo(float distance, float angle, int wallsCellsPassedThrough, int regularCellsPassedThrough, bool transmissionSuccess) {
+            public CommunicationInfo(float distance, float angle, int wallsCellsPassedThrough, int regularCellsPassedThrough, bool transmissionSuccess, float signalStrength) {
                 Distance = distance;
                 Angle = angle;
                 WallsCellsPassedThrough = wallsCellsPassedThrough;
                 RegularCellsPassedThrough = regularCellsPassedThrough;
                 TransmissionSuccessful = transmissionSuccess;
+                SignalStrength = signalStrength;
             }
 
         }
@@ -159,6 +161,7 @@ namespace Maes.Robot {
             var wallsTraveledThrough = 0;
             var regularCellsTraveledThrough = 0;
             var signalStrength = _robotConstraints.TransmitPower;
+
             _rayTracingMap.Raytrace(pos1, angle, distance, (_, tile) => {
                 if (Tile.IsWall(tile.Type)) wallsTraveledThrough++;
                 else regularCellsTraveledThrough++;
@@ -178,7 +181,8 @@ namespace Maes.Robot {
                 .IsTransmissionSuccessful(distance, distanceTraveledThroughWalls);
             if (_robotConstraints.MaterialCommunication)
                 transmissionSuccessful = _robotConstraints.ReceiverSensitivity <= signalStrength;
-            return new CommunicationInfo(distance, angle, wallsCellsPassedThrough, regularCellsPassedThrough, transmissionSuccessful);
+            Debug.Log($"strength: {signalStrength}, success: {transmissionSuccessful}");
+            return new CommunicationInfo(distance, angle, wallsCellsPassedThrough, regularCellsPassedThrough, transmissionSuccessful, signalStrength);
         }
 
         public void LogicUpdate() {
@@ -250,7 +254,7 @@ namespace Maes.Robot {
                             Debug.Log(e);
                             Debug.Log("Raytracing failed - Execution continued by providing a fake trace" +
                                       " with zero transmission probability");
-                            _adjacencyMatrix[(r1.id, r2.id)] = new CommunicationInfo(float.MaxValue, 90, 1, 1, false);
+                            _adjacencyMatrix[(r1.id, r2.id)] = new CommunicationInfo(float.MaxValue, 90, 1, 1, false, -int.MaxValue);
                         }
                         
                     }
