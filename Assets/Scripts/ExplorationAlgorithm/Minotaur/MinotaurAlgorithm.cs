@@ -17,7 +17,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private Vector2 _location;
         private List<Doorway> _doorways;
         private List<MinotaurAlgorithm> _minotaurs;
-        private object _currentState;
+        private State _currentState;
 
         private enum State
         {
@@ -25,7 +25,13 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             Exploring,
             Auctioning,
             MovingToDoorway,
-            Greed
+            MovingToNearestUnexplored
+        }
+
+        public MinotaurAlgorithm(RobotConstraints robotConstraints, int seed)
+        {
+            _robotConstraints = robotConstraints;
+            _seed = seed;
         }
 
         public string GetDebugInfo()
@@ -42,17 +48,20 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         public void UpdateLogic()
         {
-            throw new System.NotImplementedException();
-        }
-
-        private void ExploringAlongEdge()
-        {
-            throw new System.NotImplementedException();
+            Communicate();
+            ExploringAlongEdge();
+            MoveToNearestUnexploredAreaWithinRoom();
+            MoveThroughNearestUnexploredDoorway();
         }
 
         private void Communicate()
         {
             throw new System.NotImplementedException();
+        }
+
+        private void ExploringAlongEdge()
+        {
+            DoorwayDetection();
         }
 
         private void DoorwayDetection()
