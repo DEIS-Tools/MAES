@@ -411,6 +411,8 @@ namespace Maes.Map {
         //Method for checking if a solid tile is actually solid, through the slam map
         private SlamMap.SlamTileStatus IsOffsetSolid(Vector2Int nextCoordinate, Vector2Int currentCoordinate){
             List<SlamMap.SlamTileStatus> slamStatuses = GetSlamTileStatuses(coordinate);
+            // call from GetPathSteps if it hits a solid?
+            // Return path steps?
             // s o o s
             // s o o s ^
             // s o o o |
@@ -432,6 +434,48 @@ namespace Maes.Map {
             // s s o o
             //
             // may only need to check for diagonal movement
+            //
+            // coarse grained coords:
+            // -> increase first coordinate
+            // ^
+            // |
+            // increase second coordinate
+            //
+            // Check what other tiles needs to be checked by determining path direction
+            if (currentCoordinate.x < nextCoordinate.x) {
+                //nextCoordinate is right
+            }
+            else if (currentCoordinate.x > nextCoordinate.x) {
+                //nextCoordinate is left
+            }
+            else {
+                //nextCoordinate is not left or right
+            }
+
+            if (currentCoordinate.y < nextCoordinate.y) {
+                //nextCoordinate is up
+            }
+            else if (currentCoordinate.y > nextCoordinate.y) {
+                //nextCoordinate is down
+            }
+            else {
+                //nextCoordinate is not up or down
+            }
+
+            
+            // List format:
+            // 3 4
+            // 1 2
+            //
+            // get SLAM coordinates for the coarse grained tiles that needs to be checked
+            List<SlamMap.SlamTileStatus> nextCoordinateSlam = GetSlamTileStatuses(nextCoordinate);
+            List<SlamMap.SlamTileStatus> currentCoordinateSlam = GetSlamTileStatuses(currentCoordinate);
+
+            //Check if there's a path through SLAM tiles
+
+            //Return results on whether there's a path
+
+
 
             return SlamMap.SlamTileStatus.Solid
         }
