@@ -287,7 +287,7 @@ namespace Maes.Map {
         /// Calculates, and returns, a path from the robots current position to the target. Will reduce the path to a list of <see cref="PathStep"/>s.
         /// </summary>
         public List<PathStep>? GetTnfPathAsPathSteps(Vector2Int target) {
-            var path = GetPath(target, beOptimistic: true, acceptPartialPaths: true);
+            var path = GetPath(target, beOptimistic: false);
             return path == null
                 ? null
                 : _aStar.PathToSteps(path, 0f);
@@ -406,6 +406,34 @@ namespace Maes.Map {
                 _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up),
                 _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up + Vector2Int.right),
             };
+        }
+
+        //Method for checking if a solid tile is actually solid, through the slam map
+        private SlamMap.SlamTileStatus IsOffsetSolid(Vector2Int nextCoordinate, Vector2Int currentCoordinate){
+            List<SlamMap.SlamTileStatus> slamStatuses = GetSlamTileStatuses(coordinate);
+            // s o o s
+            // s o o s ^
+            // s o o o |
+            // s o o o v
+            //
+            // o o o s
+            // o o o s
+            // s o o o <->
+            // s o o o
+            //
+            // o o s s
+            // o o o o ^
+            // o o o o |
+            // s s o o v
+            //
+            // s s s s
+            // o o o o
+            // o o o o <->
+            // s s o o
+            //
+            // may only need to check for diagonal movement
+
+            return SlamMap.SlamTileStatus.Solid
         }
 
         /// <summary>
