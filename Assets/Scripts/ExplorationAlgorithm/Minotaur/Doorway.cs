@@ -8,20 +8,28 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 {
     public class Doorway
     {
-        public (Vector2, Vector2) Position;
+        public Vector2 Position;
         public bool Explored;
-        public CardinalDirection.RelativeDirection ApproachedDirection;
+        public CardinalDirection ApproachedDirection;
 
-        public Doorway Doorway((Vector2, Vector2) Position, CardinalDirection.RelativeDirection ApproachedDirection)
+        public Doorway(Vector2 position, CardinalDirection approachedDirection)
         {
-            this.Position = Position;
+            Position = position;
             Explored = false;
-            this.ApproachedDirection = ApproachedDirection;
+            ApproachedDirection = approachedDirection;
         }
-        
-        public float Distance(MinotaurAlgorithm minotaur)
+
+        public static bool Equals(Doorway x, Doorway y)
         {
-            throw new NotImplementedException();
+            if (x.Position.x - y.Position.x < 0.2 && x.Position.y - y.Position.y < 0.2 
+            && x.Explored == y.Explored 
+            && x.ApproachedDirection == y.ApproachedDirection)
+            {
+                return true;
+            }
+            return false;
         }
+
+
     }
 }
