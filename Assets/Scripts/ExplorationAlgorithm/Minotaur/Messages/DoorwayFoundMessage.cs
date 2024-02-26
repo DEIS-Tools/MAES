@@ -1,24 +1,47 @@
 ﻿using System;
+using System.Collections.Generic;
+using Maes.Map;
+using UnityEngine;
 
-namespace Maes.ExplorationAlgorithm.Minotaur.Messages
+namespace Maes.ExplorationAlgorithm.Minotaur
 {
-    public class DoorwayFoundMessage : IMinotaurMessage
+    public partial class MinotaurAlgorithm : IExplorationAlgorithm
     {
-        private readonly Doorway _doorway;
-
-        public DoorwayFoundMessage(Doorway doorway)
+        public class DoorwayFoundMessage : IMinotaurMessage
         {
-            _doorway = doorway;
-        }
+            private readonly Doorway _doorway;
 
-        public IMinotaurMessage Combine(IMinotaurMessage otherMessage, MinotaurAlgorithm minotaur)
-        {
-            throw new NotImplementedException();
-        }
+            private readonly int _requesterID;
 
-        public IMinotaurMessage Process(MinotaurAlgorithm minotaur)
-        {
-            throw new NotImplementedException();
+            public DoorwayFoundMessage(Doorway doorway, int requesterID)
+            {
+                _doorway = doorway;
+                _requesterID = requesterID;
+            }
+
+            public IMinotaurMessage Combine(IMinotaurMessage otherMessage, MinotaurAlgorithm minotaur)
+            {
+                throw new NotImplementedException(); //Shouldnt get multiple, and if you do, process one at a time
+            }
+
+            /// <summary>
+            /// Process DoorwayFoundMessage, bidding on entering the doorway depending on the length of its path to it
+            /// returns null it has to pass doorways to do so
+            /// </summary>
+            public IMinotaurMessage? Process(MinotaurAlgorithm minotaur)
+            {
+                var doorwayTile = Vector2Int.RoundToInt(_doorway.Position);
+                var pathLengthToDoorway = minotaur._map.GetPath(doorwayTile, false, false);
+                foreach (Doorway knownDoorway in minotaur._doorways)
+                {
+                    if (pathLengthToDoorway.Contains(Vector2Int.RoundToInt(knownDoorway.Position)))
+                    {
+                        return null;
+                    }
+                }
+                var bid = new Dictionary<int, int>(){{minotaur._controller.GetRobotID(), pathLengthToDoorway.Count}};
+                return new BiddingMessage(_requesterID, bid, _doorway);
+            }
         }
     }
 }

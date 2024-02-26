@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
 {
-    public class MinotaurAlgorithm : IExplorationAlgorithm
+    public partial class MinotaurAlgorithm : IExplorationAlgorithm
     {
         public float VisionArea;
         private IRobotController _controller;

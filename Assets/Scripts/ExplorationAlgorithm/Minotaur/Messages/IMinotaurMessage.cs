@@ -1,4 +1,4 @@
-namespace Maes.ExplorationAlgorithm.Minotaur.Messages
+namespace Maes.ExplorationAlgorithm.Minotaur
 {
     public interface IMinotaurMessage
     {
