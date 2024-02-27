@@ -314,6 +314,7 @@ namespace Maes.Map {
             var robotPosition = GetCurrentPositionSlamTile();  
             var distance = Vector2.Distance(robotPosition, (Vector2) slamTileTarget);
             var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetRobotAngleDeg()), slamTileTarget - robotPosition);
+            Debug.Log($"point: {slamTileTarget}, robot: {robotPosition}, distance: {distance}");
             return new RelativePosition(distance, angle);
         }
 
@@ -353,6 +354,19 @@ namespace Maes.Map {
 
         public VisibleTilesCoarseMap GetVisibleTilesCoarseMap() {
             return VisibleTilesCoarseMap;
+        }
+
+        public Vector2 SlamToWorldCoordinate(Vector2Int slamCoordinate)
+        {
+            var coarseTile = CoarseMap.FromSlamMapCoordinate(slamCoordinate);
+            var worldCoordinate = coarseTile + _collisionMap.ScaledOffset;
+            if (!IsWithinBounds(slamCoordinate))
+            {
+                throw new ArgumentException("The given coordinate " + slamCoordinate
+                                                                    + "(World coordinate:" + worldCoordinate + " )"
+                                                                    + " is not within map bounds.");
+            }
+            return worldCoordinate;
         }
     }
 }

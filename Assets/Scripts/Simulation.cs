@@ -170,5 +170,19 @@ namespace Maes {
         public Vector2 WorldCoordinateToSlamPosition(Vector2 worldPosition) {
             return worldPosition;
         }
+
+        private void OnDrawGizmos()
+        {
+            if (_selectedRobot != null)
+            {
+                Gizmos.color = Color.yellow;
+                var coarseMap = _selectedRobot.Controller.SlamMap.CoarseMap;
+
+                for (float x = -50; x < 50; x += coarseMap.CellSize())
+                    Gizmos.DrawLine(new Vector3(x, -50, 1), new Vector3(x, 50, 1));
+                for (float y = -50; y < 50; y += coarseMap.CellSize())
+                    Gizmos.DrawLine(new Vector3(-50, y, 1), new Vector3(50, y, 1));
+            }
+        }
     }
 }

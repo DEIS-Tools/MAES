@@ -181,7 +181,7 @@ namespace Maes.Robot {
                 .IsTransmissionSuccessful(distance, distanceTraveledThroughWalls);
             if (_robotConstraints.MaterialCommunication)
                 transmissionSuccessful = _robotConstraints.ReceiverSensitivity <= signalStrength;
-            Debug.Log($"strength: {signalStrength}, success: {transmissionSuccessful}");
+            //Debug.Log($"strength: {signalStrength}, success: {transmissionSuccessful}");
             return new CommunicationInfo(distance, angle, wallsCellsPassedThrough, regularCellsPassedThrough, transmissionSuccessful, signalStrength);
         }
 

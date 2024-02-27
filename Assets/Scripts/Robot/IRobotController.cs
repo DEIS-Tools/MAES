@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using Maes.Map;
 using Maes.Robot.Task;
+using UnityEngine;
 
 namespace Maes.Robot {
     public interface IRobotController {
@@ -84,6 +85,14 @@ namespace Maes.Robot {
         /// </summary>
         /// <param name="counterClockwise"> Rotate counterclockwise if true and clockwise if false </param>
         void StartRotating(bool counterClockwise = false);
+
+        /// <summary>
+        /// This method instructs the robot to start rotating around a point.
+        /// Rotation will continue until the instruction is cancelled, either manually or by a collision.
+        /// This instruction can be manually cancelled by calling <see cref="StopCurrentTask"/>
+        /// </summary>
+        /// <param name="counterClockwise"> Rotate counterclockwise if true and clockwise if false </param>
+        void StartRotateAroundPoint(Vector2Int point, bool counterClockwise = false);
 
         /// <summary>
         /// Stops the currently active task. Does nothing if the robot has no task.

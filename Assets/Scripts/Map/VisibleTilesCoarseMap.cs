@@ -77,11 +77,11 @@ namespace Maes.Map {
         public bool IsOptimisticSolid(Vector2Int coordinate) {
             var slamTile = ToSlamMapCoordinate(coordinate);
 
-            // Anything not currently visible is solid
+            // Anything not currently visible is not solid
             if (!_slamMap._currentlyVisibleTiles.ContainsKey(slamTile))
-                return true;
+                return false;
             if (_slamMap._currentlyVisibleTiles[slamTile] == SlamMap.SlamTileStatus.Unseen)
-                return true;
+                return false;
 
             // Check if the coarse tile is actually solid
             var tileStatus = GetTileStatus(coordinate, true);
