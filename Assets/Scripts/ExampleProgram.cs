@@ -57,13 +57,16 @@ namespace Maes
                 slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
                 agentRelativeSize: 0.6f,
-                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) => {
+                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) =>
+                {
                     // Blocked by walls
-                    if (distanceThroughWalls > 0) {
+                    if (distanceThroughWalls > 0)
+                    {
                         return false;
                     }
                     // Max distance 15.0f
-                    else if (15.0f < distanceTravelled) {
+                    else if (15.0f < distanceTravelled)
+                    {
                         return false;
                     }
 
@@ -73,11 +76,11 @@ namespace Maes
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
 
-            for (var leftForce = -10; leftForce < 10; leftForce++)
+            for (var leftForce = 0; leftForce < 10; leftForce++)
             {
-                for (var rightForce = -10; rightForce < 10; rightForce++)
+                for (var rightForce = -10f; rightForce < 0; rightForce++)
                 {
-                    if (leftForce == rightForce)
+                    if (Mathf.Abs(rightForce) == leftForce)
                     {
                         continue;
                     }
@@ -90,7 +93,8 @@ namespace Maes
 
                     var scenarioBuilding = new SimulationScenario(
                         seed: randomSeed,
-                        hasFinishedSim: sim => sim.Robots[0].ExplorationAlgorithm.GetDebugInfo() == "True",
+                        hasFinishedSim: sim => sim.Robots[0].ExplorationAlgorithm.GetDebugInfo() == "True" ||
+                                               sim.SimulatedLogicTicks > 200,
                         mapSpawner: generator => generator.GenerateMap(buildingConfig),
                         robotConstraints: robotConstraints,
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(

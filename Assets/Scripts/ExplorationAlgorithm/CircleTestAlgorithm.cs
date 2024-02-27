@@ -41,6 +41,7 @@ namespace ExplorationAlgorithm
             var position = _controller.SlamMap.GetCurrentPositionSlamTile();
             if (!turning)
             {
+                Debug.Log($"left: {_leftForce}, right: {_rightForce}");
                 _controller.SetWheelForceFactors(_leftForce, _rightForce);
                 turning = true;
                 _points.Add(position);
