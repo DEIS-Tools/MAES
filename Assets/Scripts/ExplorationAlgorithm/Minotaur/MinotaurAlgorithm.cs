@@ -1,4 +1,3 @@
-using Maes.ExplorationAlgorithm.Minotaur.Messages;
 using Maes.Map;
 using Maes.Robot;
 using System;
