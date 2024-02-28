@@ -46,7 +46,7 @@ namespace ExplorationAlgorithm
                 turning = true;
                 _points.Add(position);
             }
-            if (_controller._transform.position.y < 0f)
+            if (_controller._transform.position.y < 0) //Quaternion.Angle(_controller._transform.rotation, Quaternion.LookRotation(-Vector3.forward)) < 0.01f
             {
                 _points.Add(position);
             }
@@ -60,9 +60,7 @@ namespace ExplorationAlgorithm
                 var ratioBetweenWheelSpeeds = (innerRadius / outerRadius);
                 using (var file = File.AppendText("C:\\Users\\Thor Beregaard\\Desktop\\circle.csv"))
                 {
-                    var radText = radius.ToString(new CultureInfo("en-US"));
-                    var ratioText = ratioBetweenWheelSpeeds.ToString(new CultureInfo("en-US"));
-                    file.WriteLine($"{radText},{_ticks*2},{_leftForce},{_rightForce},{ratioText}");
+                    file.WriteLine($"{radius};{_ticks * 2};{_leftForce};{_rightForce};{ratioBetweenWheelSpeeds}");
                 }
                 _controller.StopCurrentTask();
             }

@@ -75,43 +75,39 @@ namespace Maes
             );
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
-
-            for (var leftForce = 0; leftForce < 10; leftForce++)
+            var rand = new System.Random();
+            var rightForce = 1f;
+            for (var leftForce = -0.625f; leftForce < 0.625f; leftForce += 0.001f)
             {
-                for (var rightForce = -10f; rightForce < 0; rightForce++)
+                if (Mathf.Abs(rightForce) == Mathf.Abs(leftForce))
                 {
-                    if (Mathf.Abs(rightForce) == leftForce)
-                    {
-                        continue;
-                    }
-                    var buildingConfig = new BuildingMapConfig(
-                        randomSeed,
-                        3,
-                        100,
-                        100);
-                    var algorithm = new CircleTestAlgorithm(leftForce, rightForce);
-
-                    var scenarioBuilding = new SimulationScenario(
-                        seed: randomSeed,
-                        hasFinishedSim: sim => sim.Robots[0].ExplorationAlgorithm.GetDebugInfo() == "True" ||
-                                               sim.SimulatedLogicTicks > 200,
-                        mapSpawner: generator => generator.GenerateMap(buildingConfig),
-                        robotConstraints: robotConstraints,
-                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
-                            new List<Vector2Int> { new Vector2Int(0, 0) },
-                            map,
-                            randomSeed,
-                            1,
-                            (seed) => algorithm
-                        ));
-                    //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
-                    //simulator.EnqueueScenario(scenarioCave);
-                    simulator.EnqueueScenario(scenarioBuilding);
-                    //simulator.EnqueueScenario(scenarioBitMap);
+                    continue;
                 }
-            }
+                var buildingConfig = new BuildingMapConfig(
+                    randomSeed,
+                    3,
+                    100,
+                    100);
+                var algorithm = new CircleTestAlgorithm(leftForce, rightForce);
 
-            simulator.PressPlayButton(); // Instantly enter play mode
+                var scenarioBuilding = new SimulationScenario(
+                    seed: randomSeed,
+                    hasFinishedSim: sim => sim.Robots[0].ExplorationAlgorithm.GetDebugInfo() == "True",
+                    mapSpawner: generator => generator.GenerateMap(buildingConfig),
+                    robotConstraints: robotConstraints,
+                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
+                        new List<Vector2Int> { new Vector2Int(0, 0) },
+                        map,
+                        randomSeed,
+                        1,
+                        (seed) => algorithm
+                    ));
+                //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
+                //simulator.EnqueueScenario(scenarioCave);
+                simulator.EnqueueScenario(scenarioBuilding);
+                //simulator.EnqueueScenario(scenarioBitMap);
+                simulator.PressPlayButton(); // Instantly enter play mode
+            }
         }
     }
 }
