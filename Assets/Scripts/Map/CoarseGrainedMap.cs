@@ -302,7 +302,7 @@ namespace Maes.Map
         /// <param name="target">the target that the path should end at.</param>
         /// <param name="acceptPartialPaths">if <b>true</b>, returns path getting the closest to the target, if no full path can be found.</param>
         /// <param name="beOptimistic">if <b>true</b>, treats unseen tiles as open in the path finding algorithm. Treats unseen tiles as solid otherwise.</param>
-        public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false, bool beOptimistic = true)
+        public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false, bool beOptimistic = false)
         {
             var approxPosition = GetApproximatePosition();
             return _aStar.GetPath(Vector2Int.FloorToInt(approxPosition), target, this, beOptimistic, acceptPartialPaths);
@@ -493,10 +493,10 @@ namespace Maes.Map
         }
 
         //Method for checking if a solid tile is actually solid, through the slam map
-        private SlamMap.SlamTileStatus IsOffsetSolid(Vector2Int nextCoordinate, Vector2Int currentCoordinate){
-            List<SlamMap.SlamTileStatus> slamStatuses = GetSlamTileStatuses(coordinate);
+        public bool IsOffsetSolid(Vector2Int nextCoordinate, Vector2Int currentCoordinate) {
             // call from GetPathSteps if it hits a solid?
-            // Return path steps?
+            // Return path steps? no.
+            // Return if it's passable or not
             // s o o s
             // s o o s ^
             // s o o o |
@@ -517,6 +517,21 @@ namespace Maes.Map
             // o o o o <->
             // s s o o
             //
+            // List format:
+            // 3 4
+            // 1 2
+            //
+            // get SLAM coordinates for the coarse grained tiles that needs to be checked
+            var nextCoordinateSlam = GetSlamTileStatuses(nextCoordinate);
+            var currentCoordinateSlam = GetSlamTileStatuses(currentCoordinate);
+
+            // If all SLAM tiles are solid, just return solid
+            var isOpen = SlamMap.SlamTileStatus.Open;
+            if (CheckIfAllSlamStatusesSolid(nextCoordinate) || CheckIfAllSlamStatusesSolid(currentCoordinate)) {
+                //Debug.Log("test1");
+                return true;
+            }
+
             // may only need to check for diagonal movement
             //
             // coarse grained coords:
@@ -528,32 +543,137 @@ namespace Maes.Map
             // Check what other tiles needs to be checked by determining path direction
             if (currentCoordinate.x < nextCoordinate.x) {
                 //nextCoordinate is right
+                if (currentCoordinate.y < nextCoordinate.y) {
+                   //up
+                   //   nn
+                   //   nn
+                   // cc
+                   // cc
+                    var bottomRightSlam = GetSlamTileStatuses(currentCoordinate + Vector2Int.right);
+                    var topLeftSlam = GetSlamTileStatuses(nextCoordinate + Vector2Int.left);
+                    if (currentCoordinateSlam[3] != isOpen || bottomRightSlam[2] != isOpen ||
+                        topLeftSlam[1] != isOpen || nextCoordinateSlam[0] != isOpen)
+                        {
+                            return true;
+                        }
+                    return false;
+
+                }
+                else if (currentCoordinate.y > nextCoordinate.y) {
+                    //down
+                    //cc
+                    //cc
+                    //  nn
+                    //  nn
+                    var topRightSlam = GetSlamTileStatuses(currentCoordinate + Vector2Int.right);
+                    var bottomLeftSlam = GetSlamTileStatuses(nextCoordinate + Vector2Int.left);
+                    if (currentCoordinateSlam[1] != isOpen || topRightSlam[0] != isOpen ||
+                        bottomLeftSlam[3] != isOpen || nextCoordinateSlam[2] != isOpen)
+                        {
+                            return true;
+                        }
+                    return false;
+                }
+                else {
+                    //ccnn
+                    //ccnn
+                    if ((currentCoordinateSlam[1] != isOpen && currentCoordinateSlam[3] != isOpen) ||
+                        (nextCoordinateSlam[0] != isOpen && currentCoordinateSlam[2] != isOpen))
+                        {
+                            return true;
+                        }
+                    if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.up) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.down)))
+                        {
+                            return true;
+                        }
+                    return false;
+
+                }
             }
             else if (currentCoordinate.x > nextCoordinate.x) {
                 //nextCoordinate is left
+                if (currentCoordinate.y < nextCoordinate.y) {
+                    // up
+                    // nn
+                    // nn
+                    //   cc
+                    //   cc
+                    var topRightSlam = GetSlamTileStatuses(nextCoordinate + Vector2Int.right);
+                    var bottomLeftSlam = GetSlamTileStatuses(currentCoordinate + Vector2Int.left);
+                    if (nextCoordinateSlam[1] != isOpen || topRightSlam[0] != isOpen ||
+                        bottomLeftSlam[3] != isOpen || currentCoordinateSlam[2] != isOpen)
+                        {
+                            return true;
+                        }
+                    return false;
+                }
+                else if (currentCoordinate.y > nextCoordinate.y) {
+                    // down
+                    //   cc
+                    //   cc
+                    // nn
+                    // nn
+                    var bottomRightSlam = GetSlamTileStatuses(nextCoordinate + Vector2Int.right);
+                    var topLeftSlam = GetSlamTileStatuses(currentCoordinate + Vector2Int.left);
+                    if (nextCoordinateSlam[3] != isOpen || bottomRightSlam[2] != isOpen ||
+                        topLeftSlam[1] != isOpen || currentCoordinateSlam[0] != isOpen)
+                        {
+                            return true;
+                        }
+                }
+                else {
+                    //nncc
+                    //nncc
+                    if ((currentCoordinateSlam[0] != isOpen && currentCoordinateSlam[2] != isOpen) ||
+                        (nextCoordinateSlam[1] != isOpen && currentCoordinateSlam[3] != isOpen))
+                        {
+                            return true;
+                        }
+                    if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.up) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.down)))
+                        {
+                            return true;
+                        }
+                    return false;
+                }
             }
             else {
                 //nextCoordinate is not left or right
+                if (currentCoordinate.y < nextCoordinate.y) {
+                    // up
+                    // nn
+                    // nn
+                    // cc
+                    // cc
+                    if ((currentCoordinateSlam[2] != isOpen && currentCoordinateSlam[3] != isOpen) ||
+                        (nextCoordinateSlam[0] != isOpen && currentCoordinateSlam[1] != isOpen))
+                        {
+                            return true;
+                        }
+                    if ((!CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.left) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right)))
+                        {
+                            return true;
+                        }
+                    return false;
+                }
+                else if (currentCoordinate.y > nextCoordinate.y) {
+                    // down
+                    // cc
+                    // cc
+                    // nn
+                    // nn
+                    if ((currentCoordinateSlam[0] != isOpen && currentCoordinateSlam[1] != isOpen) ||
+                        (nextCoordinateSlam[2] != isOpen && currentCoordinateSlam[3] != isOpen))
+                        {
+                            return true;
+                        }
+                    if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.left) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right)))
+                        {
+                            return true;
+                        }
+                    return false;
+                }
             }
 
-            if (currentCoordinate.y < nextCoordinate.y) {
-                //nextCoordinate is up
-            }
-            else if (currentCoordinate.y > nextCoordinate.y) {
-                //nextCoordinate is down
-            }
-            else {
-                //nextCoordinate is not up or down
-            }
-
-            
-            // List format:
-            // 3 4
-            // 1 2
-            //
-            // get SLAM coordinates for the coarse grained tiles that needs to be checked
-            List<SlamMap.SlamTileStatus> nextCoordinateSlam = GetSlamTileStatuses(nextCoordinate);
-            List<SlamMap.SlamTileStatus> currentCoordinateSlam = GetSlamTileStatuses(currentCoordinate);
 
             //Check if there's a path through SLAM tiles
 
@@ -561,7 +681,24 @@ namespace Maes.Map
 
 
 
-            return SlamMap.SlamTileStatus.Solid
+            return true;
+        }
+
+        private bool CheckIfAllSlamStatusesSolid(Vector2Int coordinate)
+        {
+            var statuses = GetSlamTileStatuses(coordinate);
+            int solids = 0;
+            foreach (var coord in statuses) {
+                    if (coord != SlamMap.SlamTileStatus.Open) {
+                            solids++;
+                        }
+                }
+
+            if (solids == 4) {
+                    return true;
+                }
+
+            return false;
         }
 
         /// <summary>
