@@ -112,8 +112,8 @@ namespace Maes.Map {
             var yFloat = Math.Round(currentPosition.y * 2, MidpointRounding.AwayFromZero) / 2;
             var x = Convert.ToInt32(xFloat * 2);
             var y = Convert.ToInt32(yFloat * 2);
-            var slamX = (x - ((int)_offset.x) * 2);
-            var slamY = (y - ((int)_offset.y) * 2);
+            var slamX = (x - (int)_offset.x) * 2;
+            var slamY = (y - (int)_offset.y) * 2;
 
             return new Vector2Int(slamX, slamY);
         }
@@ -294,13 +294,12 @@ namespace Maes.Map {
         }
 
         public bool IsSolid(Vector2Int coordinate) {
-            var slamCoordinate = coordinate * 2;
             
-            if (IsWithinBounds(slamCoordinate)) {
-                var isTraversable = _tiles[slamCoordinate.x, slamCoordinate.y] == SlamTileStatus.Open;
-                isTraversable &= _tiles[slamCoordinate.x + 1, slamCoordinate.y] == SlamTileStatus.Open;
-                isTraversable &= _tiles[slamCoordinate.x, slamCoordinate.y + 1] == SlamTileStatus.Open;
-                isTraversable &= _tiles[slamCoordinate.x + 1, slamCoordinate.y + 1] == SlamTileStatus.Open;
+            if (IsWithinBounds(coordinate)) {
+                var isTraversable = _tiles[coordinate.x, coordinate.y] == SlamTileStatus.Open;
+                isTraversable &= _tiles[coordinate.x + 1, coordinate.y] == SlamTileStatus.Open;
+                isTraversable &= _tiles[coordinate.x, coordinate.y + 1] == SlamTileStatus.Open;
+                isTraversable &= _tiles[coordinate.x + 1, coordinate.y + 1] == SlamTileStatus.Open;
                 return !isTraversable;
             }
             

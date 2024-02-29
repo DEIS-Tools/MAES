@@ -20,13 +20,15 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
-using Maes.ExplorationAlgorithm.TheNextFrontier;
+using Maes.ExplorationAlgorithm.Minotaur;
 using Maes.Map;
 using Maes.Map.MapGen;
 using Maes.Robot;
 using Maes.Utilities.Files;
 using UnityEngine;
 using Maes.Robot;
+using Maes.ExplorationAlgorithm.Movement;
+using System.Collections.Generic;
 
 namespace Maes
 {
@@ -55,13 +57,16 @@ namespace Maes
                 slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
                 agentRelativeSize: 0.6f,
-                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) => {
+                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) =>
+                {
                     // Blocked by walls
-                    if (distanceThroughWalls > 0) {
+                    if (distanceThroughWalls > 0)
+                    {
                         return false;
                     }
                     // Max distance 15.0f
-                    else if (15.0f < distanceTravelled) {
+                    else if (15.0f < distanceTravelled)
+                    {
                         return false;
                     }
 
@@ -71,40 +76,37 @@ namespace Maes
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
 
-            // Setup configuration for a scenario
-            var scenarioCave = new SimulationScenario(
-                hasFinishedSim: (sim) => sim.ExplorationTracker.ExploredProportion > 0.5f,
-                seed: randomSeed,
-                mapSpawner: generator => generator.GenerateMap(caveConfig),
-                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                    map,
-                    randomSeed,
-                    5,
-                    new Vector2Int(0, 0),
-                    (seed) => new TnfExplorationAlgorithm(1, 10, seed)
-                ));
-            for (var i = 0; i < 10; i++)
+            for (var leftForce = 0; leftForce < 10; leftForce++)
             {
-                var buildingConfig = new BuildingMapConfig(
-                    randomSeed+i,
-                    3,
-                    100,
-                    100);
+                for (var rightForce = -10f; rightForce < 0; rightForce++)
+                {
+                    if (Mathf.Abs(rightForce) == leftForce)
+                    {
+                        continue;
+                    }
+                    var buildingConfig = new BuildingMapConfig(
+                        randomSeed,
+                        3,
+                        100,
+                        100);
+                    var algorithm = new MovementTestAlgorithm(new Vector2Int(100, 97));
 
-                var scenarioBuilding = new SimulationScenario(
-                    seed: randomSeed+i,
-                    mapSpawner: generator => generator.GenerateMap(buildingConfig),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                        map,
-                        randomSeed+i,
-                        5,
-                        new Vector2Int(0, 0),
-                        (seed) => new TnfExplorationAlgorithm(1, 10, seed)
-                    ));
-                //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
-                //simulator.EnqueueScenario(scenarioCave);
-                simulator.EnqueueScenario(scenarioBuilding);
-                //simulator.EnqueueScenario(scenarioBitMap);
+                    var scenarioBuilding = new SimulationScenario(
+                        seed: randomSeed,
+                        mapSpawner: generator => generator.GenerateMap(buildingConfig),
+                        robotConstraints: robotConstraints,
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
+                            new List<Vector2Int> { new Vector2Int(0, 0) },
+                            map,
+                            randomSeed,
+                            1,
+                            (seed) => algorithm
+                        ));
+                    //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
+                    //simulator.EnqueueScenario(scenarioCave);
+                    simulator.EnqueueScenario(scenarioBuilding);
+                    //simulator.EnqueueScenario(scenarioBitMap);
+                }
             }
 
             simulator.PressPlayButton(); // Instantly enter play mode

@@ -23,13 +23,16 @@ using System;
 using System.Collections.Generic;
 using Maes.Map;
 using Maes.Robot.Task;
+using UnityEngine;
 
-namespace Maes.Robot {
-    public interface IRobotController {
-        
+namespace Maes.Robot
+{
+    public interface IRobotController
+    {
+
         /// <returns> The unique integer id of this robot </returns>
         int GetRobotID();
-        
+
         /// <summary>
         /// Gives the current state of the robot which can have value of {Idle, Moving, Stopping}.
         /// 'Idle' indicates that the robot is not performing a task and is not moving
@@ -47,7 +50,7 @@ namespace Maes.Robot {
         /// </summary>
         /// <returns> True if the robot has encountered a new collision since the last logic tick and false if not </returns>
         bool HasCollidedSinceLastLogicTick();
-        
+
         /// <returns> True if the robot is currently touching another object (a wall or another robot). </returns>
         bool IsCurrentlyColliding();
 
@@ -68,6 +71,13 @@ namespace Maes.Robot {
         /// </summary>
         /// <param name="reverse"> Move backwards if true and forwards if false</param>
         void StartMoving(bool reverse = false);
+
+        /// <summary>
+        /// Calls the pathfinding and makes the robot move towards a certain tile on the map through known territory
+        /// Doesn's cause movement if there is no path to the tile
+        /// </summary>
+        /// <param name="tile"> What tile the robot should move to</param>
+        void MoveTo(Vector2Int tile);
 
         /// <summary>
         /// Instructs the robot to rotate <paramref name="degrees"/>.
@@ -111,19 +121,21 @@ namespace Maes.Robot {
         /// </summary>
         /// <param name="tag">The tag of type ITag that will be deposited</param>
         void DepositTag(String content);
-        
-        
+
+
         /// <summary>
         /// Reads tags that are within tag reading range (determined by the RobotConfiguration of the simulation)
         /// </summary>
         /// <returns> a list of all the tags within tag reading range of the robot</returns>
         List<RelativeObject<EnvironmentTag>> ReadNearbyTags();
-        
-        public readonly struct DetectedWall {
+
+        public readonly struct DetectedWall
+        {
             public readonly float distance;
             public readonly float relativeAngle;
 
-            public DetectedWall(float distance, float relativeAngle) {
+            public DetectedWall(float distance, float relativeAngle)
+            {
                 this.distance = distance;
                 this.relativeAngle = relativeAngle;
             }
@@ -137,7 +149,7 @@ namespace Maes.Robot {
         /// <param name="globalAngle">The global angle, relative to the x-axis in which the ray traces are fired</param>
         /// <returns>a DetectedWall object if a wall is found, otherwise null</returns>
         public DetectedWall? DetectWall(float globalAngle);
-        
+
         /// <returns>the global orientation of the robot measured in degrees from the x axis (counter clockwise)
         /// in the range [0-360]</returns>
         public float GetGlobalAngle();

@@ -25,6 +25,7 @@ using Maes.Statistics;
 using Maes.UI;
 using Maes.Utilities;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Maes {
@@ -227,6 +228,7 @@ namespace Maes {
         }
 
         public void RemoveCurrentSimulation() {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             Destroy(_simulationGameObject);
             _currentScenario = null;
             CurrentSimulation = null;
