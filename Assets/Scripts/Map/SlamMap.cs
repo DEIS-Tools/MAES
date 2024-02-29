@@ -307,6 +307,11 @@ namespace Maes.Map {
             // Tiles outside map bounds are considered solid
             return true;
         }
+
+        public bool IsOffsetSolid(Vector2Int nextCoordinate, Vector2Int currentCoordinate)
+            {
+                return true;
+            }
         
         // Returns position of the given tile relative to the current position of the robot  
         public RelativePosition GetRelativeSlamPosition(Vector2Int slamTileTarget) {

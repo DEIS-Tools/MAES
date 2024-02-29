@@ -28,6 +28,8 @@ namespace Maes.Map.PathFinding {
 
         public bool IsOptimisticSolid(Vector2Int coordinate);
 
+        public bool IsOffsetSolid(Vector2Int nextCoordinate, Vector2Int currentCoordinate);
+
         public float CellSize();
 
     }

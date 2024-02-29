@@ -68,6 +68,10 @@ namespace Maes.Map {
 
             return false;
         }
+        public bool IsOffsetSolid(Vector2Int nextCoordinate, Vector2Int currentCoordinate)
+            {
+                return true;
+            }
 
         public List<PathStep>? GetPathSteps(Vector2Int coarseTileFrom, Vector2Int coarseTileTo, bool acceptPartialPaths = false) {
             var path = _aStar.GetOptimisticPath(coarseTileFrom, coarseTileTo, this, acceptPartialPaths);
