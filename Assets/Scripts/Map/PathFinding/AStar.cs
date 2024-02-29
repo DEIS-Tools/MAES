@@ -202,7 +202,7 @@ namespace Maes.Map.PathFinding
         private bool IsSolid(Vector2Int coord, IPathFindingMap map, bool optimistic)
         {
             return optimistic
-                ? map.IsOptimisticSolid(coord)
+                ? map.IsOptimisticSolid(coord) 
                 : map.IsSolid(coord);
         }
         private bool IsAnyNeighborOpen(Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool optimistic)

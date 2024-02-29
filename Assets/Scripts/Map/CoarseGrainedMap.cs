@@ -748,6 +748,24 @@ namespace Maes.Map
             //Return results on whether there's a path
 
 
+
+            return true;
+        }
+
+        private bool CheckIfAllSlamStatusesSolid(Vector2Int coordinate)
+        {
+            var statuses = GetSlamTileStatuses(coordinate);
+            int solids = 0;
+            foreach (var coord in statuses) {
+                    if (coord != SlamMap.SlamTileStatus.Open) {
+                            solids++;
+                        }
+                }
+
+            if (solids == 4) {
+                    return true;
+                }
+
             return false;
         }
 
