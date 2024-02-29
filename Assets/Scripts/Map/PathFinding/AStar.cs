@@ -108,14 +108,30 @@ namespace Maes.Map.PathFinding
                 {
                     Vector2Int candidateCoord = currentCoordinate + dir.Vector;
                     // Only consider non-solid tiles
-                    if (IsSolid(candidateCoord, pathFindingMap, beOptimistic) && candidateCoord != targetCoordinate) continue;
+                    if (IsSolid(candidateCoord, pathFindingMap, beOptimistic) && candidateCoord != targetCoordinate) {
+
+                        if (!beOptimistic && pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Previous().Vector, currentCoordinate)){
+                            continue;
+                        }
+                    }
+
 
                     if (dir.IsDiagonal())
                     {
                         // To travel diagonally, the two neighbouring tiles must also be free
                         if (IsSolid(currentCoordinate + dir.Previous().Vector, pathFindingMap, beOptimistic)
                         || IsSolid(currentCoordinate + dir.Next().Vector, pathFindingMap, beOptimistic))
-                            continue;
+                            {
+                                if (!beOptimistic && pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Previous().Vector, currentCoordinate) ||
+                                    !beOptimistic && pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Next().Vector, currentCoordinate))
+                                {
+                                    continue;
+                                }
+                                else if (beOptimistic)
+                                {
+                                    continue;
+                                }
+                            }
                     }
 
                     var cost = currentTile.Cost + Vector2Int.Distance(currentCoordinate, candidateCoord);
@@ -160,7 +176,6 @@ namespace Maes.Map.PathFinding
                 return GetPath(startCoordinate, new Vector2Int(closestTile.X, closestTile.Y),
                     pathFindingMap, beOptimistic, false);
             }
-
             return null;
         }
 
