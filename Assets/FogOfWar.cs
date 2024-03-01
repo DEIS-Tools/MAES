@@ -11,7 +11,7 @@ public class FogOfWarScript : MonoBehaviour
     public List<Transform> robots;
     public LayerMask _foglayer;
     private float _revealRadius;
-    private float _revealRadiusSqr { get { return _revealRadius * _revealRadius; } }
+    private float _revealRadiusSqr;
 
     private Mesh _mesh;
     private Vector3[] _vertices;
@@ -26,6 +26,7 @@ public class FogOfWarScript : MonoBehaviour
         }
 
         _revealRadius = simulationManager._currentScenario.RobotConstraints.SlamRayTraceRange;
+        _revealRadiusSqr = _revealRadius * _revealRadius;
         _mesh = _fogOfWarPlane.GetComponent<MeshFilter>().mesh;
         _vertices = _mesh.vertices;
         _colors = new Color[_vertices.Length];
@@ -64,6 +65,7 @@ public class FogOfWarScript : MonoBehaviour
         }
 
     }
+
     void UpdateColor()
     {
         _mesh.colors = _colors;
