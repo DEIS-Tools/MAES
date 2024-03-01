@@ -42,7 +42,7 @@ public class FogOfWarScript : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void Update() //various optimizations options, robots shoot up to plane, instead of from camera, visible area around robot shoots up
     {
         foreach (Transform robot in robots)
         {

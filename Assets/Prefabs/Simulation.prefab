@@ -167,6 +167,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8097070572256205115}
     m_Modifications:
+    - target: {fileID: 4464596655183588024, guid: a006b6f7b30c0c0b1a80ae7aec4b065f, type: 3}
+      propertyPath: robotSpawner
+      value: 
+      objectReference: {fileID: 2368756380866914998}
     - target: {fileID: 4464596655183588025, guid: a006b6f7b30c0c0b1a80ae7aec4b065f, type: 3}
       propertyPath: m_RootOrder
       value: 2

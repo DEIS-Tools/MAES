@@ -98,3 +98,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshRenderer: {fileID: 4464596655183588026}
   meshFilter: {fileID: 4464596655183588027}
+  robotSpawner: {fileID: 5800937216522198648, guid: 8d7bf0b2f8218b35cb432d27de8c6c64, type: 3}
+  _foglayer:
+    serializedVersion: 2
+    m_Bits: 8

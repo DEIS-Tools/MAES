@@ -61,7 +61,7 @@ namespace Maes.Robot {
         private List<Message> _readableMessages = new();
 
         private readonly RayTracingMap<Tile> _rayTracingMap;
-        private List<MonaRobot> _robots;
+        public List<MonaRobot> robots;
 
         // Map for storing and retrieving all tags deposited by robots
         private readonly EnvironmentTaggingMap _environmentTaggingMap;
@@ -219,7 +219,7 @@ namespace Maes.Robot {
 
             foreach (var group in _communicationGroups) {
                 var slamMaps = group
-                    .Select(id => _robots.Find(r => r.id == id))
+                    .Select(id => robots.Find(r => r.id == id))
                     .Select(r => r.Controller.SlamMap)
                     .ToList();
                 
@@ -237,8 +237,8 @@ namespace Maes.Robot {
             
             _adjacencyMatrix = new Dictionary<(int, int), CommunicationInfo>();
             
-            foreach (var r1 in _robots) {
-                foreach (var r2 in _robots) {
+            foreach (var r1 in robots) {
+                foreach (var r2 in robots) {
                     if (r1.id != r2.id) {
                         var r1Position = r1.transform.position;
                         var r2Position = r2.transform.position;
@@ -266,7 +266,7 @@ namespace Maes.Robot {
             PopulateAdjacencyMatrix();
 
             List<HashSet<int>> groups = new List<HashSet<int>>();
-            foreach (var r1 in _robots) {
+            foreach (var r1 in robots) {
                 if(!groups.Exists(g => g.Contains(r1.id))) {
                     groups.Add(GetCommunicationGroup(r1.id));
                 }
@@ -314,7 +314,7 @@ namespace Maes.Robot {
             PopulateAdjacencyMatrix();
             var sensedObjects = new List<SensedObject<int>>();
 
-            foreach (var robot in _robots) {
+            foreach (var robot in robots) {
                 if(robot.id == id) continue;
 
                 
@@ -331,7 +331,7 @@ namespace Maes.Robot {
         } 
 
         public void SetRobotReferences(List<MonaRobot> robots) {
-            this._robots = robots;
+            this.robots = robots;
         }
 
         

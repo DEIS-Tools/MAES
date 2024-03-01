@@ -20,15 +20,29 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System.Collections.Generic;
+using Maes;
 using Maes.Map;
 using Maes.Robot;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Maes.Statistics {
-    public class ExplorationVisualizer : MonoBehaviour {
+namespace Maes.Statistics
+{
+    public class ExplorationVisualizer : MonoBehaviour
+    {
         public MeshRenderer meshRenderer;
         public MeshFilter meshFilter;
+        public RobotSpawner robotSpawner;
+        private GameObject fogOfWarPlane;
+        private List<Transform> _fogRobots = new();
+        public LayerMask _foglayer;
+
+        private Mesh _fogMesh;
+        private Vector3[] _fogVertices;
+        private Color[] _fogColors;
+        private float _revealRadius;
+        private float _revealRadiusSqr;
+
         private Mesh mesh;
 
         public static readonly Color32 SolidColor = new Color32(0, 0, 0, 255);
@@ -49,11 +63,12 @@ namespace Maes.Statistics {
 
         private const int ResolutionMultiplier = 2;
         private SimulationMap<ExplorationCell> _map;
-        
+
         public delegate Color32 CellToColor(ExplorationCell cell);
         public delegate Color32 CellIndexToColor(int cellIndex);
-        
-        public void SetMap(SimulationMap<ExplorationCell> newMap, Vector3 offset) {
+
+        public void SetMap(SimulationMap<ExplorationCell> newMap, Vector3 offset)
+        {
             _map = newMap;
             _widthInTiles = _map.WidthInTiles;
             _heightInTiles = _map.HeightInTiles;
@@ -75,14 +90,38 @@ namespace Maes.Statistics {
 
             mesh.colors32 = _colors;
             meshFilter.mesh = mesh;
+
+            fogOfWarPlane = GameObject.Find("FogPlaneBetter");
+            _revealRadius = robotSpawner.RobotConstraints.SlamRayTraceRange;
+
+            foreach (Maes.Robot.MonaRobot robot in robotSpawner.CommunicationManager.robots)
+            {
+                _fogRobots.Add(robot.transform);
+            }
+            _fogMesh = fogOfWarPlane.GetComponent<MeshFilter>().mesh;
+            _fogVertices = _fogMesh.vertices;
+            _fogColors = new Color[_fogVertices.Length];
+            for (int i = 0; i < _fogColors.Length; i++)
+            {
+                _fogColors[i] = Color.black;
+            }
+            for (int i = 0; i < _fogVertices.Length; i++)
+            {
+                _fogVertices[i] = fogOfWarPlane.transform.TransformPoint(_fogVertices[i]);
+            }
+            UpdateFogColor();
+
         }
 
-        private void GenerateTriangleVertices() {
+        private void GenerateTriangleVertices()
+        {
             _vertices.Clear();
             var vertexDistance = 1f / ResolutionMultiplier;
-            for (int y = 0; y < _heightInTiles; y++) {
+            for (int y = 0; y < _heightInTiles; y++)
+            {
                 var translatedY = y + _offset.y;
-                for (int x = 0; x < _widthInTiles; x++) {
+                for (int x = 0; x < _widthInTiles; x++)
+                {
                     var translatedX = x + _offset.x;
                     AddTileTriangleVertices(translatedX, translatedY, vertexDistance);
                 }
@@ -93,7 +132,8 @@ namespace Maes.Statistics {
         // The triangles are indexed and arranged as shown in this very pretty illustration:
         // |4/5|6\7|
         // |0\1|2/3|
-        private void AddTileTriangleVertices(float x, float y, float vertexDistance) {
+        private void AddTileTriangleVertices(float x, float y, float vertexDistance)
+        {
             // Triangle 0
             _vertices.Add(new Vector3(x, y, 0f));
             _vertices.Add(new Vector3(x, y + vertexDistance, 0f));
@@ -136,7 +176,8 @@ namespace Maes.Statistics {
         }
 
 
-        private void GenerateTriangles() {
+        private void GenerateTriangles()
+        {
             _triangles.Clear();
             // The vertices are already arranged in the correct order (ie. triangle 0 has vertices indexed 0, 1, 2)
             _triangles = new List<int>();
@@ -145,9 +186,11 @@ namespace Maes.Statistics {
         }
 
         // Colors each triangle depending on its current state
-        public void InitializeColors(SimulationMap<ExplorationCell> newMap) {
+        public void InitializeColors(SimulationMap<ExplorationCell> newMap)
+        {
             int count = 0;
-            foreach (var (index, explorationCell) in newMap) {
+            foreach (var (index, explorationCell) in newMap)
+            {
                 var vertexIndex = index * 3;
                 var color = SolidColor;
                 if (explorationCell.IsExplorable)
@@ -164,8 +207,10 @@ namespace Maes.Statistics {
         /// and should be only called when it is necessary to replace all colors. To update a small subset of the
         /// triangles use the <see cref="UpdateColors"/> function.
         /// </summary>
-        public void SetAllColors(SimulationMap<ExplorationCell> map, CellToColor cellToColor) {
-            foreach (var (index, cell) in map) {
+        public void SetAllColors(SimulationMap<ExplorationCell> map, CellToColor cellToColor)
+        {
+            foreach (var (index, cell) in map)
+            {
                 var vertexIndex = index * 3;
                 var color = cellToColor(cell);
                 _colors[vertexIndex] = color;
@@ -181,8 +226,10 @@ namespace Maes.Statistics {
         /// and should be only called when it is necessary to replace all colors. To update a small subset of the
         /// triangles use the <see cref="UpdateColors"/> function.
         /// </summary>
-        public void SetAllColors(SimulationMap<ExplorationCell> map, CellIndexToColor cellToColor) {
-            foreach (var (index, cell) in map) {
+        public void SetAllColors(SimulationMap<ExplorationCell> map, CellIndexToColor cellToColor)
+        {
+            foreach (var (index, cell) in map)
+            {
                 var vertexIndex = index * 3;
                 var color = cellToColor(index);
                 _colors[vertexIndex] = color;
@@ -192,15 +239,18 @@ namespace Maes.Statistics {
 
             mesh.colors32 = _colors;
         }
-        
-        public void SetAllColors(CellIndexToColor getColorByIndex) {
-            foreach (var (index, _) in _map) {
+
+        public void SetAllColors(CellIndexToColor getColorByIndex)
+        {
+            foreach (var (index, _) in _map)
+            {
                 SetCellColor(index, getColorByIndex(index));
             }
             mesh.colors32 = _colors;
         }
 
-        private void SetCellColor(int triangleIndex, Color32 color) {
+        private void SetCellColor(int triangleIndex, Color32 color)
+        {
             var vertexIndex = triangleIndex * 3;
             _colors[vertexIndex] = color;
             _colors[vertexIndex + 1] = color;
@@ -210,16 +260,62 @@ namespace Maes.Statistics {
         /// <summary>
         /// Updates the colors of the triangles corresponding to the given list of exploration cells.
         /// </summary>
-        public void UpdateColors(IEnumerable<(int, ExplorationCell)> cellsWithIndices, CellToColor cellToColor) {
-            foreach (var (index, cell) in cellsWithIndices) {
+        public void UpdateColors(IEnumerable<(int, ExplorationCell)> cellsWithIndices, CellToColor cellToColor)
+        {
+            foreach (var (index, cell) in cellsWithIndices)
+            {
                 var vertexIndex = index * 3;
                 var color = cellToColor(cell);
                 _colors[vertexIndex] = color;
                 _colors[vertexIndex + 1] = color;
                 _colors[vertexIndex + 2] = color;
+
+                for (int i = 0; i <= 2; i++)
+                {
+                    Ray r = new Ray(_vertices[vertexIndex + i], Vector3.back);
+                    Debug.DrawRay(_vertices[vertexIndex + i], Vector3.back);
+                    RaycastHit hit;
+                    if (Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide))
+                    {
+                        int vertexIndexHit = GetClosestVertex(hit, _fogMesh.triangles);
+                        float dist = 1000;
+                        foreach (Transform robot in _fogRobots)
+                        {
+                            dist = Mathf.Min(dist, Vector3.SqrMagnitude(robot.position - _vertices[vertexIndex + i]));
+                        }
+                        float alpha = Mathf.Min(_fogColors[vertexIndexHit].a, dist / _revealRadiusSqr);
+                        _fogColors[vertexIndexHit].a = alpha;
+                        UpdateFogColor();
+                    }
+                }
             }
 
             mesh.colors32 = _colors;
+        }
+
+        void UpdateFogColor()
+        {
+            _fogMesh.colors = _fogColors;
+        }
+
+        public static int GetClosestVertex(RaycastHit aHit, int[] aTriangles)
+        {
+            var b = aHit.barycentricCoordinate;
+            int index = aHit.triangleIndex * 3;
+            if (aTriangles == null || index < 0 || index + 2 >= aTriangles.Length)
+                return -1;
+
+            if (b.x > b.y)
+            {
+                if (b.x > b.z)
+                    return aTriangles[index]; // x
+                else
+                    return aTriangles[index + 2]; // z
+            }
+            else if (b.y > b.z)
+                return aTriangles[index + 1]; // y
+            else
+                return aTriangles[index + 2]; // z
         }
     }
 }
