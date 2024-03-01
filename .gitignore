@@ -76,3 +76,4 @@ maes-ros-slam-ws/.idea
 /.vsconfig
 ProjectSettings/
 UserSettings/
+CodeCoverage/
