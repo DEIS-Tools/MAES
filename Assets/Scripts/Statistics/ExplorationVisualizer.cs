@@ -93,6 +93,7 @@ namespace Maes.Statistics
 
             fogOfWarPlane = GameObject.Find("FogPlaneBetter");
             _revealRadius = robotSpawner.RobotConstraints.SlamRayTraceRange;
+            _revealRadiusSqr = _revealRadius * _revealRadius;
 
             foreach (Maes.Robot.MonaRobot robot in robotSpawner.CommunicationManager.robots)
             {
@@ -270,15 +271,16 @@ namespace Maes.Statistics
                 _colors[vertexIndex + 1] = color;
                 _colors[vertexIndex + 2] = color;
 
-                for (int i = 0; i <= 2; i++)
+                for (int i = 0; i <= 1; i++) //The more vertices nearby you do, the more computation and the further you see
                 {
-                    Ray r = new Ray(_vertices[vertexIndex + i], Vector3.back);
-                    Debug.DrawRay(_vertices[vertexIndex + i], Vector3.back);
+                    Ray r = new Ray(_vertices[vertexIndex + i] + new Vector3(0,0,-100), Vector3.forward);
+                    Debug.DrawRay(_vertices[vertexIndex + i], Vector3.back * 10);
                     RaycastHit hit;
+                    bool raytrue = Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide);
                     if (Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide))
                     {
                         int vertexIndexHit = GetClosestVertex(hit, _fogMesh.triangles);
-                        float dist = 1000;
+                        float dist = 0;
                         foreach (Transform robot in _fogRobots)
                         {
                             dist = Mathf.Min(dist, Vector3.SqrMagnitude(robot.position - _vertices[vertexIndex + i]));
