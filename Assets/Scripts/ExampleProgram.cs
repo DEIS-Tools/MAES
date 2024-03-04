@@ -29,6 +29,7 @@ using UnityEngine;
 using Maes.Robot;
 using Maes.ExplorationAlgorithm.Movement;
 using System.Collections.Generic;
+using Maes.ExplorationAlgorithm.TheNextFrontier;
 
 namespace Maes
 {
@@ -89,18 +90,18 @@ namespace Maes
                         3,
                         100,
                         100);
-                    var algorithm = new MovementTestAlgorithm(new Vector2Int(100, 97));
+                    var algorithm = new TnfExplorationAlgorithm(1, 10, randomSeed);
 
                     var scenarioBuilding = new SimulationScenario(
                         seed: randomSeed,
                         mapSpawner: generator => generator.GenerateMap(buildingConfig),
                         robotConstraints: robotConstraints,
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
-                            new List<Vector2Int> { new Vector2Int(0, 0) },
+                            new List<Vector2Int> { new Vector2Int(0, 0), new Vector2Int(1, 0), new Vector2Int(0,1), new Vector2Int(1,1), new Vector2Int(2,0) },
                             map,
                             randomSeed,
-                            1,
-                            (seed) => algorithm
+                            5,
+                            (seed) => new TnfExplorationAlgorithm(1, 10, randomSeed)
                         ));
                     //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
                     //simulator.EnqueueScenario(scenarioCave);

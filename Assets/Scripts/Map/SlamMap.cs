@@ -108,12 +108,11 @@ namespace Maes.Map {
             // This is done by multiplying by 2 and then rounding to nearest number.
             // Dividing by two then gives us number with a possible fraction of 0.5
             // We then multiply by 2 again to get to the right slam tile
-            var xFloat = Math.Round(currentPosition.x * 2, MidpointRounding.AwayFromZero) / 2;
-            var yFloat = Math.Round(currentPosition.y * 2, MidpointRounding.AwayFromZero) / 2;
-            var x = Convert.ToInt32(xFloat * 2);
-            var y = Convert.ToInt32(yFloat * 2);
-            var slamX = (x - (int)_offset.x) * 2;
-            var slamY = (y - (int)_offset.y) * 2;
+            var x = (int)Math.Round(currentPosition.x * 2, MidpointRounding.AwayFromZero);
+            var y = (int)Math.Round(currentPosition.y * 2, MidpointRounding.AwayFromZero);
+
+            var slamX = x - (int)_offset.x * 2;
+            var slamY = y - (int)_offset.y * 2;
 
             return new Vector2Int(slamX, slamY);
         }
@@ -294,7 +293,7 @@ namespace Maes.Map {
         }
 
         public bool IsSolid(Vector2Int coordinate) {
-            
+            coordinate = CoarseMap.ToSlamMapCoordinate(coordinate);
             if (IsWithinBounds(coordinate)) {
                 var isTraversable = _tiles[coordinate.x, coordinate.y] == SlamTileStatus.Open;
                 isTraversable &= _tiles[coordinate.x + 1, coordinate.y] == SlamTileStatus.Open;

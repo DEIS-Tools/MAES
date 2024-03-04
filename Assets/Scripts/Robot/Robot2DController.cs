@@ -324,7 +324,7 @@ namespace Maes.Robot
             info.AppendLine(
                 $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
             info.Append($"Slam tile: {SlamMap.GetCurrentPositionSlamTile()}\n");
-            info.Append($"Coarse tile: {SlamMap.GetCoarseMap().FromSlamMapCoordinate(SlamMap.GetCurrentPositionSlamTile())}\n");
+            info.Append($"Coarse tile: {SlamMap.CoarseMap.GetApproximatePosition()}\n");
             info.Append($"Is colliding: {IsCurrentlyColliding()}");
             return info.ToString();
         }
@@ -340,23 +340,23 @@ namespace Maes.Robot
             if (GetStatus() != RobotStatus.Idle) return;
             if (_currentPath.Count == 0)
             {
-                var robotCurrentPosition = SlamMap.GetCurrentPositionSlamTile();
+                var robotCurrentPosition = Vector2Int.RoundToInt(SlamMap.CoarseMap.GetApproximatePosition());
                 if (robotCurrentPosition == tile) return;
-                var pathList = SlamMap.GetPath(robotCurrentPosition, tile);
+                var pathList = SlamMap.CoarseMap.GetPath(tile, false, true);
                 if (pathList == null) return;
                 _currentPath = new Queue<Vector2Int>(pathList);
                 _currentTarget = _currentPath.Dequeue();
             }
-            if (SlamMap.GetRelativeSlamPosition(_currentPath.Peek()).Distance == 0) //Extremely Cursed check for having moved too far
+            /* if (SlamMap.GetRelativeSlamPosition(SlamMap.CoarseMap.ToSlamMapCoordinate(_currentPath.Peek())).Distance == 0) //Extremely Cursed check for having moved too far
             {
                 _currentTarget = _currentPath.Dequeue();
-            }
-            var relativePosition = SlamMap.GetRelativeSlamPosition(_currentTarget);
+            } */
+            var relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             if (relativePosition.Distance < 0.5f) 
             {
                 if (_currentPath.Count == 0) return;
                 _currentTarget = _currentPath.Dequeue();
-                relativePosition = SlamMap.GetRelativeSlamPosition(_currentTarget);
+                relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             }
             if (Math.Abs(relativePosition.RelativeAngle) > 0.5f) Rotate(relativePosition.RelativeAngle);
             else if (relativePosition.Distance > 0.5f) Move(relativePosition.Distance); //Robots move two tiles when hthey should move one
