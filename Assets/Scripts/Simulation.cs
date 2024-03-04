@@ -31,8 +31,10 @@ using Maes.Statistics;
 using Maes.UI;
 using UnityEngine;
 
-namespace Maes {
-    public class Simulation : MonoBehaviour, ISimulationUnit {
+namespace Maes
+{
+    public class Simulation : MonoBehaviour, ISimulationUnit
+    {
         public static Simulation SingletonInstance;
         public int SimulatedLogicTicks { get; private set; } = 0;
         public int SimulatedPhysicsTicks { get; private set; } = 0;
@@ -59,47 +61,52 @@ namespace Maes {
         internal SimulationInfoUIController SimInfoUIController;
 
         // Sets up the simulation by generating the map and spawning the robots
-        public void SetScenario(SimulationScenario scenario) {
+        public void SetScenario(SimulationScenario scenario)
+        {
             _scenario = scenario;
             var mapInstance = Instantiate(MapGenerator, transform);
             _collisionMap = scenario.MapSpawner(mapInstance);
-            
+
             _communicationManager = new CommunicationManager(_collisionMap, scenario.RobotConstraints, _debugVisualizer);
             RobotSpawner.CommunicationManager = _communicationManager;
             RobotSpawner.RobotConstraints = scenario.RobotConstraints;
-            
+
             Robots = scenario.RobotSpawner(_collisionMap, RobotSpawner);
             _communicationManager.SetRobotRelativeSize(scenario.RobotConstraints.AgentRelativeSize);
             foreach (var robot in Robots)
                 robot.OnRobotSelected = SetSelectedRobot;
-            
+
             _communicationManager.SetRobotReferences(Robots);
 
             ExplorationTracker = new ExplorationTracker(_collisionMap, explorationVisualizer, scenario.RobotConstraints);
         }
 
-        public void SetSelectedRobot([CanBeNull] MonaRobot newSelectedRobot) {
+        public void SetSelectedRobot([CanBeNull] MonaRobot newSelectedRobot)
+        {
             // Disable outline on previously selected robot
             if (_selectedRobot != null) _selectedRobot.outLine.enabled = false;
             _selectedRobot = newSelectedRobot;
             if (newSelectedRobot != null) newSelectedRobot.outLine.enabled = true;
             ExplorationTracker.SetVisualizedRobot(newSelectedRobot);
-            if(_selectedRobot == null) SimInfoUIController.ClearSelectedRobot();
+            if (_selectedRobot == null) SimInfoUIController.ClearSelectedRobot();
             UpdateDebugInfo();
         }
-        
-        public void SelectFirstRobot() {
+
+        public void SelectFirstRobot()
+        {
             SetSelectedRobot(Robots[0]);
         }
 
-        public void SetSelectedTag([CanBeNull] VisibleTagInfoHandler newSelectedTag) {
+        public void SetSelectedTag([CanBeNull] VisibleTagInfoHandler newSelectedTag)
+        {
             if (_selectedTag != null) _selectedTag.outline.enabled = false;
             _selectedTag = newSelectedTag;
             if (newSelectedTag != null) newSelectedTag.outline.enabled = true;
             UpdateDebugInfo();
         }
 
-        public void LogicUpdate() {
+        public void LogicUpdate()
+        {
             _debugVisualizer.LogicUpdate();
             ExplorationTracker.LogicUpdate(Robots);
             Robots.ForEach(robot => robot.LogicUpdate());
@@ -107,7 +114,8 @@ namespace Maes {
             _communicationManager.LogicUpdate();
         }
 
-        public void PhysicsUpdate() {
+        public void PhysicsUpdate()
+        {
             Robots.ForEach(simUnit => simUnit.PhysicsUpdate());
             Physics2D.Simulate(GlobalSettings.PhysicsTickDeltaSeconds);
             SimulateTimeSeconds += GlobalSettings.PhysicsTickDeltaSeconds;
@@ -119,70 +127,93 @@ namespace Maes {
         /// <summary>
         /// Tests specifically if The Next Frontier is no longer doing any work.
         /// </summary>
-        public bool TnfBotsOutOfFrontiers() {
+        public bool TnfBotsOutOfFrontiers()
+        {
             var res = true;
-            foreach (var monaRobot in Robots) {
+            foreach (var monaRobot in Robots)
+            {
                 res &= (monaRobot.ExplorationAlgorithm as TnfExplorationAlgorithm)?.IsOutOfFrontiers() ?? true;
             }
 
             return res;
         }
 
-        public void UpdateDebugInfo() {
-            if (_selectedRobot != null) {
-                if (GlobalSettings.IsRosMode) {
+        public void UpdateDebugInfo()
+        {
+            if (_selectedRobot != null)
+            {
+                if (GlobalSettings.IsRosMode)
+                {
                     SimInfoUIController.UpdateAlgorithmDebugInfo(_selectedRobot.ExplorationAlgorithm.GetDebugInfo());
                     // SimInfoUIController.UpdateControllerDebugInfo(_selectedRobot.Controller.GetDebugInfo());
                 }
-                else {
+                else
+                {
                     SimInfoUIController.UpdateAlgorithmDebugInfo(_selectedRobot.ExplorationAlgorithm.GetDebugInfo());
                     SimInfoUIController.UpdateControllerDebugInfo(_selectedRobot.Controller.GetDebugInfo());
                 }
-                
+
             }
-            if (_selectedTag != null) {
+            if (_selectedTag != null)
+            {
                 SimInfoUIController.UpdateTagDebugInfo(_selectedTag.GetDebugInfo());
             }
         }
 
-        public void ShowAllTags() {
+        public void ShowAllTags()
+        {
             _debugVisualizer.RenderVisibleTags();
         }
 
-        public void ShowSelectedTags() {
-            if (_selectedRobot != null) {
+        public void ShowSelectedTags()
+        {
+            if (_selectedRobot != null)
+            {
                 _debugVisualizer.RenderSelectedVisibleTags(_selectedRobot.id);
             }
         }
 
-        public void ClearVisualTags() {
+        public void ClearVisualTags()
+        {
             _debugVisualizer.HideAllTags();
         }
 
-        public void RenderCommunicationLines() {
+        public void RenderCommunicationLines()
+        {
             _debugVisualizer.RenderCommunicationLines();
         }
 
-        public void Awake() {
+        public void Awake()
+        {
             SingletonInstance = this;
         }
 
-        public Vector2 WorldCoordinateToSlamPosition(Vector2 worldPosition) {
+        public Vector2 WorldCoordinateToSlamPosition(Vector2 worldPosition)
+        {
             return worldPosition;
         }
 
         private void OnDrawGizmos()
         {
-            if (_selectedRobot != null)
+            if (HasSelectedRobot())
             {
-                Gizmos.color = Color.yellow;
-                var coarseMap = _selectedRobot.Controller.SlamMap.CoarseMap;
+                Gizmos.color = Color.blue;
+                for (float x = -50; x < 50; x += 0.5f)
+                    Gizmos.DrawLine(new Vector3(x, -50, 0), new Vector3(x, 50, 0));
+                for (float y = -50; y < 50; y += 0.5f)
+                    Gizmos.DrawLine(new Vector3(-50, y, 0), new Vector3(50, y, 0));
 
-                for (float x = -50; x < 50; x += coarseMap.CellSize())
-                    Gizmos.DrawLine(new Vector3(x, -50, 1), new Vector3(x, 50, 1));
-                for (float y = -50; y < 50; y += coarseMap.CellSize())
-                    Gizmos.DrawLine(new Vector3(-50, y, 1), new Vector3(50, y, 1));
+                Gizmos.color = Color.red;
+                for (float x = -50; x < 50; x += 1)
+                    Gizmos.DrawLine(new Vector3(x, -50, 0), new Vector3(x, 50, 0));
+                for (float y = -50; y < 50; y += 1f)
+                    Gizmos.DrawLine(new Vector3(-50, y, 0), new Vector3(50, y, 0));
+
+                Gizmos.color = Color.black;
+                Gizmos.DrawLine(new Vector3(-50, 0, 0), new Vector3(50, 0, 0));
+                Gizmos.DrawLine(new Vector3(0, -50, 0), new Vector3(0, 50, 0));
             }
+            else SelectFirstRobot();
         }
     }
 }

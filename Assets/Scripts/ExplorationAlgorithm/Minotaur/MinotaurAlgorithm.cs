@@ -21,7 +21,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private List<Doorway> _doorways;
         private List<MinotaurAlgorithm> _minotaurs;
         private CardinalDirection.RelativeDirection _followDirection = CardinalDirection.RelativeDirection.Right;
-        private State _currentState;
+        private State _currentState = State.StartRotation;
         private bool _taskBegun;
         private Vector2Int? _wallPoint = null;
         private enum State
@@ -86,7 +86,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         _currentState = State.StartRotation;
                     }
                     break;
-                case State.StartRotation: if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
+                case State.StartRotation:
+                    if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
                     {
                         if (_taskBegun)
                         {
@@ -115,7 +116,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         }
                         else
                         {
-                            _controller.StartRotateAroundPoint(_wallPoint.Value);
+                            _controller.StartRotatingAroundPoint(_wallPoint.Value);
                             _taskBegun = true;
                         }
                     }
@@ -134,7 +135,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private Vector2Int? GetWallNearRobot()
         {
             var local = _visibleTiles.OrderByDescending(dict => dict.Key.y).ToList();
-            return new Vector2Int(105,98); // TODO: visibleTiles is never set :)
+            return new Vector2Int(100, 102);
             foreach (var (position, tileStatus) in local)
             {
                 if (tileStatus == SlamTileStatus.Solid)
@@ -144,21 +145,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return null;
         }
 
-        private Vector2Int? GetWallPositionAroundRobot(CardinalDirection.RelativeDirection relativeDirection, bool checkExplored = true)
-        {
-            var range = (int)VisionArea;
-            var directionVector = _map.GetRelativeNeighbourDirection(relativeDirection).Vector;
-            var currentPosition = Vector2Int.FloorToInt(_map.GetApproximatePosition());
-
-            if ((int)relativeDirection % 2 == 1)
-                range = (int)MathF.Round(MathF.Sqrt(range));
-            return Enumerable.Range(1, range)
-                .Where(step => checkExplored ?
-                                IsTileBlocked(currentPosition + directionVector * step) :
-                                IsTileWall(currentPosition + directionVector * step))
-                .Select(step => currentPosition + directionVector * step)
-                .FirstOrDefault();
-        }
         private void Communication()
         {
             var messages = _controller.ReceiveBroadcast().OfType<IMinotaurMessage>();
@@ -193,7 +179,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private void GetNextExplorationTarget()
         {
-            var tilesTowardFollowDirection = GetWallPositionAroundRobot(_followDirection);
+            //var tilesTowardFollowDirection = GetWallPositionAroundRobot(_followDirection);
             //tilesTowardFollowDirection.ForEach(tileStatus => Debug.Log(tileStatus));
 
             var direction = IsTileBlocked(_map.GetRelativeNeighbour(_followDirection));

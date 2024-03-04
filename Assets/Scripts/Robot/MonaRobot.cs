@@ -95,13 +95,13 @@ namespace Maes.Robot {
             gameObj.name = $"robot{0}-" + gameObj.name;
             return gameObj;
         }
+
         private void OnDrawGizmos()
         {
-            if (_collidingGameObjects == null) return;
-            foreach (var circle in Controller.DebugCircle)
+            Gizmos.color = Color.yellow;
+            foreach (var (point,radius) in Controller.DebugCircle)
             {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawWireSphere(circle.Item1, circle.Item2);
+                Gizmos.DrawWireSphere(point, radius);
             }
         }
     }

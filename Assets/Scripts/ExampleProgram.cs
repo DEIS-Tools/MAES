@@ -37,13 +37,7 @@ namespace Maes
         private void Start()
         {
             const int randomSeed = 123;
-            const int height = 50;
-            const int width = 50;
-            var caveConfig = new CaveMapConfig(
-                randomSeed,
-                width,
-                height);
-            var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
+            var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("Blank_map.pgm");
 
             var robotConstraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
@@ -73,9 +67,12 @@ namespace Maes
                     return true;
                 }
             );
+
+
+            var buildingConfig = new BuildingMapConfig(randomSeed: randomSeed, widthInTiles: 100, heightInTiles: 100);
+
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
-            var rand = new System.Random();
             var rightForce = 1f;
             for (var leftForce = -0.625f; leftForce < 0.625f; leftForce += 0.001f)
             {
@@ -83,31 +80,22 @@ namespace Maes
                 {
                     continue;
                 }
-                var buildingConfig = new BuildingMapConfig(
+                var scenarioBitMap = new SimulationScenario(
+                seed: randomSeed,
+                mapSpawner: (gen) => gen.GenerateMap(bitmap, randomSeed),
+                robotSpawner: (map, spawner) => spawner.SpawnRobotsAtPositions(
+                    new List<Vector2Int> { new Vector2Int(0, 0) },
+                    map,
                     randomSeed,
-                    3,
-                    100,
-                    100);
-                var algorithm = new CircleTestAlgorithm(leftForce, rightForce);
+                    1,
+                    seed => new MinotaurAlgorithm(robotConstraints, seed)
+                ),
+                robotConstraints: robotConstraints
+            );
 
-                var scenarioBuilding = new SimulationScenario(
-                    seed: randomSeed,
-                    hasFinishedSim: sim => sim.Robots[0].ExplorationAlgorithm.GetDebugInfo() == "True",
-                    mapSpawner: generator => generator.GenerateMap(buildingConfig),
-                    robotConstraints: robotConstraints,
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
-                        new List<Vector2Int> { new Vector2Int(0, 0) },
-                        map,
-                        randomSeed,
-                        1,
-                        (seed) => algorithm
-                    ));
-                //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
-                //simulator.EnqueueScenario(scenarioCave);
-                simulator.EnqueueScenario(scenarioBuilding);
-                //simulator.EnqueueScenario(scenarioBitMap);
-                simulator.PressPlayButton(); // Instantly enter play mode
+                simulator.EnqueueScenario(scenarioBitMap);
             }
+            simulator.PressPlayButton(); // Instantly enter play mode
         }
     }
 }

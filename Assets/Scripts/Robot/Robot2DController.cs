@@ -29,12 +29,12 @@ using UnityEngine;
 
 namespace Maes.Robot
 {
-    public class Robot2DController : MonoBehaviour, IRobotController
+    public class Robot2DController : IRobotController
     {
         private Rigidbody2D _rigidbody;
-        public Transform _transform;
-        public Transform _leftWheel;
-        public Transform _rightWheel;
+        private Transform _transform;
+        private Transform _leftWheel;
+        private Transform _rightWheel;
 
         private const int RotateForce = 5;
         private const int MoveForce = 15;
@@ -49,8 +49,6 @@ namespace Maes.Robot
 
         internal CommunicationManager CommunicationManager { get; set; }
         public SlamMap SlamMap { get; set; }
-
-        public List<(Vector3, float)> DebugCircle = new();
 
         // Returns the counterclockwise angle in degrees between the forward orientation of the robot and the x-axis
         public float GetForwardAngleRelativeToXAxis()
@@ -82,6 +80,8 @@ namespace Maes.Robot
         private readonly int _movementUpdatesBeforeRedeclaringCollision = 2;
         private int _physicsUpdatesSinceStartingMovement = 0;
         public RobotConstraints Constraints;
+
+        public List<(Vector3, float)> DebugCircle = new();
 
         public Robot2DController(Rigidbody2D rigidbody, Transform transform, Transform leftWheel, Transform rightWheel,
             MonaRobot robot)
@@ -207,8 +207,8 @@ namespace Maes.Robot
 
             // Force changes depending on whether the robot is rotating or accelerating
             var force = MoveForce;
-            //if (directive.IsRotational())
-            //    force = RotateForce;
+            if (directive.IsRotational())
+                force = RotateForce;
 
             // Apply force at teach wheel
             _rigidbody.AddForceAtPosition(forward * force * directive.LeftWheelSpeed, leftPosition);
@@ -253,6 +253,17 @@ namespace Maes.Robot
             AssertRobotIsInIdleState("rotation");
             CurrentTask = new InfiniteRotationTasK(Constraints.RelativeMoveSpeed * (counterClockwise ? -1 : 1));
         }
+        public void StartRotatingAroundPoint(Vector2Int point, bool counterClockwise = false)
+        {
+            AssertRobotIsInIdleState("Rotating around point");
+            var radius = Vector2.Distance(SlamMap.GetCurrentPositionSlamTile(), point);
+            var worldPoint = SlamMap.SlamToWorldCoordinate(point);
+            var distanceBetweenWheels = Vector2.Distance(_leftWheel.position, _rightWheel.position);
+            DebugCircle.Add((worldPoint, radius / 2 - distanceBetweenWheels / 2));
+            DebugCircle.Add((worldPoint, radius / 2 + distanceBetweenWheels / 2));
+
+            CurrentTask = new RotateAroundPointTask(radius, Constraints.RelativeMoveSpeed, counterClockwise);
+        }
 
 
         public void StartMoving(bool reverse = false)
@@ -261,27 +272,8 @@ namespace Maes.Robot
             CurrentTask = new MovementTask(Constraints.RelativeMoveSpeed * (reverse ? -1 : 1));
         }
 
-        public void StartRotateAroundPoint(Vector2Int point, bool counterClockwise = false)
-        {
-            AssertRobotIsInIdleState("Rotate around point");
-            var worldPoint = SlamMap.SlamToWorldCoordinate(point);
-            var radius = Vector2.Distance(worldPoint, _robot.transform.position);
-            var distanceBetweenWheels = Vector2.Distance(_leftWheel.position, _rightWheel.position);
-
-
-            DebugCircle.Add((worldPoint, radius - distanceBetweenWheels / 2));
-            DebugCircle.Add((worldPoint, radius + distanceBetweenWheels / 2));
-
-            CurrentTask = new RotateAroundPointTask(
-                radius,
-                distanceBetweenWheels,
-                Constraints.RelativeMoveSpeed,
-                counterClockwise
-            );
-        }
-
         // Asserts that the current status is idle, and throws an exception if not
-        protected void AssertRobotIsInIdleState(string attemptedActionName)
+        protected void AssertRobotIsInIdleState(String attemptedActionName)
         {
             var currentStatus = GetStatus();
             if (currentStatus != RobotStatus.Idle)

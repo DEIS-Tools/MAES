@@ -79,6 +79,14 @@ namespace Maes.Robot {
         void Rotate(float degrees);
 
         /// <summary>
+        /// Instructs the robot to rotate around a specific point <paramref name="point"/>.
+        /// Rotation will continue until the instruction is cancelled, either manually or by a collision.
+        /// This instruction can be manually cancelled by calling <see cref="StopCurrentTask"/>
+        /// </summary>
+        /// <param name="point"> The point on the slam map that is being rotated around</param>
+        void StartRotatingAroundPoint(Vector2Int point, bool counterClockwise = false);
+
+        /// <summary>
         /// This method instructs the robot to start rotating clockwise in place.
         /// Rotation will continue until the instruction is cancelled, either manually or by a collision.
         /// This instruction can be manually cancelled by calling <see cref="StopCurrentTask"/>

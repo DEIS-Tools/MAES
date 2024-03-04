@@ -1,3 +1,4 @@
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.PackageManager;
@@ -8,29 +9,27 @@ namespace Maes.Robot.Task
     internal class RotateAroundPointTask : ITask
     {
         private readonly float _radius;
-        private readonly float _distanceBetweenWheels;
         private readonly float _force;
         private readonly bool _counterClockwise;
 
-        public RotateAroundPointTask(float radius, float distanceBetweenWheels, float force, bool counterClockwise) 
+        public RotateAroundPointTask(float radius, float force, bool counterClockwise)
         {
             _radius = radius;
-            _distanceBetweenWheels = distanceBetweenWheels;
             _force = force;
             _counterClockwise = counterClockwise;
         }
 
         public MovementDirective GetNextDirective()
         {
-            var innerRadius = _radius - _distanceBetweenWheels/2;
-            var outerRadius = _radius + _distanceBetweenWheels/2;
-            var ratioBetweenWheelSpeeds = (innerRadius / outerRadius)/1.35f; // Sorry for magic number
-            Debug.Log($"inner: {innerRadius}, outer: {outerRadius}");
+            var ratioBetweenWheelForces = GetRatioFromRadius();
+            var leftForce = _counterClockwise ? _force * ratioBetweenWheelForces : _force;
+            var rightForce = _counterClockwise ? _force : _force * ratioBetweenWheelForces;
+            return new MovementDirective(leftForce, rightForce);
+        }
 
-            var leftForce = _counterClockwise ? _force * ratioBetweenWheelSpeeds : -_force;
-            var rightForce = _counterClockwise ? -_force : _force * ratioBetweenWheelSpeeds;
-            Debug.Log($"left: {leftForce}, right: {rightForce}");
-            return new MovementDirective(1, 0);
+        private float GetRatioFromRadius()
+        {
+            return 0.00006f * Mathf.Pow(_radius, 3) - 0.0056f * Mathf.Pow(_radius, 2) + 0.3472f * _radius;
         }
 
         public bool IsCompleted()

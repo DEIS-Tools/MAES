@@ -12,11 +12,12 @@ namespace Maes.Map.MapGen
         /// <summary>
         /// Method for creating a map from a 2D array of Tiles.
         /// </summary>
-        public SimulationMap<Tile> CreateMapFromBitMap(Tile[,] bitmap, float wallHeight = 2.0f, int borderSize = 1)
+        public SimulationMap<Tile> CreateMapFromBitMap(Tile[,] bitmap, int seed, float wallHeight = 2.0f, int borderSize = 1)
         {
             _bitmap = bitmap;
             _wallHeight = wallHeight;
             _borderSize = borderSize;
+            Tile.Rand = new System.Random(seed);
 
             // Clear and destroy objects from previous map
             ClearMap();
@@ -24,7 +25,6 @@ namespace Maes.Map.MapGen
             // TODO: If the border size is less than two, sometimes the mesh is generated with wierd invisible walls
             // Can be reproduced by having a map with a line with a width of 2 going through the middle and splitting the map
             // and having a border size smaller than 2. The collider also covers the outside of the map, when the bug happens.
-            _borderSize = Math.Max(2, _borderSize);
 
             // Add border around map
             var borderedMap = CreateBorderedMap(_bitmap, _bitmap.GetLength(0), _bitmap.GetLength(1), _borderSize);
