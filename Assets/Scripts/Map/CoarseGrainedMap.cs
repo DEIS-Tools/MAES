@@ -768,6 +768,27 @@ namespace Maes.Map
 
             return false;
         }
+        private bool CheckIfAnyStatusSolid(Vector2Int coordinate)
+            {
+                var statuses = GetSlamTileStatuses(coordinate);
+                foreach (var coord in statuses) {
+                    if (coord == SlamMap.SlamTileStatus.Solid) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+        private bool CheckForUnseen(Vector2Int coordinate)
+            {
+                var statuses = GetSlamTileStatuses(coordinate);
+                foreach (var coord in statuses) {
+                    if (coord == SlamMap.SlamTileStatus.Unseen){
+                        return true;
+                    }
+                }
+                return false;
+            }
 
         private bool CheckIfAllSlamStatusesSolid(Vector2Int coordinate)
         {
