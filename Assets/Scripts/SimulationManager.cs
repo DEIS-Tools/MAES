@@ -25,7 +25,6 @@ using Maes.Statistics;
 using Maes.UI;
 using Maes.Utilities;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Maes {
