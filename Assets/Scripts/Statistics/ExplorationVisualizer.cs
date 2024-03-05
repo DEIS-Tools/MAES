@@ -91,14 +91,8 @@ namespace Maes.Statistics
             mesh.colors32 = _colors;
             meshFilter.mesh = mesh;
 
+            //Fog of War related stuff below
             fogOfWarPlane = GameObject.Find("FogPlaneBetter");
-            /* _revealRadius = robotSpawner.RobotConstraints.SlamRayTraceRange;
-            _revealRadiusSqr = _revealRadius * _revealRadius;
-
-            foreach (Maes.Robot.MonaRobot robot in robotSpawner.CommunicationManager.robots)
-            {
-                _fogRobots.Add(robot.transform);
-            } */
             _fogMesh = fogOfWarPlane.GetComponent<MeshFilter>().mesh;
             _fogVertices = _fogMesh.vertices;
             _fogColors = new Color[_fogVertices.Length];
@@ -271,22 +265,17 @@ namespace Maes.Statistics
                 _colors[vertexIndex + 1] = color;
                 _colors[vertexIndex + 2] = color;
 
-                for (int i = 0; i <= 0; i++) //The more vertices nearby you do, the more computation and the further you see
+                //Fog of War colorchange below, done for every vertex that is seen and explored
+                //If turn off exploration mode, tiles dont change color, therefore dont change the FogMesh
+                for (int i = 0; i <= 2; i++) //The more vertices nearby you check, the more computation and the further you see, 0-2 work, above 0 is much slower
                 {
-                    Ray r = new Ray(_vertices[vertexIndex + i] + new Vector3(0,0,-100), Vector3.forward);
+                    Ray r = new Ray(_vertices[vertexIndex + i] + new Vector3(0,0,-10), Vector3.forward);
                     Debug.DrawRay(_vertices[vertexIndex + i], Vector3.back * 10);
                     RaycastHit hit;
                     bool raytrue = Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide);
                     if (Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide))
                     {
                         int vertexIndexHit = GetClosestVertex(hit, _fogMesh.triangles);
-                        /* float dist = 1000;
-                        foreach (Transform robot in _fogRobots)
-                        {
-                            dist = Mathf.Min(dist, Vector3.SqrMagnitude(robot.position - _vertices[vertexIndex + i]));
-                        }
-                        float distAlpha = dist / _revealRadiusSqr <= 1 ? 0 : 1;
-                        float alpha = Mathf.Min(_fogColors[vertexIndexHit].a, dist / _revealRadiusSqr, distAlpha); */
                         _fogColors[vertexIndexHit].a = 0;
                         UpdateFogColor();
                     }
