@@ -228,7 +228,6 @@ namespace Maes {
         }
 
         public void RemoveCurrentSimulation() {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             Destroy(_simulationGameObject);
             _currentScenario = null;
             CurrentSimulation = null;

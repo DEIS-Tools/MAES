@@ -63,8 +63,8 @@ namespace Maes.Robot.Task {
 
         // The applied force depends on how large a distance is remaining and how fast the robot is currently moving
         private float GetForceFactor(float remainingDistance, float currentVelocity) {
-            int stopTimeTicks = GetStopTime(currentVelocity) / 2;
-            float stopDistance = GetDistanceTraveled(currentVelocity, stopTimeTicks) / 2;
+            int stopTimeTicks = GetStopTime(currentVelocity);
+            float stopDistance = GetDistanceTraveled(currentVelocity, stopTimeTicks);
             if (stopDistance <= remainingDistance - 0.01f) return _force;
             else return 0f;
         }
