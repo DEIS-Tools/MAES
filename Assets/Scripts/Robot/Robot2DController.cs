@@ -365,14 +365,15 @@ namespace Maes.Robot
         }
 
         /// <summary>
-        /// Rotates and moves directly to target
+        /// Rotates and moves directly to target unless already moving or already on target
         /// </summary>
         /// <param name="target">COARSEGRAINED tile to move to</param>
         public void MoveTo(Vector2Int target)
         {
             var relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(target);
+            if (GetStatus() != RobotStatus.Idle || relativePosition.Distance < 0.5f) return;
             if (Math.Abs(relativePosition.RelativeAngle) > 0.5f) Rotate(relativePosition.RelativeAngle);
-            else if (relativePosition.Distance > 0.5f) Move(relativePosition.Distance);
+            else Move(relativePosition.Distance);
         }
 
 

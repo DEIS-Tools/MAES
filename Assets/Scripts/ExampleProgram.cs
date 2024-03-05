@@ -90,18 +90,18 @@ namespace Maes
                         3,
                         100,
                         100);
-                    var algorithm = new TnfExplorationAlgorithm(1, 10, randomSeed);
+                    var algorithm = new MovementTestAlgorithm(new Vector2Int(50, 47));
 
                     var scenarioBuilding = new SimulationScenario(
                         seed: randomSeed,
                         mapSpawner: generator => generator.GenerateMap(buildingConfig),
                         robotConstraints: robotConstraints,
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
-                            new List<Vector2Int> { new Vector2Int(0, 0), new Vector2Int(1, 0), new Vector2Int(0,1), new Vector2Int(1,1), new Vector2Int(2,0) },
+                            new List<Vector2Int> { new Vector2Int(0, 0)},
                             map,
                             randomSeed,
-                            5,
-                            (seed) => new TnfExplorationAlgorithm(1, 10, randomSeed)
+                            1,
+                            (seed) => algorithm
                         ));
                     //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
                     //simulator.EnqueueScenario(scenarioCave);

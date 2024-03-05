@@ -110,7 +110,6 @@ namespace Maes.Map {
             // We then multiply by 2 again to get to the right slam tile
             var x = (int)Math.Round(currentPosition.x * 2, MidpointRounding.AwayFromZero);
             var y = (int)Math.Round(currentPosition.y * 2, MidpointRounding.AwayFromZero);
-
             var slamX = x - (int)_offset.x * 2;
             var slamY = y - (int)_offset.y * 2;
 
@@ -292,13 +291,19 @@ namespace Maes.Map {
             return SlamTileStatus.Unseen;
         }
 
+        /// <summary>
+        /// Gets the solid state of a tile
+        /// </summary>
+        /// <param name="coordinate">COARSEGRAINED coordinate</param>
+        /// <returns></returns>
         public bool IsSolid(Vector2Int coordinate) {
-            coordinate = CoarseMap.ToSlamMapCoordinate(coordinate);
-            if (IsWithinBounds(coordinate)) {
-                var isTraversable = _tiles[coordinate.x, coordinate.y] == SlamTileStatus.Open;
-                isTraversable &= _tiles[coordinate.x + 1, coordinate.y] == SlamTileStatus.Open;
-                isTraversable &= _tiles[coordinate.x, coordinate.y + 1] == SlamTileStatus.Open;
-                isTraversable &= _tiles[coordinate.x + 1, coordinate.y + 1] == SlamTileStatus.Open;
+            var slamCoordinate = coordinate * 2;
+            
+            if (IsWithinBounds(slamCoordinate)) {
+                var isTraversable = _tiles[slamCoordinate.x, slamCoordinate.y] == SlamTileStatus.Open;
+                isTraversable &= _tiles[slamCoordinate.x + 1, slamCoordinate.y] == SlamTileStatus.Open;
+                isTraversable &= _tiles[slamCoordinate.x, slamCoordinate.y + 1] == SlamTileStatus.Open;
+                isTraversable &= _tiles[slamCoordinate.x + 1, slamCoordinate.y + 1] == SlamTileStatus.Open;
                 return !isTraversable;
             }
             
