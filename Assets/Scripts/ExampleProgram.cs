@@ -21,6 +21,8 @@
 
 using System;
 using Maes.ExplorationAlgorithm.Minotaur;
+using System.Collections;
+using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
 using Maes.Map.MapGen;
 using Maes.Robot;
@@ -29,24 +31,27 @@ using UnityEngine;
 using Maes.Robot;
 using Maes.ExplorationAlgorithm.Movement;
 using System.Collections.Generic;
-using Maes.ExplorationAlgorithm.TheNextFrontier;
+using Maes.UI;
+using UnityEditor;
 
 namespace Maes
 {
     internal class ExampleProgram : MonoBehaviour
     {
+        private Simulator _simulator;
         private void Start()
         {
-            const int randomSeed = 123;
-            const int height = 50;
-            const int width = 50;
-            var caveConfig = new CaveMapConfig(
+            const int randomSeed = 269952;
+            const int height = 100;
+            const int width = 100;
+
+            var bConfig = new BuildingMapConfig(
                 randomSeed,
+                1,
                 width,
                 height);
-            var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
 
-            var robotConstraints = new RobotConstraints(
+            var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -74,9 +79,9 @@ namespace Maes
                     return true;
                 }
             );
+
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
-
             for (var leftForce = 0; leftForce < 10; leftForce++)
             {
                 for (var rightForce = -10f; rightForce < 0; rightForce++)
@@ -109,8 +114,21 @@ namespace Maes
                     //simulator.EnqueueScenario(scenarioBitMap);
                 }
             }
-
+            _simulator = simulator;
+            EditorApplication.Beep();
+            StartCoroutine(PauseSimulation());
             simulator.PressPlayButton(); // Instantly enter play mode
+        }
+
+        IEnumerator PauseSimulation()
+        {
+            while (_simulator.GetSimulationManager().GetCurrentSimulation().SimulatedLogicTicks < 35700)
+            {
+                yield return new WaitForEndOfFrame();
+            }
+            _simulator.GetSimulationManager().AttemptSetPlayState(SimulationPlayState.Paused);
+            EditorApplication.Beep();
+            yield return null;
         }
     }
 }
