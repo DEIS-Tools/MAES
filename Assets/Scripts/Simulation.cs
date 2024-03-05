@@ -170,5 +170,29 @@ namespace Maes {
         public Vector2 WorldCoordinateToSlamPosition(Vector2 worldPosition) {
             return worldPosition;
         }
+        private void OnDrawGizmos()
+        {
+            SelectFirstRobot();
+            if (HasSelectedRobot())
+            {
+                Gizmos.color = Color.blue;
+                for (float x = -50; x < 50; x += 0.5f)
+                    Gizmos.DrawLine(new Vector3(x, -50, 0), new Vector3(x, 50, 0));
+                for (float y = -50; y < 50; y += 0.5f)
+                    Gizmos.DrawLine(new Vector3(-50, y, 0), new Vector3(50, y, 0));
+
+                Gizmos.color = Color.red;
+                for (float x = -50; x < 50; x += 1)
+                    Gizmos.DrawLine(new Vector3(x, -50, 0), new Vector3(x, 50, 0));
+                for (float y = -50; y < 50; y += 1f)
+                    Gizmos.DrawLine(new Vector3(-50, y, 0), new Vector3(50, y, 0));
+                
+                Gizmos.color = Color.black;
+                    Gizmos.DrawLine(new Vector3(-50, 0, 0), new Vector3(50, 0, 0));
+                    Gizmos.DrawLine(new Vector3(0, -50, 0), new Vector3(0, 50, 0));
+                
+                Gizmos.DrawCube(new Vector3(0,-1.0f,0), new Vector3(0.25f,0.25f,0));
+            }
+        }
     }
 }

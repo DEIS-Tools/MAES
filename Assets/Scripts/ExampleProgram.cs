@@ -20,6 +20,8 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
+using Maes.ExplorationAlgorithm.Minotaur;
+using System.Collections;
 using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
 using Maes.Map.MapGen;
@@ -27,23 +29,29 @@ using Maes.Robot;
 using Maes.Utilities.Files;
 using UnityEngine;
 using Maes.Robot;
+using Maes.ExplorationAlgorithm.Movement;
+using System.Collections.Generic;
+using Maes.UI;
+using UnityEditor;
 
 namespace Maes
 {
     internal class ExampleProgram : MonoBehaviour
     {
+        private Simulator _simulator;
         private void Start()
         {
-            const int randomSeed = 123;
-            const int height = 50;
-            const int width = 50;
-            var caveConfig = new CaveMapConfig(
+            const int randomSeed = 269952;
+            const int height = 100;
+            const int width = 100;
+
+            var bConfig = new BuildingMapConfig(
                 randomSeed,
+                1,
                 width,
                 height);
-            var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("map.pgm");
 
-            var robotConstraints = new RobotConstraints(
+            var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -55,59 +63,72 @@ namespace Maes
                 slamRayTraceRange: 7f,
                 relativeMoveSpeed: 1f,
                 agentRelativeSize: 0.6f,
-                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) => {
+                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) =>
+                {
                     // Blocked by walls
-                    if (distanceThroughWalls > 0) {
+                    if (distanceThroughWalls > 0)
+                    {
                         return false;
                     }
                     // Max distance 15.0f
-                    else if (15.0f < distanceTravelled) {
+                    else if (15.0f < distanceTravelled)
+                    {
                         return false;
                     }
 
                     return true;
                 }
             );
+
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
-
-            // Setup configuration for a scenario
-            var scenarioCave = new SimulationScenario(
-                hasFinishedSim: (sim) => sim.ExplorationTracker.ExploredProportion > 0.5f,
-                seed: randomSeed,
-                mapSpawner: generator => generator.GenerateMap(caveConfig),
-                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                    map,
-                    randomSeed,
-                    5,
-                    new Vector2Int(0, 0),
-                    (seed) => new TnfExplorationAlgorithm(1, 10, seed)
-                ));
-            for (var i = 0; i < 10; i++)
+            for (var leftForce = 0; leftForce < 10; leftForce++)
             {
-                var buildingConfig = new BuildingMapConfig(
-                    randomSeed+i,
-                    3,
-                    100,
-                    100);
+                for (var rightForce = -10f; rightForce < 0; rightForce++)
+                {
+                    if (Mathf.Abs(rightForce) == leftForce)
+                    {
+                        continue;
+                    }
+                    var buildingConfig = new BuildingMapConfig(
+                        randomSeed,
+                        3,
+                        100,
+                        100);
+                    var algorithm = new MovementTestAlgorithm(new Vector2Int(50, 47));
 
-                var scenarioBuilding = new SimulationScenario(
-                    seed: randomSeed+i,
-                    mapSpawner: generator => generator.GenerateMap(buildingConfig),
-                    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                        map,
-                        randomSeed+i,
-                        5,
-                        new Vector2Int(0, 0),
-                        (seed) => new TnfExplorationAlgorithm(1, 10, seed)
-                    ));
-                //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
-                //simulator.EnqueueScenario(scenarioCave);
-                simulator.EnqueueScenario(scenarioBuilding);
-                //simulator.EnqueueScenario(scenarioBitMap);
+                    var scenarioBuilding = new SimulationScenario(
+                        seed: randomSeed,
+                        mapSpawner: generator => generator.GenerateMap(buildingConfig),
+                        robotConstraints: robotConstraints,
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
+                            new List<Vector2Int> { new Vector2Int(0, 0)},
+                            map,
+                            randomSeed,
+                            1,
+                            (seed) => algorithm
+                        ));
+                    //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
+                    //simulator.EnqueueScenario(scenarioCave);
+                    simulator.EnqueueScenario(scenarioBuilding);
+                    //simulator.EnqueueScenario(scenarioBitMap);
+                }
             }
-
+            _simulator = simulator;
+            EditorApplication.Beep();
+            StartCoroutine(PauseSimulation());
             simulator.PressPlayButton(); // Instantly enter play mode
+        }
+
+        IEnumerator PauseSimulation()
+        {
+            while (_simulator.GetSimulationManager().GetCurrentSimulation().SimulatedLogicTicks < 35700)
+            {
+                yield return new WaitForEndOfFrame();
+            }
+            _simulator.GetSimulationManager().AttemptSetPlayState(SimulationPlayState.Paused);
+            EditorApplication.Beep();
+            yield return null;
         }
     }
 }

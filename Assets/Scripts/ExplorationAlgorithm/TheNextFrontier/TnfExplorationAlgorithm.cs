@@ -371,7 +371,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
         }
 
         private void StartMoving() {
-            if (_robotController.GetStatus() != RobotStatus.Idle || _nextTileInPath == null) {
+            if (_robotController.GetStatus() != RobotStatus .Idle || _nextTileInPath == null) {
                 return;
             }
             var relativePosition = _map.GetTileCenterRelativePosition(_nextTileInPath.End);

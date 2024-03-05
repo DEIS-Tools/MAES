@@ -79,11 +79,11 @@ namespace Maes.Map
                                                 pos.y - (int)collisionMap.ScaledOffset.y)).ToList();
 
             // If any of the spawn positions are not possible, throw an exception
-            if (spawnPositions.Exists(sPos => !possibleSpawnTiles.Contains(sPos))) {
+            /* if (spawnPositions.Exists(sPos => !possibleSpawnTiles.Contains(sPos))) {
                 var illegalPos = spawnPositions.First(sPos => !possibleSpawnTiles.Contains(sPos));
                 throw new Exception($"Spawn position at ({illegalPos.x},{illegalPos.y}) is illegal. " +
                                     $"It is likely inside a wall or out of bounds of the map");
-            }
+            } */
 
             int robotId = 0;
             foreach (var spawnTile in spawnPositions) {
