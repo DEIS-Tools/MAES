@@ -37,7 +37,7 @@ namespace Maes.Utilities {
             return status switch
             {
                 SlamMap.SlamTileStatus.Unseen => .5f,
-                _ => -1f
+                _ => 0f
             };
         }
     }

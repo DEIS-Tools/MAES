@@ -270,7 +270,6 @@ namespace Maes.Statistics
                 for (int i = 0; i <= 2; i++) //The more vertices nearby you check, the more computation and the further you see, 0-2 work, above 0 is much slower
                 {
                     Ray r = new Ray(_vertices[vertexIndex + i] + new Vector3(0,0,-10), Vector3.forward);
-                    Debug.DrawRay(_vertices[vertexIndex + i], Vector3.back * 10);
                     RaycastHit hit;
                     bool raytrue = Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide);
                     if (Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide))
