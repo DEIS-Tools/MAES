@@ -172,6 +172,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
         }
 
         private float UtilityFunction(Frontier frontier, float normalizerConstant) {
+            //Debug.Log("Information:" + InformationFactor(frontier) + " Distance:" + DistanceFactor(frontier, _robotPos, normalizerConstant) + " Coordination:" + CoordinationFactor(frontier) + " Frontier:" + FrontierCoordinationFactor(frontier));
             return InformationFactor(frontier) + DistanceFactor(frontier, _robotPos, normalizerConstant) - CoordinationFactor(frontier) - (FrontierCoordinationFactor(frontier) * 1f);
         }
 

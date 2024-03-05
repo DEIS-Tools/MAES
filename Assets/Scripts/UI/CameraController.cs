@@ -79,7 +79,7 @@ namespace Maes.UI {
                 c.gameObject.SetActive(false);
             }
 
-            currentCam = _cams.Find(c => c.camera.name == "Camera45").camera;
+            currentCam = _cams.Find(c => c.camera.name == "Camera90").camera;
             currentCam.gameObject.SetActive(true);
         }
 
@@ -197,6 +197,7 @@ namespace Maes.UI {
         private void PrepareZoom(float direction) {
             foreach (var cam in _cams) {
                 cam.newZoom += direction * cam.zoomAmount;
+                cam.camera.orthographicSize += cam.zoomAmount.magnitude * direction;
             }
         }
 
