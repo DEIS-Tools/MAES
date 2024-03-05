@@ -335,7 +335,13 @@ namespace Maes.Robot
             CurrentTask = new FiniteMovementTask(_transform, distanceInMeters, Constraints.RelativeMoveSpeed, reverse);
         }
 
-        public void MoveTo(Vector2Int tile)
+        /// <summary>
+        /// Paths and moves to the tile along the path
+        /// Uses and moves along coarse tiles, handling the path by itself
+        /// Must be called continuously untill the final target is reached
+        /// </summary>
+        /// <param name="tile">COARSEGRAINED tile as final target</param>
+        public void PathAndMoveTo(Vector2Int tile)
         {
             if (GetStatus() != RobotStatus.Idle) return;
             if (_currentPath.Count == 0)
@@ -347,10 +353,6 @@ namespace Maes.Robot
                 _currentPath = new Queue<Vector2Int>(pathList);
                 _currentTarget = _currentPath.Dequeue();
             }
-            /* if (SlamMap.GetRelativeSlamPosition(SlamMap.CoarseMap.ToSlamMapCoordinate(_currentPath.Peek())).Distance == 0) //Extremely Cursed check for having moved too far
-            {
-                _currentTarget = _currentPath.Dequeue();
-            } */
             var relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             if (relativePosition.Distance < 0.5f) 
             {
@@ -359,15 +361,18 @@ namespace Maes.Robot
                 relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             }
             if (Math.Abs(relativePosition.RelativeAngle) > 0.5f) Rotate(relativePosition.RelativeAngle);
-            else if (relativePosition.Distance > 0.5f) Move(relativePosition.Distance); //Robots move two tiles when hthey should move one
-            //surely this doesnt work, though other parts do work
-            //fuck off, have to rotate myself to the point, change current task to move there, somehow leave
-            //and go back to the update loop
-            //probably change finiteMovementTask to handle lists, so the current task includes rotation and continuous movement
-            //remember to also save the taks in case of interruptions, so it can recompute the path and keep going
-            //THIS might work, but would need to test it outside of something as specific as TNF that i have been doing
-            //Make a new algorithm, that decides a clear space near it, and moves there
-            //Should need very little stuff to make it work
+            else if (relativePosition.Distance > 0.5f) Move(relativePosition.Distance);
+        }
+
+        /// <summary>
+        /// Rotates and moves directly to target
+        /// </summary>
+        /// <param name="target">COARSEGRAINED tile to move to</param>
+        public void MoveTo(Vector2Int target)
+        {
+            var relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(target);
+            if (Math.Abs(relativePosition.RelativeAngle) > 0.5f) Rotate(relativePosition.RelativeAngle);
+            else if (relativePosition.Distance > 0.5f) Move(relativePosition.Distance);
         }
 
 
