@@ -23,7 +23,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private List<Doorway> _doorways;
         private List<MinotaurAlgorithm> _minotaurs;
         private CardinalDirection.RelativeDirection _followDirection = CardinalDirection.RelativeDirection.Right;
-        private State _currentState = State.StartRotation;
+        private State _currentState;
         private bool _taskBegun;
         private Vector2Int? _wallPoint = null;
         private Doorway _closestDoorway = null;
@@ -64,17 +64,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 _currentState = State.Idle;
                 //TODO: full resets
             }
-            FindWall();
 
-
-            //Communication();
-            //ExploringAlongEdge();
-            //MoveToNearestUnexploredAreaWithinRoom();
-            //MoveThroughNearestUnexploredDoorway();
-        }
-
-        private void FindWall()
-        {
             switch (_currentState)
             {
                 case State.Idle:
@@ -100,10 +90,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         else
                         {
                             _wallPoint = GetWallNearRobot();
-                            //var robotToWallDirection = _location - _wallPoint.Value;
-                            //var globalAngleToFace = Vector2.SignedAngle(Vector2.right, Vector2.Perpendicular((Vector2) robotToWallDirection));
-                            //Debug.Log($"wallAngle: {globalAngleToFace}, robotAngle: {_controller.GetGlobalAngle()}");
-                            //var rotateAngle = _controller.GetGlobalAngle() - globalAngleToFace;
                             _controller.Rotate(90);
                             _taskBegun = true;
                         }
@@ -140,11 +126,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private Vector2Int? GetWallNearRobot()
         {
             var local = _visibleTiles.OrderByDescending(dict => dict.Key.y).ToList();
-            return new Vector2Int(100, 102);
             foreach (var (position, tileStatus) in local)
             {
                 if (tileStatus == SlamTileStatus.Solid)
                 {
+                    return position;
                 }
             }
             return null;

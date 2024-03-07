@@ -22,10 +22,6 @@ namespace Maes.Map.MapGen
             // Clear and destroy objects from previous map
             ClearMap();
 
-            // TODO: If the border size is less than two, sometimes the mesh is generated with wierd invisible walls
-            // Can be reproduced by having a map with a line with a width of 2 going through the middle and splitting the map
-            // and having a border size smaller than 2. The collider also covers the outside of the map, when the bug happens.
-
             // Add border around map
             var borderedMap = CreateBorderedMap(_bitmap, _bitmap.GetLength(0), _bitmap.GetLength(1), _borderSize);
 
