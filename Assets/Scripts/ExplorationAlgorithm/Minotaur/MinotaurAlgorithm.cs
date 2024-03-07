@@ -3,6 +3,8 @@ using Maes.Robot;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor.Graphs;
 using UnityEngine;
 using Maes.Utilities;
 using static Maes.Map.SlamMap;
@@ -24,6 +26,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private State _currentState = State.StartRotation;
         private bool _taskBegun;
         private Vector2Int? _wallPoint = null;
+        private Doorway _closestDoorway = null;
         private enum State
         {
             Idle,
@@ -124,8 +127,10 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 case State.Auctioning:
                     break;
                 case State.MovingToDoorway:
+                    MoveToNearestUnexploredAreaWithinRoom();
                     break;
                 case State.MovingToNearestUnexplored:
+                    MoveThroughNearestUnexploredDoorway();
                     break;
                 default:
                     break;
@@ -216,12 +221,65 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private void MoveToNearestUnexploredAreaWithinRoom()
         {
-            throw new System.NotImplementedException();
+            //If guard clauses could be avoided, that would be great
+            if (_closestDoorway == null)
+            {
+                int doorwayDistance = int.MaxValue;
+                bool didNotPassDoorway = true;
+                foreach (Doorway doorway in _doorways)
+                {
+                    List<Vector2Int> path = _controller.GetSlamMap().GetPath(_location, doorway.Position);
+                    var distance = path.Count;
+                    if (distance < doorwayDistance)
+                    {
+                        for (int i = 0; i < distance - 1; i++)
+                        {
+                            foreach (Doorway doorwayForPath in _doorways)
+                            {
+                                if (path[i] == doorwayForPath.Position) didNotPassDoorway = false;
+                            }
+                        }
+                        if (didNotPassDoorway)
+                        {
+                            doorwayDistance = distance;
+                            _closestDoorway = doorway;
+                        }
+                    };
+                }
+            }
+            if (_closestDoorway == null) return;
+            _controller.PathAndMoveTo(_closestDoorway.Position);
+            if (_location == _closestDoorway.Position)
+            {
+                _currentState = State.Idle;
+                _closestDoorway = null;
+            }
         }
 
         private void MoveThroughNearestUnexploredDoorway()
         {
-            throw new System.NotImplementedException();
+            //If guard clauses could be avoided, that would be great
+            if (_closestDoorway == null)
+            {
+                int doorwayDistance = int.MaxValue;
+                foreach (Doorway doorway in _doorways)
+                {
+                    List<Vector2Int> path = _controller.GetSlamMap().GetPath(_location, doorway.Position);
+                    var distance = path.Count;
+                    if (distance < doorwayDistance)
+                    {
+                        doorwayDistance = distance;
+                        _closestDoorway = doorway;
+                    }
+                }
+            }
+            if (_closestDoorway == null) return;
+            _controller.PathAndMoveTo(_closestDoorway.Position);
+            if (_location == _closestDoorway.Position)
+            {
+                _currentState = State.Idle;
+                _closestDoorway = null;
+            }
         }
     }
 }

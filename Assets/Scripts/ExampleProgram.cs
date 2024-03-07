@@ -21,34 +21,37 @@
 
 using System;
 using Maes.ExplorationAlgorithm.Minotaur;
+using System.Collections;
+using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
 using Maes.Map.MapGen;
 using Maes.Robot;
 using Maes.Utilities.Files;
 using UnityEngine;
 using Maes.Robot;
-using ExplorationAlgorithm;
+using Maes.ExplorationAlgorithm.Movement;
 using System.Collections.Generic;
+using Maes.UI;
+using UnityEditor;
 
 namespace Maes
 {
     internal class ExampleProgram : MonoBehaviour
     {
+        private Simulator _simulator;
         private void Start()
         {
-            Application.runInBackground = true;
-            const int randomSeed = 123;
-            var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("Blank_map.pgm");
+            const int randomSeed = 269952;
+            const int height = 100;
+            const int width = 100;
 
+            var bConfig = new BuildingMapConfig(
+                randomSeed,
+                1,
+                width,
+                height);
 
-            var buildingConfig = new BuildingMapConfig(randomSeed: randomSeed, widthInTiles: 100, heightInTiles: 100);
-
-            // Get/instantiate simulation prefab
-            var simulator = Simulator.GetInstance();
-            var rightForce = 1f;
-            //for (var relativeSize = 3.5f; relativeSize <= 3.5f; relativeSize += 0.5f)
-            //{
-            var robotConstraints = new RobotConstraints(
+            var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -77,22 +80,55 @@ namespace Maes
                 }
             );
 
-            var alg = new MinotaurAlgorithm(robotConstraints, randomSeed);
-            var scenarioBitMap = new SimulationScenario(
-                hasFinishedSim: sim => sim.Robots[0].ExplorationAlgorithm.GetDebugInfo() == "True",
-                seed: randomSeed,
-                mapSpawner: (gen) => gen.GenerateMap(bitmap, randomSeed),
-                robotSpawner: (map, spawner) => spawner.SpawnRobotsAtPositions(
-                    new List<Vector2Int> { new Vector2Int(0, 0) },
-                    map,
-                    randomSeed,
-                    1,
-                    seed => alg
-                ),
-                robotConstraints: robotConstraints
-            );
-            simulator.EnqueueScenario(scenarioBitMap);
+            // Get/instantiate simulation prefab
+            var simulator = Simulator.GetInstance();
+            for (var leftForce = 0; leftForce < 10; leftForce++)
+            {
+                for (var rightForce = -10f; rightForce < 0; rightForce++)
+                {
+                    if (Mathf.Abs(rightForce) == leftForce)
+                    {
+                        continue;
+                    }
+                    var buildingConfig = new BuildingMapConfig(
+                        randomSeed,
+                        3,
+                        100,
+                        100);
+                    var algorithm = new MovementTestAlgorithm(new Vector2Int(50, 47));
+
+                    var scenarioBuilding = new SimulationScenario(
+                        seed: randomSeed,
+                        mapSpawner: generator => generator.GenerateMap(buildingConfig),
+                        robotConstraints: constraints,
+                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
+                            new List<Vector2Int> { new Vector2Int(0, 0)},
+                            map,
+                            randomSeed,
+                            1,
+                            (seed) => algorithm
+                        ));
+                    //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
+                    //simulator.EnqueueScenario(scenarioCave);
+                    simulator.EnqueueScenario(scenarioBuilding);
+                    //simulator.EnqueueScenario(scenarioBitMap);
+                }
+            }
+            _simulator = simulator;
+            EditorApplication.Beep();
+            StartCoroutine(PauseSimulation());
             simulator.PressPlayButton(); // Instantly enter play mode
+        }
+
+        IEnumerator PauseSimulation()
+        {
+            while (_simulator.GetSimulationManager().GetCurrentSimulation().SimulatedLogicTicks < 35700)
+            {
+                yield return new WaitForEndOfFrame();
+            }
+            _simulator.GetSimulationManager().AttemptSetPlayState(SimulationPlayState.Paused);
+            EditorApplication.Beep();
+            yield return null;
         }
     }
 }

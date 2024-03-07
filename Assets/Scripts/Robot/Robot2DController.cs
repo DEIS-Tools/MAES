@@ -49,6 +49,8 @@ namespace Maes.Robot
 
         internal CommunicationManager CommunicationManager { get; set; }
         public SlamMap SlamMap { get; set; }
+        private Queue<Vector2Int> _currentPath = new();
+        private Vector2Int _currentTarget = new(); 
 
         // Returns the counterclockwise angle in degrees between the forward orientation of the robot and the x-axis
         public float GetForwardAngleRelativeToXAxis()
@@ -335,7 +337,7 @@ namespace Maes.Robot
             info.AppendLine(
                 $"World Position: {Transform.position.x.ToString("#.0")}, {Transform.position.y.ToString("#.0")}");
             info.Append($"Slam tile: {SlamMap.GetCurrentPositionSlamTile()}\n");
-            info.Append($"Coarse tile: {SlamMap.GetCoarseMap().FromSlamMapCoordinate(SlamMap.GetCurrentPositionSlamTile())}\n");
+            info.Append($"Coarse tile: {SlamMap.CoarseMap.GetApproximatePosition()}\n");
             info.Append($"Is colliding: {IsCurrentlyColliding()}");
             return info.ToString();
         }
@@ -346,126 +348,169 @@ namespace Maes.Robot
             CurrentTask = new FiniteMovementTask(Transform, distanceInMeters, Constraints.RelativeMoveSpeed, reverse);
         }
 
-        public float GetGlobalAngle()
+        /// <summary>
+        /// Paths and moves to the tile along the path
+        /// Uses and moves along coarse tiles, handling the path by itself
+        /// Must be called continuously untill the final target is reached
+        /// If there is already a path, does not recompute
+        /// </summary>
+        /// <param name="tile">COARSEGRAINED tile as final target</param>
+        public void PathAndMoveTo(Vector2Int tile)
         {
-            return GetForwardAngleRelativeToXAxis();
-        }
-
-        // Deposits an environment tag at the current position of the robot
-        public void DepositTag(String content)
-        {
-            CommunicationManager.DepositTag(_robot, content);
-        }
-
-        // Returns a list of all environment tags that are within sensor range
-        public List<RelativeObject<EnvironmentTag>> ReadNearbyTags()
-        {
-            var tags = CommunicationManager.ReadNearbyTags(_robot);
-            return tags.Select(tag => ToRelativePosition(tag.MapPosition, tag)).ToList();
-        }
-
-        private RelativeObject<T> ToRelativePosition<T>(Vector2 tagPosition, T item)
-        {
-            var robotPosition = (Vector2)_robot.transform.position;
-            var distance = Vector2.Distance(robotPosition, tagPosition);
-            var angle = Vector2.SignedAngle(GetRobotDirectionVector(), tagPosition - robotPosition);
-            return new RelativeObject<T>(distance, angle, item);
-        }
-
-        public List<SensedObject<int>> SenseNearbyRobots()
-        {
-            return CommunicationManager.SenseNearbyRobots(_robot.id)
-                .Select(e => new SensedObject<int>(
-                    e.Distance,
-                    Vector2.SignedAngle(this._robot.transform.up,
-                                                new Vector2(Mathf.Cos(e.Angle * Mathf.Deg2Rad),
-                                                            Mathf.Sin(e.Angle * Mathf.Deg2Rad))),
-                    e.item))
-                .ToList();
-        }
-
-        public ISlamAlgorithm GetSlamMap()
-        {
-            return this.SlamMap;
-        }
-
-        public bool IsRotating()
-        {
-            return CurrentTask is FiniteRotationTask || CurrentTask is InfiniteRotationTasK;
-        }
-
-        public bool IsPerformingDifferentialDriveTask()
-        {
-            return CurrentTask is InfiniteDifferentialMovementTask;
-        }
-
-        public bool IsRotatingIndefinitely()
-        {
-            return CurrentTask is InfiniteRotationTasK;
-        }
-
-        // This method requires the robot to currently be idle or already be performing an infinite rotation 
-        public void RotateAtRate(float forceMultiplier)
-        {
-            if (forceMultiplier < -1.0f || forceMultiplier > 1.0f)
+            if (GetStatus() != RobotStatus.Idle) return;
+            if (_currentPath.Count == 0)
             {
-                throw new ArgumentException($"Force multiplier must be in range [-1.0, 1.0]. " +
-                                            $"Given value: {forceMultiplier}");
+                var robotCurrentPosition = Vector2Int.RoundToInt(SlamMap.CoarseMap.GetApproximatePosition());
+                if (robotCurrentPosition == tile) return;
+                var pathList = SlamMap.CoarseMap.GetPath(tile, false, true);
+                if (pathList == null) return;
+                _currentPath = new Queue<Vector2Int>(pathList);
+                _currentTarget = _currentPath.Dequeue();
             }
-
-            if (CurrentTask is InfiniteRotationTasK currentRotationTask)
+            var relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
+            if (relativePosition.Distance < 0.5f) 
             {
-                // Adjust existing rotation task
-                currentRotationTask.ForceMultiplier = Constraints.RelativeMoveSpeed * forceMultiplier;
+                if (_currentPath.Count == 0) return;
+                _currentTarget = _currentPath.Dequeue();
+                relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             }
-            else
-            {
-                // Create new rotation task
-                AssertRobotIsInIdleState("infinite rotation");
-                CurrentTask = new InfiniteRotationTasK(Constraints.RelativeMoveSpeed * forceMultiplier);
-            }
+            if (Math.Abs(relativePosition.RelativeAngle) > 0.5f) Rotate(relativePosition.RelativeAngle);
+            else if (relativePosition.Distance > 0.5f) Move(relativePosition.Distance);
         }
 
-        // This method requires the robot to either be idle or already be performing an infinite movement
-        public void MoveAtRate(float forceMultiplier)
+        /// <summary>
+        /// Rotates and moves directly to target unless already moving or already on target
+        /// </summary>
+        /// <param name="target">COARSEGRAINED tile to move to</param>
+        public void MoveTo(Vector2Int target)
         {
-            if (forceMultiplier < -1.0f || forceMultiplier > 1.0f)
-            {
-                throw new ArgumentException($"Force multiplier must be in range [-1.0, 1.0]. " +
-                                            $"Given value: {forceMultiplier}");
-            }
-
-            if (CurrentTask is MovementTask currentMovementTask)
-            {
-                // Adjust existing movement task
-                currentMovementTask.ForceMultiplier = Constraints.RelativeMoveSpeed * forceMultiplier;
-            }
-            else
-            {
-                // Create new movement task
-                AssertRobotIsInIdleState("Inifinite movement");
-                CurrentTask = new MovementTask(Constraints.RelativeMoveSpeed * forceMultiplier);
-            }
+            var relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(target);
+            if (GetStatus() != RobotStatus.Idle || relativePosition.Distance < 0.5f) return;
+            if (Math.Abs(relativePosition.RelativeAngle) > 0.5f) Rotate(relativePosition.RelativeAngle);
+            else Move(relativePosition.Distance);
         }
 
-        // This method allows for differential drive (each wheel is controlled separately)
-        public void SetWheelForceFactors(float leftWheelForce, float rightWheelForce)
-        {
-            // Apply force multiplier from robot constraints (this value varies based on robot size)
-            leftWheelForce *= Constraints.RelativeMoveSpeed;
-            rightWheelForce *= Constraints.RelativeMoveSpeed;
 
-            if (CurrentTask is InfiniteDifferentialMovementTask existingTask)
-            {
-                // Update the existing differential movement task
-                existingTask.UpdateWheelForces(leftWheelForce, rightWheelForce);
-            }
-            else
-            {
-                // The robot must be in idle state to start this task
-                AssertRobotIsInIdleState("Differential movement");
-                CurrentTask = new InfiniteDifferentialMovementTask(leftWheelForce, rightWheelForce);
-            }
+    public float GetGlobalAngle()
+    {
+        return GetForwardAngleRelativeToXAxis();
+    }
+
+    // Deposits an environment tag at the current position of the robot
+    public void DepositTag(String content)
+    {
+        CommunicationManager.DepositTag(_robot, content);
+    }
+
+    // Returns a list of all environment tags that are within sensor range
+    public List<RelativeObject<EnvironmentTag>> ReadNearbyTags()
+    {
+        var tags = CommunicationManager.ReadNearbyTags(_robot);
+        return tags.Select(tag => ToRelativePosition(tag.MapPosition, tag)).ToList();
+    }
+
+    private RelativeObject<T> ToRelativePosition<T>(Vector2 tagPosition, T item)
+    {
+        var robotPosition = (Vector2)_robot.transform.position;
+        var distance = Vector2.Distance(robotPosition, tagPosition);
+        var angle = Vector2.SignedAngle(GetRobotDirectionVector(), tagPosition - robotPosition);
+        return new RelativeObject<T>(distance, angle, item);
+    }
+
+    public List<SensedObject<int>> SenseNearbyRobots()
+    {
+        return CommunicationManager.SenseNearbyRobots(_robot.id)
+            .Select(e => new SensedObject<int>(
+                e.Distance,
+                Vector2.SignedAngle(this._robot.transform.up,
+                                            new Vector2(Mathf.Cos(e.Angle * Mathf.Deg2Rad),
+                                                        Mathf.Sin(e.Angle * Mathf.Deg2Rad))),
+                e.item))
+            .ToList();
+    }
+
+    public ISlamAlgorithm GetSlamMap()
+    {
+        return this.SlamMap;
+    }
+
+    public bool IsRotating()
+    {
+        return CurrentTask is FiniteRotationTask || CurrentTask is InfiniteRotationTasK;
+    }
+
+    public bool IsPerformingDifferentialDriveTask()
+    {
+        return CurrentTask is InfiniteDifferentialMovementTask;
+    }
+
+    public bool IsRotatingIndefinitely()
+    {
+        return CurrentTask is InfiniteRotationTasK;
+    }
+
+    // This method requires the robot to currently be idle or already be performing an infinite rotation 
+    public void RotateAtRate(float forceMultiplier)
+    {
+        if (forceMultiplier < -1.0f || forceMultiplier > 1.0f)
+        {
+            throw new ArgumentException($"Force multiplier must be in range [-1.0, 1.0]. " +
+                                        $"Given value: {forceMultiplier}");
+        }
+
+        if (CurrentTask is InfiniteRotationTasK currentRotationTask)
+        {
+            // Adjust existing rotation task
+            currentRotationTask.ForceMultiplier = Constraints.RelativeMoveSpeed * forceMultiplier;
+        }
+        else
+        {
+            // Create new rotation task
+            AssertRobotIsInIdleState("infinite rotation");
+            CurrentTask = new InfiniteRotationTasK(Constraints.RelativeMoveSpeed * forceMultiplier);
         }
     }
+
+    // This method requires the robot to either be idle or already be performing an infinite movement
+    public void MoveAtRate(float forceMultiplier)
+    {
+        if (forceMultiplier < -1.0f || forceMultiplier > 1.0f)
+        {
+            throw new ArgumentException($"Force multiplier must be in range [-1.0, 1.0]. " +
+                                        $"Given value: {forceMultiplier}");
+        }
+
+        if (CurrentTask is MovementTask currentMovementTask)
+        {
+            // Adjust existing movement task
+            currentMovementTask.ForceMultiplier = Constraints.RelativeMoveSpeed * forceMultiplier;
+        }
+        else
+        {
+            // Create new movement task
+            AssertRobotIsInIdleState("Infinite movement");
+            CurrentTask = new MovementTask(Constraints.RelativeMoveSpeed * forceMultiplier);
+        }
+    }
+
+    // This method allows for differential drive (each wheel is controlled separately)
+    public void SetWheelForceFactors(float leftWheelForce, float rightWheelForce)
+    {
+        // Apply force multiplier from robot constraints (this value varies based on robot size)
+        leftWheelForce *= Constraints.RelativeMoveSpeed;
+        rightWheelForce *= Constraints.RelativeMoveSpeed;
+
+        if (CurrentTask is InfiniteDifferentialMovementTask existingTask)
+        {
+            // Update the existing differential movement task
+            existingTask.UpdateWheelForces(leftWheelForce, rightWheelForce);
+        }
+        else
+        {
+            // The robot must be in idle state to start this task
+            AssertRobotIsInIdleState("Differential movement");
+            CurrentTask = new InfiniteDifferentialMovementTask(leftWheelForce, rightWheelForce);
+        }
+    }
+}
 }

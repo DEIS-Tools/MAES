@@ -8,11 +8,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 {
     public class Doorway
     {
-        public Vector2 Position;
+        public Vector2Int Position;
         public bool Explored;
         public CardinalDirection ApproachedDirection;
 
-        public Doorway(Vector2 position, CardinalDirection approachedDirection)
+        public Doorway(Vector2Int position, CardinalDirection approachedDirection)
         {
             Position = position;
             Explored = false;

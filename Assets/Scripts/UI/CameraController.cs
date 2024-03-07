@@ -197,6 +197,7 @@ namespace Maes.UI {
         private void PrepareZoom(float direction) {
             foreach (var cam in _cams) {
                 cam.newZoom += direction * cam.zoomAmount;
+                cam.camera.orthographicSize += cam.zoomAmount.magnitude * direction;
             }
         }
 
