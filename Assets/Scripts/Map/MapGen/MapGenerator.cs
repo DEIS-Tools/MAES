@@ -78,7 +78,7 @@ namespace Maes.Map.MapGen
             {
                 for (var y = 0; y < borderedMap.GetLength(1); y++)
                 {
-                    if (x >= borderSize && x < width + borderSize && y >= borderSize && y < height + borderSize)
+                    if (x > borderSize-1 && x < width + borderSize && y > borderSize - 1 && y < height + borderSize)
                     {
                         borderedMap[x, y] = map[x - borderSize, y - borderSize];
                     }

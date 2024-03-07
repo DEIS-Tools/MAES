@@ -95,5 +95,14 @@ namespace Maes.Robot {
             gameObj.name = $"robot{0}-" + gameObj.name;
             return gameObj;
         }
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.yellow;
+            foreach (var (point,radius) in Controller.DebugCircle)
+            {
+                Gizmos.DrawWireSphere(point, radius);
+            }
+        }
     }
 }

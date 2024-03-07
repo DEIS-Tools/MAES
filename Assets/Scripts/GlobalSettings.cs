@@ -48,7 +48,7 @@ namespace Maes {
         public static readonly bool DrawCommunication = true;
 
         // Statistics
-        public static readonly bool ShouldWriteCSVResults = true;
+        public static readonly bool ShouldWriteCSVResults = false;
         public static readonly string StatisticsOutPutPath = "";
         public static readonly int TicksPerStatsSnapShot = 10;
         public static readonly bool PopulateAdjacencyAndComGroupsEveryTick = false;

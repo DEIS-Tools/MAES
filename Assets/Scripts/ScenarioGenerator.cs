@@ -95,7 +95,7 @@ namespace Maes {
                      if (yamlConfig.Map.CustomMapFilename != null) {
                          // Load custom map from file
                          var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent(yamlConfig.Map.CustomMapFilename);
-                         mapSpawner = (mapGenerator) => mapGenerator.GenerateMap(bitmap, yamlConfig.Map.WallHeight, yamlConfig.Map.BorderSize);
+                         mapSpawner = (mapGenerator) => mapGenerator.GenerateMap(bitmap, seed, yamlConfig.Map.WallHeight, yamlConfig.Map.BorderSize);
                      } else if (yamlConfig.Map.CaveConfig != null) { 
                          // Generate Cave Map
                          var caveConfig = new CaveMapConfig(yamlConfig, seed);

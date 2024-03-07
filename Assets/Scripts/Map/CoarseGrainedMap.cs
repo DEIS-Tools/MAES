@@ -216,14 +216,18 @@ namespace Maes.Map {
         /// Returns the position of the neighbour in the given direction, relative to the current direction and position of the robot.
         /// </summary>
         public Vector2Int GetRelativeNeighbour(CardinalDirection.RelativeDirection relativeDirection) {
-            CardinalDirection currentCardinalDirection = CardinalDirection.DirectionFromDegrees(_slamMap.GetRobotAngleDeg());
-            CardinalDirection targetDirection = currentCardinalDirection.GetRelativeDirection(relativeDirection);
-
+            var targetDirection = GetRelativeNeighbourDirection(relativeDirection);
             var currentPosition = GetApproximatePosition();
             var relativePosition = currentPosition + targetDirection.Vector;
             return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
         }
-        
+
+        public CardinalDirection GetRelativeNeighbourDirection(CardinalDirection.RelativeDirection relativeDirection)
+        {
+            CardinalDirection currentCardinalDirection = CardinalDirection.DirectionFromDegrees(_slamMap.GetRobotAngleDeg());
+            return currentCardinalDirection.GetRelativeDirection(relativeDirection);
+        }
+
         /// <summary>
         /// Returns the position of the neighbour in the given global direction, relative to the robot's position.
         /// </summary>
