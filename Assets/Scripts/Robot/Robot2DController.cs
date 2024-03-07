@@ -255,14 +255,15 @@ namespace Maes.Robot
             AssertRobotIsInIdleState("rotation");
             CurrentTask = new InfiniteRotationTasK(Constraints.RelativeMoveSpeed * (counterClockwise ? -1 : 1));
         }
+
         public void StartRotatingAroundPoint(Vector2Int point, bool counterClockwise = false)
         {
             AssertRobotIsInIdleState("Rotating around point");
-            var radius = Vector2.Distance(SlamMap.GetCurrentPositionSlamTile(), point);
-            var worldPoint = SlamMap.SlamToWorldCoordinate(point);
+            var radius = Vector2.Distance(Vector2Int.FloorToInt(SlamMap.CoarseMap.GetCurrentPositionCoarseTile()), point);
+            var worldPoint = SlamMap.CoarseMap.CoarseToWorldCoordinate(point);
             var distanceBetweenWheels = Vector2.Distance(LeftWheel.position, RightWheel.position);
-            DebugCircle.Add((worldPoint, radius / 2 - distanceBetweenWheels / 2));
-            DebugCircle.Add((worldPoint, radius / 2 + distanceBetweenWheels / 2));
+            DebugCircle.Add((worldPoint, radius - distanceBetweenWheels / 2));
+            DebugCircle.Add((worldPoint, radius + distanceBetweenWheels / 2));
 
             CurrentTask = new RotateAroundPointTask(radius, Constraints.RelativeMoveSpeed, counterClockwise);
         }

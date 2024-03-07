@@ -221,9 +221,12 @@ namespace Maes.UI
         {
             foreach (var cam in _cams)
             {
-                if (cam.camera.orthographic && cam.camera.orthographicSize + cam.zoomAmount.magnitude * direction > 0)
+                if (cam.camera.orthographic)
                 {
-                    cam.camera.orthographicSize += cam.zoomAmount.magnitude * direction;
+                    if (cam.camera.orthographicSize + cam.zoomAmount.magnitude * direction > 0)
+                    {
+                        cam.camera.orthographicSize += cam.zoomAmount.magnitude * direction;
+                    }
                 }
                 else
                 {

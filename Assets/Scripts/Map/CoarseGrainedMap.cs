@@ -64,6 +64,11 @@ namespace Maes.Map {
             return _slamMap.ApproximatePosition - _offset;
         }
 
+        public Vector2Int GetCurrentPositionCoarseTile()
+        {
+            return Vector2Int.FloorToInt(GetApproximatePosition());
+        }
+
         public float GetApproximateGlobalDegrees() {
             return _slamMap.GetRobotAngleDeg();
         }
@@ -420,6 +425,11 @@ namespace Maes.Map {
             // Otherwise assign the new status (either open or solid)
             if (_optimisticTileStatuses[courseCoord.x, courseCoord.y] != SlamMap.SlamTileStatus.Solid)
                 _optimisticTileStatuses[courseCoord.x, courseCoord.y] = observedStatus;
+        }
+
+        public Vector2 CoarseToWorldCoordinate(Vector2Int coarseTile)
+        {
+            return coarseTile + _offset;
         }
     }
 

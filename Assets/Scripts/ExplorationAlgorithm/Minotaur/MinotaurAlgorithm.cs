@@ -19,17 +19,18 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private CoarseGrainedMap _map;
         private Dictionary<Vector2Int, SlamTileStatus> _visibleTiles => _controller.GetSlamMap().GetCurrentlyVisibleTiles();
         private int _seed;
-        private Vector2Int _location => _controller.GetSlamMap().GetCurrentPositionSlamTile();
+        private Vector2Int _location => Vector2Int.RoundToInt(_map.GetApproximatePosition());
         private List<Doorway> _doorways;
         private List<MinotaurAlgorithm> _minotaurs;
         private CardinalDirection.RelativeDirection _followDirection = CardinalDirection.RelativeDirection.Right;
         private State _currentState;
         private bool _taskBegun;
-        private Vector2Int? _wallPoint = null;
+        private RelativeWall? _wallPoint = null;
         private Doorway _closestDoorway = null;
         private enum State
         {
             Idle,
+            FirstWall,
             Exploring,
             StartRotation,
             FinishedRotation,
@@ -37,6 +38,12 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             Auctioning,
             MovingToDoorway,
             MovingToNearestUnexplored
+        }
+
+        struct RelativeWall
+        {
+            public Vector2Int position;
+            public float distance;
         }
 
         public MinotaurAlgorithm(RobotConstraints robotConstraints, int seed)
@@ -61,7 +68,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             if (_controller.HasCollidedSinceLastLogicTick())
             {
-                _currentState = State.Idle;
+                return;
                 //TODO: full resets
             }
 
@@ -69,15 +76,17 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             {
                 case State.Idle:
                     _controller.StartMoving();
-                    _currentState = State.Exploring;
+                    _currentState = State.FirstWall;
                     break;
-                case State.Exploring:
+                case State.FirstWall:
                     _wallPoint = GetWallNearRobot();
                     if (_wallPoint.HasValue)
                     {
                         _controller.StopCurrentTask();
                         _currentState = State.StartRotation;
                     }
+                    break;
+                case State.Exploring:
                     break;
                 case State.StartRotation:
                     if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
@@ -105,7 +114,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         }
                         else
                         {
-                            _controller.StartRotatingAroundPoint(_wallPoint.Value);
+                            _controller.StartRotatingAroundPoint(_wallPoint.Value.position);
                             _taskBegun = true;
                         }
                     }
@@ -118,20 +127,21 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 case State.MovingToNearestUnexplored:
                     MoveThroughNearestUnexploredDoorway();
                     break;
+                case State.FinishedRotation:
+                    break;
                 default:
                     break;
             }
         }
 
-        private Vector2Int? GetWallNearRobot()
+        private RelativeWall? GetWallNearRobot()
         {
-            var local = _visibleTiles.OrderByDescending(dict => dict.Key.y).ToList();
-            foreach (var (position, tileStatus) in local)
+            var tiles = _visibleTiles.Where(kv => kv.Value == SlamTileStatus.Solid)
+                                     .Select(kv => new RelativeWall { position = _map.FromSlamMapCoordinate(kv.Key), distance = Vector2.Distance(_map.FromSlamMapCoordinate(kv.Key), _location) })
+                                     .OrderBy(dist => dist.distance);
+            if (tiles.Any())
             {
-                if (tileStatus == SlamTileStatus.Solid)
-                {
-                    return position;
-                }
+                return tiles.First();
             }
             return null;
         }

@@ -11,9 +11,10 @@ namespace Maes.Robot.Task
         private readonly float _force;
         private readonly bool _counterClockwise;
 
+        // Radius in slam
         public RotateAroundPointTask(float radius, float force, bool counterClockwise)
-        {
-            _radius = radius;
+        {   
+            _radius = radius*2;
             _force = force;
             _counterClockwise = counterClockwise;
         }
