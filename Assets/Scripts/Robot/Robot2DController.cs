@@ -32,9 +32,9 @@ namespace Maes.Robot
     public class Robot2DController : IRobotController
     {
         private Rigidbody2D _rigidbody;
-        private Transform _transform;
-        private Transform _leftWheel;
-        private Transform _rightWheel;
+        public Transform Transform { get; private set; }
+        public Transform LeftWheel { get; private set; }
+        public Transform RightWheel { get; private set; }
 
         private const int RotateForce = 5;
         private const int MoveForce = 15;
@@ -53,7 +53,7 @@ namespace Maes.Robot
         // Returns the counterclockwise angle in degrees between the forward orientation of the robot and the x-axis
         public float GetForwardAngleRelativeToXAxis()
         {
-            var angle = Vector2.SignedAngle(Vector2.right, _transform.up);
+            var angle = Vector2.SignedAngle(Vector2.right, Transform.up);
             if (angle < 0) angle = 360 + angle;
             return angle;
         }
@@ -87,9 +87,9 @@ namespace Maes.Robot
             MonaRobot robot)
         {
             _rigidbody = rigidbody;
-            _transform = transform;
-            _leftWheel = leftWheel;
-            _rightWheel = rightWheel;
+            Transform = transform;
+            LeftWheel = leftWheel;
+            RightWheel = rightWheel;
             _robot = robot;
         }
 
@@ -129,20 +129,20 @@ namespace Maes.Robot
         public void UpdateMotorPhysics()
         {
             // Calculate movement delta between current and last physics tick
-            var leftWheelVelocityVector = _leftWheel.transform.position - _previousLeftWheelPosition ?? Vector3.zero;
-            var rightWheelVelocityVector = _rightWheel.transform.position - _previousRightWheelPosition ?? Vector3.zero;
+            var leftWheelVelocityVector = LeftWheel.transform.position - _previousLeftWheelPosition ?? Vector3.zero;
+            var rightWheelVelocityVector = RightWheel.transform.position - _previousRightWheelPosition ?? Vector3.zero;
 
             // For each wheel, determine whether it has moved forwards or backwards
-            var forward = _transform.forward;
+            var forward = Transform.forward;
             var leftWheelMoveDirection = Vector3.Dot(forward, leftWheelVelocityVector) < 0 ? -1f : 1f;
             var rightWheelMoveDirection = Vector3.Dot(forward, rightWheelVelocityVector) < 0 ? -1f : 1f;
 
             // Animate rotating wheels to match movement of the robot
-            AnimateWheelRotation(_leftWheel, leftWheelMoveDirection, leftWheelVelocityVector.magnitude);
-            AnimateWheelRotation(_rightWheel, rightWheelMoveDirection, rightWheelVelocityVector.magnitude);
+            AnimateWheelRotation(LeftWheel, leftWheelMoveDirection, leftWheelVelocityVector.magnitude);
+            AnimateWheelRotation(RightWheel, rightWheelMoveDirection, rightWheelVelocityVector.magnitude);
 
-            _previousLeftWheelPosition = _leftWheel.position;
-            _previousRightWheelPosition = _rightWheel.position;
+            _previousLeftWheelPosition = LeftWheel.position;
+            _previousRightWheelPosition = RightWheel.position;
 
             // Update the current status to indicate whether the robot is currently moving, stopping or idle
             if (CurrentTask != null)
@@ -194,14 +194,14 @@ namespace Maes.Robot
         // The robot is rotated relative to Unity's coordinate system, so 'up' is actually forward for the robot
         public Vector3 GetForwardDirectionVector()
         {
-            return _transform.up;
+            return Transform.up;
         }
 
         // Applies force at the positions of the wheels to create movement using physics simulation
         private void ApplyWheelForce(MovementDirective directive)
         {
-            var leftPosition = _leftWheel.position;
-            var rightPosition = _rightWheel.position;
+            var leftPosition = LeftWheel.position;
+            var rightPosition = RightWheel.position;
 
             var forward = GetForwardDirectionVector();
 
@@ -239,7 +239,7 @@ namespace Maes.Robot
 
             AssertRobotIsInIdleState("rotation");
 
-            CurrentTask = new FiniteRotationTask(_transform, degrees);
+            CurrentTask = new FiniteRotationTask(Transform, degrees);
         }
 
         public void StartRotating(bool counterClockwise = false)
@@ -258,7 +258,7 @@ namespace Maes.Robot
             AssertRobotIsInIdleState("Rotating around point");
             var radius = Vector2.Distance(SlamMap.GetCurrentPositionSlamTile(), point);
             var worldPoint = SlamMap.SlamToWorldCoordinate(point);
-            var distanceBetweenWheels = Vector2.Distance(_leftWheel.position, _rightWheel.position);
+            var distanceBetweenWheels = Vector2.Distance(LeftWheel.position, RightWheel.position);
             DebugCircle.Add((worldPoint, radius / 2 - distanceBetweenWheels / 2));
             DebugCircle.Add((worldPoint, radius / 2 + distanceBetweenWheels / 2));
 
@@ -333,7 +333,7 @@ namespace Maes.Robot
             info.Append($"id: {this._robot.id}\n");
             info.AppendLine($"Current task: {CurrentTask?.GetType()}");
             info.AppendLine(
-                $"World Position: {_transform.position.x.ToString("#.0")}, {_transform.position.y.ToString("#.0")}");
+                $"World Position: {Transform.position.x.ToString("#.0")}, {Transform.position.y.ToString("#.0")}");
             info.Append($"Slam tile: {SlamMap.GetCurrentPositionSlamTile()}\n");
             info.Append($"Coarse tile: {SlamMap.GetCoarseMap().FromSlamMapCoordinate(SlamMap.GetCurrentPositionSlamTile())}\n");
             info.Append($"Is colliding: {IsCurrentlyColliding()}");
@@ -343,7 +343,7 @@ namespace Maes.Robot
         public void Move(float distanceInMeters, bool reverse = false)
         {
             AssertRobotIsInIdleState($"Move forwards {distanceInMeters} meters");
-            CurrentTask = new FiniteMovementTask(_transform, distanceInMeters, Constraints.RelativeMoveSpeed, reverse);
+            CurrentTask = new FiniteMovementTask(Transform, distanceInMeters, Constraints.RelativeMoveSpeed, reverse);
         }
 
         public float GetGlobalAngle()

@@ -210,8 +210,8 @@ namespace Maes
                     Gizmos.DrawLine(new Vector3(-50, y, 0), new Vector3(50, y, 0));
 
                 Gizmos.color = Color.black;
-                Gizmos.DrawLine(new Vector3(-50, 0, 0), new Vector3(50, 0, 0));
                 Gizmos.DrawLine(new Vector3(0, -50, 0), new Vector3(0, 50, 0));
+                Gizmos.DrawLine(new Vector3(-50, 0, 0), new Vector3(50, 0, 0));
             }
             else SelectFirstRobot();
         }

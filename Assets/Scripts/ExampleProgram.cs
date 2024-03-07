@@ -36,9 +36,18 @@ namespace Maes
     {
         private void Start()
         {
+            Application.runInBackground = true;
             const int randomSeed = 123;
             var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent("Blank_map.pgm");
 
+
+            var buildingConfig = new BuildingMapConfig(randomSeed: randomSeed, widthInTiles: 100, heightInTiles: 100);
+
+            // Get/instantiate simulation prefab
+            var simulator = Simulator.GetInstance();
+            var rightForce = 1f;
+            //for (var relativeSize = 3.5f; relativeSize <= 3.5f; relativeSize += 0.5f)
+            //{
             var robotConstraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
@@ -68,19 +77,9 @@ namespace Maes
                 }
             );
 
-
-            var buildingConfig = new BuildingMapConfig(randomSeed: randomSeed, widthInTiles: 100, heightInTiles: 100);
-
-            // Get/instantiate simulation prefab
-            var simulator = Simulator.GetInstance();
-            var rightForce = 1f;
-            for (var leftForce = -0.625f; leftForce < 0.625f; leftForce += 0.001f)
-            {
-                if (Mathf.Abs(rightForce) == Mathf.Abs(leftForce))
-                {
-                    continue;
-                }
-                var scenarioBitMap = new SimulationScenario(
+            var alg = new MinotaurAlgorithm(robotConstraints, randomSeed);
+            var scenarioBitMap = new SimulationScenario(
+                hasFinishedSim: sim => sim.Robots[0].ExplorationAlgorithm.GetDebugInfo() == "True",
                 seed: randomSeed,
                 mapSpawner: (gen) => gen.GenerateMap(bitmap, randomSeed),
                 robotSpawner: (map, spawner) => spawner.SpawnRobotsAtPositions(
@@ -88,13 +87,11 @@ namespace Maes
                     map,
                     randomSeed,
                     1,
-                    seed => new MinotaurAlgorithm(robotConstraints, seed)
+                    seed => alg
                 ),
                 robotConstraints: robotConstraints
             );
-
-                simulator.EnqueueScenario(scenarioBitMap);
-            }
+            simulator.EnqueueScenario(scenarioBitMap);
             simulator.PressPlayButton(); // Instantly enter play mode
         }
     }

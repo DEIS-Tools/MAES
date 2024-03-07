@@ -16,17 +16,22 @@ namespace ExplorationAlgorithm
         private CoarseGrainedMap _map;
         private List<Vector2Int> _points = new();
         private float _leftForce, _rightForce;
+        private readonly float _size;
         private bool turning = false;
         private int _ticks = 0;
-        public CircleTestAlgorithm(float leftForce, float rightForce)
+        private bool _shouldEnd = false;
+
+        public CircleTestAlgorithm(float leftForce, float rightForce, float size)
         {
             _leftForce = leftForce;
             _rightForce = rightForce;
+            _size = size;
         }
 
         public string GetDebugInfo()
         {
-            return (_points.Count == 2).ToString();
+            // This is used to end the simulation
+            return _shouldEnd.ToString();
         }
 
         public void SetController(Robot2DController controller)
@@ -37,8 +42,16 @@ namespace ExplorationAlgorithm
 
         public void UpdateLogic()
         {
+            // Don't collect data if dragging against the wall
+            if (_controller.IsCurrentlyColliding())
+            {
+                _controller.StopCurrentTask();
+                _shouldEnd = true;
+            }
+
             _ticks++;
             var position = _controller.SlamMap.GetCurrentPositionSlamTile();
+            // Simple state machine to not set a new task constantly
             if (!turning)
             {
                 Debug.Log($"left: {_leftForce}, right: {_rightForce}");
@@ -46,23 +59,33 @@ namespace ExplorationAlgorithm
                 turning = true;
                 _points.Add(position);
             }
-            if (_controller._transform.position.y < 0) //Quaternion.Angle(_controller._transform.rotation, Quaternion.LookRotation(-Vector3.forward)) < 0.01f
+            // Add a point if we have created a half circle assuming it starts at y=0
+            if (_controller.Transform.position.y < 0) 
             {
                 _points.Add(position);
             }
-
+            // Store circle in csv when we have the start point and the half circle point
             if (_points.Count == 2)
             {
                 var radius = Vector2Int.Distance(_points[0], _points[1]) / 2;
-                var distanceBetweenWheels = Vector2.Distance(_controller._leftWheel.position, _controller._rightWheel.position);
+                var distanceBetweenWheels = Vector2.Distance(_controller.LeftWheel.position, _controller.RightWheel.position);
                 var innerRadius = radius - distanceBetweenWheels / 2;
                 var outerRadius = radius + distanceBetweenWheels / 2;
-                var ratioBetweenWheelSpeeds = (innerRadius / outerRadius);
-                using (var file = File.AppendText("C:\\Users\\Thor Beregaard\\Desktop\\circle.csv"))
+                var ratioBetweenRadii = innerRadius / outerRadius;
+                if (!File.Exists($@"circle_data.csv"))
                 {
-                    file.WriteLine($"{radius};{_ticks * 2};{_leftForce};{_rightForce};{ratioBetweenWheelSpeeds}");
+                    using (var file = File.AppendText($@"circle_data.csv"))
+                    {
+                        file.WriteLine($"radius;ticks;leftForce;rightForce;distance;ratio");
+                    }
+                }
+
+                using (var file = File.AppendText($@"circle_data.csv"))
+                {
+                    file.WriteLine($"{radius};{_ticks * 2};{_leftForce};{_rightForce};{distanceBetweenWheels};{ratioBetweenRadii}");
                 }
                 _controller.StopCurrentTask();
+                _shouldEnd = true;
             }
         }
     }

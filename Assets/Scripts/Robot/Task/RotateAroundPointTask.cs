@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 namespace Maes.Robot.Task
@@ -22,6 +21,7 @@ namespace Maes.Robot.Task
         public MovementDirective GetNextDirective()
         {
             var ratioBetweenWheelForces = GetRatioFromRadius();
+            // Apply smaller force on inner wheel depending on direction
             var leftForce = _counterClockwise ? _force * ratioBetweenWheelForces : _force;
             var rightForce = _counterClockwise ? _force : _force * ratioBetweenWheelForces;
             return new MovementDirective(leftForce, rightForce);
@@ -29,7 +29,9 @@ namespace Maes.Robot.Task
 
         private float GetRatioFromRadius()
         {
-            return 0.00006f * Mathf.Pow(_radius, 3) - 0.0056f * Mathf.Pow(_radius, 2) + 0.3472f * _radius;
+            // Emperically found numbers dependent on a MonaRobot with 0.6 relative size
+            // Data has been collated and can be found in Statistics/circle_data.xlsx
+            return -1 / (0.940824360231996f * _radius + 0.502227229721352f) + 1;
         }
 
         public bool IsCompleted()
