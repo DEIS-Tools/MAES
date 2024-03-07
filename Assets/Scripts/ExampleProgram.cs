@@ -33,6 +33,7 @@ using Maes.ExplorationAlgorithm.Movement;
 using System.Collections.Generic;
 using Maes.UI;
 using UnityEditor;
+using System.Linq;
 
 namespace Maes
 {
@@ -41,15 +42,7 @@ namespace Maes
         private Simulator _simulator;
         private void Start()
         {
-            const int randomSeed = 269952;
-            const int height = 100;
-            const int width = 100;
-
-            var bConfig = new BuildingMapConfig(
-                randomSeed,
-                1,
-                width,
-                height);
+            const int randomSeed = 123;
 
             var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
@@ -80,55 +73,24 @@ namespace Maes
                 }
             );
 
+            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("single_wall.pgm");
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
-            for (var leftForce = 0; leftForce < 10; leftForce++)
-            {
-                for (var rightForce = -10f; rightForce < 0; rightForce++)
-                {
-                    if (Mathf.Abs(rightForce) == leftForce)
-                    {
-                        continue;
-                    }
-                    var buildingConfig = new BuildingMapConfig(
-                        randomSeed,
-                        3,
-                        100,
-                        100);
-                    var algorithm = new MovementTestAlgorithm(new Vector2Int(50, 47));
+            var algorithm = new MovementTestAlgorithm(new Vector2Int(100, 50));
 
-                    var scenarioBuilding = new SimulationScenario(
-                        seed: randomSeed,
-                        mapSpawner: generator => generator.GenerateMap(buildingConfig),
-                        robotConstraints: constraints,
-                        robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
-                            new List<Vector2Int> { new Vector2Int(0, 0)},
-                            map,
-                            randomSeed,
-                            1,
-                            (seed) => algorithm
-                        ));
-                    //var scenarioBitMap = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(bitmap));
-                    //simulator.EnqueueScenario(scenarioCave);
-                    simulator.EnqueueScenario(scenarioBuilding);
-                    //simulator.EnqueueScenario(scenarioBitMap);
-                }
-            }
-            _simulator = simulator;
-            EditorApplication.Beep();
-            StartCoroutine(PauseSimulation());
+            var scenario = new SimulationScenario(
+                seed: randomSeed,
+                mapSpawner: generator => generator.GenerateMap(map, randomSeed),
+                robotConstraints: constraints,
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
+                    new List<Vector2Int> { new Vector2Int(0, 0) },
+                    map,
+                    randomSeed,
+                    1,
+                    (seed) => algorithm
+                ));
+            simulator.EnqueueScenario(scenario);
             simulator.PressPlayButton(); // Instantly enter play mode
-        }
-
-        IEnumerator PauseSimulation()
-        {
-            while (_simulator.GetSimulationManager().GetCurrentSimulation().SimulatedLogicTicks < 35700)
-            {
-                yield return new WaitForEndOfFrame();
-            }
-            _simulator.GetSimulationManager().AttemptSetPlayState(SimulationPlayState.Paused);
-            EditorApplication.Beep();
-            yield return null;
         }
     }
 }
