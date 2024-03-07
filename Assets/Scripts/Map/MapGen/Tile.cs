@@ -58,7 +58,7 @@ namespace Maes.Map.MapGen
 
         public static bool IsWall(TileType tile)
         {
-            return (int)tile >= (int)TileType.Concrete;
+            return (int)tile >= (int)TileType.Wall;
         }
 
         public static TileType[] Walls()
