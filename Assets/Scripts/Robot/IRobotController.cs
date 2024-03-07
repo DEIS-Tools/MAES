@@ -73,10 +73,18 @@ namespace Maes.Robot
         void StartMoving(bool reverse = false);
 
         /// <summary>
+        /// Paths and moves to the tile along the path
+        /// Uses and moves along coarse tiles, handling the path by itself
+        /// Must be called continuously untill the final target is reached
+        /// </summary>
+        /// <param name="tile">COARSEGRAINED tile as final target</param>
+        void PathAndMoveTo(Vector2Int tile);
+
+        /// <summary>
         /// Calls the pathfinding and makes the robot move towards a certain tile on the map through known territory
         /// Doesn's cause movement if there is no path to the tile
         /// </summary>
-        /// <param name="tile"> What tile the robot should move to</param>
+        /// <param name="tile"> What COARSEGRAINED tile the robot should move to</param>
         void MoveTo(Vector2Int tile);
 
         /// <summary>

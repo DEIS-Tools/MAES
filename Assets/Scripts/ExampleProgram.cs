@@ -100,7 +100,7 @@ namespace Maes
                     var scenarioBuilding = new SimulationScenario(
                         seed: randomSeed,
                         mapSpawner: generator => generator.GenerateMap(buildingConfig),
-                        robotConstraints: robotConstraints,
+                        robotConstraints: constraints,
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
                             new List<Vector2Int> { new Vector2Int(0, 0)},
                             map,

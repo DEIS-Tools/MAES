@@ -339,6 +339,7 @@ namespace Maes.Robot
         /// Paths and moves to the tile along the path
         /// Uses and moves along coarse tiles, handling the path by itself
         /// Must be called continuously untill the final target is reached
+        /// If there is already a path, does not recompute
         /// </summary>
         /// <param name="tile">COARSEGRAINED tile as final target</param>
         public void PathAndMoveTo(Vector2Int tile)
