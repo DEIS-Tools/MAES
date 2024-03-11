@@ -568,6 +568,7 @@ namespace Maes.Map
                                               $"Right   coordinate: {topRightSlam[2]} {topRightSlam[3]}\n" +
                                               $"$Right   coordinate: {topRightSlam[0]} {topRightSlam[1]}\n");
                             return true;
+                                }
                         }
                     return false;
                 }
@@ -626,6 +627,7 @@ namespace Maes.Map
                                               $"Right   coordinate: {topRightSlam[2]} {topRightSlam[3]}\n" +
                                               $"Right   coordinate: {topRightSlam[0]} {topRightSlam[1]}\n");
                             return true;
+                                }
                         }
                     return false;
                 }
@@ -656,6 +658,7 @@ namespace Maes.Map
                                               $"Right   coordinate: {bottomRightSlam[2]} {bottomRightSlam[3]}\n" +
                                               $"Right   coordinate: {bottomRightSlam[0]} {bottomRightSlam[1]}\n");
                             return true;
+                                }
                         }
                     return false;
                 }
@@ -748,8 +751,7 @@ namespace Maes.Map
             //Return results on whether there's a path
 
 
-
-            return true;
+            return false;
         }
 
         private bool CheckIfAllSlamStatusesSolid(Vector2Int coordinate)
