@@ -109,7 +109,6 @@ namespace Maes.Map.PathFinding
                     Vector2Int candidateCoord = currentCoordinate + dir.Vector;
                     // Only consider non-solid tiles
                     if (IsSolid(candidateCoord, pathFindingMap, beOptimistic) && candidateCoord != targetCoordinate) {
-
                         if (!beOptimistic && pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Previous().Vector, currentCoordinate)){
                             continue;
                         }

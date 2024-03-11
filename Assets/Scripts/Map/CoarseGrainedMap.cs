@@ -527,7 +527,7 @@ namespace Maes.Map
 
             // If all SLAM tiles are solid, just return solid
             var isOpen = SlamMap.SlamTileStatus.Open;
-            if (CheckIfAllSlamStatusesSolid(nextCoordinate) || CheckIfAllSlamStatusesSolid(currentCoordinate)) {
+            if (CheckIfAnyStatusSolid(nextCoordinate) || CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAllSlamStatusesSolid(nextCoordinate) || CheckIfAllSlamStatusesSolid(currentCoordinate)) {
                 //Debug.Log("test1");
                 return true;
             }
@@ -554,13 +554,11 @@ namespace Maes.Map
                     if (currentCoordinateSlam[3] != isOpen || bottomRightSlam[2] != isOpen ||
                         topLeftSlam[1] != isOpen || nextCoordinateSlam[0] != isOpen)
                         {
-                            if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || CheckForUnseen(nextCoordinate + Vector2Int.right) || CheckForUnseen(currentCoordinate + Vector2Int.left)) &&
+                            if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || (CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right) && CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.left))) &&
                                   !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
                                 {
-                                    Debug.Log($"Case xxnn");
-                                    Debug.Log($"Case xxnn");
-                                    Debug.Log($"Case cc");
-                                    Debug.Log($"Case cc");
+                                    Debug.Log($"Case xn");
+                                    Debug.Log($"Case cx");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}");
@@ -586,13 +584,11 @@ namespace Maes.Map
                     if (currentCoordinateSlam[1] != isOpen || topRightSlam[0] != isOpen ||
                         bottomLeftSlam[3] != isOpen || nextCoordinateSlam[2] != isOpen)
                         {
-                            if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || CheckForUnseen(nextCoordinate + Vector2Int.right) || CheckForUnseen(currentCoordinate + Vector2Int.left)) &&
+                            if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || (CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right) && CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.left))) &&
                                   !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
                                 {
-                                    Debug.Log($"Case cc");
-                                    Debug.Log($"Case cc");
-                                    Debug.Log($"Case xxnn");
-                                    Debug.Log($"Case xxnn");
+                                    Debug.Log($"Case cx");
+                                    Debug.Log($"Case xn");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}");
@@ -601,8 +597,8 @@ namespace Maes.Map
                                     Debug.Log($"Left    coordinate: {bottomLeftSlam[0]} {bottomLeftSlam[1]}");
                                     Debug.Log($"Right   coordinate: {topRightSlam[2]} {topRightSlam[3]}");
                                     Debug.Log($"$Right   coordinate: {topRightSlam[0]} {topRightSlam[1]}");
-                                }
                             return true;
+                                }
                         }
                     return false;
                 }
@@ -615,19 +611,19 @@ namespace Maes.Map
                             if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate)) &&
                                   !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
                                 {
-                                    Debug.Log($"Case ccnn");
-                                    Debug.Log($"Case ccnn");
+                                    Debug.Log($"Case cn");
+                                    Debug.Log($"Case cn");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}");
+                            return true;
                                 }
-                            return true;
                         }
-                    if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.up) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.down)))
-                        {
-                            return true;
-                        }
+                    //if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.up) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.down)))
+                    //    {
+                    //        return true;
+                    //    }
                     return false;
 
                 }
@@ -645,13 +641,11 @@ namespace Maes.Map
                     if (nextCoordinateSlam[1] != isOpen || topRightSlam[0] != isOpen ||
                         bottomLeftSlam[3] != isOpen || currentCoordinateSlam[2] != isOpen)
                         {
-                            if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || CheckForUnseen(nextCoordinate + Vector2Int.right) || CheckForUnseen(currentCoordinate + Vector2Int.left)) &&
+                            if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || (CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right) && CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.left))) &&
                                   !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
                                 {
-                                    Debug.Log($"Case nn");
-                                    Debug.Log($"Case nn");
-                                    Debug.Log($"Case xxcc");
-                                    Debug.Log($"Case xxcc");
+                                    Debug.Log($"Case nx");
+                                    Debug.Log($"Case xc");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}");
@@ -660,8 +654,8 @@ namespace Maes.Map
                                     Debug.Log($"Left    coordinate: {bottomLeftSlam[0]} {bottomLeftSlam[1]}");
                                     Debug.Log($"Right   coordinate: {topRightSlam[2]} {topRightSlam[3]}");
                                     Debug.Log($"Right   coordinate: {topRightSlam[0]} {topRightSlam[1]}");
-                                }
                             return true;
+                                }
                         }
                     return false;
                 }
@@ -676,13 +670,11 @@ namespace Maes.Map
                     if (nextCoordinateSlam[3] != isOpen || bottomRightSlam[2] != isOpen ||
                         topLeftSlam[1] != isOpen || currentCoordinateSlam[0] != isOpen)
                         {
-                            if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || CheckForUnseen(nextCoordinate + Vector2Int.right) || CheckForUnseen(currentCoordinate + Vector2Int.left)) &&
+                            if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || (CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right) && CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.left))) &&
                                   !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
                                 {
-                                    Debug.Log($"Case xxcc");
-                                    Debug.Log($"Case xxcc");
-                                    Debug.Log($"Case nn");
-                                    Debug.Log($"Case nn");
+                                    Debug.Log($"Case xc");
+                                    Debug.Log($"Case nx");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}");
@@ -691,9 +683,10 @@ namespace Maes.Map
                                     Debug.Log($"Left    coordinate: {topLeftSlam[0]} {topLeftSlam[1]}");
                                     Debug.Log($"Right   coordinate: {bottomRightSlam[2]} {bottomRightSlam[3]}");
                                     Debug.Log($"Right   coordinate: {bottomRightSlam[0]} {bottomRightSlam[1]}");
-                                }
                             return true;
+                                }
                         }
+                    return false;
                 }
                 else {
                     //nncc
@@ -704,19 +697,19 @@ namespace Maes.Map
                             if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate)) &&
                                   !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
                                 {
-                                    Debug.Log($"Case nncc");
-                                    Debug.Log($"Case nncc");
+                                    Debug.Log($"Case nc");
+                                    Debug.Log($"Case nc");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}");
+                            return true;
                                 }
-                            return true;
                         }
-                    if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.up) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.down)))
-                        {
-                            return true;
-                        }
+                    //if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.up) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.down)))
+                    //    {
+                    //        return true;
+                    //    }
                     return false;
                 }
             }
@@ -735,20 +728,18 @@ namespace Maes.Map
                                   !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
                                 {
                                     Debug.Log($"Case nn");
-                                    Debug.Log($"Case nn");
-                                    Debug.Log($"Case cc");
                                     Debug.Log($"Case cc");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}");
+                            return true;
                                 }
-                            return true;
                         }
-                    if ((!CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.left) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right)))
-                        {
-                            return true;
-                        }
+                    //if ((!CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.left) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right)))
+                    //    {
+                    //        return true;
+                    //    }
                     return false;
                 }
                 else if (currentCoordinate.y > nextCoordinate.y) {
@@ -764,20 +755,18 @@ namespace Maes.Map
                                   !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
                                 {
                                     Debug.Log($"Case cc");
-                                    Debug.Log($"Case cc");
-                                    Debug.Log($"Case nn");
                                     Debug.Log($"Case nn");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}");
                                     Debug.Log($"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}");
                                     Debug.Log($"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}");
+                            return true;
                                 }
-                            return true;
                         }
-                    if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.left) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right)))
-                        {
-                            return true;
-                        }
+                    //if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.left) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right)))
+                    //    {
+                    //        return true;
+                    //    }
                     return false;
                 }
             }
@@ -788,8 +777,7 @@ namespace Maes.Map
             //Return results on whether there's a path
 
 
-
-            return true;
+            return false;
         }
 
         private bool CheckIfAllSlamStatusesSolid(Vector2Int coordinate)
