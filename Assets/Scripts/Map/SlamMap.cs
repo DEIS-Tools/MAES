@@ -112,8 +112,8 @@ namespace Maes.Map {
             var yFloat = Math.Round(currentPosition.y * 2, MidpointRounding.AwayFromZero) / 2;
             var x = Convert.ToInt32(xFloat * 2);
             var y = Convert.ToInt32(yFloat * 2);
-            var slamX = (x - ((int)_offset.x) * 2);
-            var slamY = (y - ((int)_offset.y) * 2);
+            var slamX = x - ((int)_offset.x) * 2;
+            var slamY = y - ((int)_offset.y) * 2;
 
             return new Vector2Int(slamX, slamY);
         }
