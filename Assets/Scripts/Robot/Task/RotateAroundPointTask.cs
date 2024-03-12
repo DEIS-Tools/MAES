@@ -7,13 +7,15 @@ namespace Maes.Robot.Task
 {
     internal class RotateAroundPointTask : ITask
     {
+        private readonly Vector2Int _point;
         private readonly float _radius;
         private readonly float _force;
         private readonly bool _counterClockwise;
 
         // Radius in slam
-        public RotateAroundPointTask(float radius, float force, bool counterClockwise)
+        public RotateAroundPointTask(Vector2Int point, float radius, float force, bool counterClockwise)
         {   
+            _point = point;
             _radius = radius*2;
             _force = force;
             _counterClockwise = counterClockwise;
@@ -21,6 +23,8 @@ namespace Maes.Robot.Task
 
         public MovementDirective GetNextDirective()
         {
+            // TODO: rotate in correct direction
+
             var ratioBetweenWheelForces = GetRatioFromRadius();
             // Apply smaller force on inner wheel depending on direction
             var leftForce = _counterClockwise ? _force * ratioBetweenWheelForces : _force;

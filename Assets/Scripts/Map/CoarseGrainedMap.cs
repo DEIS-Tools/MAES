@@ -123,8 +123,7 @@ namespace Maes.Map {
         /// <param name="coordinate">the coordinate to test.</param>
         /// <exception cref="ArgumentException">raised when coordinate is out of bounds.</exception>
         private void AssertWithinBounds(Vector2Int coordinate) {
-            var withinBounds = coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
-            if (!withinBounds)
+            if (!IsWithinBounds(coordinate))
                 throw new ArgumentException($"Given coordinate is out of bounds {coordinate} ({_width}, {_height})");
         }
 
@@ -397,12 +396,16 @@ namespace Maes.Map {
             map._optimisticTileStatuses = globalMap.Clone() as SlamMap.SlamTileStatus[,];
         }
         
+        public bool IsWithinBounds(Vector2Int coordinate)
+        {
+            return coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
+        }
+
         /// <returns><b>false</b>, only if the tile at the coordinate is known to be solid.</returns>
         public bool IsPotentiallyExplorable(Vector2Int coordinate) {
-            var withinBounds = coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
             // To avoid giving away information which the robot cannot know, tiles outside the map bounds are
             // considered explorable
-            if (!withinBounds) return true;
+            if (!IsWithinBounds(coordinate)) return true;
 
             return (!_tilesCoveredStatus[coordinate.x, coordinate.y]) && GetSlamTileStatuses(coordinate).All(status => status != SlamMap.SlamTileStatus.Solid);
         }

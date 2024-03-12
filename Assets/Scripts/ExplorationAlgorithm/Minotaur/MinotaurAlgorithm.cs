@@ -8,32 +8,34 @@ using UnityEditor.Graphs;
 using UnityEngine;
 using Maes.Utilities;
 using static Maes.Map.SlamMap;
+using UnityEngine.UIElements;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
 {
     public partial class MinotaurAlgorithm : IExplorationAlgorithm
     {
-        public float VisionArea => _robotConstraints.SlamRayTraceRange;
+        public float VisionRadius => _robotConstraints.SlamRayTraceRange;
         private IRobotController _controller;
         private RobotConstraints _robotConstraints;
         private CoarseGrainedMap _map;
         private Dictionary<Vector2Int, SlamTileStatus> _visibleTiles => _controller.GetSlamMap().GetCurrentlyVisibleTiles();
         private int _seed;
-        private Vector2Int _location => Vector2Int.RoundToInt(_map.GetApproximatePosition());
+        private Vector2Int _location => _map.GetCurrentPositionCoarseTile();
         private List<Doorway> _doorways;
         private List<MinotaurAlgorithm> _minotaurs;
         private CardinalDirection.RelativeDirection _followDirection = CardinalDirection.RelativeDirection.Right;
         private State _currentState;
         private bool _taskBegun;
-        private RelativeWall? _wallPoint = null;
+        private List<RelativeWall> _wallPoints = new();
         private Doorway _closestDoorway = null;
+
         private enum State
         {
             Idle,
             FirstWall,
-            Exploring,
+            FollowingWall,
+            ExploredAreaFound,
             StartRotation,
-            FinishedRotation,
             Rotating,
             Auctioning,
             MovingToDoorway,
@@ -71,7 +73,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 return;
                 //TODO: full resets
             }
+            _wallPoints = GetWallsNearRobot();
 
+            Vector2Int direction;
             switch (_currentState)
             {
                 case State.Idle:
@@ -79,45 +83,45 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     _currentState = State.FirstWall;
                     break;
                 case State.FirstWall:
-                    _wallPoint = GetWallNearRobot();
-                    if (_wallPoint.HasValue)
+                    if (_wallPoints.Any() && _wallPoints.First().distance < VisionRadius - 1)
                     {
                         _controller.StopCurrentTask();
-                        _currentState = State.StartRotation;
+                        _currentState = State.FollowingWall;
                     }
                     break;
-                case State.Exploring:
-                    break;
-                case State.StartRotation:
+                case State.FollowingWall:
                     if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
                     {
-                        if (_taskBegun)
+                        var closestWall = _wallPoints.First();
+                        CardinalDirection directionToWall = CardinalDirection.VectorToDirection(closestWall.position - _location);
+                        direction = directionToWall.Counterclockwise().Vector;
+                        var wallRejectorForce = new Vector2Int();
+
+                        if (IsAheadExplored())
                         {
-                            _currentState = State.Rotating;
-                            _taskBegun = false;
+                            _currentState = State.ExploredAreaFound;
+                            direction *= 2;
                         }
-                        else
+
+                        if (closestWall.distance < VisionRadius - 2)
                         {
-                            _wallPoint = GetWallNearRobot();
-                            _controller.Rotate(90);
-                            _taskBegun = true;
+                            wallRejectorForce = -directionToWall.Vector * (int)(VisionRadius - 2 - closestWall.distance);
                         }
+                        _controller.MoveTo(_location + direction + wallRejectorForce);
                     }
                     break;
+                case State.ExploredAreaFound:
+                    direction = CardinalDirection.AngleToDirection(_controller.GetGlobalAngle()).Vector;
+                    _controller.StartRotatingAroundPoint(_location + direction * (int)VisionRadius * 2);
+                    break;
+                case State.StartRotation:
+                    _currentState = State.Rotating;
+                    _wallPoints = GetWallsNearRobot();
+                    _controller.Rotate(90);
+                    break;
                 case State.Rotating:
-                    if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle && _wallPoint.HasValue)
-                    {
-                        if (_taskBegun)
-                        {
-                            _currentState = State.Idle;
-                            _taskBegun = false;
-                        }
-                        else
-                        {
-                            _controller.StartRotatingAroundPoint(_wallPoint.Value.position);
-                            _taskBegun = true;
-                        }
-                    }
+                    _controller.StartRotatingAroundPoint(_wallPoints.First().position);
+                    _currentState = State.Idle;
                     break;
                 case State.Auctioning:
                     break;
@@ -127,23 +131,28 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 case State.MovingToNearestUnexplored:
                     MoveThroughNearestUnexploredDoorway();
                     break;
-                case State.FinishedRotation:
-                    break;
                 default:
                     break;
             }
         }
 
-        private RelativeWall? GetWallNearRobot()
+        private bool IsAheadExplored()
         {
-            var tiles = _visibleTiles.Where(kv => kv.Value == SlamTileStatus.Solid)
-                                     .Select(kv => new RelativeWall { position = _map.FromSlamMapCoordinate(kv.Key), distance = Vector2.Distance(_map.FromSlamMapCoordinate(kv.Key), _location) })
-                                     .OrderBy(dist => dist.distance);
-            if (tiles.Any())
+            var direction = CardinalDirection.AngleToDirection(_controller.GetGlobalAngle());
+            var target = direction.Vector * ((int)VisionRadius + 1) + _location;
+            if (_map.IsWithinBounds(target))
             {
-                return tiles.First();
+                return _map.GetTileStatus(target) == SlamTileStatus.Open;
             }
-            return null;
+            return false;
+        }
+
+        private List<RelativeWall> GetWallsNearRobot()
+        {
+            return _visibleTiles.Where(kv => kv.Value == SlamTileStatus.Solid)
+                                     .Select(kv => new RelativeWall { position = _map.FromSlamMapCoordinate(kv.Key), distance = Vector2.Distance(_map.FromSlamMapCoordinate(kv.Key), _location) })
+                                     .OrderBy(dist => dist.distance)
+                                     .ToList();
         }
 
         private void Communication()
@@ -168,51 +177,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     minotaurMessages.Add(message);
                 }
             }
-        }
-
-        private void ExploringAlongEdge()
-        {
-            _currentState = State.Exploring;
-
-            GetNextExplorationTarget();
-            //DoorwayDetection();
-        }
-
-        private void GetNextExplorationTarget()
-        {
-            //var tilesTowardFollowDirection = GetWallPositionAroundRobot(_followDirection);
-            //tilesTowardFollowDirection.ForEach(tileStatus => Debug.Log(tileStatus));
-
-            var direction = IsTileBlocked(_map.GetRelativeNeighbour(_followDirection));
-        }
-
-        /// <summary>
-        /// Determines if it is impossible to move to the given tile when exploring
-        /// </summary>
-        /// <param name="tileCoord">Coordinate of the tile to check</param>
-        /// <returns>
-        /// True for blocked and false for open
-        /// </returns>
-        private bool IsTileBlocked(Vector2Int tileCoord)
-        {
-            return IsTileWall(tileCoord) || _map.IsTileExplored(tileCoord);
-        }
-
-        /// <summary>
-        /// Check if tile coordinates are a wall
-        /// </summary>
-        /// <param name="tileCoord">Coordinate of the tile to check</param>
-        /// <returns>
-        /// True if solid else false
-        /// </returns>
-        private bool IsTileWall(Vector2Int tileCoord)
-        {
-            return _map.GetTileStatus(tileCoord) == SlamMap.SlamTileStatus.Solid;
-        }
-
-        private void DoorwayDetection()
-        {
-            throw new System.NotImplementedException();
         }
 
         private void MoveToNearestUnexploredAreaWithinRoom()

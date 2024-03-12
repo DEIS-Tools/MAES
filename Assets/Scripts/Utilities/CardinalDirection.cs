@@ -111,5 +111,56 @@ namespace Maes.Utilities {
         public static CardinalDirection FromVector(Vector2Int vector) {
             return AllDirections().First(dir => dir.Vector == vector);
         }
+
+        public static CardinalDirection VectorToDirection(Vector2 vector)
+        {
+            var angle = Vector2.SignedAngle(Vector2.right, vector);
+            return AngleToDirection(angle);
+        }
+
+        public static CardinalDirection AngleToDirection(float angle)
+        {
+            return FromVector(Vector2Int.RoundToInt(new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad))));
+        }
+
+        public CardinalDirection Counterclockwise()
+        {
+            return Index switch
+            {
+                //East
+                0 => North,
+                //Southeast
+                1 => NorthEast,
+                //South
+                2 => East,
+                //Southwest
+                3 => SouthEast,
+                //West
+                4 => South,
+                //Northwest
+                5 => SouthWest,
+                //North
+                6 => West,
+                //Northeast
+                7 => NorthWest,
+                _ => new CardinalDirection(-1),
+            };
+        }
+
+        public override string ToString()
+        {
+            return Index switch
+            {
+                0 => "East",
+                1 => "Southeast",
+                2 => "South",
+                3 => "Southwest",
+                4 => "West",
+                5 => "Northwest",
+                6 => "North",
+                7 => "Northeast",
+                _ => "",
+            };
+        }
     }
 }
