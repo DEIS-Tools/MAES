@@ -86,6 +86,25 @@ namespace Maes.Map.PathFinding {
 
                 if (currentCoordinate == targetCoordinate) 
                     return currentTile.Path();
+
+                //if (!IsAnyNeighborOpen(targetCoordinate, pathFindingMap, beOptimistic))
+                //    {
+                //        var directions = new List<Vector2Int>();
+                //        directions.Add(Vector2Int.up);
+                //        directions.Add(Vector2Int.down);
+                //        directions.Add(Vector2Int.left);
+                //        directions.Add(Vector2Int.right);
+                //        directions.Add(Vector2Int.up + Vector2Int.left);
+                //        directions.Add(Vector2Int.up + Vector2Int.right);
+                //        directions.Add(Vector2Int.down + Vector2Int.left);
+                //        directions.Add(Vector2Int.down + Vector2Int.right);
+                //        foreach (var dir in directions) {
+                //                if(IsAnyNeighborOpen(targetCoordinate + dir, pathFindingMap, beOptimistic)) {
+                //                    targetCoordinate = targetCoordinate + dir;
+                //                    break;
+                //                }
+                //            }
+                //    }
                 
 
                 foreach (var dir in CardinalDirection.AllDirections()) {
@@ -103,10 +122,12 @@ namespace Maes.Map.PathFinding {
                         if (IsSolid(currentCoordinate + dir.Previous().Vector, pathFindingMap, beOptimistic)
                         || IsSolid(currentCoordinate + dir.Next().Vector, pathFindingMap, beOptimistic))
                             {
+                                if (beOptimistic){
+                                    continue;
+                                    }
                                 if (!beOptimistic && pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Previous().Vector, currentCoordinate) ||
                                     !beOptimistic && pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Next().Vector, currentCoordinate))
                                 {
-                                    continue;
                                 }
                                 else if (beOptimistic)
                                 {
@@ -175,6 +196,17 @@ namespace Maes.Map.PathFinding {
                 ? map.IsOptimisticSolid(coord) 
                 : map.IsSolid(coord);
         }
+        private bool IsAnyNeighborOpen(Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool optimistic)
+            {
+                if (IsSolid(targetCoordinate + Vector2Int.up + Vector2Int.left, pathFindingMap, optimistic)  && IsSolid(targetCoordinate + Vector2Int.up, pathFindingMap, optimistic) &&
+                    IsSolid(targetCoordinate + Vector2Int.left, pathFindingMap, optimistic) && IsSolid(targetCoordinate + Vector2Int.up + Vector2Int.right, pathFindingMap, optimistic) &&
+                    IsSolid(targetCoordinate + Vector2Int.right, pathFindingMap, optimistic) && IsSolid(targetCoordinate + Vector2Int.down + Vector2Int.left, pathFindingMap, optimistic) &&
+                    IsSolid(targetCoordinate + Vector2Int.down, pathFindingMap, optimistic) && IsSolid(targetCoordinate + Vector2Int.down + Vector2Int.right, pathFindingMap, optimistic))
+                    {
+                        return false;
+                    }
+                return true;
+            }
 
         private static float OctileHeuristic(Vector2Int from, Vector2Int to) {
             var xDif = Math.Abs(from.x - to.x);
