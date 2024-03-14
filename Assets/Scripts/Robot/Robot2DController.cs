@@ -264,11 +264,10 @@ namespace Maes.Robot
             var coarseLocation = SlamMap.CoarseMap.GetCurrentPositionCoarseTile();
             var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetGlobalAngle()), Vector2.Perpendicular(point-coarseLocation) - coarseLocation);
             var radius = Vector2.Distance(Vector2Int.FloorToInt(coarseLocation), point);
-            var worldPoint = SlamMap.CoarseMap.CoarseToWorldCoordinate(point);
+            var worldPoint = SlamMap.CoarseMap.CoarseToWorld(point);
             var distanceBetweenWheels = Vector2.Distance(LeftWheel.position, RightWheel.position);
             DebugCircle.Add((worldPoint, radius - distanceBetweenWheels / 2));
             DebugCircle.Add((worldPoint, radius + distanceBetweenWheels / 2));
-            if ()
             CurrentTask = new RotateAroundPointTask(point, radius, Constraints.RelativeMoveSpeed, counterClockwise);
         }
 

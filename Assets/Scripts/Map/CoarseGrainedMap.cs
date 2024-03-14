@@ -429,11 +429,9 @@ namespace Maes.Map {
             if (_optimisticTileStatuses[courseCoord.x, courseCoord.y] != SlamMap.SlamTileStatus.Solid)
                 _optimisticTileStatuses[courseCoord.x, courseCoord.y] = observedStatus;
         }
-
-        public Vector2 CoarseToWorldCoordinate(Vector2Int coarseTile)
+        public Vector3 CoarseToWorld(Vector2 position)
         {
-            return coarseTile + _offset;
+            return new Vector3(position.x, position.y, 0) + (Vector3)_offset;
         }
     }
-
 }

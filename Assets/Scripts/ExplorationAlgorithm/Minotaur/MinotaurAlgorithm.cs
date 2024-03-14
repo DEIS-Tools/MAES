@@ -18,23 +18,24 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private IRobotController _controller;
         private RobotConstraints _robotConstraints;
         private CoarseGrainedMap _map;
+        private EdgeDetector _edgeDetector;
         private Dictionary<Vector2Int, SlamTileStatus> _visibleTiles => _controller.GetSlamMap().GetCurrentlyVisibleTiles();
         private int _seed;
         private Vector2Int _location => _map.GetCurrentPositionCoarseTile();
         private List<Doorway> _doorways;
         private List<MinotaurAlgorithm> _minotaurs;
         private CardinalDirection.RelativeDirection _followDirection = CardinalDirection.RelativeDirection.Right;
-        private State _currentState;
+        private AlgorithmState _currentState = AlgorithmState.Idle;
         private bool _taskBegun;
         private List<RelativeWall> _wallPoints = new();
         private Doorway _closestDoorway = null;
 
-        private enum State
+        private enum AlgorithmState
         {
             Idle,
             FirstWall,
             FollowingWall,
-            ExploredAreaFound,
+            FollowingExploredArea,
             StartRotation,
             Rotating,
             Auctioning,
@@ -42,7 +43,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             MovingToNearestUnexplored
         }
 
-        struct RelativeWall
+        private struct RelativeWall
         {
             public Vector2Int position;
             public float distance;
@@ -56,7 +57,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         public string GetDebugInfo()
         {
-            return $"State: {Enum.GetName(typeof(State), _currentState)}" +
+            return $"State: {Enum.GetName(typeof(AlgorithmState), _currentState)}" +
                    $"\nCoarse Map Position: {_map.GetApproximatePosition()}";
         }
 
@@ -64,6 +65,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             _controller = controller;
             _map = _controller.GetSlamMap().GetCoarseMap();
+            _edgeDetector = new EdgeDetector(_map, VisionRadius + 1);
         }
 
         public void UpdateLogic()
@@ -78,18 +80,18 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             Vector2Int direction;
             switch (_currentState)
             {
-                case State.Idle:
+                case AlgorithmState.Idle:
                     _controller.StartMoving();
-                    _currentState = State.FirstWall;
+                    _currentState = AlgorithmState.FirstWall;
                     break;
-                case State.FirstWall:
+                case AlgorithmState.FirstWall:
                     if (_wallPoints.Any() && _wallPoints.First().distance < VisionRadius - 1)
                     {
                         _controller.StopCurrentTask();
-                        _currentState = State.FollowingWall;
+                        _currentState = AlgorithmState.FollowingWall;
                     }
                     break;
-                case State.FollowingWall:
+                case AlgorithmState.FollowingWall:
                     if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
                     {
                         var closestWall = _wallPoints.First();
@@ -99,7 +101,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
                         if (IsAheadExplored())
                         {
-                            _currentState = State.ExploredAreaFound;
+                            _currentState = AlgorithmState.FollowingExploredArea;
                             direction *= 2;
                         }
 
@@ -110,31 +112,47 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         _controller.MoveTo(_location + direction + wallRejectorForce);
                     }
                     break;
-                case State.ExploredAreaFound:
-                    direction = CardinalDirection.AngleToDirection(_controller.GetGlobalAngle()).Vector;
-                    _controller.StartRotatingAroundPoint(_location + direction * (int)VisionRadius * 2);
+                case AlgorithmState.FollowingExploredArea:
+                    if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
+                    {
+                        var tiles = _edgeDetector.GetTilesAroundRobot();
+                        var color = tiles.TakeLast(tiles.Count()/12);
+                        foreach (var tile in color)
+                        {
+                            tile.DrawDebugLineFromRobot(_map);
+                        }
+
+                        _controller.MoveTo(_location + new Vector2Int(-1,-1));
+                    }
+
                     break;
-                case State.StartRotation:
-                    _currentState = State.Rotating;
-                    _wallPoints = GetWallsNearRobot();
-                    _controller.Rotate(90);
+                case AlgorithmState.StartRotation:
+
+                    if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
+                    {
+                        _currentState = AlgorithmState.Rotating;
+                        _controller.Rotate(90);
+                    }
                     break;
-                case State.Rotating:
-                    _controller.StartRotatingAroundPoint(_wallPoints.First().position);
-                    _currentState = State.Idle;
+                case AlgorithmState.Rotating:
+                    if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
+                    {
+                        _controller.StartRotatingAroundPoint(new Vector2Int(52, 54));
+                    }
                     break;
-                case State.Auctioning:
+                case AlgorithmState.Auctioning:
                     break;
-                case State.MovingToDoorway:
+                case AlgorithmState.MovingToDoorway:
                     MoveToNearestUnexploredAreaWithinRoom();
                     break;
-                case State.MovingToNearestUnexplored:
+                case AlgorithmState.MovingToNearestUnexplored:
                     MoveThroughNearestUnexploredDoorway();
                     break;
                 default:
                     break;
             }
         }
+
 
         private bool IsAheadExplored()
         {
@@ -211,7 +229,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             _controller.PathAndMoveTo(_closestDoorway.Position);
             if (_location == _closestDoorway.Position)
             {
-                _currentState = State.Idle;
+                _currentState = AlgorithmState.Idle;
                 _closestDoorway = null;
             }
         }
@@ -237,7 +255,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             _controller.PathAndMoveTo(_closestDoorway.Position);
             if (_location == _closestDoorway.Position)
             {
-                _currentState = State.Idle;
+                _currentState = AlgorithmState.Idle;
                 _closestDoorway = null;
             }
         }

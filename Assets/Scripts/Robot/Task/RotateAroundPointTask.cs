@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Maes.Utilities;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,7 +24,6 @@ namespace Maes.Robot.Task
 
         public MovementDirective GetNextDirective()
         {
-            // TODO: rotate in correct direction
 
             var ratioBetweenWheelForces = GetRatioFromRadius();
             // Apply smaller force on inner wheel depending on direction

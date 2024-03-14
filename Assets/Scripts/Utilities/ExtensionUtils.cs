@@ -20,9 +20,11 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System.Collections.Generic;
+using Codice.Client.BaseCommands;
 using Maes.Map;
 using Maes.Robot;
 using UnityEngine;
+using static UnityEditor.FilePathAttribute;
 
 namespace Maes.Utilities {
     public static class ExtensionUtils {
@@ -39,6 +41,12 @@ namespace Maes.Utilities {
                 SlamMap.SlamTileStatus.Unseen => .5f,
                 _ => 0f
             };
+        }
+        public static void DrawDebugLineFromRobot(this Vector2Int tile, CoarseGrainedMap map)
+        {
+            var robot = map.CoarseToWorld(map.GetCurrentPositionCoarseTile());
+            var point1 = map.CoarseToWorld(tile);
+            Debug.DrawLine(robot, point1, Color.magenta);
         }
     }
 }
