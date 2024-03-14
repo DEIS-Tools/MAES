@@ -84,28 +84,50 @@ namespace Maes.Map.PathFinding {
                 if(bestCandidateOnTile.ContainsKey(currentCoordinate) && bestCandidateOnTile[currentCoordinate] != currentTile)
                     continue;
 
-                if (currentCoordinate == targetCoordinate) 
-                    return currentTile.Path();
 
-                //if (!IsAnyNeighborOpen(targetCoordinate, pathFindingMap, beOptimistic))
-                //    {
-                //        var directions = new List<Vector2Int>();
-                //        directions.Add(Vector2Int.up);
-                //        directions.Add(Vector2Int.down);
-                //        directions.Add(Vector2Int.left);
-                //        directions.Add(Vector2Int.right);
-                //        directions.Add(Vector2Int.up + Vector2Int.left);
-                //        directions.Add(Vector2Int.up + Vector2Int.right);
-                //        directions.Add(Vector2Int.down + Vector2Int.left);
-                //        directions.Add(Vector2Int.down + Vector2Int.right);
-                //        foreach (var dir in directions) {
-                //                if(IsAnyNeighborOpen(targetCoordinate + dir, pathFindingMap, beOptimistic)) {
-                //                    targetCoordinate = targetCoordinate + dir;
-                //                    break;
-                //                }
-                //            }
-                //    }
-                
+                var targetQueue = new Queue<Vector2Int>();
+                var visitedTargetsList = new List<Vector2Int>();
+                targetQueue.Enqueue(targetCoordinate);
+
+                while (targetQueue.Count > 0){
+                    var target = targetQueue.Dequeue();
+                    visitedTargetsList.Add(target);
+                    if (!IsAnyNeighborOpen(target, pathFindingMap, beOptimistic))
+                    {
+                        var directions = new List<Vector2Int>();
+                        directions.Add(Vector2Int.up);
+                        directions.Add(Vector2Int.down);
+                        directions.Add(Vector2Int.left);
+                        directions.Add(Vector2Int.right);
+                        directions.Add(Vector2Int.up + Vector2Int.left);
+                        directions.Add(Vector2Int.up + Vector2Int.right);
+                        directions.Add(Vector2Int.down + Vector2Int.left);
+                        directions.Add(Vector2Int.down + Vector2Int.right);
+                        var i = 0;
+                        foreach (var dir in directions) {
+                            if(IsAnyNeighborOpen(target + dir, pathFindingMap, beOptimistic) && pathFindingMap.IsCoordWithinBounds(target + dir)) {
+                                targetCoordinate = target + dir;
+                                targetQueue.Clear();
+                                i = 0;
+                                break;
+                            }
+                            else {
+                                i++;
+                            }
+                        }
+                        if (i == 8) {
+                            foreach (var dir in directions) {
+                                if (visitedTargetsList.Contains(target + dir) || !pathFindingMap.IsCoordWithinBounds(target + dir)){
+                                    continue;
+                                }
+                                targetQueue.Enqueue(target + dir);
+                            }
+                        }
+                    }
+                }
+
+                if (currentCoordinate == targetCoordinate)
+                    return currentTile.Path();
 
                 foreach (var dir in CardinalDirection.AllDirections()) {
                     Vector2Int candidateCoord = currentCoordinate + dir.Vector;
@@ -122,12 +144,10 @@ namespace Maes.Map.PathFinding {
                         if (IsSolid(currentCoordinate + dir.Previous().Vector, pathFindingMap, beOptimistic)
                         || IsSolid(currentCoordinate + dir.Next().Vector, pathFindingMap, beOptimistic))
                             {
-                                if (beOptimistic){
-                                    continue;
-                                    }
                                 if (!beOptimistic && pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Previous().Vector, currentCoordinate) ||
                                     !beOptimistic && pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Next().Vector, currentCoordinate))
                                 {
+                                    continue;
                                 }
                                 else if (beOptimistic)
                                 {

@@ -98,6 +98,11 @@ namespace Maes.Map {
         public float CellSize() {
             return 1.0f; 
         }
+
+        public bool IsCoordWithinBounds(Vector2Int coordinate)
+        {
+            return false;
+        }
         
         
         public Vector2Int FromSlamMapCoordinate(Vector2Int slamCoord) {

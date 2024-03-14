@@ -32,5 +32,7 @@ namespace Maes.Map.PathFinding {
 
         public float CellSize();
 
+        public bool IsCoordWithinBounds(Vector2Int coordinate);
+
     }
 }

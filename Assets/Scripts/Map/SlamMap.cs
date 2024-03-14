@@ -267,6 +267,10 @@ namespace Maes.Map {
                    slamCoordinate.y > 0 && slamCoordinate.y < _heightInTiles;
         }
 
+        public bool IsCoordWithinBounds(Vector2Int coordinate) {
+            return false;
+        }
+
         public bool IsOptimisticSolid(Vector2Int coordinate) {
             var slamCoordinate = coordinate * 2;
             slamCoordinate = new Vector2Int(slamCoordinate.x, slamCoordinate.y);
