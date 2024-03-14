@@ -121,12 +121,10 @@ namespace Maes.Map.PathFinding
                         if (IsSolid(currentCoordinate + dir.Previous().Vector, pathFindingMap, beOptimistic)
                         || IsSolid(currentCoordinate + dir.Next().Vector, pathFindingMap, beOptimistic))
                             {
-                                if (beOptimistic){
-                                    continue;
-                                    }
                                 if (!beOptimistic && pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Previous().Vector, currentCoordinate) ||
                                     !beOptimistic && pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Next().Vector, currentCoordinate))
                                 {
+                                    continue;
                                 }
                                 else if (beOptimistic)
                                 {
