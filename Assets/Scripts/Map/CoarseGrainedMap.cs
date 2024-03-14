@@ -158,6 +158,10 @@ namespace Maes.Map
                 throw new ArgumentException($"Given coordinate is out of bounds {coordinate} ({_width}, {_height})");
         }
 
+        public bool IsCoordWithinBounds(Vector2Int coordinate) {
+             return (coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height) && !CheckIfAnyStatusSolid(coordinate);
+            }
+
         delegate SlamMap.SlamTileStatus StatusAggregator(SlamMap.SlamTileStatus s1, SlamMap.SlamTileStatus s2);
 
         // Returns the status of the given tile (Solid, Open or Unseen)
@@ -525,9 +529,9 @@ namespace Maes.Map
                 //Debug.Log("test1");
                 return true;
             }
-            if (!CheckIfAllSlamStatusesSolid(nextCoordinate) && !CheckIfAllSlamStatusesSolid(currentCoordinate)){
-                return false;
-            }
+            //if (!CheckIfAllSlamStatusesSolid(nextCoordinate) && !CheckIfAllSlamStatusesSolid(currentCoordinate)){
+            //    return false;
+            //}
             // may only need to check for diagonal movement
             //
             // coarse grained coords:
