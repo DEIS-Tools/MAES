@@ -42,11 +42,12 @@ namespace Maes.Utilities {
                 _ => 0f
             };
         }
-        public static void DrawDebugLineFromRobot(this Vector2Int tile, CoarseGrainedMap map)
+
+        public static void DrawDebugLineFromRobot(this Vector2Int tile, CoarseGrainedMap map, Color color)
         {
             var robot = map.CoarseToWorld(map.GetCurrentPositionCoarseTile());
             var point1 = map.CoarseToWorld(tile);
-            Debug.DrawLine(robot, point1, Color.magenta);
+            Debug.DrawLine(robot, point1, color, 2);
         }
     }
 }

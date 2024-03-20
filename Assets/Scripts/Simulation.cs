@@ -195,27 +195,23 @@ namespace Maes
 
         private void OnDrawGizmos()
         {
-            if (HasSelectedRobot())
-            {
-                var height = (_collisionMap.HeightInTiles+1)/2;
-                var width = (_collisionMap.WidthInTiles+1)/2;
-                Gizmos.color = Color.blue;
-                for (float x = -width; x < width; x += 0.5f)
-                    Gizmos.DrawLine(new Vector3(x, -width, 0), new Vector3(x, width, 0));
-                for (float y = -height; y < height; y += 0.5f)
-                    Gizmos.DrawLine(new Vector3(-height, y, 0), new Vector3(height, y, 0));
+            var height = (_collisionMap.HeightInTiles + 1) / 2 - 0.5f;
+            var width = (_collisionMap.WidthInTiles + 1) / 2 - 0.5f;
+            Gizmos.color = Color.blue;
+            for (float x = -width; x < width; x += 0.5f)
+                Gizmos.DrawLine(new Vector3(x, -width, -0.01f), new Vector3(x, width, -0.01f));
+            for (float y = -height; y < height; y += 0.5f)
+                Gizmos.DrawLine(new Vector3(-height, y, -0.01f), new Vector3(height, y, -0.01f));
 
-                Gizmos.color = Color.red;
-                for (float x = -width; x < width; x += 1)
-                    Gizmos.DrawLine(new Vector3(x, -width, 0), new Vector3(x, width, 0));
-                for (float y = -height; y < height; y += 1f)
-                    Gizmos.DrawLine(new Vector3(-height, y, 0), new Vector3(height, y, 0));
+            Gizmos.color = Color.red;
+            for (float x = -width; x < width; x += 1)
+                Gizmos.DrawLine(new Vector3(x, -width, -0.01f), new Vector3(x, width, -0.01f));
+            for (float y = -height; y < height; y += 1f)
+                Gizmos.DrawLine(new Vector3(-height, y, -0.01f), new Vector3(height, y, -0.01f));
 
-                Gizmos.color = Color.black;
-                Gizmos.DrawLine(new Vector3(0, -width, 0), new Vector3(0, width, 0));
-                Gizmos.DrawLine(new Vector3(-height, 0, 0), new Vector3(height, 0, 0));
-            }
-            else SelectFirstRobot();
+            Gizmos.color = Color.black;
+            Gizmos.DrawLine(new Vector3(0, -width, -0.01f), new Vector3(0, width, -0.01f));
+            Gizmos.DrawLine(new Vector3(-height, 0, -0.01f), new Vector3(height, 0, -0.01f));
         }
     }
 }

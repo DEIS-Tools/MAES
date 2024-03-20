@@ -4,20 +4,20 @@ using System.Linq;
 using UnityEngine;
 using Maes.Utilities;
 using static Maes.Map.SlamMap;
+using System;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
 {
     internal class EdgeDetector
     {
         public EdgeState State => UpdateState();
-        public bool isStuck => GetTilesAroundRobot().Where(tile => _map.GetTileStatus(tile) != SlamTileStatus.Open).Any();
+        public bool isStuck => GetTilesAroundRobot(_edgeSize, _defaultLimitors).Where(tile => _map.GetTileStatus(tile) != SlamTileStatus.Open).Any();
 
         private CoarseGrainedMap _map;
-        private float _edgeSize;
-
-        private Vector2Int _robotLocation => _map.GetCurrentPositionCoarseTile();
-        private Vector2Int _unseenPoint => GetFurthestTileAroundRobot(_map.GetApproximateGlobalDegrees() - 45);
-        private Vector2Int _solidOrExploredPoint => CardinalDirection.AngleToDirection(_map.GetApproximateGlobalDegrees() - 90).Vector + _unseenPoint;
+        private int _edgeSize;
+        private int _visionRange;
+        private readonly List<SlamTileStatus> _defaultLimitors = new List<SlamTileStatus> { SlamTileStatus.Solid };
+        private Vector2Int _robotPosition => _map.GetCurrentPositionCoarseTile();
 
         public enum EdgeState
         {
@@ -26,60 +26,102 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             ForwardRight,
         }
 
-        public EdgeDetector(CoarseGrainedMap map, float edgeSize)
+        public EdgeDetector(CoarseGrainedMap map, float visionRange)
         {
             _map = map;
-            _edgeSize = edgeSize;
-        }
-
-        public void DrawDebugLines()
-        {
-
-            var isPointUnseen = _map.GetTileStatus(_unseenPoint) == SlamTileStatus.Unseen;
-            var isPointSolidOrExplored = _map.GetTileStatus(_solidOrExploredPoint) != SlamTileStatus.Unseen;
-            var robot = _map.CoarseToWorld(_robotLocation);
-            var point1 = _map.CoarseToWorld(_unseenPoint);
-            var point2 = _map.CoarseToWorld(_solidOrExploredPoint);
-
-            Debug.DrawLine(robot, point1, Color.magenta);
-            Debug.DrawLine(robot, point2, Color.yellow);
-            Debug.Log($"unseen: {isPointUnseen}, solid or explored: {isPointSolidOrExplored}");
+            _edgeSize = (int)visionRange + 1;
+            _visionRange = (int)visionRange;
         }
 
         private EdgeState UpdateState()
         {
-            var tiles = GetTilesAroundRobot();
+            var tiles = GetTilesAroundRobot(_edgeSize, _defaultLimitors);
             var angle = _map.GetApproximateGlobalDegrees();
             return EdgeState.ForwardRight;
         }
 
-        public IEnumerable<Vector2Int> GetTilesAroundRobot()
+        public Vector2Int? GetNearestUnseenTile()
         {
-            var tiles = new List<Vector2Int>();
-            for (int angle = 0; angle < 360; angle++)
+            var angles = Enumerable.Range(0, 360).ToList();
+            var range = 1;
+            while (angles.Any())
             {
-                tiles.Add(GetFurthestTileAroundRobot(_map.GetApproximateGlobalDegrees() + angle));
+                var unseenTiles = new List<Vector2Int>();
+                var removedAngles = new List<int>();
+                foreach (var angle in angles)
+                {
+                    var tile = GetFurthestTileAroundRobot(_map.GetApproximateGlobalDegrees() + angle, range, _defaultLimitors);
+
+                    if (_map.GetTileStatus(tile) == SlamTileStatus.Solid)
+                    {
+                        removedAngles.Add(angle);
+                        continue;
+                    }
+                    if (_map.GetTileStatus(tile) == SlamTileStatus.Unseen)
+                    {
+                        unseenTiles.Add(tile);
+                    }
+                }
+                foreach (var removedangle in removedAngles)
+                {
+                    angles.Remove(removedangle);
+                }
+                if (unseenTiles.Any())
+                {
+                    return unseenTiles.OrderBy(tile => Vector2.Distance(_robotPosition, tile)).First();
+                }
+                range++;
             }
-            return tiles.Distinct().Where(tile => _map.IsWithinBounds(tile));  //&& _map.GetTileStatus(tile) == SlamTileStatus.Unseen);
+            return null;
         }
 
-        public Vector2Int GetFurthestTileAroundRobot(float angle)
+        public IEnumerable<Vector2Int> GetTilesAroundRobot(int range, List<SlamTileStatus> limiters, int startAngle = 0)
         {
-            Vector2Int tile = _robotLocation;
-            for (int i = 0; i < _edgeSize; i++)
+            var tiles = new List<Vector2Int>();
+            for (int angle = startAngle; angle < 360; angle++)
             {
-                var candidateTile = Vector2Int.FloorToInt(Geometry.VectorFromDegreesAndMagnitude(angle, i)) + _robotLocation;
+                tiles.Add(GetFurthestTileAroundRobot(_map.GetApproximateGlobalDegrees() + angle, range, limiters));
+            }
+            return tiles.Distinct().Where(tile => _map.IsWithinBounds(tile));
+        }
+
+        public Vector2Int GetFurthestTileAroundRobot(float angle, int range, List<SlamTileStatus> limiters)
+        {
+            Vector2Int tile = _robotPosition;
+            for (int i = 0; i < range; i++)
+            {
+                var candidateTile = Vector2Int.FloorToInt(Geometry.VectorFromDegreesAndMagnitude(angle, i)) + _robotPosition;
                 if (_map.IsWithinBounds(candidateTile))
                 {
-                    if (_map.GetTileStatus(candidateTile) == SlamTileStatus.Solid)
+                    foreach (var limiter in limiters)
                     {
-                        return candidateTile;
+                        if (_map.GetTileStatus(candidateTile) == limiter && (limiter != SlamTileStatus.Open || i > _visionRange))
+                        {
+                            return candidateTile;
+                        }
                     }
                     tile = candidateTile;
                 }
             }
             return tile;
         }
+
+        public IEnumerable<Vector2Int> GetBoxAroundRobot()
+        {
+            var boxTileList = new List<Vector2Int>();
+            for (int x = -_edgeSize; x <= _edgeSize; x++)
+            {
+                for (int y = _edgeSize; y <= _edgeSize + 1; y++)
+                {
+                    boxTileList.Add(_robotPosition + new Vector2Int(x, y));
+                    boxTileList.Add(_robotPosition + new Vector2Int(x, -y - 1));
+                    boxTileList.Add(_robotPosition + new Vector2Int(y, x));
+                    boxTileList.Add(_robotPosition + new Vector2Int(-y - 1, x));
+                }
+            }
+            return boxTileList.Where(tile => _map.IsWithinBounds(tile));
+        }
+
 
     }
 }

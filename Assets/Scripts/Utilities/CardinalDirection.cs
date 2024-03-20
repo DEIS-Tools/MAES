@@ -147,6 +147,11 @@ namespace Maes.Utilities {
             };
         }
 
+        public static CardinalDirection PerpendicularDirection(Vector2 vector)
+        {
+            return VectorToDirection(Vector2.Perpendicular(vector));
+        }
+
         public override string ToString()
         {
             return Index switch
