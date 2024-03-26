@@ -283,6 +283,11 @@ namespace Maes.Map
             return _tiles[tile.x, tile.y];
         }
 
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus)
+        {
+            return _pathFinder.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus);
+        }
+
         public float GetRobotAngleDeg()
         {
             return _robotAngle;

@@ -176,6 +176,11 @@ namespace Maes.Map {
             return status;
         }
 
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus)
+        {
+            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus);
+        }
+
         /// <summary>
         /// Combines two <see cref="SlamMap.SlamTileStatus"/>' in an "optimistic" fashion.
         /// </summary>

@@ -34,5 +34,7 @@ namespace Maes.Map.PathFinding {
         public bool IsWithinBounds(Vector2Int coordinate);
 
         public SlamTileStatus GetTileStatus(Vector2Int coordinate, bool optimistic = false);
+
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamTileStatus lookupStatus);
     }
 }

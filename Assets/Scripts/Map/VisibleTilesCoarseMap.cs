@@ -126,6 +126,11 @@ namespace Maes.Map {
             
             return status;
         }
+
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus)
+        {
+            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus);
+        }
         
         // Combines two SlamTileStatus in a 'optimistic' fashion.
         // If any status is solid both are consider solid. Otherwise, if any status is open both are considered open
