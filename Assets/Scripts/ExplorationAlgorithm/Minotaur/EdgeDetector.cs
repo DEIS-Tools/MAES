@@ -85,17 +85,18 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return tiles.Distinct().Where(tile => _map.IsWithinBounds(tile));
         }
 
-        public Vector2Int GetFurthestTileAroundRobot(float angle, int range, List<SlamTileStatus> limiters)
+        public Vector2Int GetFurthestTileAroundRobot(float angle, int range, List<SlamTileStatus> limiters, bool snapToGrid = false)
         {
             Vector2Int tile = _robotPosition;
-            for (int i = 0; i < range; i++)
+            for (int r = 0; r < range; r++)
             {
-                var candidateTile = Vector2Int.FloorToInt(Geometry.VectorFromDegreesAndMagnitude(angle, i)) + _robotPosition;
+                tile = snapToGrid ? CardinalDirection.AngleToDirection(angle).Vector * r : Vector2Int.FloorToInt(Geometry.VectorFromDegreesAndMagnitude(angle, r));
+                var candidateTile = tile + _robotPosition;
                 if (_map.IsWithinBounds(candidateTile))
                 {
                     foreach (var limiter in limiters)
                     {
-                        if (_map.GetTileStatus(candidateTile) == limiter && (limiter != SlamTileStatus.Open || i > _visionRange))
+                        if (_map.GetTileStatus(candidateTile) == limiter && (limiter != SlamTileStatus.Open || r > _visionRange))
                         {
                             return candidateTile;
                         }
@@ -111,12 +112,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var boxTileList = new List<Vector2Int>();
             for (int x = -_edgeSize; x <= _edgeSize; x++)
             {
-                for (int y = _edgeSize; y <= _edgeSize + 1; y++)
+                for (int y = -_edgeSize; y <= _edgeSize; y++)
                 {
                     boxTileList.Add(_robotPosition + new Vector2Int(x, y));
-                    boxTileList.Add(_robotPosition + new Vector2Int(x, -y - 1));
-                    boxTileList.Add(_robotPosition + new Vector2Int(y, x));
-                    boxTileList.Add(_robotPosition + new Vector2Int(-y - 1, x));
                 }
             }
             return boxTileList.Where(tile => _map.IsWithinBounds(tile));

@@ -9,19 +9,21 @@ using UnityEngine;
 using Maes.Utilities;
 using static Maes.Map.SlamMap;
 using UnityEngine.UIElements;
+using System.Runtime.InteropServices;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
 {
     public partial class MinotaurAlgorithm : IExplorationAlgorithm
     {
-        public float VisionRadius => _robotConstraints.SlamRayTraceRange;
+        public int VisionRadius => (int)_robotConstraints.SlamRayTraceRange;
+
         private IRobotController _controller;
         private RobotConstraints _robotConstraints;
         private CoarseGrainedMap _map;
         private EdgeDetector _edgeDetector;
         private Dictionary<Vector2Int, SlamTileStatus> _visibleTiles => _controller.GetSlamMap().GetCurrentlyVisibleTiles();
         private int _seed;
-        private Vector2Int _robotPosition => _map.GetCurrentPositionCoarseTile();
+        private Vector2Int _position => _map.GetCurrentPositionCoarseTile();
         private List<Doorway> _doorways;
         private List<MinotaurAlgorithm> _minotaurs;
         private CardinalDirection.RelativeDirection _followDirection = CardinalDirection.RelativeDirection.Right;
@@ -30,15 +32,14 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private Doorway _closestDoorway = null;
         private Vector2Int? _destination;
         private RelativeWall _lastWall;
+        private int _logicTicks = 0;
+
 
         private enum AlgorithmState
         {
             Idle,
             FirstWall,
-            FollowingWall,
-            FollowingExploredArea,
-            StartRotation,
-            Rotating,
+            ExploreRoom,
             Auctioning,
             MovingToDoorway,
             MovingToNearestUnexplored
@@ -71,14 +72,30 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         public void UpdateLogic()
         {
+            _logicTicks++;
             if (_controller.HasCollidedSinceLastLogicTick())
             {
                 return;
                 //TODO: full resets
             }
+
+            if (_destination.HasValue)
+            {
+                var solidTile = _edgeDetector.GetFurthestTileAroundRobot((_destination.Value - _position).GetAngleRelativeToX(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid }, true);
+                if (_map.GetTileStatus(solidTile) == SlamTileStatus.Solid)
+                {
+                    _destination = null;
+                    _controller.StopCurrentTask();
+                    return;
+                }
+                _controller.MoveTo(_destination.Value);
+                ResetDestinationIfReached();
+                return;
+            }
+
+
             var wallPoints = GetWallsNearRobot();
 
-            Vector2Int direction;
             switch (_currentState)
             {
                 case AlgorithmState.Idle:
@@ -89,67 +106,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     if (wallPoints.Any() && wallPoints.First().distance < VisionRadius - 1)
                     {
                         _controller.StopCurrentTask();
-                        _currentState = AlgorithmState.FollowingWall;
+                        _currentState = AlgorithmState.ExploreRoom;
                     }
                     break;
-                case AlgorithmState.FollowingWall: // TODO: follow wall when no wall is found in visible area
+                case AlgorithmState.ExploreRoom:
                     if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
                     {
-                        var wallRejectorForce = new Vector2Int();
-                        if (wallPoints.Any())
+                        var isAllSeen = _edgeDetector.GetTilesAroundRobot(VisionRadius + 1, new List<SlamTileStatus> { SlamTileStatus.Solid }).Where(tile => _map.GetTileStatus(tile) == SlamTileStatus.Unseen).Count() == 0;
+                        if (isAllSeen)
                         {
-                            var closestWall = wallPoints.First();
-                            CardinalDirection directionToWall = CardinalDirection.VectorToDirection(closestWall.position - _robotPosition);
-                            direction = directionToWall.Counterclockwise().Vector;
-
-
-                            if (closestWall.distance < VisionRadius - 2)
-                            {
-                                wallRejectorForce = -directionToWall.Vector * (int)(VisionRadius - 2 - closestWall.distance);
-                            }
-                            _lastWall = closestWall;
-                        }
-                        else
-                        {
-                            direction = CardinalDirection.VectorToDirection(_lastWall.position - _robotPosition).Vector;
-                        }
-
-                        if (IsAheadExplored())
-                        {
-                            _currentState = AlgorithmState.FollowingExploredArea;
-                            direction *= 2;
-                        }
-                        _controller.MoveTo(_robotPosition + direction + wallRejectorForce);
-                    }
-                    break;
-                case AlgorithmState.FollowingExploredArea:
-                    if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
-                    {
-                        if (_destination.HasValue)
-                        {
-                            _controller.MoveTo(_destination.Value);
-                            ResetDestinationIfReached();
+                            MoveToNearestUnseen();
                             break;
                         }
-
-                        if (MoveToCornerCoverage()) break;
+                        else if (MoveAlongWall()) break;
+                        else if (MoveToCornerCoverage()) break;
                         else if (MoveToNearestEdge()) break;
                         else MoveToNearestUnseen();
-                    }
-
-                    break;
-                case AlgorithmState.StartRotation:
-
-                    if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
-                    {
-                        _currentState = AlgorithmState.Rotating;
-                        _controller.Rotate(90);
-                    }
-                    break;
-                case AlgorithmState.Rotating:
-                    if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
-                    {
-                        _controller.StartRotatingAroundPoint(new Vector2Int(52, 54));
+                        //StepByStep(wallPoints);
                     }
                     break;
                 case AlgorithmState.Auctioning:
@@ -164,12 +137,84 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     break;
             }
         }
+        private bool MoveAlongWall()
+        {
+            // Wait until SlamMap has updated otherwise we see old data
+            if (_logicTicks % _robotConstraints.SlamUpdateIntervalInTicks != 0)
+            {
+                return true;
+            }
+            var tiles = _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Solid }).Where(tile => _map.GetTileStatus(tile) == SlamTileStatus.Solid).ToList();
+            if (tiles.Count() < 2) return false;
+            var tileAhead = _edgeDetector.GetFurthestTileAroundRobot(_controller.GetGlobalAngle(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid }, true);
+            var localLeft = (_controller.GetGlobalAngle() + (_map.GetTileStatus(tileAhead) == SlamTileStatus.Solid ? 90 : 0)) % 360;
+            (CardinalDirection.AngleToDirection(localLeft).Vector + _position).DrawDebugLineFromRobot(_map, Color.blue);
+            var walls = GetWalls(tiles);
+            var points = walls.Select(wall => Vector2Int.FloorToInt(wall.Start))
+                              .Union(walls.Select(wall => Vector2Int.FloorToInt(wall.End)))
+                              .OrderByDescending(point => ((point - _position).GetAngleRelativeToX() - localLeft + 360) % 360);
+
+            walls.ToList().ForEach(wall => Debug.DrawLine(_map.CoarseToWorld(wall.Start), _map.CoarseToWorld(wall.End), Color.black, 2));
+            points.ToList().ForEach(point => point.DrawDebugLineFromRobot(_map, Color.yellow));
+            points.First(point => _map.IsWithinBounds(point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2))
+                                  && _map.GetTileStatus(point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2)) != SlamTileStatus.Solid)
+                  .DrawDebugLineFromRobot(_map, Color.white);
+
+            var perpendicularTile = points.Select(point => point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2))
+                              .First(perpendicularTile => _map.IsWithinBounds(perpendicularTile) && _map.GetTileStatus(perpendicularTile) != SlamTileStatus.Solid);
+            perpendicularTile.DrawDebugLineFromRobot(_map, Color.red);
+
+            _destination = perpendicularTile;
+            _controller.MoveTo(perpendicularTile);
+            (CardinalDirection.AngleToDirection(0).Vector + _position).DrawDebugLineFromRobot(_map, Color.magenta);
+            return true;
+        }
+        private List<Line2D> GetWalls(IEnumerable<Vector2Int> tiles)
+        {
+            List<Line2D> lines = new();
+            foreach (var tile in tiles)
+            {
+                foreach (var otherTile in tiles)
+                {
+                    if (tile != otherTile)
+                    {
+                        lines.Add(new Line2D(tile, otherTile));
+                    }
+                }
+            }
+            // Sort the list for the longest lines first, since it will make the distinct (same a and b in ax+b) remainder the longest line.
+            lines = lines.OrderByDescending(line => Vector2.Distance(line.Start, line.End)).Distinct().ToList();
+
+            List<Line2D> result = new();
+            foreach (var line in lines)
+            {
+                var start = line.IsVertical ? line.Start.y : line.Start.x;
+                var end = line.IsVertical ? line.End.y : line.End.x;
+                Vector2Int currentStart = Vector2Int.FloorToInt(line.Start);
+                Vector2Int prevTile = currentStart;
+                for (float i = start; i < end; i++)
+                {
+                    var tile = line.IsVertical ? new Vector2Int((int)line.SlopeIntercept(i), (int)i) : new Vector2Int((int)i, (int)line.SlopeIntercept(i));
+                    if (_map.GetTileStatus(tile) != SlamTileStatus.Solid && _map.GetTileStatus(prevTile) == SlamTileStatus.Solid)
+                    {
+                        result.Add(new Line2D(currentStart, prevTile));
+                    }
+                    else if (_map.GetTileStatus(tile) == SlamTileStatus.Solid && _map.GetTileStatus(prevTile) != SlamTileStatus.Solid)
+                    {
+                        currentStart = tile;
+                    }
+                    prevTile = tile;
+                }
+                result.Add(new Line2D(currentStart, line.End));
+            }
+            return result;
+        }
 
 
         private bool MoveToCornerCoverage()
         {
             if (IsAheadExploreable(1) && IsAheadExploreable(2)) return false;
-            var tiles = _edgeDetector.GetTilesAroundRobot((int)VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Unseen, SlamTileStatus.Solid }, 360 - 30);
+            var tiles = _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Unseen, SlamTileStatus.Solid }, 360 - 30);
             foreach (var tile in tiles)
             {
                 tile.DrawDebugLineFromRobot(_map, Color.green);
@@ -190,21 +235,22 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             }
             return false;
         }
+
         private bool MoveToNearestEdge()
         {
             var tiles = _edgeDetector.GetBoxAroundRobot()
-                               .Where(tile => _map.GetTileStatus(tile) != SlamTileStatus.Unseen
-                                             && IsPerpendicularNotUnseen(tile))
-                              .Select(tile => (status: _map.GetTileStatus(tile), perpendicularTile: tile + CardinalDirection.PerpendicularDirection(tile - _robotPosition).Vector * ((int)VisionRadius - 1)))
+                              .Where(tile => (_map.GetTileStatus(tile) != SlamTileStatus.Unseen)
+                                             && IsPerpendicularUnseen(tile))
+                              .Select(tile => (status: _map.GetTileStatus(tile), perpendicularTile: tile + CardinalDirection.PerpendicularDirection(tile - _position).Vector * (VisionRadius - 1)))
                               .Where(tile => _map.IsWithinBounds(tile.perpendicularTile) && IfSolidIsPathable(tile))
                               .Select(tile => tile.perpendicularTile);
             if (tiles.Any())
             {
                 var closestTile = tiles.Select(tile => new { angle = _map.GetTileCenterRelativePosition(tile).RelativeAngle, tile }).OrderBy(tile => Mathf.Min(Math.Abs(tile.angle))).First().tile;
-                var angle = Vector2.SignedAngle(Vector2.right, closestTile - _robotPosition);
+                var angle = Vector2.SignedAngle(Vector2.right, closestTile - _position);
                 var vector = Geometry.VectorFromDegreesAndMagnitude(angle, VisionRadius + 1);
                 Debug.Log($"tile: {closestTile}, angle: {angle}, vec: {vector}");
-                closestTile = Vector2Int.FloorToInt(vector + _robotPosition);
+                closestTile = Vector2Int.FloorToInt(vector + _position);
                 foreach (var tile in tiles)
                 {
                     tile.DrawDebugLineFromRobot(_map, Color.yellow);
@@ -217,10 +263,13 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return false;
         }
 
-        private bool IsPerpendicularNotUnseen(Vector2Int tile)
+        private bool IsPerpendicularUnseen(Vector2Int tile)
         {
-            var direction = CardinalDirection.PerpendicularDirection(tile - _robotPosition).Vector;
-            return _map.GetTileStatus(tile + direction) == SlamTileStatus.Unseen;
+            var direction = CardinalDirection.PerpendicularDirection(tile - _position).Vector;
+            var perp = direction * 2 + tile;
+            perp.DrawDebugLineFromRobot(_map, Color.magenta);
+            if (!_map.IsWithinBounds(perp)) return false;
+            return _map.GetTileStatus(perp) == SlamTileStatus.Unseen;
         }
         private bool IfSolidIsPathable((SlamTileStatus status, Vector2Int perpendicularTile) tile)
         {
@@ -250,7 +299,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private void ResetDestinationIfReached()
         {
-            if ((_destination.Value - _robotPosition).magnitude < 0.5f)
+            if ((_destination.Value - _position).magnitude < 0.5f)
             {
                 _destination = null;
             }
@@ -261,7 +310,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             var tiles = _edgeDetector.GetBoxAroundRobot();
             var direction = CardinalDirection.AngleToDirection(_controller.GetGlobalAngle());
-            var target = direction.Vector * ((int)VisionRadius + 1) + _robotPosition;
+            var target = direction.Vector * (VisionRadius + 1) + _position;
             if (_map.IsWithinBounds(target))
             {
                 return _map.GetTileStatus(target) == SlamTileStatus.Open;
@@ -272,7 +321,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private bool IsAheadExploreable(int range)
         {
             var direction = CardinalDirection.AngleToDirection(_controller.GetGlobalAngle());
-            var target = direction.Vector * ((int)VisionRadius + range) + _robotPosition;
+            var target = direction.Vector * (VisionRadius + range) + _position;
             if (_map.IsWithinBounds(target))
             {
                 return _map.GetTileStatus(target) == SlamTileStatus.Unseen;
@@ -283,7 +332,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private List<RelativeWall> GetWallsNearRobot()
         {
             return _visibleTiles.Where(kv => kv.Value == SlamTileStatus.Solid)
-                                     .Select(kv => new RelativeWall { position = _map.FromSlamMapCoordinate(kv.Key), distance = Vector2.Distance(_map.FromSlamMapCoordinate(kv.Key), _robotPosition) })
+                                     .Select(kv => new RelativeWall { position = _map.FromSlamMapCoordinate(kv.Key), distance = Vector2.Distance(_map.FromSlamMapCoordinate(kv.Key), _position) })
                                      .OrderBy(dist => dist.distance)
                                      .ToList();
         }
@@ -321,7 +370,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 bool didNotPassDoorway = true;
                 foreach (Doorway doorway in _doorways)
                 {
-                    List<Vector2Int> path = _controller.GetSlamMap().GetPath(_robotPosition, doorway.Position);
+                    List<Vector2Int> path = _controller.GetSlamMap().GetPath(_position, doorway.Position);
                     var distance = path.Count;
                     if (distance < doorwayDistance)
                     {
@@ -342,7 +391,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             }
             if (_closestDoorway == null) return;
             _controller.PathAndMoveTo(_closestDoorway.Position);
-            if (_robotPosition == _closestDoorway.Position)
+            if (_position == _closestDoorway.Position)
             {
                 _currentState = AlgorithmState.Idle;
                 _closestDoorway = null;
@@ -357,7 +406,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 int doorwayDistance = int.MaxValue;
                 foreach (Doorway doorway in _doorways)
                 {
-                    List<Vector2Int> path = _controller.GetSlamMap().GetPath(_robotPosition, doorway.Position);
+                    List<Vector2Int> path = _controller.GetSlamMap().GetPath(_position, doorway.Position);
                     var distance = path.Count;
                     if (distance < doorwayDistance)
                     {
@@ -368,7 +417,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             }
             if (_closestDoorway == null) return;
             _controller.PathAndMoveTo(_closestDoorway.Position);
-            if (_robotPosition == _closestDoorway.Position)
+            if (_position == _closestDoorway.Position)
             {
                 _currentState = AlgorithmState.Idle;
                 _closestDoorway = null;

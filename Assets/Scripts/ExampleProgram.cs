@@ -48,7 +48,7 @@ namespace Maes
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
-                slamUpdateIntervalInTicks: 10,
+                slamUpdateIntervalInTicks: 1,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f,
                 distributeSlam: false,
@@ -73,7 +73,7 @@ namespace Maes
                 }
             );
 
-            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("blank.pgm");
+            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway.pgm");
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
 

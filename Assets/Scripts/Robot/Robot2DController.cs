@@ -57,9 +57,7 @@ namespace Maes.Robot
         // Returns the counterclockwise angle in degrees between the forward orientation of the robot and the x-axis
         public float GetForwardAngleRelativeToXAxis()
         {
-            var angle = Vector2.SignedAngle(Vector2.right, Transform.up);
-            if (angle < 0) angle = 360 + angle;
-            return angle;
+            return ((Vector2)Transform.up).GetAngleRelativeToX();
         }
 
         private Vector2 GetRobotDirectionVector()
