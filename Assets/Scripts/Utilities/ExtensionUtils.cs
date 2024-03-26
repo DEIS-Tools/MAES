@@ -20,25 +20,56 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System.Collections.Generic;
+using System.Linq;
+using Codice.Client.BaseCommands;
 using Maes.Map;
 using Maes.Robot;
 using UnityEngine;
+using static UnityEditor.FilePathAttribute;
 
-namespace Maes.Utilities {
-    public static class ExtensionUtils {
+namespace Maes.Utilities
+{
+    public static class ExtensionUtils
+    {
         /// <summary>
         /// Extension method for converting a SLAM tile to a TNF cell
         /// </summary>
-        public static (Vector2Int, float) ToTnfCell(this KeyValuePair<Vector2Int, SlamMap.SlamTileStatus> tile) {
+        public static (Vector2Int, float) ToTnfCell(this KeyValuePair<Vector2Int, SlamMap.SlamTileStatus> tile)
+        {
             return (tile.Key, tile.Value.ToTnfCellValue());
         }
 
-        public static float ToTnfCellValue(this SlamMap.SlamTileStatus status) {
+        public static float ToTnfCellValue(this SlamMap.SlamTileStatus status)
+        {
             return status switch
             {
                 SlamMap.SlamTileStatus.Unseen => .5f,
                 _ => 0f
             };
+        }
+
+        public static float GetAngleRelativeToX(this Vector2Int vector)
+        {
+            return GetAngleRelativeToX((Vector2)vector);
+        }
+
+        public static float GetAngleRelativeToX(this Vector2 vector)
+        {
+            var angle = Vector2.SignedAngle(Vector2.right, vector);
+            if (angle < 0) angle = 360 + angle;
+            return angle;
+        }
+
+        public static void DrawDebugLineFromRobot(this Vector2Int tile, CoarseGrainedMap map, Color color)
+        {
+            DrawDebugLineFromRobot((Vector2)tile, map, color);
+        }
+
+        public static void DrawDebugLineFromRobot(this Vector2 tile, CoarseGrainedMap map, Color color)
+        {
+            var robot = map.CoarseToWorld(map.GetCurrentPositionCoarseTile());
+            var point1 = map.CoarseToWorld(tile);
+            Debug.DrawLine(robot, point1, color, 2);
         }
     }
 }

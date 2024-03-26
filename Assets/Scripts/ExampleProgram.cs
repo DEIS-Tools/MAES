@@ -48,12 +48,12 @@ namespace Maes
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
-                slamUpdateIntervalInTicks: 10,
+                slamUpdateIntervalInTicks: 1,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f,
                 distributeSlam: false,
                 environmentTagReadRange: 4.0f,
-                slamRayTraceRange: 7f,
+                slamRayTraceRange: 4f,
                 relativeMoveSpeed: 1f,
                 agentRelativeSize: 0.6f,
                 calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) =>
@@ -73,10 +73,9 @@ namespace Maes
                 }
             );
 
-            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("single_wall.pgm");
+            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway.pgm");
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
-            var algorithm = new MovementTestAlgorithm(new Vector2Int(100, 50));
 
             var scenario = new SimulationScenario(
                 seed: randomSeed,
@@ -87,7 +86,7 @@ namespace Maes
                     map,
                     randomSeed,
                     1,
-                    (seed) => algorithm
+                    (seed) => new MinotaurAlgorithm(constraints, randomSeed)
                 ));
             simulator.EnqueueScenario(scenario);
             simulator.PressPlayButton(); // Instantly enter play mode

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Maes.Utilities;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,19 +8,23 @@ namespace Maes.Robot.Task
 {
     internal class RotateAroundPointTask : ITask
     {
+        private readonly Vector2Int _point;
         private readonly float _radius;
         private readonly float _force;
         private readonly bool _counterClockwise;
 
-        public RotateAroundPointTask(float radius, float force, bool counterClockwise)
-        {
-            _radius = radius;
+        // Radius in slam
+        public RotateAroundPointTask(Vector2Int point, float radius, float force, bool counterClockwise)
+        {   
+            _point = point;
+            _radius = radius*2;
             _force = force;
             _counterClockwise = counterClockwise;
         }
 
         public MovementDirective GetNextDirective()
         {
+
             var ratioBetweenWheelForces = GetRatioFromRadius();
             // Apply smaller force on inner wheel depending on direction
             var leftForce = _counterClockwise ? _force * ratioBetweenWheelForces : _force;

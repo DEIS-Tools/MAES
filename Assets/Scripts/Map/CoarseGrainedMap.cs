@@ -64,6 +64,11 @@ namespace Maes.Map {
             return _slamMap.ApproximatePosition - _offset;
         }
 
+        public Vector2Int GetCurrentPositionCoarseTile()
+        {
+            return Vector2Int.FloorToInt(GetApproximatePosition());
+        }
+
         public float GetApproximateGlobalDegrees() {
             return _slamMap.GetRobotAngleDeg();
         }
@@ -93,7 +98,26 @@ namespace Maes.Map {
 
             return res;
         }
-        
+
+
+        /// <returns>all tiles that are unseen as a list.</returns>
+        public List<Vector2Int> GetUnexploredTiles()
+        {
+            var res = new List<Vector2Int>();
+
+            for (int x = 0; x < _width; x++)
+            {
+                for (int y = 0; y < _height; y++)
+                {
+                    var pos = new Vector2Int(x, y);
+                    if (GetTileStatus(pos) == SlamMap.SlamTileStatus.Unseen)
+                        res.Add(pos);
+                }
+            }
+
+            return res;
+        }
+
         /// <param name="localCoordinate">the tile to get the explored-status from.</param>
         /// <returns>the explored-status of the given tile.</returns>
         public bool IsTileExplored(Vector2Int localCoordinate) {
@@ -118,8 +142,7 @@ namespace Maes.Map {
         /// <param name="coordinate">the coordinate to test.</param>
         /// <exception cref="ArgumentException">raised when coordinate is out of bounds.</exception>
         private void AssertWithinBounds(Vector2Int coordinate) {
-            var withinBounds = coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
-            if (!withinBounds)
+            if (!IsWithinBounds(coordinate))
                 throw new ArgumentException($"Given coordinate is out of bounds {coordinate} ({_width}, {_height})");
         }
 
@@ -248,8 +271,8 @@ namespace Maes.Map {
         public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false, bool beOptimistic = true) {
             var approxPosition = GetApproximatePosition();
             return beOptimistic 
-                ? _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this, acceptPartialPaths = true) 
-                : _aStar.GetPath(Vector2Int.RoundToInt(approxPosition), target, this, acceptPartialPaths = true);
+                ? _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this, acceptPartialPaths) 
+                : _aStar.GetPath(Vector2Int.RoundToInt(approxPosition), target, this, acceptPartialPaths);
         }
         
         /// <summary>
@@ -392,12 +415,16 @@ namespace Maes.Map {
             map._optimisticTileStatuses = globalMap.Clone() as SlamMap.SlamTileStatus[,];
         }
         
+        public bool IsWithinBounds(Vector2Int coordinate)
+        {
+            return coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
+        }
+
         /// <returns><b>false</b>, only if the tile at the coordinate is known to be solid.</returns>
         public bool IsPotentiallyExplorable(Vector2Int coordinate) {
-            var withinBounds = coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
             // To avoid giving away information which the robot cannot know, tiles outside the map bounds are
             // considered explorable
-            if (!withinBounds) return true;
+            if (!IsWithinBounds(coordinate)) return true;
 
             return (!_tilesCoveredStatus[coordinate.x, coordinate.y]) && GetSlamTileStatuses(coordinate).All(status => status != SlamMap.SlamTileStatus.Solid);
         }
@@ -421,6 +448,9 @@ namespace Maes.Map {
             if (_optimisticTileStatuses[courseCoord.x, courseCoord.y] != SlamMap.SlamTileStatus.Solid)
                 _optimisticTileStatuses[courseCoord.x, courseCoord.y] = observedStatus;
         }
+        public Vector3 CoarseToWorld(Vector2 position)
+        {
+            return new Vector3(position.x, position.y, -0.01f) + (Vector3)_offset;
+        }
     }
-
 }

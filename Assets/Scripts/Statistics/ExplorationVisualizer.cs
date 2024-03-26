@@ -33,7 +33,7 @@ namespace Maes.Statistics
         public MeshRenderer meshRenderer;
         public MeshFilter meshFilter;
         //public RobotSpawner robotSpawner;
-        private GameObject fogOfWarPlane;
+        private GameObject _fogOfWarPlane;
         //private List<Transform> _fogRobots = new();
         public LayerMask _foglayer;
 
@@ -92,20 +92,22 @@ namespace Maes.Statistics
             meshFilter.mesh = mesh;
 
             //Fog of War related stuff below
-            fogOfWarPlane = GameObject.Find("FogPlaneBetter");
-            _fogMesh = fogOfWarPlane.GetComponent<MeshFilter>().mesh;
-            _fogVertices = _fogMesh.vertices;
-            _fogColors = new Color[_fogVertices.Length];
-            for (int i = 0; i < _fogColors.Length; i++)
+            _fogOfWarPlane = GameObject.Find("FogPlaneBetter");
+            if (_fogOfWarPlane != null)
             {
-                _fogColors[i] = Color.black;
+                _fogMesh = _fogOfWarPlane.GetComponent<MeshFilter>().mesh;
+                _fogVertices = _fogMesh.vertices;
+                _fogColors = new Color[_fogVertices.Length];
+                for (int i = 0; i < _fogColors.Length; i++)
+                {
+                    _fogColors[i] = Color.black;
+                }
+                for (int i = 0; i < _fogVertices.Length; i++)
+                {
+                    _fogVertices[i] = _fogOfWarPlane.transform.TransformPoint(_fogVertices[i]);
+                }
+                UpdateFogColor();
             }
-            for (int i = 0; i < _fogVertices.Length; i++)
-            {
-                _fogVertices[i] = fogOfWarPlane.transform.TransformPoint(_fogVertices[i]);
-            }
-            UpdateFogColor();
-
         }
 
         private void GenerateTriangleVertices()
@@ -267,16 +269,18 @@ namespace Maes.Statistics
 
                 //Fog of War colorchange below, done for every vertex that is seen and explored
                 //If turn off exploration mode, tiles dont change color, therefore dont change the FogMesh
-                for (int i = 0; i <= 2; i++) //The more vertices nearby you check, the more computation and the further you see, 0-2 work, above 0 is much slower
-                {
-                    Ray r = new Ray(_vertices[vertexIndex + i] + new Vector3(0,0,-10), Vector3.forward);
-                    RaycastHit hit;
-                    bool raytrue = Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide);
-                    if (Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide))
+                if (_fogOfWarPlane != null) {
+                    for (int i = 0; i <= 2; i++) //The more vertices nearby you check, the more computation and the further you see, 0-2 work, above 0 is much slower
                     {
-                        int vertexIndexHit = GetClosestVertex(hit, _fogMesh.triangles);
-                        _fogColors[vertexIndexHit].a = 0;
-                        UpdateFogColor();
+                        Ray r = new Ray(_vertices[vertexIndex + i] + new Vector3(0, 0, -10), Vector3.forward);
+                        RaycastHit hit;
+                        bool raytrue = Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide);
+                        if (Physics.Raycast(r, out hit, 1000, _foglayer, QueryTriggerInteraction.Collide))
+                        {
+                            int vertexIndexHit = GetClosestVertex(hit, _fogMesh.triangles);
+                            _fogColors[vertexIndexHit].a = 0;
+                            UpdateFogColor();
+                        }
                     }
                 }
             }

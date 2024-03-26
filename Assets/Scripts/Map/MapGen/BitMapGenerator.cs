@@ -19,6 +19,8 @@ namespace Maes.Map.MapGen
             _borderSize = borderSize;
             Tile.Rand = new System.Random(seed);
 
+            _borderSize = Math.Max(2, borderSize);
+
             // Clear and destroy objects from previous map
             ClearMap();
 
