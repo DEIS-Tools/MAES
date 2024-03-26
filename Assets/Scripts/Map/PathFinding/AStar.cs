@@ -108,6 +108,7 @@ namespace Maes.Map.PathFinding {
                             if(IsAnyNeighborOpen(target + dir, pathFindingMap, beOptimistic) && pathFindingMap.IsCoordWithinBounds(target + dir)) {
                                 targetCoordinate = target + dir;
                                 targetQueue.Clear();
+                                visitedTargetsList.Clear();
                                 i = 0;
                                 break;
                             }
