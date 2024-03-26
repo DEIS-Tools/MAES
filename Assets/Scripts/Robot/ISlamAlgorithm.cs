@@ -60,7 +60,7 @@ namespace Maes.Robot {
         /// </summary>
         /// <param name="tile">The coordinate measured in slam tiles</param>
         /// <returns>The perceived <see cref="SlamMap.SlamTileStatus"/> of the given tile</returns>
-        public SlamMap.SlamTileStatus GetTileStatus(Vector2Int tile);
+        public SlamMap.SlamTileStatus GetTileStatus(Vector2Int tile, bool optimistic = false);
         
         /// <returns>The robots orientation in the slam map measured in degrees relative to the x-axis (counter-clockwise)</returns>
         public float GetRobotAngleDeg();

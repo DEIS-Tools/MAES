@@ -26,6 +26,7 @@ using System.Linq;
 using Maes.Utilities;
 using Maes.Utilities.Priority_Queue;
 using UnityEngine;
+using static Maes.Map.SlamMap;
 
 namespace Maes.Map.PathFinding {
     public class AStar : IPathFinder {
@@ -212,6 +213,47 @@ namespace Maes.Map.PathFinding {
             }
         }
 
+        public Vector2Int? GetNearestTileFloodFill(IPathFindingMap pathFindingMap, Vector2Int targetCoordinate, SlamTileStatus lookupStatus)
+        {
+            var targetQueue = new Queue<Vector2Int>();
+            var visitedTargetsList = new List<Vector2Int>();
+            targetQueue.Enqueue(targetCoordinate);
 
+            while (targetQueue.Any()){
+                var target = targetQueue.Dequeue();
+                visitedTargetsList.Add(target);
+                if (!IsAnyNeighborStatus(target, pathFindingMap, lookupStatus))
+                {
+                    var directions = CardinalDirection.AllDirections().Select(dir => dir.Vector);
+                    foreach (var dir in directions) {
+                        if(IsAnyNeighborStatus(target + dir, pathFindingMap, lookupStatus) && pathFindingMap.IsWithinBounds(target + dir)) {
+                            targetCoordinate = target + dir;
+                            return targetCoordinate;
+                        }
+                    }
+                    foreach (var dir in directions) {
+                        if (visitedTargetsList.Contains(target + dir) || !pathFindingMap.IsWithinBounds(target + dir))
+                        {
+                            continue;
+                        }
+                        targetQueue.Enqueue(target + dir);
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public bool IsAnyNeighborStatus(Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, SlamTileStatus status, bool optimistic = false)
+        {
+            var directions = CardinalDirection.AllDirections().Select(dir => dir.Vector);
+            foreach (var dir in directions){
+                if (pathFindingMap.GetTileStatus(targetCoordinate + dir, optimistic) == status)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

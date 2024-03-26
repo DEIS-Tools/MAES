@@ -103,6 +103,11 @@ namespace Maes.Map {
         public Vector2Int ToSlamMapCoordinate(Vector2Int localCoordinate) {
             return localCoordinate * 2;
         }
+
+        public bool IsWithinBounds(Vector2Int coordinate)
+        {
+            return coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
+        }
         
         // Returns the status of the given tile (Solid, Open or Unseen)
         public SlamMap.SlamTileStatus GetTileStatus(Vector2Int localCoordinate, bool optimistic = false) {

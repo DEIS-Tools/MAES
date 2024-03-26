@@ -175,7 +175,7 @@ namespace Maes.Map {
 
             return status;
         }
-        
+
         /// <summary>
         /// Combines two <see cref="SlamMap.SlamTileStatus"/>' in an "optimistic" fashion.
         /// </summary>

@@ -278,7 +278,7 @@ namespace Maes.Map
             return _currentlyVisibleTiles;
         }
 
-        public SlamTileStatus GetTileStatus(Vector2Int tile)
+        public SlamTileStatus GetTileStatus(Vector2Int tile, bool optimistic = false)
         {
             return _tiles[tile.x, tile.y];
         }
@@ -293,7 +293,7 @@ namespace Maes.Map
             _robotAngle = robotAngle;
         }
 
-        private bool IsWithinBounds(Vector2Int slamCoordinate)
+        public bool IsWithinBounds(Vector2Int slamCoordinate)
         {
             return slamCoordinate.x > 0 && slamCoordinate.x < _widthInTiles &&
                    slamCoordinate.y > 0 && slamCoordinate.y < _heightInTiles;
