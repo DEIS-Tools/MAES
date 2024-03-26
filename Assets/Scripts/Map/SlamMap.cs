@@ -278,7 +278,7 @@ namespace Maes.Map
             return _currentlyVisibleTiles;
         }
 
-        public SlamTileStatus GetStatusOfTile(Vector2Int tile)
+        public SlamTileStatus GetTileStatus(Vector2Int tile)
         {
             return _tiles[tile.x, tile.y];
         }
