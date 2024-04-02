@@ -266,16 +266,14 @@ namespace Maes.Map.PathFinding
                         {
                             continue;
                         }
+
                         neighborHit = IsAnyNeighborStatus(target + dir, pathFindingMap, lookupStatus);
                         if (neighborHit.HasValue && pathFindingMap.IsWithinBounds(target + dir))
                         {
                             return neighborHit.Value;
                         }
 
-                    }
-                    foreach (var dir in directions)
-                    {
-                        if (visitedTargetsList.Contains(target + dir) || !pathFindingMap.IsWithinBounds(target + dir) || pathFindingMap.GetTileStatus(target + dir) == SlamTileStatus.Solid)
+                        if (visitedTargetsList.Contains(target + dir) || !pathFindingMap.IsWithinBounds(target + dir))
                         {
                             continue;
                         }
