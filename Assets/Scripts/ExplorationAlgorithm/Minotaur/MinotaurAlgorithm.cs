@@ -255,7 +255,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 var closestTile = tiles.Select(tile => new { angle = _map.GetTileCenterRelativePosition(tile).RelativeAngle, tile }).OrderBy(tile => Mathf.Min(Math.Abs(tile.angle))).First().tile;
                 var angle = Vector2.SignedAngle(Vector2.right, closestTile - _position);
                 var vector = Geometry.VectorFromDegreesAndMagnitude(angle, VisionRadius + 1);
-                Debug.Log($"tile: {closestTile}, angle: {angle}, vec: {vector}");
                 closestTile = Vector2Int.FloorToInt(vector + _position);
                 foreach (var tile in tiles)
                 {

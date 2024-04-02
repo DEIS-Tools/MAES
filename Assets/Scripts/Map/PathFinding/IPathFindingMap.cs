@@ -22,8 +22,10 @@
 using UnityEngine;
 using static Maes.Map.SlamMap;
 
-namespace Maes.Map.PathFinding {
-    public interface IPathFindingMap {
+namespace Maes.Map.PathFinding
+{
+    public interface IPathFindingMap
+    {
 
         public bool IsSolid(Vector2Int coordinate);
 
