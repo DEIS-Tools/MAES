@@ -112,9 +112,12 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var boxTileList = new List<Vector2Int>();
             for (int x = -_edgeSize; x <= _edgeSize; x++)
             {
-                for (int y = -_edgeSize; y <= _edgeSize; y++)
+                for (int y = _edgeSize; y <= _edgeSize+1; y++)
                 {
                     boxTileList.Add(_robotPosition + new Vector2Int(x, y));
+                    boxTileList.Add(_robotPosition + new Vector2Int(x, -y));
+                    boxTileList.Add(_robotPosition + new Vector2Int(y,x));
+                    boxTileList.Add(_robotPosition + new Vector2Int(y,-x));
                 }
             }
             return boxTileList.Where(tile => _map.IsWithinBounds(tile));

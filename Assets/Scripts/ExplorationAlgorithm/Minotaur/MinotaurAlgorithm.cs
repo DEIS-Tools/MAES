@@ -152,13 +152,19 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var walls = GetWalls(tiles);
             var points = walls.Select(wall => Vector2Int.FloorToInt(wall.Start))
                               .Union(walls.Select(wall => Vector2Int.FloorToInt(wall.End)))
-                              .OrderByDescending(point => ((point - _position).GetAngleRelativeToX() - localLeft + 360) % 360);
+                              .OrderByDescending(point => ((point - _position).GetAngleRelativeToX() - localLeft + 360) % 360).ToList();
 
             walls.ToList().ForEach(wall => Debug.DrawLine(_map.CoarseToWorld(wall.Start), _map.CoarseToWorld(wall.End), Color.black, 2));
             points.ToList().ForEach(point => point.DrawDebugLineFromRobot(_map, Color.yellow));
-            points.First(point => _map.IsWithinBounds(point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2))
-                                  && _map.GetTileStatus(point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2)) != SlamTileStatus.Solid)
-                  .DrawDebugLineFromRobot(_map, Color.white);
+            points = points.Where(point => _map.IsWithinBounds(point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2))
+                                  && _map.GetTileStatus(point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2)) != SlamTileStatus.Solid).ToList();
+
+            if (!points.Any())
+            {
+                return false;
+            }
+
+            points.First().DrawDebugLineFromRobot(_map, Color.white);
 
             var perpendicularTile = points.Select(point => point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2))
                               .First(perpendicularTile => _map.IsWithinBounds(perpendicularTile) && _map.GetTileStatus(perpendicularTile) != SlamTileStatus.Solid);
@@ -249,7 +255,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 var closestTile = tiles.Select(tile => new { angle = _map.GetTileCenterRelativePosition(tile).RelativeAngle, tile }).OrderBy(tile => Mathf.Min(Math.Abs(tile.angle))).First().tile;
                 var angle = Vector2.SignedAngle(Vector2.right, closestTile - _position);
                 var vector = Geometry.VectorFromDegreesAndMagnitude(angle, VisionRadius + 1);
-                Debug.Log($"tile: {closestTile}, angle: {angle}, vec: {vector}");
                 closestTile = Vector2Int.FloorToInt(vector + _position);
                 foreach (var tile in tiles)
                 {
@@ -284,7 +289,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private void MoveToNearestUnseen()
         {
-            var tile = _edgeDetector.GetNearestUnseenTile();
+            var tile = _map.GetNearestTileFloodFill(_position, SlamTileStatus.Unseen);
             if (tile.HasValue)
             {
                 _controller.PathAndMoveTo(tile.Value);

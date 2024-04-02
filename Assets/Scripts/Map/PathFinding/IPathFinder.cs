@@ -21,15 +21,22 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using static Maes.Map.SlamMap;
 
-namespace Maes.Map.PathFinding {
-    public interface IPathFinder {
+namespace Maes.Map.PathFinding
+{
+    public interface IPathFinder
+    {
 
         public List<Vector2Int>? GetPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool beOptimistic = false, bool acceptPartialPaths = false);
-        
+
         public List<Vector2Int>? GetOptimisticPath(Vector2Int startCoordinate, Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool acceptPartialPaths = false);
 
         public List<PathStep> PathToSteps(List<Vector2Int> path, float robotRadius);
+
+        public Vector2Int? GetNearestTileFloodFill(IPathFindingMap pathFindingMap, Vector2Int targetCoordinate, SlamTileStatus lookupStatus);
+
+        public Vector2Int? IsAnyNeighborStatus(Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, SlamTileStatus status, bool optimistic = false);
 
     }
 }

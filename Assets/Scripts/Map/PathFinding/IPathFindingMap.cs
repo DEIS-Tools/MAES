@@ -20,9 +20,12 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using UnityEngine;
+using static Maes.Map.SlamMap;
 
-namespace Maes.Map.PathFinding {
-    public interface IPathFindingMap {
+namespace Maes.Map.PathFinding
+{
+    public interface IPathFindingMap
+    {
 
         public bool IsSolid(Vector2Int coordinate);
 
@@ -30,5 +33,10 @@ namespace Maes.Map.PathFinding {
 
         public float CellSize();
 
+        public bool IsWithinBounds(Vector2Int coordinate);
+
+        public SlamTileStatus GetTileStatus(Vector2Int coordinate, bool optimistic = false);
+
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamTileStatus lookupStatus);
     }
 }
