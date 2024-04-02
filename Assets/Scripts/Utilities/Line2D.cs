@@ -22,21 +22,23 @@
 using System;
 using UnityEngine;
 
-namespace Maes.Utilities {
-    public class Line2D : IEquatable<Line2D> 
+namespace Maes.Utilities
+{
+    public class Line2D
     {
         public readonly Vector2 Start, End, MidPoint;
         private readonly float _minY, _maxY;
         private readonly float _minX, _maxX;
 
-        public bool IsVertical { get; } = false;
+        public readonly bool IsVertical = false;
         private readonly bool _isHorizontal = false;
 
         // Describe line by ax + b
         private float _a;
         private float _b;
 
-        public Line2D(Vector2 start, Vector2 end) {
+        public Line2D(Vector2 start, Vector2 end)
+        {
             Start = start;
             End = end;
             MidPoint = (start + end) / 2f;
@@ -53,7 +55,8 @@ namespace Maes.Utilities {
             IsVertical = Mathf.Approximately(_minX, _maxX);
             if (!IsVertical) _isHorizontal = Mathf.Approximately(_minY, _maxY);
 
-            if (!IsVertical) {
+            if (!IsVertical)
+            {
                 _a = (end.y - start.y) / (_maxX - _minX);
                 _b = start.y - _a * start.x;
             }
@@ -69,29 +72,33 @@ namespace Maes.Utilities {
             return _a * x + _b;
         }
 
+
         // Returns true if the y value of the line grows as x increases
-        public bool IsGrowing() {
+        public bool IsGrowing()
+        {
             if (IsVertical || _isHorizontal)
                 throw new Exception("Cannot call IsGrowing on Horizontal or Vertical lines");
             return _a > 0f;
         }
 
         // Checks for intersection with an infinite line described by a_1 x + b_2 
-        public Vector2? GetIntersection(float a_2, float b_2) {
-            if (this.IsVertical) // Special case
+        public Vector2? GetIntersection(float a_2, float b_2)
+        {
+            if (IsVertical) // Special case
             {
                 // This line is vertical. Simply plug x coordinate of this line into equation to find y intersection
-                var yIntersection = this.Start.x * a_2 + b_2;
+                var yIntersection = Start.x * a_2 + b_2;
                 // Return intersection if it is within bounds of this line
                 if (yIntersection <= _maxY && yIntersection >= _minY)
                     return new Vector2(Start.x, yIntersection);
                 else
                     return null;
             }
-            else if (this._isHorizontal) // Optimization
+            else if (_isHorizontal) // Optimization
             {
                 // Parallel lines case
-                if (Mathf.Abs(a_2) < 0.0001f) {
+                if (Mathf.Abs(a_2) < 0.0001f)
+                {
                     if (Mathf.Abs(b_2 - _b) < 0.0001f)
                         return MidPoint;
                     else
@@ -99,16 +106,18 @@ namespace Maes.Utilities {
                 }
 
                 // y = ax + b, solved for x gives x = (y - b) / a (using the y of this horizontal line)
-                var xIntersection = (this.Start.y - b_2) / a_2;
+                var xIntersection = (Start.y - b_2) / a_2;
                 // Return intersection if it is within bounds of this line
                 if (xIntersection >= _minX && xIntersection <= _maxX)
                     return new Vector2(xIntersection, Start.y);
                 else
                     return null;
             }
-            else {
+            else
+            {
                 // Parallel lines case
-                if (Mathf.Abs(a_2 - _a) <= 0.0001f) {
+                if (Mathf.Abs(a_2 - _a) <= 0.0001f)
+                {
                     // If the two parallel lines intersect then return the midpoint of this line as intersection
                     if (Mathf.Abs(b_2 - _b) < 0.0001f)
                         return MidPoint;
@@ -131,23 +140,14 @@ namespace Maes.Utilities {
         {
             if (obj == null) return false;
             var otherLine = obj as Line2D;
-            return _a == otherLine._a &&
-                   _b == otherLine._b &&
+            return Mathf.Approximately(_a, otherLine._a) &&
+                   Mathf.Approximately(_b, otherLine._b) &&
                    (IsVertical == otherLine.IsVertical);
-        }
-
-        public bool Equals(Line2D other)
-        {
-            if (other == null) return false;
-            return _a == other._a &&
-                   _b == other._b &&
-                   (IsVertical == other.IsVertical);
         }
 
         public override int GetHashCode()
         {
-            //Calculate the hash code for the line.
-            return _a.GetHashCode() ^ _b.GetHashCode() ^ IsVertical.GetHashCode();
+            return HashCode.Combine(IsVertical, _a, _b);
         }
     }
 }

@@ -164,8 +164,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 return false;
             }
 
-            points.First().DrawDebugLineFromRobot(_map, Color.white);
-
             var perpendicularTile = points.Select(point => point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2))
                               .First(perpendicularTile => _map.IsWithinBounds(perpendicularTile) && _map.GetTileStatus(perpendicularTile) != SlamTileStatus.Solid);
             perpendicularTile.DrawDebugLineFromRobot(_map, Color.red);
@@ -190,30 +188,32 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             }
             // Sort the list for the longest lines first, since it will make the distinct (same a and b in ax+b) remainder the longest line.
             lines = lines.OrderByDescending(line => Vector2.Distance(line.Start, line.End)).Distinct().ToList();
-
-            List<Line2D> result = new();
+            List<Line2D> results = new();
             foreach (var line in lines)
             {
                 var start = line.IsVertical ? line.Start.y : line.Start.x;
                 var end = line.IsVertical ? line.End.y : line.End.x;
-                Vector2Int currentStart = Vector2Int.FloorToInt(line.Start);
-                Vector2Int prevTile = currentStart;
-                for (float i = start; i < end; i++)
+                if (start > end)
+                {
+                    (end, start) = (start, end);
+                }
+
+                var isUnbroken = true;
+                for (float i = start; i < end; i += 0.5f)
                 {
                     var tile = line.IsVertical ? new Vector2Int((int)line.SlopeIntercept(i), (int)i) : new Vector2Int((int)i, (int)line.SlopeIntercept(i));
-                    if (_map.GetTileStatus(tile) != SlamTileStatus.Solid && _map.GetTileStatus(prevTile) == SlamTileStatus.Solid)
+                    if (_map.GetTileStatus(tile) != SlamTileStatus.Solid)
                     {
-                        result.Add(new Line2D(currentStart, prevTile));
+                        isUnbroken = false;
+                        break;
                     }
-                    else if (_map.GetTileStatus(tile) == SlamTileStatus.Solid && _map.GetTileStatus(prevTile) != SlamTileStatus.Solid)
-                    {
-                        currentStart = tile;
-                    }
-                    prevTile = tile;
                 }
-                result.Add(new Line2D(currentStart, line.End));
+                if (isUnbroken)
+                {
+                    results.Add(line);
+                }
             }
-            return result;
+            return results.Distinct().ToList();
         }
 
 
