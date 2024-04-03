@@ -52,7 +52,7 @@ namespace Maes.Utilities {
         
         private static readonly CardinalDirection[] Directions = 
             {East, SouthEast, South, SouthWest, West, NorthWest, North, NorthEast};
-        
+
         public readonly int Index;
         public readonly Vector2Int Vector;
         
@@ -105,11 +105,12 @@ namespace Maes.Utilities {
             return GetDirection(this.Index + (int) dir);
         }
 
-        public static CardinalDirection[] AllDirections() => Directions;
+        public static CardinalDirection[] GetCardinalAndOrdinalDirections() => Directions;
+        public static CardinalDirection[] GetCardinalDirections() => new CardinalDirection[] { East, South, West, North};
 
 
         public static CardinalDirection FromVector(Vector2Int vector) {
-            return AllDirections().First(dir => dir.Vector == vector);
+            return GetCardinalAndOrdinalDirections().First(dir => dir.Vector == vector);
         }
 
         public static CardinalDirection VectorToDirection(Vector2 vector)

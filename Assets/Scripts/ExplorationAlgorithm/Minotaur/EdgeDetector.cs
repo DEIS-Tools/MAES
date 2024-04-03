@@ -117,7 +117,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     boxTileList.Add(_robotPosition + new Vector2Int(x, y));
                     boxTileList.Add(_robotPosition + new Vector2Int(x, -y));
                     boxTileList.Add(_robotPosition + new Vector2Int(y,x));
-                    boxTileList.Add(_robotPosition + new Vector2Int(y,-x));
+                    boxTileList.Add(_robotPosition + new Vector2Int(-y,x));
                 }
             }
             return boxTileList.Where(tile => _map.IsWithinBounds(tile));

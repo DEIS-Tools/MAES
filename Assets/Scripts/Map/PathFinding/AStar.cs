@@ -98,7 +98,7 @@ namespace Maes.Map.PathFinding
                     return currentTile.Path();
 
 
-                foreach (var dir in CardinalDirection.AllDirections())
+                foreach (var dir in CardinalDirection.GetCardinalAndOrdinalDirections())
                 {
                     Vector2Int candidateCoord = currentCoordinate + dir.Vector;
                     // Only consider non-solid tiles
@@ -259,7 +259,7 @@ namespace Maes.Map.PathFinding
                 }
                 else
                 {
-                    var directions = CardinalDirection.AllDirections().Select(dir => dir.Vector);
+                    var directions = CardinalDirection.GetCardinalDirections().Select(dir => dir.Vector);
                     foreach (var dir in directions)
                     {
                         if (pathFindingMap.GetTileStatus(target + dir) == SlamTileStatus.Solid)
@@ -288,7 +288,7 @@ namespace Maes.Map.PathFinding
 
         public Vector2Int? IsAnyNeighborStatus(Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, SlamTileStatus status, bool optimistic = false)
         {
-            var directions = CardinalDirection.AllDirections().Select(dir => dir.Vector);
+            var directions = CardinalDirection.GetCardinalDirections().Select(dir => dir.Vector);
             foreach (var dir in directions)
             {
                 if (pathFindingMap.GetTileStatus(targetCoordinate + dir, optimistic) == status)

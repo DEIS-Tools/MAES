@@ -545,7 +545,7 @@ namespace Maes.ExplorationAlgorithm.SSB {
                 return currentTile;
 
             // Try to find one
-            foreach (var direction in AllDirections()) {
+            foreach (var direction in GetCardinalAndOrdinalDirections()) {
                 var candidateTile = currentTile + direction.Vector;
                 if (!existingBPs.Contains(candidateTile) && !IsTileBlocked(candidateTile))
                     return candidateTile;

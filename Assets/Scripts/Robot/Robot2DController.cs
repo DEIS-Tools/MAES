@@ -362,7 +362,7 @@ namespace Maes.Robot
             if (GetStatus() != RobotStatus.Idle) return;
             if (_currentPath.Count == 0)
             {
-                var robotCurrentPosition = Vector2Int.RoundToInt(SlamMap.CoarseMap.GetApproximatePosition());
+                var robotCurrentPosition = Vector2Int.FloorToInt(SlamMap.CoarseMap.GetApproximatePosition());
                 if (robotCurrentPosition == tile) return;
                 var pathList = SlamMap.CoarseMap.GetPath(tile, false, false);
                 if (pathList == null) return;
@@ -376,7 +376,7 @@ namespace Maes.Robot
                 _currentTarget = _currentPath.Dequeue();
                 relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             }
-            if (Math.Abs(relativePosition.RelativeAngle) > 0.5f) Rotate(relativePosition.RelativeAngle);
+            if (Math.Abs(relativePosition.RelativeAngle) > 1.5f) Rotate(relativePosition.RelativeAngle);
             else if (relativePosition.Distance > 0.5f) Move(relativePosition.Distance);
         }
 

@@ -301,7 +301,7 @@ namespace Maes.Map
             var approxPosition = GetApproximatePosition();
             return beOptimistic
                 ? _aStar.GetOptimisticPath(new Vector2Int((int)approxPosition.x, (int)approxPosition.y), target, this, acceptPartialPaths)
-                : _aStar.GetPath(Vector2Int.RoundToInt(approxPosition), target, this, acceptPartialPaths);
+                : _aStar.GetPath(Vector2Int.FloorToInt(approxPosition), target, this, acceptPartialPaths);
         }
 
         /// <summary>
