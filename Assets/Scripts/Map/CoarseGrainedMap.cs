@@ -299,9 +299,7 @@ namespace Maes.Map
         public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false, bool beOptimistic = true)
         {
             var approxPosition = GetApproximatePosition();
-            return beOptimistic
-                ? _aStar.GetOptimisticPath(new Vector2Int((int)approxPosition.x, (int)approxPosition.y), target, this, acceptPartialPaths)
-                : _aStar.GetPath(Vector2Int.FloorToInt(approxPosition), target, this, acceptPartialPaths);
+            return _aStar.GetPath(Vector2Int.FloorToInt(approxPosition), target, this, beOptimistic, acceptPartialPaths);
         }
 
         /// <summary>

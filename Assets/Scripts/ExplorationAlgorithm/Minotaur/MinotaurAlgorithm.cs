@@ -85,6 +85,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             _logicTicks++;
             if (_controller.HasCollidedSinceLastLogicTick())
             {
+                _controller.Move(1, true);
+                _waypoint = null;
                 return;
                 //TODO: full resets
             }
@@ -92,19 +94,20 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             if (_waypoint.HasValue)
             {
                 var waypoint = _waypoint.Value;
-                var solidTile = _edgeDetector.GetFurthestTileAroundRobot((waypoint.Destination - _position).GetAngleRelativeToX(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid }, true);
-                if (_map.GetTileStatus(solidTile) == SlamTileStatus.Solid)
-                {
-                    _waypoint = null;
-                    _controller.StopCurrentTask();
-                    return;
-                }
+
                 if (waypoint.UsePathing)
                 {
                     _controller.PathAndMoveTo(waypoint.Destination);
                 }
                 else
                 {
+                    var solidTile = _edgeDetector.GetFurthestTileAroundRobot((waypoint.Destination - _position).GetAngleRelativeToX(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid }, true);
+                    if (_map.GetTileStatus(solidTile) == SlamTileStatus.Solid)
+                    {
+                        _waypoint = null;
+                        _controller.StopCurrentTask();
+                        return;
+                    }
                     _controller.MoveTo(waypoint.Destination);
                 }
                 ResetDestinationIfReached();
@@ -166,15 +169,15 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var localLeft = (_controller.GetGlobalAngle() + (_map.GetTileStatus(tileAhead) == SlamTileStatus.Solid ? 90 : 0)) % 360;
             (CardinalDirection.AngleToDirection(localLeft).Vector + _position).DrawDebugLineFromRobot(_map, Color.blue);
             var walls = GetWalls(tiles);
-            var points = walls.Select(wall => Vector2Int.FloorToInt(wall.Start))
+            var wallPoints = walls.Select(wall => Vector2Int.FloorToInt(wall.Start))
                               .Union(walls.Select(wall => Vector2Int.FloorToInt(wall.End)))
                               .OrderByDescending(point => ((point - _position).GetAngleRelativeToX() - localLeft + 360) % 360).ToList();
 
             walls.ToList().ForEach(wall => Debug.DrawLine(_map.CoarseToWorld(wall.Start), _map.CoarseToWorld(wall.End), Color.black, 2));
-            points.ToList().ForEach(point => point.DrawDebugLineFromRobot(_map, Color.yellow));
-            points = points.Select(point => point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2))
-                           .Where(point => _map.IsWithinBounds(point)
-                                           && _map.GetTileStatus(point) != SlamTileStatus.Solid)
+            wallPoints.ToList().ForEach(point => point.DrawDebugLineFromRobot(_map, Color.yellow));
+            var points = wallPoints.Select(point => (perp: point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2), point))
+                           .Where(tuple => _map.IsWithinBounds(tuple.perp)
+                                           && _map.GetTileStatus(tuple.perp) != SlamTileStatus.Solid)
                            .ToList();
 
             if (!points.Any())
@@ -184,12 +187,54 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
 
             var perpendicularTile = points.First();
-            perpendicularTile.DrawDebugLineFromRobot(_map, Color.red);
+            //var thirdPoint = new Vector2Int((int)(perpendicularTile.perp.x + (Math.Abs(perpendicularTile.perp.x - perpendicularTile.point.x))*(Vector2.Angle(_position,perpendicularTile.perp)/90)), (int)(perpendicularTile.perp.y + (Math.Abs(perpendicularTile.perp.y - perpendicularTile.point.y))*(1-Vector2.Angle(_position,perpendicularTile.perp)/90)));
 
-            _waypoint = new Waypoint(perpendicularTile);
-            _controller.MoveTo(perpendicularTile);
-            (CardinalDirection.AngleToDirection(0).Vector + _position).DrawDebugLineFromRobot(_map, Color.magenta);
-            return true;
+            var perpDirection = (perpendicularTile.perp - _position).GetAngleRelativeToX();
+            var thirdPointDirection = (perpDirection + 270) % 360;
+            var thirdPointDirectionVector = CardinalDirection.AngleToDirection(thirdPointDirection).Vector;
+            var thirdPoint = perpendicularTile.perp + thirdPointDirectionVector * (VisionRadius - 2);
+            thirdPoint.DrawDebugLineFromRobot(_map, Color.blue);
+
+            // var (minx, maxx, miny, maxy) = Geometry.GetBoundingBox(perpendicularTile.point, perpendicularTile.perp, thirdPoint);
+            // for (int y = miny; y < maxy; y++)
+            // {
+            //     for (int x = minx; x < maxx; x++)
+            //     {
+            //         if ((perpendicularTile.point.x - perpendicularTile.perp.x) * (y - perpendicularTile.point.y) - (perpendicularTile.point.y - perpendicularTile.perp.y) * (x - perpendicularTile.point.x) >= 0 &&
+            //         (perpendicularTile.perp.x - thirdPoint.x) * (y - perpendicularTile.perp.y) - (perpendicularTile.perp.y - thirdPoint.y) * (x - perpendicularTile.perp.x) >= 0 &&
+            //         (thirdPoint.x - perpendicularTile.point.x) * (y - thirdPoint.y) - (thirdPoint.y - perpendicularTile.point.y) * (x - thirdPoint.x) >= 0)
+            //         {
+            //             var triangleTile = new Vector2Int(x, y);
+            //             //Debug.Log($"X = {x}, Y = {y}, TileStatus = {_map.GetTileStatus(new Vector2Int(x, y))}");
+            //             if (_map.IsWithinBounds(triangleTile) && _map.GetTileStatus(triangleTile) == SlamTileStatus.Unseen)
+            //             {
+            //                 new Vector2Int(x,y).DrawDebugLineFromRobot(_map, Color.magenta);
+
+            //                 perpendicularTile.perp.DrawDebugLineFromRobot(_map, Color.red);
+            //                 _waypoint = new Waypoint(perpendicularTile.perp);
+            //                 _controller.MoveTo(perpendicularTile.perp);
+            //                 (CardinalDirection.AngleToDirection(0).Vector + _position).DrawDebugLineFromRobot(_map, Color.magenta);
+            //                 return true;
+            //             }
+            //         }
+            //     }
+            // }
+
+            thirdPointDirectionVector = CardinalDirection.AngleToDirection((thirdPoint - perpendicularTile.point).GetAngleRelativeToX()).Vector;
+            var thirdPointDirectionVectorPerpendicular = CardinalDirection.PerpendicularDirection(thirdPointDirectionVector).Vector;
+            for (int i = 1; i < 4; i++)
+            {
+                var possibleUnseen = thirdPoint + (thirdPointDirectionVector * i) + thirdPointDirectionVectorPerpendicular;
+                if (_map.IsWithinBounds(possibleUnseen) && _map.GetTileStatus(possibleUnseen) == SlamTileStatus.Unseen)
+                {
+                    perpendicularTile.perp.DrawDebugLineFromRobot(_map, Color.red);
+                    _waypoint = new Waypoint(perpendicularTile.perp, true);
+                    _controller.PathAndMoveTo(perpendicularTile.perp); //THIS FUCKED EVERYTHING
+                    (CardinalDirection.AngleToDirection(0).Vector + _position).DrawDebugLineFromRobot(_map, Color.magenta);
+                    return true;
+                };
+            }
+            return false;
         }
         private List<Line2D> GetWalls(IEnumerable<Vector2Int> tiles)
         {
@@ -311,9 +356,13 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var tile = _map.GetNearestTileFloodFill(_position, SlamTileStatus.Unseen);
             if (tile.HasValue)
             {
-                _controller.PathAndMoveTo(tile.Value);
-                _waypoint = new Waypoint(tile.Value, true);
-                tile.Value.DrawDebugLineFromRobot(_map, Color.cyan);
+                tile = _map.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
+                if (tile.HasValue)
+                {
+                    _controller.PathAndMoveTo(tile.Value);
+                    _waypoint = new Waypoint(tile.Value, true);
+                    tile.Value.DrawDebugLineFromRobot(_map, Color.cyan);
+                }
             }
             else
             {

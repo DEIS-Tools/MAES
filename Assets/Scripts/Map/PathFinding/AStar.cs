@@ -144,6 +144,7 @@ namespace Maes.Map.PathFinding
                 {
                     if (kv.Value.Heuristic < lowestHeuristic)
                     {
+                        if (kv.Key == startCoordinate) continue;
                         lowestHeuristic = kv.Value.Heuristic;
                         lowestHeuristicKey = kv.Key;
                     }

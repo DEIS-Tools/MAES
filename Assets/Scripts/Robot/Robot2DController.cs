@@ -260,7 +260,7 @@ namespace Maes.Robot
         {
             AssertRobotIsInIdleState("Rotating around point");
             var coarseLocation = SlamMap.CoarseMap.GetCurrentPositionCoarseTile();
-            var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetGlobalAngle()), Vector2.Perpendicular(point-coarseLocation) - coarseLocation);
+            var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetGlobalAngle()), Vector2.Perpendicular(point - coarseLocation) - coarseLocation);
             var radius = Vector2.Distance(Vector2Int.FloorToInt(coarseLocation), point);
             var worldPoint = SlamMap.CoarseMap.CoarseToWorld(point);
             var distanceBetweenWheels = Vector2.Distance(LeftWheel.position, RightWheel.position);
@@ -360,11 +360,12 @@ namespace Maes.Robot
         public void PathAndMoveTo(Vector2Int tile)
         {
             if (GetStatus() != RobotStatus.Idle) return;
-            if (_currentPath.Count == 0)
+            if (_currentPath.Any() && _currentPath.Last() != tile) _currentPath.Clear();
+            if (!_currentPath.Any())
             {
                 var robotCurrentPosition = Vector2Int.FloorToInt(SlamMap.CoarseMap.GetApproximatePosition());
                 if (robotCurrentPosition == tile) return;
-                var pathList = SlamMap.CoarseMap.GetPath(tile, false, false);
+                var pathList = SlamMap.CoarseMap.GetPath(tile, true, false);
                 if (pathList == null) return;
                 _currentPath = new Queue<Vector2Int>(pathList);
                 _currentTarget = _currentPath.Dequeue();
@@ -372,7 +373,7 @@ namespace Maes.Robot
             var relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             if (relativePosition.Distance < 0.5f)
             {
-                if (_currentPath.Count == 0) return;
+                if (!_currentPath.Any()) return;
                 _currentTarget = _currentPath.Dequeue();
                 relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             }
