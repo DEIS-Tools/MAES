@@ -94,6 +94,12 @@ namespace Maes.Map.PathFinding
                 if (bestCandidateOnTile.ContainsKey(currentCoordinate) && bestCandidateOnTile[currentCoordinate] != currentTile)
                     continue;
 
+                if (!IsAnyNeighborStatus(targetCoordinate, pathFindingMap, SlamTileStatus.Open).HasValue && !beOptimistic)
+                {
+                    var nearestTile = GetNearestTileFloodFill(pathFindingMap, targetCoordinate, SlamTileStatus.Open);
+                    targetCoordinate = nearestTile.HasValue ? nearestTile.Value : targetCoordinate;
+                }
+
                 if (currentCoordinate == targetCoordinate)
                     return currentTile.Path();
 
@@ -263,6 +269,8 @@ namespace Maes.Map.PathFinding
                     var directions = CardinalDirection.GetCardinalDirections().Select(dir => dir.Vector);
                     foreach (var dir in directions)
                     {
+                        if (!pathFindingMap.IsWithinBounds(target + dir))
+                            continue;
                         if (pathFindingMap.GetTileStatus(target + dir) == SlamTileStatus.Solid)
                         {
                             continue;
@@ -292,6 +300,8 @@ namespace Maes.Map.PathFinding
             var directions = CardinalDirection.GetCardinalDirections().Select(dir => dir.Vector);
             foreach (var dir in directions)
             {
+                if (!pathFindingMap.IsWithinBounds(targetCoordinate + dir))
+                    continue;
                 if (pathFindingMap.GetTileStatus(targetCoordinate + dir, optimistic) == status)
                 {
                     return targetCoordinate + dir;
