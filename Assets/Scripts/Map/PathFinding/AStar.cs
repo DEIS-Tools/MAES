@@ -83,6 +83,12 @@ namespace Maes.Map.PathFinding
             candidates.Enqueue(startingTile, startingTile.TotalCost);
             bestCandidateOnTile[startCoordinate] = startingTile;
 
+            if (!IsAnyNeighborStatus(targetCoordinate, pathFindingMap, SlamTileStatus.Open).HasValue && !beOptimistic)
+            {
+                var nearestTile = GetNearestTileFloodFill(pathFindingMap, targetCoordinate, SlamTileStatus.Open);
+                targetCoordinate = nearestTile.HasValue ? nearestTile.Value : targetCoordinate;
+            }
+
             int loopCount = 0;
             while (candidates.Count > 0)
             {
@@ -90,15 +96,9 @@ namespace Maes.Map.PathFinding
                 var currentTile = candidates.Dequeue();
                 var currentCoordinate = new Vector2Int(currentTile.X, currentTile.Y);
 
-                // Skip if a better candidate has been added to the queue since this was added 
+                // Skip if a better candidate has been added to the queue since this was added
                 if (bestCandidateOnTile.ContainsKey(currentCoordinate) && bestCandidateOnTile[currentCoordinate] != currentTile)
                     continue;
-
-                if (!IsAnyNeighborStatus(targetCoordinate, pathFindingMap, SlamTileStatus.Open).HasValue && !beOptimistic)
-                {
-                    var nearestTile = GetNearestTileFloodFill(pathFindingMap, targetCoordinate, SlamTileStatus.Open);
-                    targetCoordinate = nearestTile.HasValue ? nearestTile.Value : targetCoordinate;
-                }
 
                 if (currentCoordinate == targetCoordinate)
                     return currentTile.Path();
