@@ -225,11 +225,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             for (int i = 1; i < 4; i++)
             {
                 var possibleUnseen = thirdPoint + (thirdPointDirectionVector * i) + thirdPointDirectionVectorPerpendicular;
+                //if (_map.IsWithinBounds(possibleUnseen) && _map.GetTileStatus(possibleUnseen) == SlamTileStatus.Solid) 
+                //{break;} //This line should make it a lot faster
                 if (_map.IsWithinBounds(possibleUnseen) && _map.GetTileStatus(possibleUnseen) == SlamTileStatus.Unseen)
                 {
                     perpendicularTile.perp.DrawDebugLineFromRobot(_map, Color.red);
-                    _waypoint = new Waypoint(perpendicularTile.perp, true);
-                    _controller.PathAndMoveTo(perpendicularTile.perp); //THIS FUCKED EVERYTHING
+                    if (_map.GetTileStatus(perpendicularTile.perp) == SlamTileStatus.Open)
+                    {
+                        //var freeTileBeforeWall = _edgeDetector.GetFurthestTileAroundRobot((perpendicularTile.perp - _position).GetAngleRelativeToX(), (int)Vector2Int.Distance(perpendicularTile.perp, _position), new List<SlamTileStatus>{SlamTileStatus.Solid}, false);
+                        _waypoint = new Waypoint(perpendicularTile.perp, true);
+                        _controller.PathAndMoveTo(perpendicularTile.perp);
+                    }
+                    else
+                    {
+                        _waypoint = new Waypoint(perpendicularTile.perp, false);
+                        _controller.MoveTo(perpendicularTile.perp);
+                    }
+
                     (CardinalDirection.AngleToDirection(0).Vector + _position).DrawDebugLineFromRobot(_map, Color.magenta);
                     return true;
                 };
