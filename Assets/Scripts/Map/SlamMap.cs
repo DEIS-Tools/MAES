@@ -298,16 +298,11 @@ namespace Maes.Map
                    slamCoordinate.y > 0 && slamCoordinate.y < _heightInTiles;
         }
 
-<<<<<<< HEAD
-        public bool IsOptimisticSolid(Vector2Int coordinate)
-        {
-=======
         public bool IsCoordWithinBounds(Vector2Int coordinate) {
             return false;
         }
 
         public bool IsOptimisticSolid(Vector2Int coordinate) {
->>>>>>> 9dd307d (changed the check to see if any neighbors are open to a system that uses a queue. now it keeps checking till it finds a tile with an open neighbor)
             var slamCoordinate = coordinate * 2;
             slamCoordinate = new Vector2Int(slamCoordinate.x, slamCoordinate.y);
 
