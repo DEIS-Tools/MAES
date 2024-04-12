@@ -10,10 +10,6 @@
 /[Ll]ogs/
 /[Mm]emoryCaptures/
 
-
-# Remove for csv-reader work
-csv-reader/
-
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta
 
@@ -80,7 +76,4 @@ maes-ros-slam-ws/.idea
 /.vsconfig
 ProjectSettings/
 UserSettings/
-<<<<<<< HEAD
 CodeCoverage/
-=======
->>>>>>> a5a6a868ebcc1397b725a1d8c4e6040aa466b47b
