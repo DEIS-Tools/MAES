@@ -111,6 +111,28 @@ namespace Maes {
         }
 
 
+        private void Update()
+        {
+            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) {
+                if (Input.GetKeyDown(KeyCode.Alpha1))
+                {
+                    AttemptSetPlayState(SimulationPlayState.Play);
+                } 
+                else if (Input.GetKeyDown(KeyCode.Alpha2))
+                {
+                    AttemptSetPlayState(SimulationPlayState.FastForward);
+                }
+                else if (Input.GetKeyDown(KeyCode.Alpha3))
+                {
+                    AttemptSetPlayState(SimulationPlayState.FastAsPossible);
+                }
+                else if (Input.GetKeyDown(KeyCode.P))
+                {
+                    AttemptSetPlayState(SimulationPlayState.Step);
+                }
+            }
+        }
+
         // Timing variables for controlling the simulation in a manner that is decoupled from Unity's update system
         private long _nextUpdateTimeMillis = 0;
 

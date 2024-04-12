@@ -283,9 +283,9 @@ namespace Maes.Map
             return _tiles[tile.x, tile.y];
         }
 
-        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus)
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus, HashSet<Vector2Int> excludedTiles = null)
         {
-            return _pathFinder.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus);
+            return _pathFinder.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus, excludedTiles);
         }
 
         public float GetRobotAngleDeg()

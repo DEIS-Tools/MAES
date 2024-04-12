@@ -191,9 +191,15 @@ namespace Maes.Map
             return status;
         }
 
-        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus)
+        /// <summary>
+        /// Gets the nearest target status tile using flood fill, which is faster than doing aStar.
+        /// </summary>
+        /// <param name="targetCoordinate">Location to start the flood fill</param>
+        /// <param name="lookupStatus">The status that is being looked for being {unseen, open, solid}</param>
+        /// <returns>The given tile in coarse coordinates</returns>
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus, HashSet<Vector2Int> excludedTiles = null)
         {
-            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus);
+            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus, excludedTiles);
         }
 
         /// <summary>

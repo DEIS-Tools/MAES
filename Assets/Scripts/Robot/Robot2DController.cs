@@ -377,6 +377,21 @@ namespace Maes.Robot
                 _currentTarget = _currentPath.Dequeue();
                 relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             }
+            #region DrawPath
+            Debug.DrawLine(SlamMap.CoarseMap.CoarseToWorld(Vector2Int.FloorToInt(SlamMap.CoarseMap.GetApproximatePosition())), SlamMap.CoarseMap.CoarseToWorld(_currentTarget), Color.cyan, 2);
+            for (int i = 0; i < _currentPath.Count-1; i++)
+            {
+                var pathSteps = _currentPath.ToList();
+                if (i == 0)
+                    Debug.DrawLine(SlamMap.CoarseMap.CoarseToWorld(_currentTarget), SlamMap.CoarseMap.CoarseToWorld(pathSteps[i]), Color.cyan, 2);
+                Debug.DrawLine(SlamMap.CoarseMap.CoarseToWorld(pathSteps[i]), SlamMap.CoarseMap.CoarseToWorld(pathSteps[i + 1]), Color.cyan, 2);
+            }
+            if (_currentPath.Any())
+            {
+                var lastStep = _currentPath.Reverse().Take(2);
+                Debug.DrawLine(SlamMap.CoarseMap.CoarseToWorld(lastStep.Last()), SlamMap.CoarseMap.CoarseToWorld(lastStep.First()), Color.cyan, 2);
+            }
+            #endregion
             if (Math.Abs(relativePosition.RelativeAngle) > 1.5f) Rotate(relativePosition.RelativeAngle);
             else if (relativePosition.Distance > 0.5f) Move(relativePosition.Distance);
         }

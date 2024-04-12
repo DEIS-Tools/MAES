@@ -40,7 +40,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             ExploreRoom,
             Auctioning,
             MovingToDoorway,
-            MovingToNearestUnexplored
+            MovingToNearestUnexplored,
+            Done
         }
         private enum DoorState
         {
@@ -104,9 +105,12 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         public void UpdateLogic()
         {
             _logicTicks++;
-            if (_controller.HasCollidedSinceLastLogicTick())
+            if (_controller.IsCurrentlyColliding())
             {
-                _controller.Move(1, true);
+                if (_controller.GetStatus() != Robot.Task.RobotStatus.Idle)
+                    _controller.StopCurrentTask();
+                else
+                    _controller.Move(1, true);
                 _waypoint = null;
                 return;
                 //TODO: full resets
@@ -117,7 +121,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             switch (_doorState)
             {
                 case DoorState.None:
-                    if (!_waypoint.HasValue || _waypoint.Value.Type == Waypoint.WaypointType.Wall)
+                    if (_waypoint.HasValue && _waypoint.Value.Type == Waypoint.WaypointType.Wall)// || !_waypoint.HasValue)
                         _doorState = DoorwayDetection(wallPoints);
                     if (_doorState != DoorState.None)
                         _lastWalls = GetWalls(wallPoints.Select(tile => tile.Position));
@@ -135,7 +139,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                             var wallDirectionVector = CardinalDirection.DirectionFromDegrees((end - start).GetAngleRelativeToX()).Vector;
                             var closestWall = wallPoints.First();
                             var approachDirection = _clockwise ? CardinalDirection.DirectionFromDegrees((_controller.GetGlobalAngle() + 90) % 360) : CardinalDirection.DirectionFromDegrees((_controller.GetGlobalAngle() + 270) % 360);
-                            var newDoor =  new Doorway(_lastWallTile.Value, closestWall.Position, approachDirection);
+                            var newDoor = new Doorway(_lastWallTile.Value, closestWall.Position, approachDirection);
                             if (!_doorways.Any(doorway => newDoor.Equals(doorway)))
                             {
                                 _closestDoorway = newDoor;
@@ -160,7 +164,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 }
                 else
                 {
-                    var solidTile = _edgeDetector.GetFurthestTileAroundRobot((waypoint.Destination - _position).GetAngleRelativeToX(), VisionRadius-2, new List<SlamTileStatus> { SlamTileStatus.Solid }, true);
+                    var solidTile = _edgeDetector.GetFurthestTileAroundRobot((waypoint.Destination - _position).GetAngleRelativeToX(), VisionRadius - 2, new List<SlamTileStatus> { SlamTileStatus.Solid }, true);
                     if (_map.GetTileStatus(solidTile) == SlamTileStatus.Solid)
                     {
                         _waypoint = null;
@@ -175,8 +179,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 }
                 return;
             }
-
-
 
             switch (_currentState)
             {
@@ -196,22 +198,32 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     {
                         if (!IsAroundExplorable(2))
                         {
-                            MoveToNearestUnseen();
+                            MoveToNearestUnseenWithinRoom();
                             break;
                         }
                         else if (MoveAlongWall()) break;
                         else if (MoveToCornerCoverage()) break;
                         else if (MoveToNearestEdge()) break;
-                        else MoveToNearestUnseen();
+                        else MoveToNearestUnseenWithinRoom();
                     }
                     break;
                 case AlgorithmState.Auctioning:
                     break;
                 case AlgorithmState.MovingToDoorway:
-                    MoveToNearestUnexploredAreaWithinRoom();
+                    var nearestDoorway = GetNearestUnexploredDoorway();
+                    if (nearestDoorway != null)
+                    {
+                        _controller.PathAndMoveTo(nearestDoorway.Center);
+                        _waypoint = new Waypoint(nearestDoorway.Center, Waypoint.WaypointType.Door, true);
+                        _currentState = AlgorithmState.ExploreRoom;
+                        nearestDoorway.Explored = true;
+                    }
+                    else
+                    {
+                        _currentState = AlgorithmState.Done;
+                    }
                     break;
-                case AlgorithmState.MovingToNearestUnexplored:
-                    MoveThroughNearestUnexploredDoorway();
+                case AlgorithmState.Done:
                     break;
                 default:
                     break;
@@ -294,7 +306,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             foreach (var line in lines)
             {
                 var isSuperLine = true;
-                var otherLines = lines.Where(otherLine => line != otherLine); 
+                var otherLines = lines.Where(otherLine => line != otherLine);
                 foreach (var otherLine in otherLines)
                 {
                     if (otherLine.Contains(line))
@@ -304,7 +316,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     }
                 }
                 if (isSuperLine)
-                { 
+                {
                     superLines.Add(line);
                 }
             }
@@ -400,9 +412,10 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return true;
         }
 
-        private void MoveToNearestUnseen()
+        private void MoveToNearestUnseenWithinRoom()
         {
-            var tile = _map.GetNearestTileFloodFill(_position, SlamTileStatus.Unseen);
+            var doorTiles = _doorways.SelectMany(doorway => doorway.Tiles);
+            var tile = _map.GetNearestTileFloodFill(_position, SlamTileStatus.Unseen, doorTiles.ToHashSet());
             if (tile.HasValue)
             {
                 tile = _map.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
@@ -410,12 +423,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 {
                     _controller.PathAndMoveTo(tile.Value);
                     _waypoint = new Waypoint(tile.Value, Waypoint.WaypointType.Greed, true);
-                    tile.Value.DrawDebugLineFromRobot(_map, Color.cyan);
                 }
             }
             else
             {
-                _currentState = AlgorithmState.Auctioning;
+                _currentState = AlgorithmState.MovingToDoorway;
             }
         }
 
@@ -486,7 +498,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 }
             }
 
-
             return DoorState.None;
         }
 
@@ -523,61 +534,43 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             }
         }
 
-        private void MoveToNearestUnexploredAreaWithinRoom()
-        {
-            //If guard clauses could be avoided, that would be great
-            if (_closestDoorway == null) return;
-            int doorwayDistance = int.MaxValue;
-            bool didNotPassDoorway = true;
-            foreach (Doorway doorway in _doorways)
-            {
-                List<Vector2Int> path = _controller.GetSlamMap().GetPath(_position, doorway.Center);
-                var distance = path.Count;
-                if (distance < doorwayDistance)
-                {
-                    for (int i = 0; i < distance - 1; i++)
-                    {
-                        foreach (Doorway doorwayForPath in _doorways)
-                        {
-                            if (path[i] == doorwayForPath.Center) didNotPassDoorway = false;
-                        }
-                    }
-                    if (didNotPassDoorway)
-                    {
-                        doorwayDistance = distance;
-                        _closestDoorway = doorway;
-                    }
-                };
-            }
-            _controller.PathAndMoveTo(_closestDoorway.Center);
-            if (_position == _closestDoorway.Center)
-            {
-                _currentState = AlgorithmState.Idle;
-                _closestDoorway = null;
-            }
-        }
 
-        private void MoveThroughNearestUnexploredDoorway()
+        private Doorway? GetNearestUnexploredDoorway()
         {
-            //If guard clauses could be avoided, that would be great
-            if (_closestDoorway == null) return;
-            int doorwayDistance = int.MaxValue;
-            foreach (Doorway doorway in _doorways)
+            float doorwayDistance = float.MaxValue;
+            Doorway nearestDoorway = null;
+            var unexploredDoorways = _doorways.Where(doorway => !doorway.Explored);
+            foreach (Doorway doorway in unexploredDoorways)
             {
-                List<Vector2Int> path = _controller.GetSlamMap().GetPath(_position, doorway.Center);
-                var distance = path.Count;
+                var distance = PathDistanceToPoint(doorway.Center);
                 if (distance < doorwayDistance)
                 {
                     doorwayDistance = distance;
-                    _closestDoorway = doorway;
-                }
+                    nearestDoorway = doorway;
+                };
             }
-            _controller.PathAndMoveTo(_closestDoorway.Center);
-            if (_position == _closestDoorway.Center)
+            return nearestDoorway;
+        }
+
+        /// <summary>
+        /// Gets the real distance that the robot has to go to on the path to the point
+        /// </summary>
+        /// <param name="point">The point that gets pathed to</param>
+        /// <returns>The distance of the path</returns>
+        private float PathDistanceToPoint(Vector2Int point)
+        {
+            List<Vector2Int> path = _controller.GetSlamMap().GetPath(_position, point);
+            List<float> distances = new();
+            for (var i = 0; i < path.Count - 2; i++)
             {
-                _currentState = AlgorithmState.Idle;
-                _closestDoorway = null;
+                var pathStep = path[i];
+                if (pathStep == path.First())
+                {
+                    distances.Add(Vector2.Distance(path.First(), _position));
+                }
+                distances.Add(Vector2.Distance(pathStep, path[i + 1]));
             }
+            return distances.Sum();
         }
     }
 }

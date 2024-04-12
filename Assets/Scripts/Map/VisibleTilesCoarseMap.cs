@@ -127,9 +127,9 @@ namespace Maes.Map {
             return status;
         }
 
-        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus)
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus, HashSet<Vector2Int> excludedTiles = null)
         {
-            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus);
+            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus, excludedTiles);
         }
         
         // Combines two SlamTileStatus in a 'optimistic' fashion.

@@ -11,8 +11,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
     public class Doorway
     {
         public readonly Vector2Int Center;
-        public readonly Vector2Int Start;
-        public readonly Vector2Int End;
+        public readonly Line2D Opening;
+        public readonly IEnumerable<Vector2Int> Tiles;
         public bool Explored;
         public CardinalDirection ApproachedDirection;
         public static int DoorWidth;
@@ -22,8 +22,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             Center = (start+end)/2;
             Explored = false;
-            Start = start;
-            End = end;
+            Opening = new Line2D(start, end);
+            Tiles = Opening.Rasterize();
             ApproachedDirection = approachedDirection;
         }
 
@@ -31,11 +31,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             if (obj is Doorway other)
             {
-                var doorTiles = new Line2D(Start, End).Rasterize();
-                var squareTiles = Enumerable.Range(1, DoorWidth).SelectMany(i => doorTiles.Select(doorTile => doorTile + ApproachedDirection.Vector * i)).ToList();
+                var squareTiles = Enumerable.Range(1, DoorWidth).SelectMany(i => Tiles.Select(doorTile => doorTile + ApproachedDirection.Vector * i)).ToList();
                 squareTiles.ToList().ForEach(tile => tile.DrawDebugLineFromRobot(_map, Color.cyan));
-                if (new Line2D(other.Start, other.End).Rasterize().All(tile => squareTiles.Contains(tile)))
+                if (other.Tiles.All(tile => squareTiles.Contains(tile)))
                 {
+                    Explored = true;
                     return true;
                 }
             }
