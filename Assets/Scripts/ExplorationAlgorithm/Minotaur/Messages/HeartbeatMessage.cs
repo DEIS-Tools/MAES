@@ -29,7 +29,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     foreach (Doorway doorway in heartbeatMessage.doorways) 
                     {
                         foreach (Doorway ownDoorway in doorways)
-                            if (Math.Abs(doorway.Position.x - ownDoorway.Position.x) < 0.2 && Math.Abs(doorway.Position.y - ownDoorway.Position.y) < 0.2
+                            if (Math.Abs(doorway.Center.x - ownDoorway.Center.x) < 0.2 && Math.Abs(doorway.Center.y - ownDoorway.Center.y) < 0.2
                             && doorway.ApproachedDirection.OppositeDirection() == ownDoorway.ApproachedDirection)
                             {
                                 doorway.Explored = true;

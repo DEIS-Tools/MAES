@@ -8,28 +8,36 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 {
     public class Doorway
     {
-        public Vector2Int Position;
+        public readonly Vector2Int Center;
+        public readonly Vector2Int Start;
+        public readonly Vector2Int End;
         public bool Explored;
         public CardinalDirection ApproachedDirection;
 
-        public Doorway(Vector2Int position, CardinalDirection approachedDirection)
+        public Doorway(Vector2Int start, Vector2Int end, CardinalDirection approachedDirection)
         {
-            Position = position;
+            Center = (start+end)/2;
             Explored = false;
+            Start = start;
+            End = end;
             ApproachedDirection = approachedDirection;
         }
 
-        public static bool Equals(Doorway x, Doorway y)
+        public override bool Equals(object obj)
         {
-            if (x.Position.x - y.Position.x < 0.2 && x.Position.y - y.Position.y < 0.2 
-            && x.Explored == y.Explored 
-            && x.ApproachedDirection == y.ApproachedDirection)
+            if (obj is Doorway other
+                && Center == other.Center
+                && Explored == other.Explored
+                && ApproachedDirection == other.ApproachedDirection)
             {
                 return true;
             }
             return false;
         }
 
-
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Center, Explored, ApproachedDirection);
+        }
     }
 }

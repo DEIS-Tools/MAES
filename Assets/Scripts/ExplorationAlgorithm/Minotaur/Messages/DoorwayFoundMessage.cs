@@ -30,11 +30,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             /// </summary>
             public IMinotaurMessage? Process(MinotaurAlgorithm minotaur)
             {
-                var doorwayTile = Vector2Int.RoundToInt(_doorway.Position);
+                var doorwayTile = Vector2Int.RoundToInt(_doorway.Center);
                 var pathLengthToDoorway = minotaur._map.GetPath(doorwayTile, false, false);
                 foreach (Doorway knownDoorway in minotaur._doorways)
                 {
-                    if (pathLengthToDoorway.Contains(Vector2Int.RoundToInt(knownDoorway.Position)))
+                    if (pathLengthToDoorway.Contains(Vector2Int.RoundToInt(knownDoorway.Center)))
                     {
                         return null;
                     }

@@ -20,6 +20,8 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Maes.Utilities
@@ -136,13 +138,49 @@ namespace Maes.Utilities
             }
         }
 
+        /// <summary>
+        /// Check if line contains all points of other line
+        /// </summary>
+        /// <param name="other"> the other line</param>
+        /// <returns>true if line contains all points and false if it does not</returns>
+        public bool Contains(Line2D other)
+        {
+            var points = Rasterize();
+            var otherPoints = other.Rasterize();
+            return otherPoints.All(point => points.Contains(point));
+        }
+
+        /// <summary>
+        /// Gets all points on a grid that the line goes through from start to end as integer numbers
+        /// </summary>
+        /// <returns>list of points</returns>
+        public IEnumerable<Vector2Int> Rasterize()
+        {
+            var start = IsVertical ? Start.y : Start.x;
+            var end = IsVertical ? End.y : End.x;
+            if (start > end)
+            {
+                (end, start) = (start, end);
+            }
+
+            var points = new List<Vector2Int>();
+            for (var x = start; x <= end; x++)
+            {
+                points.Add(IsVertical ? new Vector2Int((int)SlopeIntercept(x), (int)x) : new Vector2Int((int)x, (int)SlopeIntercept(x)));
+            }
+            return points;
+        }
+
         public override bool Equals(object obj)
         {
             if (obj == null) return false;
             var otherLine = obj as Line2D;
-            return Mathf.Approximately(_a, otherLine._a) &&
-                   Mathf.Approximately(_b, otherLine._b) &&
-                   (IsVertical == otherLine.IsVertical);
+
+            return (Start == otherLine.Start && End == otherLine.End) || (Start == otherLine.End && End == otherLine.Start);
+
+            //return Mathf.Approximately(_a, otherLine._a) &&
+            //       Mathf.Approximately(_b, otherLine._b) &&
+            //       (IsVertical == otherLine.IsVertical);
         }
 
         public override int GetHashCode()
