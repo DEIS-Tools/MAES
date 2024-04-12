@@ -84,6 +84,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             _robotConstraints = robotConstraints;
             _seed = seed;
             _doorWidth = doorWidth;
+            Doorway.DoorWidth = _doorWidth;
         }
 
         public string GetDebugInfo()
@@ -96,6 +97,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             _controller = controller;
             _map = _controller.GetSlamMap().GetCoarseMap();
+            Doorway._map = _map;
             _edgeDetector = new EdgeDetector(_map, VisionRadius);
         }
 
@@ -133,8 +135,12 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                             var wallDirectionVector = CardinalDirection.DirectionFromDegrees((end - start).GetAngleRelativeToX()).Vector;
                             var closestWall = wallPoints.First();
                             var approachDirection = _clockwise ? CardinalDirection.DirectionFromDegrees((_controller.GetGlobalAngle() + 90) % 360) : CardinalDirection.DirectionFromDegrees((_controller.GetGlobalAngle() + 270) % 360);
-                            _closestDoorway = new Doorway(_lastWallTile.Value, closestWall.Position, approachDirection);
-                            _doorways.Add(_closestDoorway);
+                            var newDoor =  new Doorway(_lastWallTile.Value, closestWall.Position, approachDirection);
+                            if (!_doorways.Any(doorway => newDoor.Equals(doorway)))
+                            {
+                                _closestDoorway = newDoor;
+                                _doorways.Add(_closestDoorway);
+                            }
                         }
                     }
                     break;
@@ -154,7 +160,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 }
                 else
                 {
-                    var solidTile = _edgeDetector.GetFurthestTileAroundRobot((waypoint.Destination - _position).GetAngleRelativeToX(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid }, true);
+                    var solidTile = _edgeDetector.GetFurthestTileAroundRobot((waypoint.Destination - _position).GetAngleRelativeToX(), VisionRadius-2, new List<SlamTileStatus> { SlamTileStatus.Solid }, true);
                     if (_map.GetTileStatus(solidTile) == SlamTileStatus.Solid)
                     {
                         _waypoint = null;
@@ -188,7 +194,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 case AlgorithmState.ExploreRoom:
                     if (_controller.GetStatus() == Robot.Task.RobotStatus.Idle)
                     {
-                        if (!IsAroundExplorable(1))
+                        if (!IsAroundExplorable(2))
                         {
                             MoveToNearestUnseen();
                             break;
@@ -275,10 +281,10 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 {
                     if (tile != otherTile)
                     {
-                        var line = new Line2D(tile, otherTile);
-                        if (!lines.Contains(line))
+                        var otherLine = new Line2D(tile, otherTile);
+                        if (!lines.Any(line => line.EqualLineSegment(otherLine)))
                         {
-                            lines.Add(line);
+                            lines.Add(otherLine);
                         }
                     }
                 }

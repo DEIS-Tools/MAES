@@ -171,16 +171,20 @@ namespace Maes.Utilities
             return points;
         }
 
+        public bool EqualLineSegment(Line2D other)
+        {
+            return (Start == other.Start && End == other.End) || (Start == other.End && End == other.Start);
+
+        }
+
         public override bool Equals(object obj)
         {
             if (obj == null) return false;
             var otherLine = obj as Line2D;
 
-            return (Start == otherLine.Start && End == otherLine.End) || (Start == otherLine.End && End == otherLine.Start);
-
-            //return Mathf.Approximately(_a, otherLine._a) &&
-            //       Mathf.Approximately(_b, otherLine._b) &&
-            //       (IsVertical == otherLine.IsVertical);
+            return Mathf.Approximately(_a, otherLine._a) &&
+                   Mathf.Approximately(_b, otherLine._b) &&
+                   (IsVertical == otherLine.IsVertical);
         }
 
         public override int GetHashCode()

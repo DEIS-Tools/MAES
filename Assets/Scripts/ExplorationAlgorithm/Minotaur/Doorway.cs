@@ -1,7 +1,9 @@
+using Maes.Map;
 using Maes.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
@@ -13,6 +15,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         public readonly Vector2Int End;
         public bool Explored;
         public CardinalDirection ApproachedDirection;
+        public static int DoorWidth;
+        public static CoarseGrainedMap _map;
 
         public Doorway(Vector2Int start, Vector2Int end, CardinalDirection approachedDirection)
         {
@@ -25,12 +29,15 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         public override bool Equals(object obj)
         {
-            if (obj is Doorway other
-                && Center == other.Center
-                && Explored == other.Explored
-                && ApproachedDirection == other.ApproachedDirection)
+            if (obj is Doorway other)
             {
-                return true;
+                var doorTiles = new Line2D(Start, End).Rasterize();
+                var squareTiles = Enumerable.Range(1, DoorWidth).SelectMany(i => doorTiles.Select(doorTile => doorTile + ApproachedDirection.Vector * i)).ToList();
+                squareTiles.ToList().ForEach(tile => tile.DrawDebugLineFromRobot(_map, Color.cyan));
+                if (new Line2D(other.Start, other.End).Rasterize().All(tile => squareTiles.Contains(tile)))
+                {
+                    return true;
+                }
             }
             return false;
         }
