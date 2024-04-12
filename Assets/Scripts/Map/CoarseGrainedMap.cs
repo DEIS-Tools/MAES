@@ -492,33 +492,6 @@ namespace Maes.Map
 
         //Method for checking if a solid tile is actually solid, through the slam map
         public bool IsOffsetSolid(Vector2Int nextCoordinate, Vector2Int currentCoordinate) {
-            // call from GetPathSteps if it hits a solid?
-            // Return path steps? no.
-            // Return if it's passable or not
-            // s o o s
-            // s o o s ^
-            // s o o o |
-            // s o o o v
-            //
-            // o o o s
-            // o o o s
-            // s o o o <->
-            // s o o o
-            //
-            // o o s s
-            // o o o o ^
-            // o o o o |
-            // s s o o v
-            //
-            // s s s s
-            // o o o o
-            // o o o o <->
-            // s s o o
-            //
-            // List format:
-            // 3 4
-            // 1 2
-            //
             // get SLAM coordinates for the coarse grained tiles that needs to be checked
             var nextCoordinateSlam = GetSlamTileStatuses(nextCoordinate);
             var currentCoordinateSlam = GetSlamTileStatuses(currentCoordinate);
@@ -526,20 +499,8 @@ namespace Maes.Map
             // If all SLAM tiles are solid, just return solid
             var isOpen = SlamMap.SlamTileStatus.Open;
             if (CheckIfAnyStatusSolid(nextCoordinate) || CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAllSlamStatusesSolid(nextCoordinate) || CheckIfAllSlamStatusesSolid(currentCoordinate)) {
-                //Debug.Log("test1");
                 return true;
             }
-            //if (!CheckIfAllSlamStatusesSolid(nextCoordinate) && !CheckIfAllSlamStatusesSolid(currentCoordinate)){
-            //    return false;
-            //}
-            // may only need to check for diagonal movement
-            //
-            // coarse grained coords:
-            // -> increase first coordinate
-            // ^
-            // |
-            // increase second coordinate
-            //
             // Check what other tiles needs to be checked by determining path direction
             if (currentCoordinate.x < nextCoordinate.x) {
                 //nextCoordinate is right
