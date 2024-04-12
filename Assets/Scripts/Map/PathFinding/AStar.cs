@@ -114,7 +114,6 @@ namespace Maes.Map.PathFinding
                         }
                     }
 
-
                     if (dir.IsDiagonal())
                     {
                         // To travel diagonally, the two neighbouring tiles must also be free
