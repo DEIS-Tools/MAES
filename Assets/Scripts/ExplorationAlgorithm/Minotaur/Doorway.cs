@@ -23,7 +23,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             Center = (start+end)/2;
             Explored = false;
             Opening = new Line2D(start, end);
-            Tiles = Opening.Rasterize();
+            Tiles = Opening.Rasterize().Select(tile => Vector2Int.FloorToInt(tile));
             ApproachedDirection = approachedDirection;
         }
 

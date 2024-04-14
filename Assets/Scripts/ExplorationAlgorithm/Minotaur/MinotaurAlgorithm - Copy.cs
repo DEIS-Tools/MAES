@@ -7,11 +7,10 @@ using UnityEngine;
 using Maes.Utilities;
 using static Maes.Map.SlamMap;
 using System.Reflection;
-using Maes.Map.PathFinding;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
 {
-    public partial class MinotaurAlgorithm : IExplorationAlgorithm
+    public partial class MinotaurAlgorithmCopy : IExplorationAlgorithm
     {
         public int VisionRadius => (int)_robotConstraints.SlamRayTraceRange;
         private int _doorWidth;
@@ -82,7 +81,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             public float Angle;
         }
 
-        public MinotaurAlgorithm(RobotConstraints robotConstraints, int seed, int doorWidth)
+        public MinotaurAlgorithmCopy(RobotConstraints robotConstraints, int seed, int doorWidth)
         {
             _robotConstraints = robotConstraints;
             _seed = seed;
@@ -189,7 +188,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     _currentState = AlgorithmState.FirstWall;
                     break;
                 case AlgorithmState.FirstWall:
-                    if (wallPoints.Any() && wallPoints.First().Distance / 2 < VisionRadius - 1)
+                    if (wallPoints.Any() && wallPoints.First().Distance/2 < VisionRadius - 1)
                     {
                         _controller.StopCurrentTask();
                         _currentState = AlgorithmState.ExploreRoom;
@@ -239,23 +238,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 return true;
             }
             var slamMap = _controller.GetSlamMap();
-            var slamPosition = slamMap.GetCurrentPosition();
-            var slamTiles = _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Solid }, slamPrecision: true)
+            var tiles = _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Solid }, slamPrecision: true)
                                      .Where(tile => slamMap.GetTileStatus(tile) == SlamTileStatus.Solid)
                                      .ToList();
-            if (slamTiles.Count() < 2) return false;
-            var coarseTileAhead = _edgeDetector.GetFurthestTileAroundRobot(_controller.GetGlobalAngle(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid }, snapToGrid: true);
-            var localLeft = (_controller.GetGlobalAngle() + (_map.GetTileStatus(coarseTileAhead) == SlamTileStatus.Solid ? 90 : 0)) % 360;
+            if (tiles.Count() < 2) return false;
+            var tileAhead = _edgeDetector.GetFurthestTileAroundRobot(_controller.GetGlobalAngle(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid }, snapToGrid: true, slamPrecision: true);
+            var localLeft = (_controller.GetGlobalAngle() + (slamMap.GetTileStatus(tileAhead) == SlamTileStatus.Solid ? 90 : 0)) % 360;
             (CardinalDirection.AngleToDirection(localLeft).Vector + _position).DrawDebugLineFromRobot(_map, Color.blue);
-            var slamWalls = GetWalls(slamTiles, true);
-            var slamWallPoints = slamWalls.Select(wall => Vector2Int.FloorToInt(wall.Start))
-                              .Union(slamWalls.Select(wall => Vector2Int.FloorToInt(wall.End)))
-                              .OrderByDescending(point => ((point - slamPosition).GetAngleRelativeToX() - localLeft + 360) % 360).ToList();
+            var walls = GetWalls(tiles);
+            var wallPoints = walls.Select(wall => Vector2Int.FloorToInt(wall.Start))
+                              .Union(walls.Select(wall => Vector2Int.FloorToInt(wall.End)))
+                              .OrderByDescending(point => ((point - _position).GetAngleRelativeToX() - localLeft + 360) % 360).ToList();
+            var wallCoarsePoints = wallPoints.Select(point => _map.FromSlamMapCoordinate(point));
 
-            slamWalls.ToList().ForEach(wall => Debug.DrawLine(slamMap.TileToWorld(wall.Start), slamMap.TileToWorld(wall.End), Color.white, 2));
-            slamWallPoints.ToList().ForEach(point => point.DrawDebugLineFromRobot(slamMap, Color.yellow));
+            walls.ToList().ForEach(wall => Debug.DrawLine(slamMap.TileToWorld(wall.Start), slamMap.TileToWorld(wall.End), Color.white, 2));
+            wallCoarsePoints.ToList().ForEach(point => point.DrawDebugLineFromRobot(_map, Color.yellow));
 
-            var points = slamWallPoints.Select(point => (perp: point + CardinalDirection.PerpendicularDirection(point - slamPosition).Vector * (VisionRadius - 2) * 2, point))
+            var points = wallCoarsePoints.Select(point => (perp: point + CardinalDirection.PerpendicularDirection(point - _position).Vector * (VisionRadius - 2), point))
                            .Where(tuple => slamMap.IsWithinBounds(tuple.perp)
                                            && slamMap.GetTileStatus(tuple.perp) != SlamTileStatus.Solid)
                            .ToList();
@@ -269,11 +268,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var perpendicularTile = points.First();
             //var thirdPoint = new Vector2Int((int)(perpendicularTile.perp.x + (Math.Abs(perpendicularTile.perp.x - perpendicularTile.point.x))*(Vector2.Angle(_position,perpendicularTile.perp)/90)), (int)(perpendicularTile.perp.y + (Math.Abs(perpendicularTile.perp.y - perpendicularTile.point.y))*(1-Vector2.Angle(_position,perpendicularTile.perp)/90)));
 
-            var perpDirection = (perpendicularTile.perp - slamMap.GetCurrentPosition()).GetAngleRelativeToX();
+            var perpDirection = (perpendicularTile.perp - _position).GetAngleRelativeToX();
             var thirdPointDirection = (perpDirection + 270) % 360;
             var thirdPointDirectionVector = CardinalDirection.AngleToDirection(thirdPointDirection).Vector;
-            var thirdPoint = perpendicularTile.perp + thirdPointDirectionVector * (VisionRadius - 2) * 2;
-            thirdPoint.DrawDebugLineFromRobot(slamMap, Color.blue);
+            var thirdPoint = perpendicularTile.perp + thirdPointDirectionVector * (VisionRadius - 2);
+            thirdPoint.DrawDebugLineFromRobot(_map, Color.blue);
 
             thirdPointDirectionVector = CardinalDirection.AngleToDirection((thirdPoint - perpendicularTile.point).GetAngleRelativeToX()).Vector;
             var thirdPointDirectionVectorPerpendicular = CardinalDirection.PerpendicularDirection(thirdPointDirectionVector).Vector;
@@ -282,10 +281,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 var possibleUnseen = thirdPoint + (thirdPointDirectionVector * i) + thirdPointDirectionVectorPerpendicular;
                 if (slamMap.IsWithinBounds(possibleUnseen) && slamMap.GetTileStatus(possibleUnseen) == SlamTileStatus.Unseen)
                 {
-                    perpendicularTile.perp.DrawDebugLineFromRobot(slamMap, Color.red);
-                    var destination = _map.FromSlamMapCoordinate(perpendicularTile.perp);
-                    _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall);
-                    _controller.MoveTo(destination); //THIS FUCKED EVERYTHING
+                    perpendicularTile.perp.DrawDebugLineFromRobot(_map, Color.red);
+                    _waypoint = new Waypoint(perpendicularTile.perp, Waypoint.WaypointType.Wall);
+                    _controller.MoveTo(perpendicularTile.perp); //THIS FUCKED EVERYTHING
                     (CardinalDirection.AngleToDirection(0).Vector + _position).DrawDebugLineFromRobot(_map, Color.magenta);
                     return true;
                 };
@@ -293,95 +291,68 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return false;
         }
 
-        private List<Line2D> GetWalls(IEnumerable<Vector2Int> tiles, bool slamPrecision = false)
+        private List<Line2D> GetWalls(IEnumerable<Vector2Int> tiles)
         {
-            if (tiles.Count() < 2) return new();
-            var forwardAngle = _controller.GetGlobalAngle();
+            var correctedTiles = new List<(Vector2Int corrected, Vector2Int original)>();
             var slamMap = _controller.GetSlamMap();
             var slamPosition = slamMap.GetCurrentPosition();
-
-            var correctedTiles = new List<Vector2Int>();
-            IPathFindingMap map = slamPrecision ? _controller.GetSlamMap() : _map;
             foreach (var tile in tiles)
             {
                 var correctedTile = tile;
-                if (map.IsWithinBounds(tile + CardinalDirection.East.Vector) && map.GetTileStatus(tile + CardinalDirection.East.Vector) == SlamTileStatus.Open)
+                if (slamMap.GetTileStatus(tile + CardinalDirection.East.Vector) == SlamTileStatus.Open)
                     correctedTile = tile + CardinalDirection.East.Vector;
-                else if (map.IsWithinBounds(tile + CardinalDirection.North.Vector) && map.GetTileStatus(tile + CardinalDirection.North.Vector) == SlamTileStatus.Open)
+                else if (slamMap.GetTileStatus(tile + CardinalDirection.North.Vector) == SlamTileStatus.Open)
                     correctedTile = tile + CardinalDirection.North.Vector;
-                else if (map.IsWithinBounds(tile + CardinalDirection.NorthEast.Vector) && map.GetTileStatus(tile + CardinalDirection.NorthEast.Vector) == SlamTileStatus.Open)
+                else if (slamMap.GetTileStatus(tile + CardinalDirection.NorthEast.Vector) == SlamTileStatus.Open)
                     correctedTile = tile + CardinalDirection.NorthEast.Vector;
 
-                correctedTiles.Add(correctedTile);
+                correctedTiles.Add((correctedTile, tile));
             }
 
-            correctedTiles = correctedTiles.Distinct().ToList();
-            var sortedTiles = correctedTiles.OrderBy(tile => (Vector2.SignedAngle(CardinalDirection.AngleToDirection(forwardAngle + 270).OppositeDirection().Vector, tile - slamPosition) + 360) % 360).ToArray();
-            var startPoint = sortedTiles.First(); // Top right is borked
-            CardinalDirection previousDirection = CardinalDirection.VectorToDirection(startPoint - sortedTiles[1]);
-            var result = new List<Line2D>();
-            for (int i = 0; i < sortedTiles.Count() - 2; i++)
+            // Get every possible line from the points we have gathered
+            List<(Line2D corrected, Line2D original)> lines = new();
+            foreach (var tile in correctedTiles)
             {
-                var direction = CardinalDirection.VectorToDirection(sortedTiles[i] - sortedTiles[i + 1]);
-                if (previousDirection != direction)
+                foreach (var otherTile in correctedTiles)
                 {
-                    result.Add(new Line2D(startPoint, sortedTiles[i]));
-                    startPoint = sortedTiles[i];
-                    previousDirection = direction;
+                    if (tile != otherTile)
+                    {
+                        var otherLine = new Line2D(tile.corrected, otherTile.corrected);
+                        if (!lines.Any(line => line.corrected.EqualLineSegment(otherLine)))
+                        {
+                            lines.Add((otherLine, new Line2D(tile.original, otherTile.original)));
+                        }
+                    }
                 }
             }
-            result.Add(new(startPoint, sortedTiles.Last()));
 
-            return result;
+            // Remove the lines that have gaps of unsolid tiles
+            List<Line2D> unbrokenWalls = new();
+            foreach (var line in lines)
+            {
+                var points = line.original.Rasterize();
+                //if (Mathf.Approximately(line.Start.x, 2) && Mathf.Approximately(line.End.x, 3))
+                //{
+                //    var a = 1;
+                //}
+                if (points.All(tile => _controller.GetSlamMap().GetTileStatus(Vector2Int.FloorToInt(tile)) == SlamTileStatus.Solid))
+                {
+                    unbrokenWalls.Add(line.corrected);
+                }
+            }
 
+            // Take only the lines that are not subsets of other lines
+            var superLines = new List<Line2D>();
+            foreach (var line in unbrokenWalls)
+            {
+                var otherLines = unbrokenWalls.Where(otherLine => line != otherLine);
+                if (!otherLines.Any(otherline => otherline.Contains(line)))
+                {
+                    superLines.Add(line);
+                }
+            }
 
-
-            //correctedTiles.ForEach(tile => tile.corrected.DrawDebugLineFromRobot(map, Color.cyan, 0));
-
-            //// Get every possible line from the points we have gathered
-            //List<(Line2D corrected, Line2D original)> lines = new();
-            //foreach (var tile in correctedTiles)
-            //{
-            //    foreach (var otherTile in correctedTiles)
-            //    {
-            //        if (tile != otherTile)
-            //        {
-            //            var otherLine = new Line2D(tile.corrected, otherTile.corrected);
-            //            if (!lines.Any(line => line.corrected.EqualLineSegment(otherLine)))
-            //            {
-            //                lines.Add((otherLine, new Line2D(tile.original, otherTile.original)));
-            //            }
-            //        }
-            //    }
-            //}
-
-            //// Remove the lines that have gaps of unsolid tiles
-            //List<Line2D> unbrokenWalls = new();
-            //foreach (var line in lines)
-            //{
-            //    var points = line.original.Rasterize();
-            //    //if (Mathf.Approximately(line.Start.x, 2) && Mathf.Approximately(line.End.x, 3))
-            //    //{
-            //    //    var a = 1;
-            //    //}
-            //    if (points.All(tile => map.GetTileStatus(Vector2Int.FloorToInt(tile)) == SlamTileStatus.Solid))
-            //    {
-            //        unbrokenWalls.Add(line.corrected);
-            //    }
-            //}
-
-            //// Take only the lines that are not subsets of other lines
-            //var superLines = new List<Line2D>();
-            //foreach (var line in unbrokenWalls)
-            //{
-            //    var otherLines = unbrokenWalls.Where(otherLine => line != otherLine);
-            //    if (!otherLines.Any(otherline => otherline.Contains(line)))
-            //    {
-            //        superLines.Add(line);
-            //    }
-            //}
-
-            //return superLines.ToList();
+            return superLines.ToList();
         }
 
 
@@ -516,33 +487,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private DoorState DoorwayDetection(List<RelativeWall> visibleWallTiles)
         {
             if (!visibleWallTiles.Any()) return DoorState.None;
-            var slamMap = _controller.GetSlamMap();
-            var visibleTiles = _visibleTiles.Select(kv => kv.Key).Distinct();
-            var wallTilePositions = visibleWallTiles.Select(wall => wall.Position).Distinct();
+            var visibleTiles = _visibleTiles.Select(kv => _map.FromSlamMapCoordinate(kv.Key)).Distinct();
+            var wallTilePositions = visibleWallTiles.Select(wall => wall.Position);
             var walls = GetWalls(wallTilePositions);
 
             if (walls.Count == 1)
             {
-                var mid = walls.First().MidPoint;
-                var midWallDirection = CardinalDirection.VectorToDirection(mid - slamMap.GetCurrentPosition());
-                var correction = new Vector2Int(0, 0);
-                if (midWallDirection.Vector.y < 0)
-                    correction = Vector2Int.down;
-                if (midWallDirection.Vector.x < 0)
-                    correction = Vector2Int.left;
-
-                //var (start, end) = SortSingleWall(walls);
-                var (start, end) = (Vector2Int.FloorToInt(walls.First().Start), Vector2Int.FloorToInt(walls.First().End));
+                var (start, end) = SortSingleWall(walls);
                 var wallDirectionVector = CardinalDirection.DirectionFromDegrees((end - start).GetAngleRelativeToX()).Vector;
-                var presumedUnbrokenLine = Enumerable.Range(0, VisionRadius * 2)
-                          .Select(r => Vector2Int.FloorToInt(start + wallDirectionVector * r + correction)).ToArray();
-                var lineBroken = presumedUnbrokenLine.Where(tile => visibleTiles.Contains(tile))
-                          .Any(tile => slamMap.GetTileStatus(tile) == SlamTileStatus.Open);
+                var hasOpening = Enumerable.Range(0, VisionRadius * 2)
+                          .Select(r => Vector2Int.FloorToInt(start + wallDirectionVector * r))
+                          .Where(tile => visibleTiles.Contains(tile))
+                          .Any(tile => _map.GetTileStatus(tile) == SlamTileStatus.Open);
 
-                if (lineBroken)
+                if (hasOpening)
                 {
-                    end.DrawDebugLineFromRobot(slamMap, Color.magenta);
-                    var distanceToEnd = (_map.FromSlamMapCoordinate(end) - _position) * new Vector2Int(Mathf.Abs(wallDirectionVector.x), Mathf.Abs(wallDirectionVector.y));
+                    end.DrawDebugLineFromRobot(_map, Color.magenta);
+                    var distanceToEnd = (end - _position) * new Vector2Int(Mathf.Abs(wallDirectionVector.x), Mathf.Abs(wallDirectionVector.y));
                     _waypoint = new Waypoint(_position + distanceToEnd + wallDirectionVector * _doorWidth, Waypoint.WaypointType.Door);
                     _controller.MoveTo(_waypoint.Value.Destination);
                     _waypoint.Value.Destination.DrawDebugLineFromRobot(_map, Color.green);
@@ -563,29 +524,29 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         }
 
-        private void Communication()
-        {
-            var messages = _controller.ReceiveBroadcast().OfType<IMinotaurMessage>();
-            var minotaurMessages = new List<IMinotaurMessage>();
-            foreach (var message in messages)
-            {
-                var combined = false;
-                foreach (var minotaurMessage in minotaurMessages)
-                {
-                    var combinedMessage = minotaurMessage.Combine(message, this);
-                    if (combinedMessage != null)
-                    {
-                        minotaurMessages[minotaurMessages.IndexOf(message)] = combinedMessage;
-                        combined = true;
-                        break;
-                    }
-                }
-                if (!combined)
-                {
-                    minotaurMessages.Add(message);
-                }
-            }
-        }
+        //private void Communication()
+        //{
+        //    var messages = _controller.ReceiveBroadcast().OfType<IMinotaurMessage>();
+        //    var minotaurMessages = new List<IMinotaurMessage>();
+        //    foreach (var message in messages)
+        //    {
+        //        var combined = false;
+        //        foreach (var minotaurMessage in minotaurMessages)
+        //        {
+        //            var combinedMessage = minotaurMessage.Combine(message, this);
+        //            if (combinedMessage != null)
+        //            {
+        //                minotaurMessages[minotaurMessages.IndexOf(message)] = combinedMessage;
+        //                combined = true;
+        //                break;
+        //            }
+        //        }
+        //        if (!combined)
+        //        {
+        //            minotaurMessages.Add(message);
+        //        }
+        //    }
+        //}
 
 
         private Doorway? GetNearestUnexploredDoorway()

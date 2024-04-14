@@ -68,7 +68,7 @@ namespace Maes.Map
             return _slamMap.ApproximatePosition - _offset;
         }
 
-        public Vector2Int GetCurrentPositionCoarseTile()
+        public Vector2Int GetCurrentPosition()
         {
             return Vector2Int.FloorToInt(GetApproximatePosition());
         }
@@ -262,9 +262,9 @@ namespace Maes.Map
         /// <summary>
         /// Converts the given local coordinate to a <see cref="SlamMap"/> coordinate.
         /// </summary>
-        public Vector2Int ToSlamMapCoordinate(Vector2Int localCoordinate)
+        public Vector2Int ToSlamMapCoordinate(Vector2 localCoordinate)
         {
-            return localCoordinate * 2;
+            return Vector2Int.FloorToInt(localCoordinate * 2);
         }
 
         /// <summary>
@@ -503,9 +503,10 @@ namespace Maes.Map
             if (_optimisticTileStatuses[courseCoord.x, courseCoord.y] != SlamMap.SlamTileStatus.Solid)
                 _optimisticTileStatuses[courseCoord.x, courseCoord.y] = observedStatus;
         }
-        public Vector3 CoarseToWorld(Vector2 position)
+
+        public Vector3 TileToWorld(Vector2 tile)
         {
-            return new Vector3(position.x, position.y, -0.01f) + (Vector3)_offset;
+            return new Vector3(tile.x, tile.y, -0.01f) + (Vector3)_offset;
         }
     }
 }

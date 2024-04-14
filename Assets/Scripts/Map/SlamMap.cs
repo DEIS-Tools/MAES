@@ -109,7 +109,7 @@ namespace Maes.Map
                 _tiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
         }
 
-        public Vector2Int GetCurrentPositionSlamTile()
+        public Vector2Int GetCurrentPosition()
         {
             var currentPosition = GetApproxPosition();
             // Since the resolution of the slam map is double, we round to nearest half
@@ -358,7 +358,7 @@ namespace Maes.Map
         public RelativePosition GetRelativeSlamPosition(Vector2Int slamTileTarget)
         {
             // Convert to local coordinate
-            var robotPosition = GetCurrentPositionSlamTile();
+            var robotPosition = GetCurrentPosition();
             var distance = Vector2.Distance(robotPosition, (Vector2)slamTileTarget);
             var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetRobotAngleDeg()), slamTileTarget - robotPosition);
             return new RelativePosition(distance, angle);
@@ -419,5 +419,12 @@ namespace Maes.Map
             }
             return worldCoordinate;
         }
+
+        public Vector3 TileToWorld(Vector2 tile)
+        {
+            var WorldTile = tile / 2;
+            return new Vector3(WorldTile.x, WorldTile.y, -0.01f) + (Vector3)_offset;
+        }
+
     }
 }

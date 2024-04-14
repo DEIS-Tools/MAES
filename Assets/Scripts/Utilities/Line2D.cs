@@ -153,8 +153,9 @@ namespace Maes.Utilities
         /// <summary>
         /// Gets all points on a grid that the line goes through from start to end as integer numbers
         /// </summary>
-        /// <returns>list of points</returns>
-        public IEnumerable<Vector2Int> Rasterize()
+        /// <param name="resolution">The step size to create points from, defaults to 1 world unit aka. a coarse tile</param>
+        /// <returns>List of points</returns>
+        public IEnumerable<Vector2> Rasterize(float resolution = 1)
         {
             var start = IsVertical ? Start.y : Start.x;
             var end = IsVertical ? End.y : End.x;
@@ -163,12 +164,12 @@ namespace Maes.Utilities
                 (end, start) = (start, end);
             }
 
-            var points = new List<Vector2Int>();
-            for (var x = start; x <= end; x++)
+            var points = new List<Vector2>();
+            for (var x = start; x <= end; x += resolution)
             {
-                points.Add(IsVertical ? new Vector2Int((int)SlopeIntercept(x), (int)x) : new Vector2Int((int)x, (int)SlopeIntercept(x)));
+                points.Add(IsVertical ? new Vector2(SlopeIntercept(x), x) : new Vector2(x, SlopeIntercept(x)));
             }
-            return points;
+            return points.Distinct();
         }
 
         public bool EqualLineSegment(Line2D other)

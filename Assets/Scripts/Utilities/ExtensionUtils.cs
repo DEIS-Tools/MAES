@@ -20,12 +20,9 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System.Collections.Generic;
-using System.Linq;
-using Codice.Client.BaseCommands;
 using Maes.Map;
-using Maes.Robot;
+using Maes.Map.PathFinding;
 using UnityEngine;
-using static UnityEditor.FilePathAttribute;
 
 namespace Maes.Utilities
 {
@@ -60,16 +57,16 @@ namespace Maes.Utilities
             return angle;
         }
 
-        public static void DrawDebugLineFromRobot(this Vector2Int tile, CoarseGrainedMap map, Color color)
+        public static void DrawDebugLineFromRobot(this Vector2Int tile, IPathFindingMap map, Color color, float duration = 2)
         {
-            DrawDebugLineFromRobot((Vector2)tile, map, color);
+            DrawDebugLineFromRobot((Vector2)tile, map, color, duration);
         }
 
-        public static void DrawDebugLineFromRobot(this Vector2 tile, CoarseGrainedMap map, Color color)
+        public static void DrawDebugLineFromRobot(this Vector2 tile, IPathFindingMap map, Color color, float duration = 2)
         {
-            var robot = map.CoarseToWorld(map.GetCurrentPositionCoarseTile());
-            var point1 = map.CoarseToWorld(tile);
-            Debug.DrawLine(robot, point1, color, 2);
+            var robot = map.TileToWorld(map.GetCurrentPosition());
+            var point1 = map.TileToWorld(tile);
+            Debug.DrawLine(robot, point1, color, duration);
         }
     }
 }

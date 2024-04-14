@@ -152,5 +152,15 @@ namespace Maes.Map {
                 return SlamMap.SlamTileStatus.Unseen;
             return SlamMap.SlamTileStatus.Open;
         }
+
+        public Vector2Int GetCurrentPosition()
+        {
+            return Vector2Int.FloorToInt(_slamMap.ApproximatePosition - _offset);
+        }
+
+        public Vector3 TileToWorld(Vector2 tile)
+        {
+            return new Vector3(tile.x, tile.y, -0.01f) + (Vector3)_offset;
+        }
     }
 }
