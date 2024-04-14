@@ -137,8 +137,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         walls.ToList().ForEach(wall => Debug.DrawLine(_map.TileToWorld(wall.Start), _map.TileToWorld(wall.End)));
                         if (walls.Any(wall => _lastWalls.Contains(wall)))
                         {
-                            var (start, end) = SortSingleWall(walls);
-                            var wallDirectionVector = CardinalDirection.DirectionFromDegrees((end - start).GetAngleRelativeToX()).Vector;
                             var closestWall = wallPoints.First();
                             var approachDirection = _clockwise ? CardinalDirection.DirectionFromDegrees((_controller.GetGlobalAngle() + 90) % 360) : CardinalDirection.DirectionFromDegrees((_controller.GetGlobalAngle() + 270) % 360);
                             var newDoor = new Doorway(_lastWallTile.Value, closestWall.Position, approachDirection);
@@ -215,8 +213,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     var nearestDoorway = GetNearestUnexploredDoorway();
                     if (nearestDoorway != null)
                     {
-                        _controller.PathAndMoveTo(nearestDoorway.Center);
-                        _waypoint = new Waypoint(nearestDoorway.Center, Waypoint.WaypointType.Door, true);
+                        _waypoint = new Waypoint(_map.FromSlamMapCoordinate(nearestDoorway.Center), Waypoint.WaypointType.Door, true);
+                        _controller.PathAndMoveTo(_waypoint.Value.Destination);
                         _currentState = AlgorithmState.ExploreRoom;
                         nearestDoorway.Explored = true;
                     }
@@ -458,7 +456,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private void MoveToNearestUnseenWithinRoom()
         {
-            var doorTiles = _doorways.SelectMany(doorway => doorway.Tiles);
+            var doorTiles = _doorways.SelectMany(doorway => _map.FromSlamMapCoordinates(doorway.Tiles.ToList()));
             var tile = _map.GetNearestTileFloodFill(_position, SlamTileStatus.Unseen, doorTiles.ToHashSet());
             if (tile.HasValue)
             {
@@ -595,7 +593,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var unexploredDoorways = _doorways.Where(doorway => !doorway.Explored);
             foreach (Doorway doorway in unexploredDoorways)
             {
-                var distance = PathDistanceToPoint(doorway.Center);
+                var distance = PathDistanceToPoint(_map.FromSlamMapCoordinate(doorway.Center));
                 if (distance < doorwayDistance)
                 {
                     doorwayDistance = distance;
