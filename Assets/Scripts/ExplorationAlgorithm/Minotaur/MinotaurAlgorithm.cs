@@ -298,7 +298,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var slamMap = _controller.GetSlamMap();
             var slamPosition = slamMap.GetCurrentPosition();
 
-            var correctedTiles = new List<Vector2Int>();
+            var correctedTiles = new List<(Vector2Int corrected, Vector2Int original)>();
             IPathFindingMap map = slamPrecision ? _controller.GetSlamMap() : _map;
             foreach (var tile in tiles)
             {
@@ -310,76 +310,38 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 else if (map.IsWithinBounds(tile + CardinalDirection.NorthEast.Vector) && map.GetTileStatus(tile + CardinalDirection.NorthEast.Vector) == SlamTileStatus.Open)
                     correctedTile = tile + CardinalDirection.NorthEast.Vector;
 
-                correctedTiles.Add(correctedTile);
+                correctedTiles.Add((correctedTile, tile));
             }
 
             correctedTiles = correctedTiles.Distinct().ToList();
-            var sortedTiles = correctedTiles.OrderBy(tile => (Vector2.SignedAngle(CardinalDirection.AngleToDirection(forwardAngle + 270).OppositeDirection().Vector, tile - slamPosition) + 360) % 360).ToArray();
+            var sortedTiles = correctedTiles.OrderBy(tile => (Vector2.SignedAngle(CardinalDirection.AngleToDirection(forwardAngle + 90).Vector, tile.corrected - slamPosition) + 360) % 360).ToArray();
             var startPoint = sortedTiles.First(); // Top right is borked
-            CardinalDirection previousDirection = CardinalDirection.VectorToDirection(startPoint - sortedTiles[1]);
+            CardinalDirection previousDirection = CardinalDirection.VectorToDirection(startPoint.corrected - sortedTiles[1].corrected);
             var result = new List<Line2D>();
-            for (int i = 0; i < sortedTiles.Count() - 2; i++)
+            for (int i = 0; i < sortedTiles.Count() - 1; i++)
             {
-                var direction = CardinalDirection.VectorToDirection(sortedTiles[i] - sortedTiles[i + 1]);
-                if (previousDirection != direction)
+                if (_logicTicks == 6873 && i == 5)
                 {
-                    result.Add(new Line2D(startPoint, sortedTiles[i]));
+                    var a = 1;
+                }
+                var direction = CardinalDirection.VectorToDirection(sortedTiles[i].corrected - sortedTiles[i + 1].corrected);
+                if (previousDirection != direction || slamMap.GetTileStatus(sortedTiles[i].original + direction.OppositeDirection().Vector) != SlamTileStatus.Solid)
+                {
+                    var originalLine = new Line2D(startPoint.original, sortedTiles[i].original);
+                    if (originalLine.Rasterize().All(tile =>slamMap.IsWithinBounds(Vector2Int.FloorToInt(tile)) && slamMap.GetTileStatus(Vector2Int.FloorToInt(tile)) == SlamTileStatus.Solid))
+                    {
+                        result.Add(new Line2D(startPoint.corrected, sortedTiles[i].corrected));
+                    }
                     startPoint = sortedTiles[i];
                     previousDirection = direction;
                 }
             }
-            result.Add(new(startPoint, sortedTiles.Last()));
-
+            var lastLine = new Line2D(startPoint.original, sortedTiles.Last().original);
+            if (lastLine.Rasterize().All(tile => slamMap.IsWithinBounds(Vector2Int.FloorToInt(tile)) && slamMap.GetTileStatus(Vector2Int.FloorToInt(tile)) == SlamTileStatus.Solid))
+            {
+                result.Add(new(startPoint.corrected, sortedTiles.Last().corrected));
+            }
             return result;
-
-
-
-            //correctedTiles.ForEach(tile => tile.corrected.DrawDebugLineFromRobot(map, Color.cyan, 0));
-
-            //// Get every possible line from the points we have gathered
-            //List<(Line2D corrected, Line2D original)> lines = new();
-            //foreach (var tile in correctedTiles)
-            //{
-            //    foreach (var otherTile in correctedTiles)
-            //    {
-            //        if (tile != otherTile)
-            //        {
-            //            var otherLine = new Line2D(tile.corrected, otherTile.corrected);
-            //            if (!lines.Any(line => line.corrected.EqualLineSegment(otherLine)))
-            //            {
-            //                lines.Add((otherLine, new Line2D(tile.original, otherTile.original)));
-            //            }
-            //        }
-            //    }
-            //}
-
-            //// Remove the lines that have gaps of unsolid tiles
-            //List<Line2D> unbrokenWalls = new();
-            //foreach (var line in lines)
-            //{
-            //    var points = line.original.Rasterize();
-            //    //if (Mathf.Approximately(line.Start.x, 2) && Mathf.Approximately(line.End.x, 3))
-            //    //{
-            //    //    var a = 1;
-            //    //}
-            //    if (points.All(tile => map.GetTileStatus(Vector2Int.FloorToInt(tile)) == SlamTileStatus.Solid))
-            //    {
-            //        unbrokenWalls.Add(line.corrected);
-            //    }
-            //}
-
-            //// Take only the lines that are not subsets of other lines
-            //var superLines = new List<Line2D>();
-            //foreach (var line in unbrokenWalls)
-            //{
-            //    var otherLines = unbrokenWalls.Where(otherLine => line != otherLine);
-            //    if (!otherLines.Any(otherline => otherline.Contains(line)))
-            //    {
-            //        superLines.Add(line);
-            //    }
-            //}
-
-            //return superLines.ToList();
         }
 
 
