@@ -32,7 +32,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             if (obj is Doorway other)
             {
                 var squareTiles = Enumerable.Range(1, DoorWidth).SelectMany(i => Tiles.Select(doorTile => doorTile + ApproachedDirection.Vector * i)).ToList();
-                squareTiles.ToList().ForEach(tile => tile.DrawDebugLineFromRobot(_map, Color.cyan));
+                squareTiles.ToList().ForEach(tile => _map.FromSlamMapCoordinate(tile).DrawDebugLineFromRobot(_map, Color.cyan));
                 if (other.Tiles.All(tile => squareTiles.Contains(tile)))
                 {
                     Explored = true;

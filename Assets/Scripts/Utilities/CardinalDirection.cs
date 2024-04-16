@@ -92,7 +92,7 @@ namespace Maes.Utilities {
             var xDir = 0;
             var yDir = 0;
             
-            if (Index > 6 || Index < 2) xDir = 1;
+            if (Index > 6 || (Index < 2 && Index >= 0)) xDir = 1;
             else if (Index < 6 && Index > 2) xDir = -1;
             
             if (Index > 4) yDir = 1;
@@ -115,6 +115,10 @@ namespace Maes.Utilities {
 
         public static CardinalDirection VectorToDirection(Vector2 vector)
         {
+            if (vector == Vector2.zero) 
+            {
+                return new CardinalDirection(-1);
+            }
             return AngleToDirection(vector.GetAngleRelativeToX());
         }
 
