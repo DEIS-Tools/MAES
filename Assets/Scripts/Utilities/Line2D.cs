@@ -83,15 +83,22 @@ namespace Maes.Utilities
             return _a > 0f;
         }
 
+        public Vector2? GetIntersection(Line2D otherline, bool infinite = false)
+        {
+            return GetIntersection(otherline._a, otherline._b, infinite);
+        }
+
         // Checks for intersection with an infinite line described by a_1 x + b_2 
-        public Vector2? GetIntersection(float a_2, float b_2)
+        public Vector2? GetIntersection(float a_2, float b_2, bool infinite = false)
         {
             if (IsVertical) // Special case
             {
                 // This line is vertical. Simply plug x coordinate of this line into equation to find y intersection
                 var yIntersection = Start.x * a_2 + b_2;
+
                 // Return intersection if it is within bounds of this line
-                if (yIntersection <= _maxY && yIntersection >= _minY)
+
+                if (infinite || yIntersection <= _maxY && yIntersection >= _minY)
                     return new Vector2(Start.x, yIntersection);
                 else
                     return null;
@@ -110,7 +117,7 @@ namespace Maes.Utilities
                 // y = ax + b, solved for x gives x = (y - b) / a (using the y of this horizontal line)
                 var xIntersection = (Start.y - b_2) / a_2;
                 // Return intersection if it is within bounds of this line
-                if (xIntersection >= _minX && xIntersection <= _maxX)
+                if (infinite || xIntersection >= _minX && xIntersection <= _maxX)
                     return new Vector2(xIntersection, Start.y);
                 else
                     return null;
@@ -130,7 +137,7 @@ namespace Maes.Utilities
                 // Debug.Log($"({b_2} - {_b}) / ({_a} - {a_2}) ");
                 var intersectX = (b_2 - _b) / (_a - a_2);
                 // Check if intersection is outside line segment
-                if (intersectX - _minX < -0.0001f || _maxX - intersectX < -0.0001f) return null;
+                if (!infinite && intersectX - _minX < -0.0001f || _maxX - intersectX < -0.0001f) return null;
                 var intersectY = _a * intersectX + _b;
                 // Debug.Log("Line : " + _a + "x + " + _b + " intersects with " + a_2 + "x + " + b_2 + 
                 //           " at " + intersectX + ", " + intersectY);

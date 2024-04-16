@@ -115,8 +115,7 @@ namespace Maes.Utilities {
 
         public static CardinalDirection VectorToDirection(Vector2 vector)
         {
-            var angle = Vector2.SignedAngle(Vector2.right, vector);
-            return AngleToDirection(angle);
+            return AngleToDirection(vector.GetAngleRelativeToX());
         }
 
         public static CardinalDirection AngleToDirection(float angle)
