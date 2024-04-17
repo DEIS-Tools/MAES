@@ -7,6 +7,7 @@ using UnityEngine;
 using Maes.Utilities;
 using static Maes.Map.SlamMap;
 using Maes.Map.PathFinding;
+using UnityEditor.Experimental.GraphView;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
 {
@@ -22,7 +23,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private Dictionary<Vector2Int, SlamTileStatus> _visibleTiles => _controller.GetSlamMap().GetCurrentlyVisibleTiles();
         private int _seed;
         private Vector2Int _position => _map.GetCurrentPosition();
-        private List<Doorway> _doorways = new();
+        protected List<Doorway> _doorways = new();
         private List<MinotaurAlgorithm> _minotaurs;
         private bool _clockwise = false;
         private AlgorithmState _currentState = AlgorithmState.Idle;
@@ -114,53 +115,54 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 else
                     _controller.Move(1, true);
                 _waypoint = null;
+                _doorState = DoorState.None;
                 return;
                 //TODO: full resets
             }
 
             var wallPoints = GetWallsNearRobot();
-
-            switch (_doorState)
-            {
-                case DoorState.None:
-                    if (_waypoint.HasValue && _waypoint.Value.Type == Waypoint.WaypointType.Wall)// || !_waypoint.HasValue)
-                        _doorState = DoorwayDetection(wallPoints);
-                    if (_doorState != DoorState.None)
-                        _lastWalls = GetWalls(wallPoints.Select(tile => tile.Position));
-                    break;
-                case DoorState.Single:
-                    if (IsDestinationReached())
-                    {
-                        _doorState = DoorState.None;
-                        if (!wallPoints.Any()) break;
-                        var walls = GetWalls(wallPoints.Select(tile => tile.Position));
-                        walls.ToList().ForEach(wall => Debug.DrawLine(_map.TileToWorld(wall.Start), _map.TileToWorld(wall.End)));
-                        if (walls.Any(wall => _lastWalls.Contains(wall)))
-                        {
-                            var closestWall = wallPoints.First();
-                            var approachDirection = _clockwise ? CardinalDirection.DirectionFromDegrees((_controller.GetGlobalAngle() + 90) % 360) : CardinalDirection.DirectionFromDegrees((_controller.GetGlobalAngle() + 270) % 360);
-                            var newDoor = new Doorway(_lastWallTile.Value, closestWall.Position, approachDirection);
-                            if (!_doorways.Any(doorway => newDoor.Equals(doorway)))
-                            {
-                                _closestDoorway = newDoor;
-                                _doorways.Add(_closestDoorway);
-                            }
-                        }
-                    }
-                    break;
-                case DoorState.Intersection:
-                    if (IsDestinationReached())
-                    {
-                        _doorState = DoorState.None;
-                        if (_controller.GetSlamMap().GetTileStatus(_queryPoint) == SlamTileStatus.Open)
-                        {
-                            SetDoorwayFromWalls(_lastWalls, _queryPoint);
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
+            _doorState = DoorwayDetection(wallPoints);
+            //switch (_doorState)
+            //{
+            //    case DoorState.None:
+            //        if (_doorState != DoorState.None)
+            //            _lastWalls = GetWalls(wallPoints.Select(tile => tile.Position), true);
+            //        break;
+            //    case DoorState.Single:
+            //        if (IsDestinationReached())
+            //        {
+            //            _doorState = DoorState.None;
+            //            if (!wallPoints.Any()) break;
+            //            var walls = GetWalls(wallPoints.Select(tile => tile.Position), true);
+            //            walls.ToList().ForEach(wall => Debug.DrawLine(_map.TileToWorld(wall.Start), _map.TileToWorld(wall.End)));
+            //            if (walls.Any(wall => _lastWalls.Contains(wall)))
+            //            {
+            //                var closestWall = wallPoints.First();
+            //                var approachDirection = _clockwise ? CardinalDirection.DirectionFromDegrees((_controller.GetGlobalAngle() + 90) % 360) : CardinalDirection.DirectionFromDegrees((_controller.GetGlobalAngle() + 270) % 360);
+            //                Debug.DrawLine(_controller.GetSlamMap().TileToWorld(_lastWallTile.Value), _controller.GetSlamMap().TileToWorld(closestWall.Position), Color.blue, 2);
+            //                var newDoor = new Doorway(_lastWallTile.Value, closestWall.Position, approachDirection);
+            //                if (_doorways.All(doorway => !newDoor.Equals(doorway)))
+            //                {
+            //                    _closestDoorway = newDoor;
+            //                    _doorways.Add(_closestDoorway);
+            //                }
+            //            }
+            //        }
+            //        break;
+            //    case DoorState.Intersection:
+            //        if (IsDestinationReached())
+            //        {
+            //            _doorState = DoorState.None;
+            //            if (_controller.GetSlamMap().GetTileStatus(_queryPoint) == SlamTileStatus.Open)
+            //            {
+            //                SetDoorwayFromWalls(_lastWalls, _queryPoint);
+            //            }
+            //            MoveToNearestUnseenWithinRoom();
+            //        }
+            //        break;
+            //    default:
+            //        break;
+            //}
 
             if (_waypoint.HasValue)
             {
@@ -245,7 +247,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             {
                 return true;
             }
-            // TODO: see doortiles as walls
             var slamMap = _controller.GetSlamMap();
             var slamPosition = slamMap.GetCurrentPosition();
             var slamTiles = _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Solid }, slamPrecision: true)
@@ -290,6 +291,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 var possibleUnseen = thirdPoint + (thirdPointDirectionVector * i) + thirdPointDirectionVectorPerpendicular;
                 if (slamMap.IsWithinBounds(possibleUnseen) && slamMap.GetTileStatus(possibleUnseen) == SlamTileStatus.Unseen)
                 {
+                    possibleUnseen.DrawDebugLineFromRobot(slamMap, Color.black);
                     perpendicularTile.perp.DrawDebugLineFromRobot(slamMap, Color.red);
                     var destination = _map.FromSlamMapCoordinate(perpendicularTile.perp);
                     _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall);
@@ -362,7 +364,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             List<Vector2Int> intersectionPoints = new();
             foreach (var line in walls)
             {
-                var otherlines = walls.Where(tempLine => tempLine != line);
+                var otherlines = walls.Where(tempLine => !tempLine.Equals(line));
                 foreach (var otherline in otherlines)
                 {
                     var intersectionPoint = line.GetIntersection(otherline, true);
@@ -510,18 +512,18 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var visibleTiles = _visibleTiles.Select(kv => kv.Key).Distinct();
             var wallTilePositions = visibleWallTiles.Select(wall => wall.Position).Distinct();
             Vector2Int slamPosition = slamMap.GetCurrentPosition();
-            var walls = GetWalls(wallTilePositions);
+            var walls = GetWalls(wallTilePositions, true);
 
             List<(Line2D wall, Vector2Int correction)> correctedWalls = new();
             foreach (var wall in walls)
             {
-                var mid = walls.First().MidPoint;
-                var midWallDirection = CardinalDirection.VectorToDirection(mid - slamPosition);
+                var mid = GetClosestPoints(new List<Line2D> { wall }, slamPosition).First();
+                Vector2 midWallDirection = GetWallDirectionFromLineMidpoint(slamPosition, mid);
                 var correction = new Vector2Int(0, 0);
-                if (midWallDirection.Vector.y < 0)
-                    correction = Vector2Int.down;
-                if (midWallDirection.Vector.x < 0)
-                    correction = Vector2Int.left;
+                if (midWallDirection.y < 0)
+                    correction += Vector2Int.down;
+                if (midWallDirection.x < 0)
+                    correction += Vector2Int.left;
                 correctedWalls.Add((wall, correction));
             }
 
@@ -535,22 +537,30 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                           .Select(r => Vector2Int.FloorToInt(start + wallDirectionVector * r + wall.correction)).ToArray();
                 var lineBroken = presumedUnbrokenLine.Where(tile => visibleTiles.Contains(tile))
                           .Any(tile => slamMap.GetTileStatus(tile) == SlamTileStatus.Open);
-
+                var test = presumedUnbrokenLine.Where(tile => visibleTiles.Contains(tile))
+                          .Select(tile => new { tile = tile, status = slamMap.GetTileStatus(tile) == SlamTileStatus.Open });
                 if (lineBroken)
                 {
                     end.DrawDebugLineFromRobot(slamMap, Color.magenta);
                     var distanceToEnd = (_map.FromSlamMapCoordinate(end) - _position) * new Vector2Int(Mathf.Abs(wallDirectionVector.x), Mathf.Abs(wallDirectionVector.y));
-                    _waypoint = new Waypoint(_position + distanceToEnd + wallDirectionVector * _doorWidth, Waypoint.WaypointType.Door);
-                    _controller.MoveTo(_waypoint.Value.Destination);
-                    _waypoint.Value.Destination.DrawDebugLineFromRobot(_map, Color.green);
-                    _lastWallTile = end;
+                    //_waypoint = new Waypoint(_position + distanceToEnd + wallDirectionVector * _doorWidth, Waypoint.WaypointType.Door);
+                    //_controller.MoveTo(_waypoint.Value.Destination);
+                    //_waypoint.Value.Destination.DrawDebugLineFromRobot(_map, Color.green);
+                    //_lastWallTile = end;
                     return DoorState.Single;
                 }
             }
             else if (walls.Count == 2)
             {
-                var intersectionPoints = GetIntersectionPoints(slamMap, walls);
-                var queryPoints = intersectionPoints.Except(correctedWalls.SelectMany(wall => wall.wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile + wall.correction))));
+                Vector2Int sumCorrection = new(0,0);
+                foreach (var wall in correctedWalls)
+                {
+                    sumCorrection += wall.correction;
+                }
+
+                var intersectionPoints = GetIntersectionPoints(slamMap, walls).Select(tile => tile + sumCorrection);
+                var wallPoints = correctedWalls.SelectMany(wall => wall.wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile + wall.correction)));
+                var queryPoints = intersectionPoints.Except(wallPoints);
                 if (queryPoints.Any())
                 {
                     var queryPoint = queryPoints.First();
@@ -560,11 +570,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                             // Goes into wall at top right with wall due to wrong orientation... rotate back to before move to unseen
                             Vector2Int destinationVector = queryPoint - slamPosition;
                             Vector2 visionVector = Geometry.VectorFromDegreesAndMagnitude(destinationVector.GetAngleRelativeToX(), VisionRadius);
-                            _waypoint = new(_map.FromSlamMapCoordinate(Vector2Int.FloorToInt(destinationVector - visionVector) + slamPosition), Waypoint.WaypointType.Door, true);
-                            _controller.MoveTo(_waypoint.Value.Destination);
-                            _waypoint.Value.Destination.DrawDebugLineFromRobot(_map, Color.green);
-                            _queryPoint = queryPoint;
-                            _lastWalls = walls;
+                            //_waypoint = new(_map.FromSlamMapCoordinate(Vector2Int.FloorToInt(destinationVector - visionVector) + slamPosition), Waypoint.WaypointType.Door, true);
+                            //_controller.MoveTo(_waypoint.Value.Destination);
+                            //_waypoint.Value.Destination.DrawDebugLineFromRobot(_map, Color.green);
+                            //_queryPoint = queryPoint;
+                            //_lastWalls = walls;
                             return DoorState.Intersection;
                         case SlamTileStatus.Open:
                             SetDoorwayFromWalls(walls, queryPoint);
@@ -588,6 +598,14 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return DoorState.None;
         }
 
+        private static Vector2 GetWallDirectionFromLineMidpoint(Vector2Int slamPosition, Vector2 mid)
+        {
+            var direction = mid - slamPosition;
+            direction.x = direction.x > 0 ? Mathf.FloorToInt(direction.x) : Mathf.Ceil(direction.x);
+            direction.y = direction.y > 0 ? Mathf.FloorToInt(direction.y) : Mathf.Ceil(direction.y);
+            return Vector2Int.FloorToInt(direction);
+        }
+
         private void SetDoorwayFromWalls(List<Line2D> walls, Vector2Int queryPoint)
         {
             var slamMap = _controller.GetSlamMap();
@@ -596,12 +614,12 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var center = Vector2Int.FloorToInt((closestPoints.First() + closestPoints.Last()) / 2);
             var (start, end) = (Vector2Int.FloorToInt(closestPoints.First()), Vector2Int.FloorToInt(closestPoints.Last()));
             var newDoorway = new Doorway(start, end, CardinalDirection.VectorToDirection(center - slamPosition));
-            if (_doorways.All(doorway => newDoorway.Equals(doorway)))
+            if (_doorways.All(doorway => !newDoorway.Equals(doorway)))
                 _doorways.Add(newDoorway);
             Debug.DrawLine(slamMap.TileToWorld(start), slamMap.TileToWorld(end), Color.blue, 2);
         }
 
-        private static IEnumerable<Vector2> GetClosestPoints(List<Line2D> walls, Vector2Int queryPoint)
+        private IEnumerable<Vector2> GetClosestPoints(List<Line2D> walls, Vector2Int queryPoint)
         {
             return walls.Select(wall => wall.Rasterize().OrderBy(tile => Vector2.Distance(tile, queryPoint)).First());
         }

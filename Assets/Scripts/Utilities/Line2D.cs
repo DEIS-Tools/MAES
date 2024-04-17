@@ -85,7 +85,12 @@ namespace Maes.Utilities
 
         public Vector2? GetIntersection(Line2D otherline, bool infinite = false)
         {
-            return GetIntersection(otherline._a, otherline._b, infinite);
+            if (IsVertical && otherline.IsVertical || _isHorizontal && otherline._isHorizontal)
+                return null;
+            else if (Mathf.Approximately(_a, otherline._a))
+                return IsVertical ? new(_b, otherline._b) : new(otherline._b, _b);
+            else
+                return GetIntersection(otherline._a, otherline._b, infinite);
         }
 
         // Checks for intersection with an infinite line described by a_1 x + b_2 
