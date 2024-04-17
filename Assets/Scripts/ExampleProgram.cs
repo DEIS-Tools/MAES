@@ -73,14 +73,14 @@ namespace Maes
                 }
             );
 
-            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("hallway_rotate.pgm");
+            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway.pgm");
 
             var scenario = new SimulationScenario(
                 seed: randomSeed,
                 mapSpawner: generator => generator.GenerateMap(map, randomSeed),
                 robotConstraints: constraints,
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
-                    new List<Vector2Int> { new Vector2Int(-24, 0) },
+                    new List<Vector2Int> { new Vector2Int(0, -24) },
                     map,
                     randomSeed,
                     1,

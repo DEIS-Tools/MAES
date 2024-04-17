@@ -69,6 +69,11 @@ namespace Maes.Utilities
             }
         }
 
+        public List<Vector2> GetPoints()
+        {
+            return new List<Vector2> { Start, End };
+        }
+
         public float SlopeIntercept(float x)
         {
             return _a * x + _b;
@@ -83,12 +88,25 @@ namespace Maes.Utilities
             return _a > 0f;
         }
 
+        public bool SameOrientation(Line2D otherLine)
+        {
+            return IsVertical && otherLine.IsVertical || _isHorizontal && otherLine._isHorizontal;
+        }
+
         public Vector2? GetIntersection(Line2D otherline, bool infinite = false)
         {
-            if (IsVertical && otherline.IsVertical || _isHorizontal && otherline._isHorizontal)
-                return null;
-            else if (Mathf.Approximately(_a, otherline._a))
-                return IsVertical ? new(_b, otherline._b) : new(otherline._b, _b);
+            if (Mathf.Approximately(_a, otherline._a))
+            {
+                if (SameOrientation(otherline))
+                {
+                    if (Mathf.Approximately(_b, otherline._b))
+                        return (Start + End + otherline.Start + otherline.End) / 4;
+                    else
+                        return null;
+                }
+                else 
+                    return IsVertical ? new(_b, otherline._b) : new(otherline._b, _b);
+            }
             else
                 return GetIntersection(otherline._a, otherline._b, infinite);
         }
