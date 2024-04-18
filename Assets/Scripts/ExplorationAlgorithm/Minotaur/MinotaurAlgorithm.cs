@@ -34,7 +34,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private Vector2Int? _lastWallTile;
         private List<Line2D> _lastWalls = new();
         private int _logicTicks = 0;
-        private (Vector2Int intersection, List<Line2D> walls) _intersection;
+        private Vector2Int _previousIntersection;
 
         private enum AlgorithmState
         {
@@ -124,10 +124,12 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             if (_potentialDoor)
             {
                 if (IsDestinationReached())
+                {
                     AttemptAddDoorway(GetWalls(wallPoints.Select(wallPoint => wallPoint.Position).Distinct()));
-                _potentialDoor = false;
+                    _potentialDoor = false;
+                }
             }
-            else
+            else if (!_waypoint.HasValue || _waypoint.Value.Type != Waypoint.WaypointType.Door)
                 _potentialDoor = DoorwayDetection(wallPoints);
 
             if (_waypoint.HasValue)
@@ -491,10 +493,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 {
                     Vector2Int destinationVector = intersection.intersection - slamPosition;
                     Vector2 visionVector = Geometry.VectorFromDegreesAndMagnitude(destinationVector.GetAngleRelativeToX(), VisionRadius);
-                    _waypoint = new(_map.FromSlamMapCoordinate(Vector2Int.FloorToInt(destinationVector - visionVector) + slamPosition), Waypoint.WaypointType.Door, false);
+                    var destination = _map.FromSlamMapCoordinate(Vector2Int.FloorToInt(destinationVector - visionVector) + slamPosition);
+                    _waypoint = new(destination, Waypoint.WaypointType.Door, false);
                     _controller.MoveTo(_waypoint.Value.Destination);
                     _waypoint.Value.Destination.DrawDebugLineFromRobot(_map, Color.green);
-                    _intersection = intersection;
+                    _previousIntersection = intersection.intersection;
                     return true;
                 }
                 else if (slamMap.GetTileStatus(intersection.intersection) == SlamTileStatus.Open)
@@ -509,7 +512,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             var slamMap = _controller.GetSlamMap();
             Vector2Int slamPosition = slamMap.GetCurrentPosition();
-            var intersectionPoints = GetIntersectionPoints(slamMap, walls).Distinct().Where(point => !point.walls.All(wall => wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile)).Contains(point.intersection)));
+            var intersectionPoints = GetIntersectionPoints(slamMap, walls).Distinct().Where(point => !point.walls.Any(wall => wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile)).Contains(point.intersection)));
             if (intersectionPoints.Any())
             {
                 Debug.Log($"intersection at {_logicTicks}");
@@ -517,9 +520,12 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 var closest = GetClosestPoints(intersectionPoint.walls, intersectionPoint.intersection);
                 var (start, end) = (closest.First(), closest.Last());
                 var center = (start + end) / 2;
-                if (Mathf.Approximately(Vector2.Distance(start, end), _doorWidth * 2) || (Vector2.Distance(start, end) < _doorWidth && Vector2.Distance(start, end) > 2))
+                var newDoorway = new Doorway(start, end, CardinalDirection.VectorToDirection(center - slamPosition));
+                if (slamMap.GetTileStatus(intersectionPoint.intersection) != SlamTileStatus.Unseen
+                    && (Mathf.Approximately(Vector2.Distance(start, end), _doorWidth * 2) || (Vector2.Distance(start, end) < _doorWidth && Vector2.Distance(start, end) > 2))
+                    && _doorways.All(doorway => !doorway.Equals(newDoorway)))
                 {
-                    _doorways.Add(new(start, end, CardinalDirection.VectorToDirection(center - slamPosition)));
+                    _doorways.Add(newDoorway);
                 }
             }
         }
