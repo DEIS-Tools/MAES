@@ -159,7 +159,7 @@ namespace Maes.Map
         }
 
         public bool IsCoordWithinBounds(Vector2Int coordinate) {
-             return (coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height) && !CheckIfAnyStatusSolid(coordinate);
+             return (coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height) && !CheckIfAnyIsStatus(coordinate, SlamMap.SlamTileStatus.Solid);
             }
 
         delegate SlamMap.SlamTileStatus StatusAggregator(SlamMap.SlamTileStatus s1, SlamMap.SlamTileStatus s2);
@@ -495,12 +495,19 @@ namespace Maes.Map
             // get SLAM coordinates for the coarse grained tiles that needs to be checked
             var nextCoordinateSlam = GetSlamTileStatuses(nextCoordinate);
             var currentCoordinateSlam = GetSlamTileStatuses(currentCoordinate);
+            var solid = SlamMap.SlamTileStatus.Solid;
+            var unseen = SlamMap.SlamTileStatus.Unseen;
+            var open = SlamMap.SlamTileStatus.Open;
 
             // If all SLAM tiles are solid, just return solid
-            var isOpen = SlamMap.SlamTileStatus.Open;
-            if (CheckIfAnyStatusSolid(nextCoordinate) || CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAllSlamStatusesSolid(nextCoordinate) || CheckIfAllSlamStatusesSolid(currentCoordinate)) {
+            if (CheckIfAnyIsStatus(nextCoordinate, solid) || CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAllSlamStatusesSolid(nextCoordinate) || CheckIfAllSlamStatusesSolid(currentCoordinate)) {
                 return true;
             }
+            if (CheckIfAnyIsStatus(currentCoordinate, open) && CheckIfAnyIsStatus(nextCoordinate, open))
+                {
+                    return false;
+                }
+            return true;
             // Check what other tiles needs to be checked by determining path direction
             if (currentCoordinate.x < nextCoordinate.x) {
                 //nextCoordinate is right
@@ -512,24 +519,24 @@ namespace Maes.Map
                    // cc
                     var bottomRightSlam = GetSlamTileStatuses(currentCoordinate + Vector2Int.right);
                     var topLeftSlam = GetSlamTileStatuses(nextCoordinate + Vector2Int.left);
-                    if ((currentCoordinateSlam[3] != isOpen || bottomRightSlam[2] != isOpen ||
-                        topLeftSlam[1] != isOpen || nextCoordinateSlam[0] != isOpen) &&
+                    if ((currentCoordinateSlam[3] != open || bottomRightSlam[2] != open ||
+                        topLeftSlam[1] != open || nextCoordinateSlam[0] != open) &&
                         CheckForUnseen(nextCoordinate + Vector2Int.left) && CheckForUnseen(currentCoordinate + Vector2Int.right))
                         {
                             if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || (CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.right) &&
-                                    CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.left))) && !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
+                                    CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.left))) && !(CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAnyIsStatus(nextCoordinate, solid)))
                                 {
                                 }
-                                    Debug.Log($"Case xn\n" +
-                                              $"Case cx\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n" +
-                                              $"Left    coordinate: {topLeftSlam[2]} {topLeftSlam[3]}\n" +
-                                              $"Left    coordinate: {topLeftSlam[0]} {topLeftSlam[1]}\n"+
-                                              $"Right   coordinate: {bottomRightSlam[2]} {bottomRightSlam[3]}\n" +
-                                              $"Right   coordinate: {bottomRightSlam[0]} {bottomRightSlam[1]}\n");
+                                    //Debug.Log($"Case xn\n" +
+                                    //          $"Case cx\n" +
+                                    //          $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
+                                    //          $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
+                                    //          $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
+                                    //          $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n" +
+                                    //          $"Left    coordinate: {topLeftSlam[2]} {topLeftSlam[3]}\n" +
+                                    //          $"Left    coordinate: {topLeftSlam[0]} {topLeftSlam[1]}\n"+
+                                    //          $"Right   coordinate: {bottomRightSlam[2]} {bottomRightSlam[3]}\n" +
+                                    //          $"Right   coordinate: {bottomRightSlam[0]} {bottomRightSlam[1]}\n");
                             return true;
                         }
                     return false;
@@ -543,24 +550,24 @@ namespace Maes.Map
                     //  nn
                     var topRightSlam = GetSlamTileStatuses(currentCoordinate + Vector2Int.right);
                     var bottomLeftSlam = GetSlamTileStatuses(nextCoordinate + Vector2Int.left);
-                    if ((currentCoordinateSlam[1] != isOpen || topRightSlam[0] != isOpen ||
-                        bottomLeftSlam[3] != isOpen || nextCoordinateSlam[2] != isOpen) &&
+                    if ((currentCoordinateSlam[1] != open || topRightSlam[0] != open ||
+                        bottomLeftSlam[3] != open || nextCoordinateSlam[2] != open) &&
                         CheckForUnseen(nextCoordinate + Vector2Int.left) && CheckForUnseen(currentCoordinate + Vector2Int.right))
                         {
                             if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || (CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right) &&
-                                  CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.left))) && !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
+                                  CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.left))) && !(CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAnyIsStatus(nextCoordinate, solid)))
                                 {
                                 }
-                                    Debug.Log($"Case cx\n" +
-                                              $"Case xn\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n" +
-                                              $"Left    coordinate: {bottomLeftSlam[2]} {bottomLeftSlam[3]}\n" +
-                                              $"Left    coordinate: {bottomLeftSlam[0]} {bottomLeftSlam[1]}\n" +
-                                              $"Right   coordinate: {topRightSlam[2]} {topRightSlam[3]}\n" +
-                                              $"$Right   coordinate: {topRightSlam[0]} {topRightSlam[1]}\n");
+                                    //Debug.Log($"Case cx\n" +
+                                    //          $"Case xn\n" +
+                                    //          $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
+                                    //          $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
+                                    //          $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
+                                    //          $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n" +
+                                    //          $"Left    coordinate: {bottomLeftSlam[2]} {bottomLeftSlam[3]}\n" +
+                                    //          $"Left    coordinate: {bottomLeftSlam[0]} {bottomLeftSlam[1]}\n" +
+                                    //          $"Right   coordinate: {topRightSlam[2]} {topRightSlam[3]}\n" +
+                                    //          $"$Right   coordinate: {topRightSlam[0]} {topRightSlam[1]}\n");
                             return true;
                         }
                     return false;
@@ -568,20 +575,20 @@ namespace Maes.Map
                 else {
                     //ccnn
                     //ccnn
-                    if ((currentCoordinateSlam[1] != isOpen && currentCoordinateSlam[3] != isOpen) ||
-                        (nextCoordinateSlam[0] != isOpen && currentCoordinateSlam[2] != isOpen))
+                    if ((currentCoordinateSlam[1] != open && currentCoordinateSlam[3] != open) ||
+                        (nextCoordinateSlam[0] != open && currentCoordinateSlam[2] != open))
                         {
                             if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate)) &&
-                                  !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
+                                  !(CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAnyIsStatus(nextCoordinate, solid)))
                                 {
-                                    Debug.Log($"Case cn\n" +
-                                              $"Case cn\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n");
-                            return true;
+                                    //Debug.Log($"Case cn\n" +
+                                    //          $"Case cn\n" +
+                                    //          $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
+                                    //          $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
+                                    //          $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
+                                    //          $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n");
                                 }
+                            return true;
                         }
                     //if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.up) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.down)))
                     //    {
@@ -601,24 +608,24 @@ namespace Maes.Map
                     //   cc
                     var topRightSlam = GetSlamTileStatuses(nextCoordinate + Vector2Int.right);
                     var bottomLeftSlam = GetSlamTileStatuses(currentCoordinate + Vector2Int.left);
-                    if ((nextCoordinateSlam[1] != isOpen || topRightSlam[0] != isOpen ||
-                        bottomLeftSlam[3] != isOpen || currentCoordinateSlam[2] != isOpen) &&
+                    if ((nextCoordinateSlam[1] != open || topRightSlam[0] != open ||
+                        bottomLeftSlam[3] != open || currentCoordinateSlam[2] != open) &&
                         CheckForUnseen(currentCoordinate + Vector2Int.left) && CheckForUnseen(nextCoordinate + Vector2Int.right))
                         {
                             if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || (CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right) &&
-                                  CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.left))) && !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
+                                  CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.left))) && !(CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAnyIsStatus(nextCoordinate, solid)))
                                 {
                                 }
-                                    Debug.Log($"Case nx\n" +
-                                              $"Case xc\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n" +
-                                              $"Left    coordinate: {bottomLeftSlam[2]} {bottomLeftSlam[3]}\n" +
-                                              $"Left    coordinate: {bottomLeftSlam[0]} {bottomLeftSlam[1]}\n" +
-                                              $"Right   coordinate: {topRightSlam[2]} {topRightSlam[3]}\n" +
-                                              $"Right   coordinate: {topRightSlam[0]} {topRightSlam[1]}\n");
+                                   // Debug.Log($"Case nx\n" +
+                                   //           $"Case xc\n" +
+                                   //           $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
+                                   //           $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
+                                   //           $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
+                                   //           $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n" +
+                                   //           $"Left    coordinate: {bottomLeftSlam[2]} {bottomLeftSlam[3]}\n" +
+                                   //           $"Left    coordinate: {bottomLeftSlam[0]} {bottomLeftSlam[1]}\n" +
+                                   //           $"Right   coordinate: {topRightSlam[2]} {topRightSlam[3]}\n" +
+                                   //           $"Right   coordinate: {topRightSlam[0]} {topRightSlam[1]}\n");
                             return true;
                         }
                     return false;
@@ -631,24 +638,24 @@ namespace Maes.Map
                     // nn
                     var bottomRightSlam = GetSlamTileStatuses(nextCoordinate + Vector2Int.right);
                     var topLeftSlam = GetSlamTileStatuses(currentCoordinate + Vector2Int.left);
-                    if ((nextCoordinateSlam[3] != isOpen || bottomRightSlam[2] != isOpen ||
-                        topLeftSlam[1] != isOpen || currentCoordinateSlam[0] != isOpen) &&
+                    if ((nextCoordinateSlam[3] != open || bottomRightSlam[2] != open ||
+                        topLeftSlam[1] != open || currentCoordinateSlam[0] != open) &&
                         CheckForUnseen(currentCoordinate + Vector2Int.left) && CheckForUnseen(nextCoordinate + Vector2Int.right))
                         {
                             if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate) || (CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right) &&
-                                  CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.left))) && !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
+                                  CheckIfAllSlamStatusesSolid(currentCoordinate + Vector2Int.left))) && !(CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAnyIsStatus(nextCoordinate, solid)))
                                 {
                                 }
-                                    Debug.Log($"Case xc\n" +
-                                              $"Case nx\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n" +
-                                              $"Left    coordinate: {topLeftSlam[2]} {topLeftSlam[3]}\n" +
-                                              $"Left    coordinate: {topLeftSlam[0]} {topLeftSlam[1]}\n" +
-                                              $"Right   coordinate: {bottomRightSlam[2]} {bottomRightSlam[3]}\n" +
-                                              $"Right   coordinate: {bottomRightSlam[0]} {bottomRightSlam[1]}\n");
+                                  //  Debug.Log($"Case xc\n" +
+                                  //            $"Case nx\n" +
+                                  //            $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
+                                  //            $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
+                                  //            $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
+                                  //            $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n" +
+                                  //            $"Left    coordinate: {topLeftSlam[2]} {topLeftSlam[3]}\n" +
+                                  //            $"Left    coordinate: {topLeftSlam[0]} {topLeftSlam[1]}\n" +
+                                  //            $"Right   coordinate: {bottomRightSlam[2]} {bottomRightSlam[3]}\n" +
+                                  //            $"Right   coordinate: {bottomRightSlam[0]} {bottomRightSlam[1]}\n");
                             return true;
                         }
                     return false;
@@ -656,19 +663,19 @@ namespace Maes.Map
                 else {
                     //nncc
                     //nncc
-                    if ((currentCoordinateSlam[0] != isOpen && currentCoordinateSlam[2] != isOpen) ||
-                        (nextCoordinateSlam[1] != isOpen && currentCoordinateSlam[3] != isOpen))
+                    if ((currentCoordinateSlam[0] != open && currentCoordinateSlam[2] != open) ||
+                        (nextCoordinateSlam[1] != open && currentCoordinateSlam[3] != open))
                         {
                             if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate)) &&
-                                  !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
+                                  !(CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAnyIsStatus(nextCoordinate, solid)))
                                 {
                                 }
-                                    Debug.Log($"Case nc\n" +
-                                              $"Case nc\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n");
+                                 //   Debug.Log($"Case nc\n" +
+                                 //             $"Case nc\n" +
+                                 //             $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
+                                 //             $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
+                                 //             $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
+                                 //             $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n");
                             return true;
                         }
                     //if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.up) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.down)))
@@ -686,19 +693,19 @@ namespace Maes.Map
                     // nn
                     // cc
                     // cc
-                    if ((currentCoordinateSlam[2] != isOpen && currentCoordinateSlam[3] != isOpen) ||
-                        (nextCoordinateSlam[0] != isOpen && currentCoordinateSlam[1] != isOpen))
+                    if ((currentCoordinateSlam[2] != open && currentCoordinateSlam[3] != open) ||
+                        (nextCoordinateSlam[0] != open && currentCoordinateSlam[1] != open))
                         {
                             if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate)) &&
-                                  !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
+                                  !(CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAnyIsStatus(nextCoordinate, solid)))
                                 {
                                 }
-                                    Debug.Log($"Case nn\n" +
-                                              $"Case cc\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n");
+                                //    Debug.Log($"Case nn\n" +
+                                //              $"Case cc\n" +
+                                //              $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
+                                //              $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
+                                //              $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
+                                //              $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n");
                             return true;
                         }
                     //if ((!CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.left) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right)))
@@ -713,19 +720,19 @@ namespace Maes.Map
                     // cc
                     // nn
                     // nn
-                    if ((currentCoordinateSlam[0] != isOpen && currentCoordinateSlam[1] != isOpen) ||
-                        (nextCoordinateSlam[2] != isOpen && currentCoordinateSlam[3] != isOpen))
+                    if ((currentCoordinateSlam[0] != open && currentCoordinateSlam[1] != open) ||
+                        (nextCoordinateSlam[2] != open && currentCoordinateSlam[3] != open))
                         {
                             if ( (CheckForUnseen(currentCoordinate) ||  CheckForUnseen(nextCoordinate)) &&
-                                  !(CheckIfAnyStatusSolid(currentCoordinate) || CheckIfAnyStatusSolid(nextCoordinate)))
+                                  !(CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAnyIsStatus(nextCoordinate, solid)))
                                 {
                                 }
-                                    Debug.Log($"Case cc\n" +
-                                              $"Case nn\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
-                                              $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
-                                              $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n");
+                               //     Debug.Log($"Case cc\n" +
+                               //               $"Case nn\n" +
+                               //               $"Current coordinate: {currentCoordinateSlam[2]} {currentCoordinateSlam[3]}\n" +
+                               //               $"Current coordinate: {currentCoordinateSlam[0]} {currentCoordinateSlam[1]}\n" +
+                               //               $"Next    coordinate: {nextCoordinateSlam[2]} {nextCoordinateSlam[3]}\n" +
+                               //               $"Next    coordinate: {nextCoordinateSlam[0]} {nextCoordinateSlam[1]}\n");
                             return true;
                         }
                     //if (!(CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.left) || CheckIfAllSlamStatusesSolid(nextCoordinate + Vector2Int.right)))
@@ -761,11 +768,11 @@ namespace Maes.Map
 
             return false;
         }
-        private bool CheckIfAnyStatusSolid(Vector2Int coordinate)
+        private bool CheckIfAnyIsStatus(Vector2Int coordinate, SlamMap.SlamTileStatus status)
             {
                 var statuses = GetSlamTileStatuses(coordinate);
                 foreach (var coord in statuses) {
-                    if (coord == SlamMap.SlamTileStatus.Solid) {
+                    if (coord == status) {
                         return true;
                     }
                 }
