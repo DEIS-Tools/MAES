@@ -125,9 +125,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var wallPoints = GetWallsNearRobot();
             if (!_waypoint.HasValue)
             {
-                
+
                 DoorwayDetection(wallPoints);
-             }
+            }
             if (_waypoint.HasValue)
             {
                 var waypoint = _waypoint.Value;
@@ -222,6 +222,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var slamTiles = _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Solid }, slamPrecision: true)
                                      .Where(tile => slamMap.GetTileStatus(tile) == SlamTileStatus.Solid)
                                      .ToList();
+            slamTiles.AddRange(DoorwayTilesInVision(VisionRadius + 2));
             if (slamTiles.Count() < 2) return false;
             var coarseTileAhead = _edgeDetector.GetFurthestTileAroundRobot(_controller.GetGlobalAngle(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid }, snapToGrid: true);
             var localLeft = (_controller.GetGlobalAngle() + (_map.GetTileStatus(coarseTileAhead) == SlamTileStatus.Solid ? 90 : 0)) % 360;
@@ -273,6 +274,20 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return false;
         }
 
+        /// <summary>
+        /// Gets the doorway tiles that are within range of the robot to a radius in coarse tiles<para/>
+        /// Utilizes this inequality (x - slamPosition.x)^2 + (y - slamPosition.y)^2 = r^2 &lt; <paramref name="radius"/>^2 <para/>
+        /// Based on <see href="https://math.stackexchange.com/questions/1307832/how-to-tell-if-x-y-coordinate-is-within-a-circle">How to tell if (X,Y) coordinate is within a Circle</see>
+        /// </summary>
+        /// <param name="radius">The radius in coarse tiles from the robot. R in the inequality</param>
+        /// <returns>Doorway tiles around the robot within range</returns>
+        private IEnumerable<Vector2Int> DoorwayTilesInVision(int radius)
+        {
+            var slamPosition = _controller.GetSlamMap().GetCurrentPosition();
+            var maxRadius = Mathf.Pow(radius * 2, 2);
+            return _doorways.SelectMany(doorway => doorway.Tiles).Where(tile => (Mathf.Pow(tile.x - slamPosition.x, 2) + Mathf.Pow(tile.y - slamPosition.y, 2)) < maxRadius);
+        }
+
         private List<Line2D> GetWalls(IEnumerable<Vector2Int> tiles)
         {
             if (tiles.Count() < 2) return new();
@@ -307,12 +322,12 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var furthestPoint = correctedTiles.OrderByDescending(tile => Vector2.Distance(slamPosition, tile.corrected)).First().corrected;
 
             var sortedTiles = correctedTiles.Distinct()
-                                            .OrderBy(tile => (Vector2.SignedAngle(furthestPoint-slamPosition, tile.corrected - slamPosition) + 360) % 360) // Should be 180 aka backwards
+                                            .OrderBy(tile => (Vector2.SignedAngle(furthestPoint - slamPosition, tile.corrected - slamPosition) + 360) % 360) // Should be 180 aka backwards
                                             .ThenByDescending(tile => Vector2.Distance(leftAngleVector * VisionRadius + slamPosition, tile.corrected))
                                             .ToArray();
             var test = sortedTiles.Select(tile => (Vector2.SignedAngle(leftAngleVector, tile.corrected - slamPosition) + 360) % 360);
 
-            
+
             var startPoint = sortedTiles.First(); // Top right is borked
             var previousDirection = (startPoint.corrected - sortedTiles[1].corrected).GetAngleRelativeToX();
 
@@ -510,7 +525,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             if (intersectionPoints.Any())
             {
                 var intersection = intersectionPoints.First();
-                 if (_previousIntersections.Contains(intersection.intersection))
+                if (_previousIntersections.Contains(intersection.intersection))
                 {
                     return false;
                 }
@@ -543,7 +558,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 var (start, end) = (closest.First(), closest.Last());
                 var center = (start + end) / 2;
                 if (slamMap.GetTileStatus(intersectionPoint.intersection) != SlamTileStatus.Unseen
-                    && (Mathf.Approximately(Vector2.Distance(start, end), _doorWidth * 2) || (Vector2.Distance(start, end) <= _doorWidth*2 && Vector2.Distance(start, end) >= 3)))
+                    && (Mathf.Approximately(Vector2.Distance(start, end), _doorWidth * 2) || (Vector2.Distance(start, end) <= _doorWidth * 2 && Vector2.Distance(start, end) >= 3)))
                 {
                     var newDoorway = new Doorway(start, end, CardinalDirection.VectorToDirection(center - slamPosition));
                     if (_doorways.All(doorway => !doorway.Equals(newDoorway)))
