@@ -80,7 +80,7 @@ namespace Maes
                 mapSpawner: generator => generator.GenerateMap(map, randomSeed),
                 robotConstraints: constraints,
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
-                    new List<Vector2Int> { new Vector2Int(0, -24) },
+                    new List<Vector2Int> { new Vector2Int(0, 0) },
                     map,
                     randomSeed,
                     1,

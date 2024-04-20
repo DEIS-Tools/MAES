@@ -144,7 +144,7 @@ namespace PlayModeTests
                 yield return null;
             }
 
-            Assert.AreEqual(0, _minotaurs.First().GetDoorways().Count);
+            Assert.AreEqual(1, _minotaurs.First().GetDoorways().Count);
         }
     }
 }
