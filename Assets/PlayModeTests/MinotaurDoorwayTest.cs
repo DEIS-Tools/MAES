@@ -83,6 +83,17 @@ namespace PlayModeTests
             _simulation = _maes.GetSimulationManager().CurrentSimulation;
         }
 
+        private IEnumerator AssertDoorsWhenFinished(int doorAmount)
+        {
+
+            while (_simulation.ExplorationTracker.ExploredProportion < 0.999f)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(doorAmount, _minotaurs.First().GetDoorways().Count);
+        }
+
         [Test(ExpectedResult = null)]
         public IEnumerator BlankMap()
         {
@@ -90,13 +101,7 @@ namespace PlayModeTests
 
             _maes.PressPlayButton();
             _maes.GetSimulationManager().AttemptSetPlayState(Maes.UI.SimulationPlayState.FastAsPossible);
-
-            while (_simulation.ExplorationTracker.ExploredProportion < 0.99f)
-            {
-                yield return null;
-            }
-
-            Assert.AreEqual(0, _minotaurs.First().GetDoorways().Count);
+            return AssertDoorsWhenFinished(0);
         }
 
         [Test(ExpectedResult = null)]
@@ -106,13 +111,7 @@ namespace PlayModeTests
 
             _maes.PressPlayButton();
             _maes.GetSimulationManager().AttemptSetPlayState(Maes.UI.SimulationPlayState.FastAsPossible);
-
-            while (_simulation.ExplorationTracker.ExploredProportion < 0.99f)
-            {
-                yield return null;
-            }
-
-            Assert.AreEqual(1, _minotaurs.First().GetDoorways().Count);
+            return AssertDoorsWhenFinished(1);
         }
 
         [Test(ExpectedResult = null)]
@@ -122,13 +121,7 @@ namespace PlayModeTests
 
             _maes.PressPlayButton();
             _maes.GetSimulationManager().AttemptSetPlayState(Maes.UI.SimulationPlayState.FastAsPossible);
-
-            while (_simulation.ExplorationTracker.ExploredProportion < 0.99f)
-            {
-                yield return null;
-            }
-
-            Assert.AreEqual(1, _minotaurs.First().GetDoorways().Count);
+            return AssertDoorsWhenFinished(1);
         }
 
         [Test(ExpectedResult = null)]
@@ -138,13 +131,7 @@ namespace PlayModeTests
 
             _maes.PressPlayButton();
             _maes.GetSimulationManager().AttemptSetPlayState(Maes.UI.SimulationPlayState.FastAsPossible);
-
-            while (_simulation.ExplorationTracker.ExploredProportion < 0.99f)
-            {
-                yield return null;
-            }
-
-            Assert.AreEqual(1, _minotaurs.First().GetDoorways().Count);
+            return AssertDoorsWhenFinished(1);
         }
     }
 }

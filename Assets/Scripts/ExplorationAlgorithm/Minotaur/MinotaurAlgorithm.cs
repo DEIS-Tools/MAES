@@ -125,12 +125,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var wallPoints = GetWallsNearRobot();
             if (!_waypoint.HasValue)
             {
-                if (_logicTicks == 1837)
-                {
-                    var a = 1;
-                }
+                
                 DoorwayDetection(wallPoints);
-            }
+             }
             if (_waypoint.HasValue)
             {
                 var waypoint = _waypoint.Value;
@@ -307,14 +304,15 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             }
 
             var leftAngleVector = CardinalDirection.AngleToDirection(forwardAngle + 90).Vector;
+            var furthestPoint = correctedTiles.OrderByDescending(tile => Vector2.Distance(slamPosition, tile.corrected)).First().corrected;
+
             var sortedTiles = correctedTiles.Distinct()
-                                            .OrderBy(tile => (Vector2.SignedAngle(leftAngleVector, tile.corrected - slamPosition) + 360) % 360) // Should be 180 aka backwards
+                                            .OrderBy(tile => (Vector2.SignedAngle(furthestPoint-slamPosition, tile.corrected - slamPosition) + 360) % 360) // Should be 180 aka backwards
                                             .ThenByDescending(tile => Vector2.Distance(leftAngleVector * VisionRadius + slamPosition, tile.corrected))
                                             .ToArray();
-            if (_logicTicks == 679)
-            {
-                var a = 1;
-            }
+            var test = sortedTiles.Select(tile => (Vector2.SignedAngle(leftAngleVector, tile.corrected - slamPosition) + 360) % 360);
+
+            
             var startPoint = sortedTiles.First(); // Top right is borked
             var previousDirection = (startPoint.corrected - sortedTiles[1].corrected).GetAngleRelativeToX();
 
@@ -508,11 +506,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var walls = GetWalls(wallTilePositions);
             walls.ToList().ForEach(wall => Debug.DrawLine(slamMap.TileToWorld(wall.Start), slamMap.TileToWorld(wall.End), Color.white, 0.1f));
 
-            var intersectionPoints = GetIntersectionPoints(slamMap, walls).Distinct().Where(point => !point.walls.Any(wall => wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile)).Contains(point.intersection)));
+            var intersectionPoints = GetIntersectionPoints(slamMap, walls).Distinct().Where(point => !point.walls.All(wall => wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile)).Contains(point.intersection)));
             if (intersectionPoints.Any())
             {
                 var intersection = intersectionPoints.First();
-                if (_previousIntersections.Contains(intersection.intersection))
+                 if (_previousIntersections.Contains(intersection.intersection))
                 {
                     return false;
                 }
@@ -537,7 +535,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             var slamMap = _controller.GetSlamMap();
             Vector2Int slamPosition = slamMap.GetCurrentPosition();
-            var intersectionPoints = GetIntersectionPoints(slamMap, walls).Distinct().Where(point => !point.walls.Any(wall => wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile)).Contains(point.intersection)));
+            var intersectionPoints = GetIntersectionPoints(slamMap, walls).Distinct().Where(point => !point.walls.All(wall => wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile)).Contains(point.intersection)));
             if (intersectionPoints.Any())
             {
                 var intersectionPoint = intersectionPoints.First();
@@ -545,7 +543,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 var (start, end) = (closest.First(), closest.Last());
                 var center = (start + end) / 2;
                 if (slamMap.GetTileStatus(intersectionPoint.intersection) != SlamTileStatus.Unseen
-                    && (Mathf.Approximately(Vector2.Distance(start, end), _doorWidth * 2) || (Vector2.Distance(start, end) < _doorWidth && Vector2.Distance(start, end) >= 3)))
+                    && (Mathf.Approximately(Vector2.Distance(start, end), _doorWidth * 2) || (Vector2.Distance(start, end) <= _doorWidth*2 && Vector2.Distance(start, end) >= 3)))
                 {
                     var newDoorway = new Doorway(start, end, CardinalDirection.VectorToDirection(center - slamPosition));
                     if (_doorways.All(doorway => !doorway.Equals(newDoorway)))
