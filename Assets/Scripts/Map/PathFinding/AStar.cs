@@ -270,7 +270,7 @@ namespace Maes.Map.PathFinding
                     foreach (var dir in directions)
                     {
                         if (!pathFindingMap.IsWithinBounds(target + dir)
-                            || (excludedTiles == null || excludedTiles.Contains(target + dir))
+                            || (excludedTiles != null && excludedTiles.Contains(target + dir))
                             || pathFindingMap.GetTileStatus(target + dir) == SlamTileStatus.Solid)
                             continue;
 

@@ -125,7 +125,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var wallPoints = GetWallsNearRobot();
             if (!_waypoint.HasValue)
             {
-
                 DoorwayDetection(wallPoints);
             }
             if (_waypoint.HasValue)
@@ -178,30 +177,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     {
                         if (!IsAroundExplorable(2))
                         {
-                            MoveToNearestUnseenWithinRoom();
-                            break;
+                            if (MoveToNearestUnseenWithinRoom()) break;
+                            else if (MovetoNearestDoorway()) break;
+                            else if (MoveToNearestUnseen()) break;
+                            else _currentState = AlgorithmState.Done;
                         }
                         else if (MoveAlongWall()) break;
                         else if (MoveToCornerCoverage()) break;
                         else if (MoveToNearestEdge()) break;
-                        else MoveToNearestUnseenWithinRoom();
+                        else if (MoveToNearestUnseenWithinRoom()) break;
+                        else if (MovetoNearestDoorway()) break;
+                        else if (MoveToNearestUnseen()) break;
+                        else _currentState = AlgorithmState.Done;
                     }
                     break;
                 case AlgorithmState.Auctioning:
                     break;
                 case AlgorithmState.MovingToDoorway:
-                    var nearestDoorway = GetNearestUnexploredDoorway();
-                    if (nearestDoorway != null)
-                    {
-                        _waypoint = new Waypoint(_map.FromSlamMapCoordinate(nearestDoorway.Center + nearestDoorway.ApproachedDirection.Vector * 4), Waypoint.WaypointType.NearestDoor, true);
-                        _controller.PathAndMoveTo(_waypoint.Value.Destination);
-                        _currentState = AlgorithmState.ExploreRoom;
-                        nearestDoorway.Explored = true;
-                    }
-                    else
-                    {
-                        _currentState = AlgorithmState.Done;
-                    }
                     break;
                 case AlgorithmState.Done:
                     break;
@@ -222,7 +214,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var slamTiles = _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Solid }, slamPrecision: true)
                                      .Where(tile => slamMap.GetTileStatus(tile) == SlamTileStatus.Solid)
                                      .ToList();
-            slamTiles.AddRange(DoorwayTilesInVision(VisionRadius + 2));
+            slamTiles.AddRange(DoorwayTilesInVision(VisionRadius * 2));
             if (slamTiles.Count() < 2) return false;
             var coarseTileAhead = _edgeDetector.GetFurthestTileAroundRobot(_controller.GetGlobalAngle(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid }, snapToGrid: true);
             var localLeft = (_controller.GetGlobalAngle() + (_map.GetTileStatus(coarseTileAhead) == SlamTileStatus.Solid ? 90 : 0)) % 360;
@@ -257,7 +249,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
             thirdPointDirectionVector = CardinalDirection.AngleToDirection((thirdPoint - perpendicularTile.point).GetAngleRelativeToX()).Vector;
             var thirdPointDirectionVectorPerpendicular = CardinalDirection.PerpendicularDirection(thirdPointDirectionVector).Vector;
-            for (int i = 1; i < 4; i++)
+            for (int i = 1; i < VisionRadius * 2; i++)
             {
                 var possibleUnseen = thirdPoint + (thirdPointDirectionVector * i) + thirdPointDirectionVectorPerpendicular;
                 //if (_map.IsWithinBounds(possibleUnseen) && _map.GetTileStatus(possibleUnseen) == SlamTileStatus.Solid) 
@@ -288,16 +280,14 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         /// <summary>
         /// Gets the doorway tiles that are within range of the robot to a radius in coarse tiles<para/>
-        /// Utilizes this inequality (x - slamPosition.x)^2 + (y - slamPosition.y)^2 = r^2 &lt; <paramref name="radius"/>^2 <para/>
-        /// Based on <see href="https://math.stackexchange.com/questions/1307832/how-to-tell-if-x-y-coordinate-is-within-a-circle">How to tell if (X,Y) coordinate is within a Circle</see>
+        /// Utilizing the equation of <see cref="Geometry.PointsWithinCircle(IEnumerable{Vector2Int}, Vector2, float)"/>
         /// </summary>
         /// <param name="radius">The radius in coarse tiles from the robot. R in the inequality</param>
         /// <returns>Doorway tiles around the robot within range</returns>
         private IEnumerable<Vector2Int> DoorwayTilesInVision(int radius)
         {
             var slamPosition = _controller.GetSlamMap().GetCurrentPosition();
-            var maxRadius = Mathf.Pow(radius * 2, 2);
-            return _doorways.SelectMany(doorway => doorway.Tiles).Where(tile => (Mathf.Pow(tile.x - slamPosition.x, 2) + Mathf.Pow(tile.y - slamPosition.y, 2)) < maxRadius);
+            return Geometry.PointsWithinCircle(_doorways.SelectMany(doorway => doorway.Tiles), slamPosition, radius);
         }
 
         private List<Line2D> GetWalls(IEnumerable<Vector2Int> tiles)
@@ -374,7 +364,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return result;
         }
 
-        private List<(Vector2Int intersection, List<Line2D> walls)> GetIntersectionPoints(IPathFindingMap map, List<Line2D> walls)
+        private List<(Vector2Int intersection, List<Line2D> walls)> GetIntersectionPoints(IPathFindingMap map, IEnumerable<Line2D> walls)
         {
             List<(Vector2Int intersection, List<Line2D> walls)> intersectionPoints = new();
             foreach (var line in walls)
@@ -466,10 +456,19 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return true;
         }
 
-        private void MoveToNearestUnseenWithinRoom()
+        private bool MoveToNearestUnseenWithinRoom()
         {
-            var doorTiles = _doorways.SelectMany(doorway => _map.FromSlamMapCoordinates(doorway.Tiles.ToList()));
-            var tile = _map.GetNearestTileFloodFill(_position, SlamTileStatus.Unseen, doorTiles.ToHashSet());
+            var doorTiles = _doorways.SelectMany(doorway => _map.FromSlamMapCoordinates(doorway.Tiles.ToList())).ToHashSet();
+            var startCoordinate = _position;
+            if (_map.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
+            {
+                var NearestOpenTile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open, doorTiles);
+                if (NearestOpenTile.HasValue)
+                {
+                    startCoordinate = NearestOpenTile.Value;
+                }
+            }
+            var tile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, doorTiles);
             if (tile.HasValue)
             {
                 tile = _map.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
@@ -477,12 +476,44 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 {
                     _controller.PathAndMoveTo(tile.Value);
                     _waypoint = new Waypoint(tile.Value, Waypoint.WaypointType.Greed, true);
+                    return true;
                 }
             }
-            else
+            return false;
+        }
+
+        private bool MovetoNearestDoorway()
+        {
+            var nearestDoorway = GetNearestUnexploredDoorway();
+            if (nearestDoorway != null)
             {
-                _currentState = AlgorithmState.MovingToDoorway;
+                _waypoint = new Waypoint(_map.FromSlamMapCoordinate(nearestDoorway.Center + nearestDoorway.ApproachedDirection.Vector * 4), Waypoint.WaypointType.NearestDoor, true);
+                _controller.PathAndMoveTo(_waypoint.Value.Destination);
+                nearestDoorway.Explored = true;
+                return true;
             }
+            return false;
+        }
+
+        private bool MoveToNearestUnseen()
+        {
+            var startCoordinate = _position;
+            if (_map.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
+            {
+                var NearestOpenTile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open);
+                if (NearestOpenTile.HasValue)
+                {
+                    startCoordinate = NearestOpenTile.Value;
+                }
+            }
+            var tile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen);
+            if (tile.HasValue)
+            {
+                _controller.PathAndMoveTo(tile.Value);
+                _waypoint = new Waypoint(tile.Value, Waypoint.WaypointType.Greed, true);
+                return true;
+            }
+            return false;
         }
 
         private bool IsDestinationReached()
@@ -524,45 +555,77 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                                      .ToList();
         }
 
-        private bool DoorwayDetection(List<RelativeWall> visibleWallTiles)
+        private void DoorwayDetection(List<RelativeWall> visibleWallTiles)
         {
-            if (!visibleWallTiles.Any()) return false;
+            if (!visibleWallTiles.Any()) return;
             var slamMap = _controller.GetSlamMap();
             var wallTilePositions = visibleWallTiles.Select(wall => wall.Position).Distinct();
             Vector2Int slamPosition = slamMap.GetCurrentPosition();
-            var walls = GetWalls(wallTilePositions);
+            var walls = GetWalls(wallTilePositions).Where(wall => wall.Start != wall.End);
             walls.ToList().ForEach(wall => Debug.DrawLine(slamMap.TileToWorld(wall.Start), slamMap.TileToWorld(wall.End), Color.white, 0.1f));
 
-            var intersectionPoints = GetIntersectionPoints(slamMap, walls).Distinct().Where(point => !point.walls.All(wall => wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile)).Contains(point.intersection)));
-            if (intersectionPoints.Any())
+            if (walls.Count() == 1)
             {
-                var intersection = intersectionPoints.First();
-                if (_previousIntersections.Contains(intersection.intersection))
-                {
-                    return false;
-                }
-                _previousIntersections.Add(intersection.intersection);
+                var wall = walls.First();
+                var (start, end) = (Vector2Int.FloorToInt(wall.Start), Vector2Int.FloorToInt(wall.End));
+                var wallDirectionVector = CardinalDirection.DirectionFromDegrees((end - start).GetAngleRelativeToX()).Vector;
+                var closestWallPoint = wallTilePositions.OrderBy(tile => Vector2.Distance(slamPosition, tile)).First();
+                var presumedUnbrokenLine = Enumerable.Range(0, VisionRadius * 2)
+                          .Select(r => Vector2Int.FloorToInt(closestWallPoint + wallDirectionVector * r)).ToArray();
+                var lineBroken = Geometry.PointsWithinCircle(presumedUnbrokenLine, slamPosition, VisionRadius * 2)
+                          .Where(tile => slamMap.IsWithinBounds(tile))
+                          .FirstOrDefault(tile => slamMap.GetTileStatus(tile) == SlamTileStatus.Open);
 
-                if (slamMap.GetTileStatus(intersection.intersection) != SlamTileStatus.Solid)
+                if (lineBroken != default)
                 {
-                    Vector2Int destinationVector = intersection.intersection - slamPosition;
-                    Vector2 visionVector = Geometry.VectorFromDegreesAndMagnitude(destinationVector.GetAngleRelativeToX(), VisionRadius);
-                    var destination = _map.FromSlamMapCoordinate(Vector2Int.FloorToInt(destinationVector - visionVector) + slamPosition);
-                    _waypoint = new(destination, Waypoint.WaypointType.Door, false);
+                    if (_previousIntersections.Contains(lineBroken))
+                    {
+                        return;
+                    }
+                    _previousIntersections.Add(lineBroken);
+                    end.DrawDebugLineFromRobot(slamMap, Color.magenta);
+                    var distanceToEnd = (_map.FromSlamMapCoordinate(end) - _position) * new Vector2Int(Mathf.Abs(wallDirectionVector.x), Mathf.Abs(wallDirectionVector.y));
+                    _waypoint = new Waypoint(_position + distanceToEnd + wallDirectionVector * _doorWidth, Waypoint.WaypointType.Door, false);
                     _controller.StopCurrentTask();
                     _controller.MoveTo(_waypoint.Value.Destination);
                     _waypoint.Value.Destination.DrawDebugLineFromRobot(_map, Color.green);
-                    return true;
+                    return;
                 }
             }
-            return false;
+            else
+            {
+                var intersectionPoints = GetIntersectionPoints(slamMap, walls).Distinct()
+                                                                              .Where(point => !point.walls.All(wall => wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile)).Contains(point.intersection)))
+                                                                              .Where(point => Geometry.IsPointWithinCirle(point.intersection, slamPosition, VisionRadius * 2));
+                foreach (var intersection in intersectionPoints)
+                {
+                    if (_previousIntersections.Contains(intersection.intersection))
+                    {
+                        return;
+                    }
+                    _previousIntersections.Add(intersection.intersection);
+
+                    if (slamMap.GetTileStatus(intersection.intersection) != SlamTileStatus.Solid)
+                    {
+                        Vector2Int destinationVector = intersection.intersection - slamPosition;
+                        Vector2 visionVector = Geometry.VectorFromDegreesAndMagnitude(destinationVector.GetAngleRelativeToX(), VisionRadius);
+                        var destination = _map.FromSlamMapCoordinate(Vector2Int.FloorToInt(destinationVector - visionVector) + slamPosition);
+                        _waypoint = new(destination, Waypoint.WaypointType.Door, false);
+                        _controller.StopCurrentTask();
+                        _controller.MoveTo(_waypoint.Value.Destination);
+                        _waypoint.Value.Destination.DrawDebugLineFromRobot(_map, Color.green);
+                        return;
+                    }
+                }
+            }
         }
 
         private void AttemptAddDoorway(List<Line2D> walls)
         {
             var slamMap = _controller.GetSlamMap();
             Vector2Int slamPosition = slamMap.GetCurrentPosition();
-            var intersectionPoints = GetIntersectionPoints(slamMap, walls).Distinct().Where(point => !point.walls.All(wall => wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile)).Contains(point.intersection)));
+            var intersectionPoints = GetIntersectionPoints(slamMap, walls).Distinct();
+            intersectionPoints = intersectionPoints.Where(point => !point.walls.All(wall => wall.Rasterize().Select(tile => Vector2Int.FloorToInt(tile)).Contains(point.intersection)));
             if (intersectionPoints.Any())
             {
                 var intersectionPoint = intersectionPoints.First();
@@ -575,7 +638,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     var newDoorway = new Doorway(start, end, CardinalDirection.VectorToDirection(center - slamPosition));
                     if (_doorways.All(doorway => !doorway.Equals(newDoorway)))
                     {
-                        Debug.Log($"doorway at {_logicTicks}");
+                        Debug.Log($"doorway {start}-{end} at {_logicTicks}");
                         _doorways.Add(newDoorway);
                     }
                 }
@@ -637,6 +700,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private float PathDistanceToPoint(Vector2Int point)
         {
             List<Vector2Int> path = _controller.GetSlamMap().GetPath(_position, point);
+            if (path == null) return Mathf.Infinity;
             List<float> distances = new();
             for (var i = 0; i < path.Count - 2; i++)
             {

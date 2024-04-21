@@ -20,6 +20,8 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -55,6 +57,23 @@ namespace Maes.Utilities
             return new Vector2(-MapPosition.x, -MapPosition.y);
         }
 
+        public static bool IsPointWithinCirle(Vector2Int point, Vector2 circleStartPosition, float maxRadius)
+        {
+            return Mathf.Pow(point.x - circleStartPosition.x, 2) + Mathf.Pow(point.y - circleStartPosition.y, 2) < Mathf.Pow(maxRadius, 2);
+        }
+
+        /// <summary>
+        /// Utilizes this inequality (x - <paramref name="circleStartPosition"/>.x)^2 + (y - <paramref name="circleStartPosition"/>.y)^2 = r^2 &lt; <paramref name="radius"/>^2 <para/>
+        /// Based on <see href="https://math.stackexchange.com/questions/1307832/how-to-tell-if-x-y-coordinate-is-within-a-circle">How to tell if (X,Y) coordinate is within a Circle</see>
+        /// </summary>
+        /// <param name="points">The points that gets checked if they are within the circle</param>
+        /// <param name="circleStartPosition">The origin point of the circle</param>
+        /// <param name="maxRadius">The radius in coarse tiles from the robot. R in the inequality</param>
+        /// <returns>Doorway tiles around the robot within range</returns>
+        public static IEnumerable<Vector2Int> PointsWithinCircle(IEnumerable<Vector2Int> points, Vector2 circleStartPosition, float maxRadius)
+        {
+            return points.Where(point => IsPointWithinCirle(point, circleStartPosition, maxRadius));
+        }
 
         public static Vector2 VectorFromDegreesAndMagnitude(float angleDegrees, float magnitude)
         {

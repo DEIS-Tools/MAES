@@ -93,6 +93,27 @@ namespace Maes.Utilities
             return IsVertical && otherLine.IsVertical || _isHorizontal && otherLine._isHorizontal;
         }
 
+        public (Vector2 linePoint, Vector2 otherLinePoint) GetClosestPoints(Line2D otherLine)
+        {
+            var linePoints = Rasterize();
+            var otherLinePoints = otherLine.Rasterize();
+            (Vector2 linePoint, Vector2 otherLinePoint) result = (Vector2.zero, Vector2.zero);
+            float minDistance = float.MaxValue;
+            foreach (var point in linePoints)
+            {
+                foreach (var otherPoint in otherLinePoints)
+                {
+                    var distance = Vector2.Distance(point, otherPoint);
+                    if (minDistance > distance)
+                    {
+                        minDistance = distance;
+                        result = (point, otherPoint); 
+                    }
+                }
+            }
+            return result;
+        }
+
         public Vector2? GetIntersection(Line2D otherline, bool infinite = false)
         {
             if (Mathf.Approximately(_a, otherline._a))
@@ -100,15 +121,24 @@ namespace Maes.Utilities
                 if (SameOrientation(otherline))
                 {
                     if (Mathf.Approximately(_b, otherline._b))
-                        return (Start + End + otherline.Start + otherline.End) / 4;
+                    {
+                        var closestPoints = GetClosestPoints(otherline);
+                        return (closestPoints.linePoint + closestPoints.otherLinePoint) / 2;
+                    }
                     else
                         return null;
                 }
-                else 
+                else
                     return IsVertical ? new(_b, otherline._b) : new(otherline._b, _b);
             }
             else
+            {
+                if (otherline.IsVertical)
+                {
+                    return otherline.GetIntersection(_a, _b, infinite);
+                }
                 return GetIntersection(otherline._a, otherline._b, infinite);
+            }
         }
 
         // Checks for intersection with an infinite line described by a_1 x + b_2 

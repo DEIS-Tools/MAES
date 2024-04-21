@@ -87,23 +87,26 @@ namespace Maes
                     (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
                 ));
 
-            //var buildingConfig = new BuildingMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
-            //var scenario = new SimulationScenario(
-            //   seed: randomSeed,
-            //   mapSpawner: generator => generator.GenerateMap(buildingConfig),
-            //   robotConstraints: constraints,
-            //   robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-            //       map,
-            //       randomSeed,
-            //       1,
-            //       new Vector2Int(0,0),
-            //       (seed) => new MinotaurAlgorithm(constraints, randomSeed)
-            //   ));
+            var buildingConfig = new BuildingMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
+            scenario = new SimulationScenario(
+               hasFinishedSim: sim => sim.ExplorationTracker.ExploredProportion > 0.99f,
+               seed: randomSeed,
+               mapSpawner: generator => generator.GenerateMap(buildingConfig),
+               robotConstraints: constraints,
+               robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                   map,
+                   randomSeed,
+                   1,
+                   new Vector2Int(0, 0),
+                   (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
+               ));
 
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
             simulator.EnqueueScenario(scenario);
             simulator.PressPlayButton(); // Instantly enter play mode
+
+            //simulator.GetSimulationManager().AttemptSetPlayState(SimulationPlayState.FastAsPossible);
         }
     }
 }
