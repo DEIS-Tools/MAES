@@ -85,7 +85,8 @@ namespace PlayModeTests
 
         private IEnumerator AssertDoorsWhenFinished(int doorAmount)
         {
-
+            if (_simulation.SimulatedLogicTicks > 36000)
+                yield return false;
             while (_simulation.ExplorationTracker.ExploredProportion < 0.999f)
             {
                 yield return null;

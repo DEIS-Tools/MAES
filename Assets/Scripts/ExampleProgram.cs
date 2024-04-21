@@ -73,7 +73,7 @@ namespace Maes
                 }
             );
 
-            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway_corner.pgm");
+            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway.pgm");
 
             var scenario = new SimulationScenario(
                 seed: randomSeed,

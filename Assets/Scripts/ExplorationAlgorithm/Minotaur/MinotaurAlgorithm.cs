@@ -260,13 +260,25 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             for (int i = 1; i < 4; i++)
             {
                 var possibleUnseen = thirdPoint + (thirdPointDirectionVector * i) + thirdPointDirectionVectorPerpendicular;
+                //if (_map.IsWithinBounds(possibleUnseen) && _map.GetTileStatus(possibleUnseen) == SlamTileStatus.Solid) 
+                //{break;} //This line should make it a lot faster
                 if (slamMap.IsWithinBounds(possibleUnseen) && slamMap.GetTileStatus(possibleUnseen) == SlamTileStatus.Unseen)
                 {
                     possibleUnseen.DrawDebugLineFromRobot(slamMap, Color.black);
                     perpendicularTile.perp.DrawDebugLineFromRobot(slamMap, Color.red);
                     var destination = _map.FromSlamMapCoordinate(perpendicularTile.perp);
-                    _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall);
-                    _controller.MoveTo(destination); //THIS FUCKED EVERYTHING
+                    if (slamMap.GetTileStatus(perpendicularTile.perp) == SlamTileStatus.Open)
+                    {
+                        //var freeTileBeforeWall = _edgeDetector.GetFurthestTileAroundRobot((perpendicularTile.perp - _position).GetAngleRelativeToX(), (int)Vector2Int.Distance(perpendicularTile.perp, _position), new List<SlamTileStatus>{SlamTileStatus.Solid}, false);
+                        _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall, true);
+                        _controller.PathAndMoveTo(destination);
+                    }
+                    else
+                    {
+                        _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall, false);
+                        _controller.MoveTo(destination);
+                    }
+
                     (CardinalDirection.AngleToDirection(0).Vector + _position).DrawDebugLineFromRobot(_map, Color.magenta);
                     return true;
                 };
