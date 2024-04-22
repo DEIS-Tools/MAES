@@ -211,23 +211,25 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             }
             var slamMap = _controller.GetSlamMap();
             var slamPosition = slamMap.GetCurrentPosition();
-            var slamTiles = _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Solid }, slamPrecision: true)
+            var slamTiles = _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Solid, SlamTileStatus.Unseen }, slamPrecision: true)
                                      .Where(tile => slamMap.GetTileStatus(tile) == SlamTileStatus.Solid)
                                      .ToList();
-            slamTiles.AddRange(DoorwayTilesInVision(VisionRadius * 2));
+            slamTiles.AddRange(DoorwayTilesInRange(VisionRadius * 2));
             if (slamTiles.Count() < 2) return false;
-            var coarseTileAhead = _edgeDetector.GetFurthestTileAroundRobot(_controller.GetGlobalAngle(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid }, snapToGrid: true);
+            var coarseTileAhead = _edgeDetector.GetFurthestTileAroundRobot(_controller.GetGlobalAngle(), VisionRadius, new List<SlamTileStatus> { SlamTileStatus.Solid, SlamTileStatus.Unseen }, snapToGrid: true);
             var localLeft = (_controller.GetGlobalAngle() + (_map.GetTileStatus(coarseTileAhead) == SlamTileStatus.Solid ? 90 : 0)) % 360;
             (CardinalDirection.AngleToDirection(localLeft).Vector + _position).DrawDebugLineFromRobot(_map, Color.blue);
             var slamWalls = GetWalls(slamTiles);
             var slamWallPoints = slamWalls.Select(wall => Vector2Int.FloorToInt(wall.Start))
-                              .Union(slamWalls.Select(wall => Vector2Int.FloorToInt(wall.End)))
-                              .OrderByDescending(point => ((point - slamPosition).GetAngleRelativeToX() - localLeft + 360) % 360).ToList();
+                              .Union(slamWalls.Select(wall => Vector2Int.FloorToInt(wall.End)));
+
+            var furthestPoint = slamWallPoints.OrderByDescending(point => Vector2.Distance(point, slamPosition)).First();
+            slamWallPoints = slamWallPoints.OrderByDescending(point => (Vector2.SignedAngle((furthestPoint - slamPosition), (point - slamPosition)) + 360) % 360);
 
             slamWalls.ToList().ForEach(wall => Debug.DrawLine(slamMap.TileToWorld(wall.Start), slamMap.TileToWorld(wall.End), Color.white, 2));
             slamWallPoints.ToList().ForEach(point => point.DrawDebugLineFromRobot(slamMap, Color.yellow));
 
-            var points = slamWallPoints.Select(point => (perp: point + CardinalDirection.PerpendicularDirection(point - slamPosition).Vector * (VisionRadius - 2) * 2, point))
+            var points = slamWallPoints.Select(point => (perp: point + Vector2Int.FloorToInt(Vector2.Perpendicular(point - slamPosition).normalized * (VisionRadius - 2) * 2), point))
                            .Where(tuple => slamMap.IsWithinBounds(tuple.perp)
                                            && slamMap.GetTileStatus(tuple.perp) != SlamTileStatus.Solid)
                            .ToList();
@@ -237,44 +239,76 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 return false;
             }
 
+            (Vector2Int perp, Vector2Int point)? openPoint = null;
+            foreach (var point in points)
+            {
+                var tile = _edgeDetector.GetFurthestTileAroundRobot((point.perp - slamPosition).GetAngleRelativeToX(), (VisionRadius + 2) * 2, new List<SlamTileStatus> { SlamTileStatus.Solid }, slamPrecision: true);
+                if ((point.perp - slamPosition).magnitude > (tile - slamPosition).magnitude)
+                {
+                    continue;
+                }
 
-            var perpendicularTile = points.First();
+                if (slamMap.IsWithinBounds(point.perp))
+                {
+                    if (slamMap.GetTileStatus(point.perp) == SlamTileStatus.Unseen)
+                    {
+                        var destination = _map.FromSlamMapCoordinate(point.perp);
+                        _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall, false);
+                        destination.DrawDebugLineFromRobot(_map, Color.red);
+                        _controller.MoveTo(destination);
+                        return true;
+                    }
+                    else if (slamMap.GetTileStatus(point.perp) == SlamTileStatus.Open)
+                    {
+                        openPoint = point;
+                    }
+                }
+            }
+            if (openPoint.HasValue)
+            {
+                var destination = _map.FromSlamMapCoordinate(openPoint.Value.perp);
+                _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall, false);
+                destination.DrawDebugLineFromRobot(_map, Color.red);
+                _controller.MoveTo(destination);
+                return true;
+            }
+
             //var thirdPoint = new Vector2Int((int)(perpendicularTile.perp.x + (Math.Abs(perpendicularTile.perp.x - perpendicularTile.point.x))*(Vector2.Angle(_position,perpendicularTile.perp)/90)), (int)(perpendicularTile.perp.y + (Math.Abs(perpendicularTile.perp.y - perpendicularTile.point.y))*(1-Vector2.Angle(_position,perpendicularTile.perp)/90)));
 
-            var perpDirection = (perpendicularTile.perp - slamMap.GetCurrentPosition()).GetAngleRelativeToX();
-            var thirdPointDirection = (perpDirection + 270) % 360;
-            var thirdPointDirectionVector = CardinalDirection.AngleToDirection(thirdPointDirection).Vector;
-            var thirdPoint = perpendicularTile.perp + thirdPointDirectionVector * (VisionRadius - 2) * 2;
-            thirdPoint.DrawDebugLineFromRobot(slamMap, Color.blue);
+            //var perpDirection = (perpendicularTile.perp - slamPosition).GetAngleRelativeToX();
+            //var thirdPointDirection = (perpDirection + 270) % 360;
+            //var thirdPointDirectionVector = Geometry.DirectionAsVector(thirdPointDirection);
+            //var thirdPoint = perpendicularTile.perp + thirdPointDirectionVector * (VisionRadius - 2) * 2;
+            //thirdPoint.DrawDebugLineFromRobot(slamMap, Color.blue);
 
-            thirdPointDirectionVector = CardinalDirection.AngleToDirection((thirdPoint - perpendicularTile.point).GetAngleRelativeToX()).Vector;
-            var thirdPointDirectionVectorPerpendicular = CardinalDirection.PerpendicularDirection(thirdPointDirectionVector).Vector;
-            for (int i = 1; i < VisionRadius * 2; i++)
-            {
-                var possibleUnseen = thirdPoint + (thirdPointDirectionVector * i) + thirdPointDirectionVectorPerpendicular;
-                //if (_map.IsWithinBounds(possibleUnseen) && _map.GetTileStatus(possibleUnseen) == SlamTileStatus.Solid) 
-                //{break;} //This line should make it a lot faster
-                if (slamMap.IsWithinBounds(possibleUnseen) && slamMap.GetTileStatus(possibleUnseen) == SlamTileStatus.Unseen)
-                {
-                    possibleUnseen.DrawDebugLineFromRobot(slamMap, Color.black);
-                    perpendicularTile.perp.DrawDebugLineFromRobot(slamMap, Color.red);
-                    var destination = _map.FromSlamMapCoordinate(perpendicularTile.perp);
-                    if (slamMap.GetTileStatus(perpendicularTile.perp) == SlamTileStatus.Open)
-                    {
-                        //var freeTileBeforeWall = _edgeDetector.GetFurthestTileAroundRobot((perpendicularTile.perp - _position).GetAngleRelativeToX(), (int)Vector2Int.Distance(perpendicularTile.perp, _position), new List<SlamTileStatus>{SlamTileStatus.Solid}, false);
-                        _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall, true);
-                        _controller.PathAndMoveTo(destination);
-                    }
-                    else
-                    {
-                        _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall, false);
-                        _controller.MoveTo(destination);
-                    }
+            //thirdPointDirectionVector = Geometry.DirectionAsVector((thirdPoint - perpendicularTile.point).GetAngleRelativeToX());
+            //var thirdPointDirectionVectorPerpendicular = Vector2.Perpendicular(thirdPointDirectionVector);
+            //for (int i = 1; i < VisionRadius * 2; i++)
+            //{
+            //    var possibleUnseen = Vector2Int.FloorToInt(thirdPoint + (thirdPointDirectionVector * i) + thirdPointDirectionVectorPerpendicular);
+            //    //if (_map.IsWithinBounds(possibleUnseen) && _map.GetTileStatus(possibleUnseen) == SlamTileStatus.Solid) 
+            //    //{break;} //This line should make it a lot faster
+            //    if (slamMap.IsWithinBounds(possibleUnseen) && slamMap.GetTileStatus(possibleUnseen) == SlamTileStatus.Unseen)
+            //    {
+            //        possibleUnseen.DrawDebugLineFromRobot(slamMap, Color.black);
+            //        perpendicularTile.perp.DrawDebugLineFromRobot(slamMap, Color.red);
+            //        var destination = _map.FromSlamMapCoordinate(perpendicularTile.perp);
+            //        if (slamMap.GetTileStatus(perpendicularTile.perp) == SlamTileStatus.Open)
+            //        {
+            //            //var freeTileBeforeWall = _edgeDetector.GetFurthestTileAroundRobot((perpendicularTile.perp - _position).GetAngleRelativeToX(), (int)Vector2Int.Distance(perpendicularTile.perp, _position), new List<SlamTileStatus>{SlamTileStatus.Solid}, false);
+            //            _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall, true);
+            //            _controller.PathAndMoveTo(destination);
+            //        }
+            //        else
+            //        {
+            //            _waypoint = new Waypoint(destination, Waypoint.WaypointType.Wall, false);
+            //            _controller.MoveTo(destination);
+            //        }
 
-                    (CardinalDirection.AngleToDirection(0).Vector + _position).DrawDebugLineFromRobot(_map, Color.magenta);
-                    return true;
-                };
-            }
+            //        (CardinalDirection.AngleToDirection(0).Vector + _position).DrawDebugLineFromRobot(_map, Color.magenta);
+            //        return true;
+            //    };
+            //}
             return false;
         }
 
@@ -284,7 +318,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         /// </summary>
         /// <param name="radius">The radius in coarse tiles from the robot. R in the inequality</param>
         /// <returns>Doorway tiles around the robot within range</returns>
-        private IEnumerable<Vector2Int> DoorwayTilesInVision(int radius)
+        private IEnumerable<Vector2Int> DoorwayTilesInRange(int radius)
         {
             var slamPosition = _controller.GetSlamMap().GetCurrentPosition();
             return Geometry.PointsWithinCircle(_doorways.SelectMany(doorway => doorway.Tiles), slamPosition, radius);
@@ -534,14 +568,14 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private bool IsAroundExplorable(int range)
         {
-            return _edgeDetector.GetTilesAroundRobot(VisionRadius + range, new List<SlamTileStatus> { SlamTileStatus.Solid })
+            return _edgeDetector.GetTilesAroundRobot(VisionRadius + range, new List<SlamTileStatus> { SlamTileStatus.Solid, SlamTileStatus.Unseen })
                                 .Count(tile => _map.GetTileStatus(tile) == SlamTileStatus.Unseen) > 0;
         }
 
         private List<RelativeWall> GetWallsNearRobot()
         {
             var slamMap = _controller.GetSlamMap();
-            return _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Solid }, true).Where(tile => slamMap.GetTileStatus(tile) == SlamTileStatus.Solid)
+            return _edgeDetector.GetTilesAroundRobot(VisionRadius + 2, new List<SlamTileStatus> { SlamTileStatus.Solid, SlamTileStatus.Unseen }, true).Where(tile => slamMap.GetTileStatus(tile) == SlamTileStatus.Solid)
                                      .Distinct()
                                      .Select(tile =>
                                          new RelativeWall
