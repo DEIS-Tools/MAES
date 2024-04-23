@@ -65,7 +65,7 @@ namespace Maes.Map.MapGen
                 caveConfig.BorderSize);
 
             // Draw gizmo of map for debugging. Will draw the map in Scene upon selection.
-            // MapToDraw = borderedMap;
+            MapToDraw = borderedMap;
 
             // The rooms should now reflect their relative shifted positions after adding borders round map.
             survivingRooms.ForEach(r => r.OffsetCoordsBy(caveConfig.BorderSize, caveConfig.BorderSize));
@@ -217,10 +217,10 @@ namespace Maes.Map.MapGen
         void CreatePassage(Room roomA, Room roomB, Vector2Int tileA, Vector2Int tileB, Tile[,] map, int passageWidth)
         {
             Room.ConnectRooms(roomA, roomB);
-            //Debug.DrawLine(CoordToWorldPoint(tileA, map.GetLength(0), map.GetLength(1)),
-            //    CoordToWorldPoint(tileB, map.GetLength(0), map.GetLength(1)), 
-            //    Color.green,
-            //    100);
+            Debug.DrawLine(CoordToWorldPoint(tileA, map.GetLength(0), map.GetLength(1)),
+                CoordToWorldPoint(tileB, map.GetLength(0), map.GetLength(1)),
+                Color.green,
+                100);
 
             var line = GetLine(tileA, tileB);
             foreach (var c in line)
@@ -382,6 +382,11 @@ namespace Maes.Map.MapGen
             var mostCommonType = wallCount > 0 ? wallTypes.Aggregate((l,r) => l.Value > r.Value ? l : r).Key : TileType.Room;
 
             return (wallCount, mostCommonType);
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            base.DrawMap(MapToDraw);
         }
     }
 }
