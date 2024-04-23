@@ -21,7 +21,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
             public IMinotaurMessage Combine(IMinotaurMessage otherMessage, MinotaurAlgorithm minotaur)
             {
-                throw new NotImplementedException(); //Shouldnt get multiple, and if you do, process one at a time
+                return this;
             }
 
             /// <summary>

@@ -34,6 +34,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private Vector2Int? _lastWallTile;
         private List<Line2D> _lastWalls = new();
         private int _logicTicks = 0;
+        private int _ticksSinceHeartbeat;
         private List<Vector2Int> _previousIntersections = new();
 
         private enum AlgorithmState
@@ -109,6 +110,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         public void UpdateLogic()
         {
             _logicTicks++;
+            _ticksSinceHeartbeat++;
+            if (_ticksSinceHeartbeat == 10)
+            {
+                _ticksSinceHeartbeat = 0;
+                _controller.Broadcast(new HeartbeatMessage(_controller.GetSlamMap(), _doorways, _position));
+            }
+            var receivedMessages = _controller.ReceiveBroadcast().OfType<IMinotaurMessage>();
+            if (receivedMessages.Count() > 1)
+            {
+                var combinedMessage = receivedMessages.Take(1).First();
+                foreach (var message in receivedMessages)
+                {
+                    combinedMessage.Combine(message, this);
+                }
+            } else if (receivedMessages.Any()) receivedMessages.First().Combine(receivedMessages.First(), this);
+
+
 
             if (_controller.IsCurrentlyColliding())
             {
@@ -269,7 +287,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return false;
         }
 
-        private bool WallUnseenNeighbor((Vector2Int perp, Vector2Int point)point, List<Line2D> slamWalls)
+        private bool WallUnseenNeighbor((Vector2Int perp, Vector2Int point) point, List<Line2D> slamWalls)
         {
             var slamMap = _controller.GetSlamMap();
             var slamPosition = slamMap.GetCurrentPosition();

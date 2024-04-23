@@ -42,7 +42,7 @@ namespace Maes
         private Simulator _simulator;
         private void Start()
         {
-            const int randomSeed = 123;
+            const int randomSeed = 2;
 
             var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
@@ -96,7 +96,7 @@ namespace Maes
                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                    map,
                    randomSeed,
-                   1,
+                   4,
                    new Vector2Int(0, 0),
                    (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
                ));

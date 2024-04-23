@@ -47,18 +47,19 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         {
                             winnerIDList.Add(value);
                         }
-                        // TODO: Should also move through doorway itself
-                        throw new NotImplementedException();
+                        minotaur._waypoint = new Waypoint(_doorway.Center, Waypoint.WaypointType.Door, true);
+                        minotaur._controller.PathAndMoveTo(_doorway.Center);
                     }
                     else if (_allBids.Count / 2 == 1)
                     {
-                        // TODO: move through doorway yourself
-                        throw new NotImplementedException();
+                        minotaur._waypoint = new Waypoint(_doorway.Center, Waypoint.WaypointType.Door, true);
+                        minotaur._controller.PathAndMoveTo(_doorway.Center);
                     } //else pass doorway, maybe here?
 
                     return new AuctionResultMessage(winnerIDList, _doorway);
                 }
-                else {
+                else
+                {
                     return this;
                 }
             }
