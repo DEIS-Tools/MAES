@@ -140,6 +140,16 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 //TODO: full resets
             }
 
+            //foreach (var doorway in _doorways)
+            //{
+            //    var doorCoarseTiles = _map.FromSlamMapCoordinates(doorway.Tiles.ToList());
+            //    if (doorCoarseTiles.Contains(_position))
+            //    {
+            //        doorway.Explored = true;
+            //        break;
+            //    }
+            //}
+
             var wallPoints = GetWallsNearRobot();
             if (!_waypoint.HasValue)
             {
@@ -240,6 +250,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var slamWalls = GetWalls(slamTiles);
             var slamWallPoints = slamWalls.Select(wall => Vector2Int.FloorToInt(wall.Start))
                               .Union(slamWalls.Select(wall => Vector2Int.FloorToInt(wall.End)));
+            if (slamWallPoints.Count() < 2) return false;
 
             var furthestPoint = slamWallPoints.OrderByDescending(point => Vector2.Distance(point, slamPosition)).First();
             slamWallPoints = slamWallPoints.OrderByDescending(point => (Vector2.SignedAngle((furthestPoint - slamPosition), (point - slamPosition)) + 360) % 360);
@@ -669,10 +680,16 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     && (Mathf.Approximately(Vector2.Distance(start, end), _doorWidth * 2) || (Vector2.Distance(start, end) <= _doorWidth * 2 && Vector2.Distance(start, end) >= 3)))
                 {
                     var newDoorway = new Doorway(start, end, CardinalDirection.VectorToDirection(center - slamPosition));
-                    if (_doorways.All(doorway => !doorway.Equals(newDoorway)))
+                    var otherDoorway = _doorways.FirstOrDefault(doorway => doorway.Equals(newDoorway));
+
+                    if (otherDoorway == default)
                     {
                         Debug.Log($"doorway {start}-{end} at {_logicTicks}");
                         _doorways.Add(newDoorway);
+                    }
+                    else
+                    {
+                        otherDoorway.Explored = true;
                     }
                 }
             }

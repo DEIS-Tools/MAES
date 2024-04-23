@@ -86,6 +86,8 @@ namespace Maes
                     1,
                     (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
                 ));
+            // Get/instantiate simulation prefab
+            var simulator = Simulator.GetInstance();
 
             var buildingConfig = new BuildingMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
             scenario = new SimulationScenario(
@@ -101,8 +103,6 @@ namespace Maes
                    (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
                ));
 
-            // Get/instantiate simulation prefab
-            var simulator = Simulator.GetInstance();
             simulator.EnqueueScenario(scenario);
             simulator.PressPlayButton(); // Instantly enter play mode
 
