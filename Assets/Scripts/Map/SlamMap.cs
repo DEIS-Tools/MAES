@@ -201,9 +201,6 @@ namespace Maes.Map
         public static void Synchronize(List<SlamMap> maps)
         {
             var globalMap = new SlamTileStatus[maps[0]._widthInTiles, maps[0]._heightInTiles];
-            for (int x = 0; x < globalMap.GetLength(0); x++)
-                for (int y = 0; y < globalMap.GetLength(1); y++)
-                    globalMap[x, y] = SlamTileStatus.Unseen;
 
             foreach (var map in maps)
             {
@@ -232,9 +229,6 @@ namespace Maes.Map
         public static void Combine(SlamMap target, List<SlamMap> others)
         {
             var globalMap = new SlamTileStatus[target._widthInTiles, target._heightInTiles];
-            for (int x = 0; x < globalMap.GetLength(0); x++)
-                for (int y = 0; y < globalMap.GetLength(1); y++)
-                    globalMap[x, y] = SlamTileStatus.Unseen;
 
             foreach (var other in others)
             {

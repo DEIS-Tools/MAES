@@ -111,20 +111,21 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             _logicTicks++;
             _ticksSinceHeartbeat++;
-            if (_ticksSinceHeartbeat == 10)
+            if (_ticksSinceHeartbeat == 100)
             {
+                var ownHeartbeat = new HeartbeatMessage(_controller.GetSlamMap(), _doorways, _position);
                 _ticksSinceHeartbeat = 0;
-                _controller.Broadcast(new HeartbeatMessage(_controller.GetSlamMap(), _doorways, _position));
+                _controller.Broadcast(ownHeartbeat);
             }
-            var receivedMessages = _controller.ReceiveBroadcast().OfType<IMinotaurMessage>();
-            if (receivedMessages.Count() > 1)
+            var receivedMessages = _controller.ReceiveBroadcast().OfType<HeartbeatMessage>();
+            if (receivedMessages.Any())
             {
-                var combinedMessage = receivedMessages.Take(1).First();
+                var ownHeartbeat = new HeartbeatMessage(_controller.GetSlamMap(), _doorways, _position);
                 foreach (var message in receivedMessages)
                 {
-                    combinedMessage.Combine(message, this);
+                    ownHeartbeat.Combine(message, this);
                 }
-            } else if (receivedMessages.Any()) receivedMessages.First().Combine(receivedMessages.First(), this);
+            }
 
 
 

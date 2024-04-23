@@ -23,21 +23,26 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
             public IMinotaurMessage? Combine(IMinotaurMessage otherMessage, MinotaurAlgorithm minotaur)
             {
-                if (otherMessage is HeartbeatMessage heartbeatMessage) {
-                    List<SlamMap> newMap = new(){heartbeatMessage.map};
-                    SlamMap.Combine(map, newMap); //layers of pass by reference, map in controller is updated with the info from message
+                if (otherMessage is HeartbeatMessage heartbeatMessage)
+                {
+                    List<SlamMap> maps = new() { heartbeatMessage.map, map };
+                    SlamMap.Synchronize(maps); //layers of pass by reference, map in controller is updated with the info from message
 
-                    foreach (Doorway doorway in heartbeatMessage.doorways) 
+                    var amount = heartbeatMessage.doorways.Count;
+                    for (int i = 0; i < amount; i++)
                     {
-                        foreach (Doorway ownDoorway in doorways)
-                            if (Math.Abs(doorway.Center.x - ownDoorway.Center.x) < 0.2 && Math.Abs(doorway.Center.y - ownDoorway.Center.y) < 0.2
-                            && doorway.ApproachedDirection.OppositeDirection() == ownDoorway.ApproachedDirection)
+                        var doorway = heartbeatMessage.doorways[i];
+                        if (doorways.Contains(doorway))
+                        {
+                            if (doorway.ApproachedDirection.OppositeDirection() == doorways.Find(ownDoorway => ownDoorway == doorway).ApproachedDirection)
                             {
-                                doorway.Explored = true;
-                            } else 
-                            {
-                                doorways.Add(doorway);
+                                doorways.Find(ownDoorway => ownDoorway == doorway).Explored = true;
                             }
+                        }
+                        else
+                        {
+                            doorways.Add(doorway);
+                        }
                     }
                     return this;
                 }
@@ -51,3 +56,4 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         }
     }
 }
+
