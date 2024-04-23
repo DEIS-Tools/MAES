@@ -42,7 +42,7 @@ namespace Maes
         private Simulator _simulator;
         private void Start()
         {
-            const int randomSeed = 123;
+            const int randomSeed = 1;
 
             var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
@@ -86,23 +86,23 @@ namespace Maes
                     1,
                     (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
                 ));
+            // Get/instantiate simulation prefab
+            var simulator = Simulator.GetInstance();
 
             var buildingConfig = new BuildingMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
             scenario = new SimulationScenario(
-               hasFinishedSim: sim => sim.ExplorationTracker.ExploredProportion > 0.99f,
-               seed: randomSeed,
-               mapSpawner: generator => generator.GenerateMap(buildingConfig),
-               robotConstraints: constraints,
-               robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                   map,
-                   randomSeed,
-                   1,
-                   new Vector2Int(0, 0),
-                   (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
-               ));
+                hasFinishedSim: sim => sim.ExplorationTracker.ExploredProportion > 0.99f,
+                seed: randomSeed,
+                mapSpawner: generator => generator.GenerateMap(buildingConfig),
+                robotConstraints: constraints,
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                    map,
+                    randomSeed,
+                    1,
+                    new Vector2Int(0, 0),
+                    (seed) => new MinotaurAlgorithm(constraints, randomSeed, 2)
+                ));
 
-            // Get/instantiate simulation prefab
-            var simulator = Simulator.GetInstance();
             simulator.EnqueueScenario(scenario);
             simulator.PressPlayButton(); // Instantly enter play mode
 
