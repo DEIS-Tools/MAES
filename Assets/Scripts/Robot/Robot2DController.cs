@@ -365,7 +365,7 @@ namespace Maes.Robot
             {
                 var robotCurrentPosition = Vector2Int.FloorToInt(SlamMap.CoarseMap.GetApproximatePosition());
                 if (robotCurrentPosition == tile) return;
-                var pathList = SlamMap.CoarseMap.GetPath(tile, true, false);
+                var pathList = SlamMap.CoarseMap.GetPath(tile, false, false);
                 if (pathList == null) return;
                 _currentPath = new Queue<Vector2Int>(pathList);
                 _currentTarget = _currentPath.Dequeue();

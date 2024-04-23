@@ -223,7 +223,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: e9a1893d4339b8d4491de78238bfcd19, type: 2}
   - {fileID: 2100000, guid: 4f9fba080a4896e47bbf47147814940d, type: 2}
   - {fileID: 2100000, guid: 5e8ed97749e472a4c9123bc956cf671c, type: 2}
-  Include3DCollider: 0
+  Include3DCollider: 1
 --- !u!114 &5448115849239720796
 MonoBehaviour:
   m_ObjectHideFlags: 0

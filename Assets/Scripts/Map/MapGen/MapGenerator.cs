@@ -78,7 +78,7 @@ namespace Maes.Map.MapGen
             {
                 for (var y = 0; y < borderedMap.GetLength(1); y++)
                 {
-                    if (x > borderSize-1 && x < width + borderSize && y > borderSize - 1 && y < height + borderSize)
+                    if (x > borderSize - 1 && x < width + borderSize && y > borderSize - 1 && y < height + borderSize)
                     {
                         borderedMap[x, y] = map[x - borderSize, y - borderSize];
                     }
@@ -103,7 +103,7 @@ namespace Maes.Map.MapGen
             {
                 for (var y = 0; y < map.GetLength(1); y++)
                 {
-                    if (mapFlags[x, y] != notCounted || !tileTypes.Contains(map[x, y].Type)) 
+                    if (mapFlags[x, y] != notCounted || !tileTypes.Contains(map[x, y].Type))
                         continue;
 
                     var newRegion = GetRegionTiles(x, y, map);
@@ -144,9 +144,9 @@ namespace Maes.Map.MapGen
                 {
                     for (var y = tile.y - 1; y <= tile.y + 1; y++)
                     {
-                        if (!IsInMapRange(x, y, map) || (y != tile.y && x != tile.x)) 
+                        if (!IsInMapRange(x, y, map) || (y != tile.y && x != tile.x))
                             continue;
-                        if (mapFlags[x, y] != notCounted || map[x, y].Type != tileType) 
+                        if (mapFlags[x, y] != notCounted || map[x, y].Type != tileType)
                             continue;
                         mapFlags[x, y] = counted;
                         queue.Enqueue(new Vector2Int(x, y));
@@ -195,9 +195,9 @@ namespace Maes.Map.MapGen
         }
 
         // Draw the gizmo of the map for debugging purposes.
-        private void DrawMap(Tile[,] map)
+        protected void DrawMap(Tile[,] map)
         {
-            if (MapToDraw == null) 
+            if (MapToDraw == null)
                 return;
 
             var width = map.GetLength(0);
@@ -218,7 +218,7 @@ namespace Maes.Map.MapGen
                         _ => Color.blue
                     };
 
-                    var pos = new Vector3(-width / 2 + x + .5f, 0, -height / 2 + y + .5f);
+                    var pos = new Vector3(-width / 2 + x + .5f, -height / 2 + y + .5f, 0);
                     Gizmos.DrawCube(pos, Vector3.one);
                 }
             }

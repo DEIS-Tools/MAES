@@ -742,7 +742,7 @@ namespace Maes.Map.MapGen
                     for (var y = 0; y < nodeCountY; y++)
                     {
                         // Divided by 2, since we start in 0,0 and can go both above and below 0.
-                        var position = new Vector3(x + XOffset, 0, y + YOffset);
+                        var position = new Vector3(x + XOffset, y + YOffset, 0);
                         controlNodes[x, y] = new ControlNode(position, map[x, y].Type);
                     }
                 }

@@ -73,10 +73,10 @@ namespace Maes.Map.MapGen
         public CaveMapConfig(
             int randomSeed,
             int widthInTiles = 50, int heightInTiles = 50,
-            int smoothingRuns = 3,
-            int connectionPassagesWidth = 4,
+            int smoothingRuns = 5,
+            int connectionPassagesWidth = 5,
             int randomFillPercent = 60,
-            int wallThresholdSize = 5,
+            int wallThresholdSize = 3,
             int roomThresholdSize = 5,
             int borderSize = 2,
             int neighbourWallsNeededToStayWall = 3,
