@@ -34,10 +34,10 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         var doorway = heartbeatMessage.doorways[i];
                         if (doorways.Contains(doorway))
                         {
-                            if (doorway.ApproachedDirection.OppositeDirection() == doorways.Find(ownDoorway => ownDoorway == doorway).ApproachedDirection)
-                            {
-                                doorways.Find(ownDoorway => ownDoorway == doorway).Explored = true;
-                            }
+                            // if (doorway.ApproachedDirection.OppositeDirection() == doorways.Find(ownDoorway => ownDoorway == doorway).ApproachedDirection)
+                            // {
+                            //     doorways.Find(ownDoorway => ownDoorway == doorway).Explored = true;
+                            // }
                         }
                         else
                         {

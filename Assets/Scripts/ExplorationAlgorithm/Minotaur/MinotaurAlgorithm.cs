@@ -126,7 +126,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             _logicTicks++;
             _ticksSinceHeartbeat++;
-            if (_ticksSinceHeartbeat == 100)
+            if (_ticksSinceHeartbeat == 10)
             {
                 var ownHeartbeat = new HeartbeatMessage(_controller.GetSlamMap(), _doorways, _position);
                 _ticksSinceHeartbeat = 0;

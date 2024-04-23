@@ -89,7 +89,7 @@ namespace Maes
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
 
-            var buildingConfig = new CaveMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
+            var buildingConfig = new BuildingMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
             scenario = new SimulationScenario(
                hasFinishedSim: sim => sim.ExplorationTracker.ExploredProportion > 0.99f,
                seed: randomSeed,
