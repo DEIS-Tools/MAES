@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using UnityEngine;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
 {
@@ -11,9 +12,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             internal SlamMap map;
             internal List<Doorway> doorways;
-            internal Vector2 location;
+            internal Vector2Int location;
 
-            public HeartbeatMessage(SlamMap map, List<Doorway> doorways, Vector2 location)
+            public HeartbeatMessage(SlamMap map, List<Doorway> doorways, Vector2Int location)
             {
                 this.map = map;
                 this.doorways = doorways;
@@ -45,7 +46,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
             public IMinotaurMessage Process(MinotaurAlgorithm minotaur) //Combine all, then process, but not really anything to process for heartbeat
             {
-                throw new NotImplementedException(); //
+                return this;
             }
         }
     }

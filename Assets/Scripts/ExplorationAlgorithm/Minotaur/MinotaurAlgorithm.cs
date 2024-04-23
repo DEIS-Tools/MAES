@@ -34,6 +34,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private Vector2Int? _lastWallTile;
         private List<Line2D> _lastWalls = new();
         private int _logicTicks = 0;
+        private int _ticksSinceHeartbeat;
         private List<Vector2Int> _previousIntersections = new();
         private int _deadlockTimer = 0;
         private Vector2Int _previousPosition;
@@ -124,6 +125,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         public void UpdateLogic()
         {
             _logicTicks++;
+            _ticksSinceHeartbeat++;
+            if (_ticksSinceHeartbeat == 10)
+            {
+                _ticksSinceHeartbeat = 0;
+                _controller.Broadcast(new HeartbeatMessage(_controller.GetSlamMap(), _doorways, _position));
+            }
+            var receivedMessages = _controller.ReceiveBroadcast().OfType<IMinotaurMessage>();
+            if (receivedMessages.Count() > 1)
+            {
+                var combinedMessage = receivedMessages.Take(1).First();
+                foreach (var message in receivedMessages)
+                {
+                    combinedMessage.Combine(message, this);
+                }
+            } else if (receivedMessages.Any()) receivedMessages.First().Combine(receivedMessages.First(), this);
+
+
 
             if (_controller.IsCurrentlyColliding())
             {
