@@ -125,7 +125,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.services.core": {
-      "version": "1.12.2",
+      "version": "1.12.0",
       "depth": 1,
       "source": "registry",
       "dependencies": {

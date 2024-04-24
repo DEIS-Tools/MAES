@@ -332,8 +332,6 @@ namespace Maes.Map.MapGen
                     var bottomLeft = new Node(topLeft, topLeft.Position - direction * wallHeight);
                     var bottomRight = new Node(topRight, topRight.Position - direction * wallHeight);
 
-
-
                     // Create section of the wall currently being made
                     // as viewed from inside the room looked at the wall
                     wallVertices.Add(topLeft); // top left (0)
@@ -689,20 +687,16 @@ namespace Maes.Map.MapGen
                 VertexB = b;
                 VertexC = c;
 
-                var types = new List<TileType> { a.Type, b.Type, c.Type };
-                var type = types.Max();
-                if (!Tile.IsWall(type) && (Tile.IsWall(a.Type) || Tile.IsWall(b.Type) || Tile.IsWall(c.Type)))
+                var types = new List<TileType> { a.Type, b.Type, c.Type }.Where(type => Tile.IsWall(type));
+                Type = TileType.Room;
+                if (types.Any())
                 {
-                    if (Tile.IsWall(a.Type)) type = a.Type;
-                    else if (Tile.IsWall(b.Type)) type = b.Type;
-                    else type = c.Type;
-
+                    var type = types.GroupBy(type => type).OrderByDescending(t => t.Count()).First().Key;
                     a.Type = type;
                     b.Type = type;
                     c.Type = type;
+                    Type = type;
                 }
-                Type = type;
-
                 _vertices = new Node[3];
                 _vertices[0] = a;
                 _vertices[1] = b;
@@ -789,16 +783,8 @@ namespace Maes.Map.MapGen
                 var centerX = bottomLeft.Position.x + (xDiff / 2f);
                 var centerZ = bottomLeft.Position.z + (zDiff / 2f);
 
-                var types = new List<TileType>
-                {
-                    topLeft.Type,
-                    topRight.Type,
-                    bottomLeft.Type,
-                    bottomRight.Type,
-                };
-                var maxType = types.Max();
 
-                Center = new Node(new Vector3(centerX, topLeft.Position.y, centerZ), maxType);
+                Center = new Node(new Vector3(centerX, topLeft.Position.y, centerZ), bottomLeft.Type);
 
                 // There are only 16 possible configurations
                 // Consider them in binary xxxx
@@ -879,9 +865,9 @@ namespace Maes.Map.MapGen
                 for (var index = 0; index < vertices.Count - 1; index++)
                 {
                     var vec = _gizmoWallVertices[vertices[index]].Position;
-                    vec.Set(vec.x, vec.y, vec.z - 2f);
+                    vec.Set(vec.x, vec.z, vec.y);
                     var vec2 = _gizmoWallVertices[vertices[index + 1]].Position;
-                    vec2.Set(vec2.x, vec2.y, vec2.z - 2f);
+                    vec2.Set(vec2.x, vec2.z, vec2.y);
                     Gizmos.DrawLine(vec, vec2);
                     //Handles.Label(vec, index.ToString());
                 }
