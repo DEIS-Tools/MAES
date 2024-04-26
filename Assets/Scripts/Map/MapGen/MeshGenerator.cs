@@ -784,7 +784,17 @@ namespace Maes.Map.MapGen
                 var centerZ = bottomLeft.Position.z + (zDiff / 2f);
 
 
-                Center = new Node(new Vector3(centerX, topLeft.Position.y, centerZ), bottomLeft.Type);
+                var types = new List<TileType>
+                {
+                    topLeft.Type,
+                    topRight.Type,
+                    bottomLeft.Type,
+                    bottomRight.Type,
+                };
+                var maxType = types.Max();
+
+                // Should not work, type should be the bottom left control node but it breaks where walls are on the slam map
+                Center = new Node(new Vector3(centerX, topLeft.Position.y, centerZ), maxType); 
 
                 // There are only 16 possible configurations
                 // Consider them in binary xxxx

@@ -33,6 +33,8 @@ namespace Maes.Map.MapGen
             // The rooms should now reflect their relative shifted positions after adding borders round map.
             survivingRooms.ForEach(r => r.OffsetCoordsBy(_borderSize, _borderSize));
 
+            MapToDraw = cleanedMap;
+
             // Create mesh
             MeshGenerator meshGen = GetComponent<MeshGenerator>();
             var collisionMap = meshGen.GenerateMesh(cleanedMap.Clone() as Tile[,], _wallHeight,
@@ -46,5 +48,9 @@ namespace Maes.Map.MapGen
             return collisionMap;
         }
 
+        private void OnDrawGizmosSelected()
+        {
+            DrawMap(MapToDraw);
+        }
     }
 }

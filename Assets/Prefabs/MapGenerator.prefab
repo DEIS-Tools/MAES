@@ -220,8 +220,8 @@ MonoBehaviour:
   WallRoof: {fileID: 6267725986360238117}
   WallRoofRenderer: {fileID: 6267725986360238116}
   Materials:
-  - {fileID: 2100000, guid: e9a1893d4339b8d4491de78238bfcd19, type: 2}
-  - {fileID: 2100000, guid: 4f9fba080a4896e47bbf47147814940d, type: 2}
+  - {fileID: 2100000, guid: 6e8442dd275001c4f9d167e8d1b8c962, type: 2}
+  - {fileID: 2100000, guid: 3f070b9b51e38424e9597fbb6f473e87, type: 2}
   - {fileID: 2100000, guid: 015da0f3dbeb55f4c82fb3d0587dcca1, type: 2}
   Include3DCollider: 1
 --- !u!114 &5448115849239720796
