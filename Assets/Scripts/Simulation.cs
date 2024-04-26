@@ -195,8 +195,8 @@ namespace Maes
 
         private void OnDrawGizmos()
         {
-            var height = (_collisionMap.HeightInTiles + 1) / 2 - 0.5f;
-            var width = (_collisionMap.WidthInTiles + 1) / 2 - 0.5f;
+            var height = (_collisionMap.HeightInTiles + 1) / 2;
+            var width = (_collisionMap.WidthInTiles + 1) / 2;
             Gizmos.color = Color.blue;
             for (float x = -width; x < width; x += 0.5f)
                 Gizmos.DrawLine(new Vector3(x, -width, -0.01f), new Vector3(x, width, -0.01f));

@@ -60,6 +60,8 @@ namespace Maes.Map.MapGen
             // Connect all rooms to main (the biggest) room
             var connectedMap = ConnectAllRoomsToMainRoom(survivingRooms, cleanedMap, caveConfig);
 
+            //var ensuredTraversabilityMap = EnsureAllTilesArePathable(connectedMap, cleanedMap)
+            
             // Ensure a border around the map
             var borderedMap = CreateBorderedMap(connectedMap, caveConfig.BitMapWidth, caveConfig.BitMapHeight,
                 caveConfig.BorderSize);
@@ -72,7 +74,7 @@ namespace Maes.Map.MapGen
 
             var meshGen = GetComponent<MeshGenerator>();
             var collisionMap = meshGen.GenerateMesh(borderedMap.Clone() as Tile[,], wallHeight,
-                false, survivingRooms);
+                true, survivingRooms);
 
             // Rotate to fit 2D view
             Plane.rotation = Quaternion.AngleAxis(-90, Vector3.right);
@@ -136,10 +138,18 @@ namespace Maes.Map.MapGen
                 if (horizontalClear && verticalClear && bottomLeftToTopRightClear && topLeftToBottomRightClear)
                     continue;
 
-                newMap[x, y] = Tile.GetRandomWall();
+                var types = new List<TileType>();
+                for (var neighborX = x - 1; neighborX <= x + 1; neighborX++)
+                    for (var neighborY = y - 1; neighborY <= y + 1; neighborY++)
+                        if (IsInMapRange(neighborX, neighborY, newMap) && Tile.IsWall(newMap[neighborX, neighborY].Type))
+                            types.Add(newMap[neighborX, neighborY].Type);
+
+                var type = types.GroupBy(type => type).OrderByDescending(t => t.Count()).First().Key;
+
+                newMap[x, y] = new Tile(type);
                 // enqueue neighbours to be checked again
-                for (var neighborX = x - 1; neighborX < x + 1; neighborX++)
-                    for (var neighborY = y - 1; neighborY < y + 1; neighborY++)
+                for (var neighborX = x - 1; neighborX <= x + 1; neighborX++)
+                    for (var neighborY = y - 1; neighborY <= y + 1; neighborY++)
                         if (IsInMapRange(neighborX, neighborY, newMap))
                             tilesToCheck.Enqueue((neighborX, neighborY));
             }

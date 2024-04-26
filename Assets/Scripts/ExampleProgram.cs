@@ -42,7 +42,7 @@ namespace Maes
         private Simulator _simulator;
         private void Start()
         {
-            const int randomSeed = 1; // 948778
+            const int randomSeed = 2; // 948778
 
             var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
@@ -73,7 +73,7 @@ namespace Maes
                 }
             );
 
-            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway.pgm");
+            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway_corner.pgm");
 
             var scenario = new SimulationScenario(
                 seed: randomSeed,
@@ -89,19 +89,19 @@ namespace Maes
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
 
-            var buildingConfig = new BuildingMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
-            scenario = new SimulationScenario(
-               hasFinishedSim: sim => sim.ExplorationTracker.ExploredProportion > 0.99f,
-               seed: randomSeed,
-               mapSpawner: generator => generator.GenerateMap(buildingConfig),
-               robotConstraints: constraints,
-               robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                   map,
-                   randomSeed,
-                   4,
-                   new Vector2Int(0, 0),
-                   (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
-               ));
+            //var buildingConfig = new CaveMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
+            //scenario = new SimulationScenario(
+            //   hasFinishedSim: sim => sim.ExplorationTracker.ExploredProportion > 0.99f,
+            //   seed: randomSeed,
+            //   mapSpawner: generator => generator.GenerateMap(buildingConfig),
+            //   robotConstraints: constraints,
+            //   robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+            //       map,
+            //       randomSeed,
+            //       1,
+            //       new Vector2Int(0, 0),
+            //       (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
+            //   ));
 
             simulator.EnqueueScenario(scenario);
             simulator.PressPlayButton(); // Instantly enter play mode
