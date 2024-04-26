@@ -42,7 +42,7 @@ namespace Maes
         private Simulator _simulator;
         private void Start()
         {
-            const int randomSeed = 2; // 948778
+            const int randomSeed = 12; // 948778
 
             var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
@@ -73,18 +73,18 @@ namespace Maes
                 }
             );
 
-            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway_corner.pgm");
-
+            //var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway_corner.pgm");
+            var buildingConfig = new BuildingMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
             var scenario = new SimulationScenario(
                 seed: randomSeed,
-                mapSpawner: generator => generator.GenerateMap(map, randomSeed),
+                mapSpawner: generator => generator.GenerateMap(buildingConfig, randomSeed),
                 robotConstraints: constraints,
-                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsAtPositions(
-                    new List<Vector2Int> { new Vector2Int(0, 0) },
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                     map,
                     randomSeed,
-                    1,
-                    (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
+                    4,
+                    new Vector2Int(0, 0),
+                    (seed) => new MinotaurAlgorithm(constraints, randomSeed, 2)
                 ));
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
