@@ -605,7 +605,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private bool MoveToNearestUnseenWithinRoom()
         {
-            var doorTiles = _doorways.SelectMany(doorway => doorway.Tiles.ToList()).ToHashSet();
+            var doorTiles = _map.FromSlamMapCoordinates(_doorways.SelectMany(doorway => doorway.Tiles)).ToHashSet();
             var startCoordinate = _position;
             if (_map.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
             {

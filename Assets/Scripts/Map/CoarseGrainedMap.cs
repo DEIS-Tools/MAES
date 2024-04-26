@@ -248,7 +248,7 @@ namespace Maes.Map
         /// <summary>
         /// Converts a list of <see cref="SlamMap"/> coordinates to a list of local coordinates.
         /// </summary>
-        public List<Vector2Int> FromSlamMapCoordinates(List<Vector2Int> slamCoords)
+        public IEnumerable<Vector2Int> FromSlamMapCoordinates(IEnumerable<Vector2Int> slamCoords)
         {
             var coarseCoords = new HashSet<Vector2Int>();
             foreach (var slamCoord in slamCoords)
@@ -256,7 +256,7 @@ namespace Maes.Map
                 coarseCoords.Add(FromSlamMapCoordinate(slamCoord));
             }
 
-            return coarseCoords.ToList();
+            return coarseCoords;
         }
 
         /// <summary>

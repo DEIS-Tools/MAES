@@ -42,7 +42,7 @@ namespace Maes
         private Simulator _simulator;
         private void Start()
         {
-            const int randomSeed = 2; // 948778
+            const int randomSeed = 123; // 948778
 
             var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
