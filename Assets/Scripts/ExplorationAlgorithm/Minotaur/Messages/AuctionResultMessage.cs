@@ -25,8 +25,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 // TODO: Should move to doorway that auction was won for, if in winner list
                 if (_winnerList.Contains(minotaur._controller.GetRobotID()))
                 {
-                    minotaur._waypoint = new Waypoint(_doorway.Center, Waypoint.WaypointType.Door, true);
-                    minotaur._controller.PathAndMoveTo(_doorway.Center);
+                    minotaur._waypoint = new Waypoint(_doorway.Center + _doorway.ApproachedDirection.Vector * 4, Waypoint.WaypointType.Door, true);
+                    minotaur._controller.PathAndMoveTo(minotaur._waypoint.Value.Destination);
                     return this;
                 }
                 return null;

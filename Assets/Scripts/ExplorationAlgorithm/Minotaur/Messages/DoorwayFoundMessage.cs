@@ -32,6 +32,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             {
                 var doorwayTile = Vector2Int.RoundToInt(_doorway.Center);
                 var pathLengthToDoorway = minotaur._map.GetPath(doorwayTile, false, false);
+                if (pathLengthToDoorway != null)
+                {
                 foreach (Doorway knownDoorway in minotaur._doorways)
                 {
                     if (pathLengthToDoorway.Contains(Vector2Int.RoundToInt(knownDoorway.Center)))
@@ -41,6 +43,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 }
                 var bid = new Dictionary<int, int>(){{minotaur._controller.GetRobotID(), pathLengthToDoorway.Count}};
                 return new BiddingMessage(_requesterID, bid, _doorway);
+                }
+                return null;
             }
         }
     }

@@ -132,15 +132,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 _ticksSinceHeartbeat = 0;
                 _controller.Broadcast(ownHeartbeat);
             }
-            var receivedMessages = _controller.ReceiveBroadcast().OfType<HeartbeatMessage>();
-            if (receivedMessages.Any())
+            var receivedHeartbeat = new Queue<HeartbeatMessage>(_controller.ReceiveBroadcast().OfType<HeartbeatMessage>());
+            if (receivedHeartbeat.Count > 1)
+                receivedHeartbeat.Dequeue().Combine(receivedHeartbeat.Peek(), this);
+            var receivedDoorwayFound = _controller.ReceiveBroadcast().OfType<DoorwayFoundMessage>();
+            if (receivedDoorwayFound.Any())
             {
-                var ownHeartbeat = new HeartbeatMessage(_controller.GetSlamMap(), _doorways, _position);
-                foreach (var message in receivedMessages)
+                foreach (DoorwayFoundMessage doorwayFound in receivedDoorwayFound)
                 {
-                    ownHeartbeat.Combine(message, this);
+                    var bid = doorwayFound.Process(this);
+                    if (bid != null)
+                    {
+                        _controller.Broadcast(bid);
+                    }
                 }
             }
+            var receivedAuctionResult = _controller.ReceiveBroadcast().OfType<AuctionResultMessage>();
+            if (receivedAuctionResult.Any()) receivedAuctionResult.Select(result => result.Process(this));
 
 
 
@@ -262,7 +270,22 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         else _currentState = AlgorithmState.Done;
                     }
                     break;
-                case AlgorithmState.Auctioning:
+                case AlgorithmState.Auctioning: //Should probably wait a certain amount of ticks before doing this
+                    int tick = 0;
+                    tick++;
+                    if (tick == 5)
+                    {
+                        _waypoint = null;
+                        _controller.StopCurrentTask();
+                        var receivedBids = new Queue<BiddingMessage>(_controller.ReceiveBroadcast().OfType<BiddingMessage>());
+                        var combinedMessage = receivedBids.Dequeue().Combine(receivedBids.Peek(), this);
+                        var winnerMessage = combinedMessage.Process(this); //Causes the auction caller to move through doorway if enough robots in room
+                        if (winnerMessage is AuctionResultMessage)
+                        {
+                            _controller.Broadcast(winnerMessage);
+                        }
+                        _currentState = AlgorithmState.ExploreRoom;
+                    }
                     break;
                 case AlgorithmState.MovingToDoorway:
                     break;
@@ -743,6 +766,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     {
                         Debug.Log($"doorway {start}-{end} at {_logicTicks}");
                         _doorways.Add(newDoorway);
+
+                        // _currentState = AlgorithmState.Auctioning;
+                        // _controller.Broadcast(new DoorwayFoundMessage(newDoorway, _controller.GetRobotID()));
                     }
                     else
                     {
