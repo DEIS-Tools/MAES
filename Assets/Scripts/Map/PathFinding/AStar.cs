@@ -278,7 +278,6 @@ namespace Maes.Map.PathFinding
             while (targetQueue.Any())
             {
                 var target = targetQueue.Dequeue();
-                visitedTargetsList.Add(target);
                 var neighborHit = IsAnyNeighborStatus(target, pathFindingMap, lookupStatus);
                 if (neighborHit.HasValue && (excludedTiles == null || !excludedTiles.Contains(neighborHit.Value)))
                 {
@@ -305,6 +304,7 @@ namespace Maes.Map.PathFinding
                         }
 
                         targetQueue.Enqueue(target + dir);
+                        visitedTargetsList.Add(target + dir);
                     }
                 }
             }
