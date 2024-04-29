@@ -109,7 +109,7 @@ namespace Maes.Map.PathFinding
                     Vector2Int candidateCoord = currentCoordinate + dir.Vector;
                     // Only consider non-solid tiles
                     if (IsSolid(candidateCoord, pathFindingMap, beOptimistic) && candidateCoord != targetCoordinate) {
-                        if (pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Previous().Vector, currentCoordinate)){
+                        if (pathFindingMap.IsUnseenSemiOpen(currentCoordinate + dir.Previous().Vector, currentCoordinate)){
                             continue;
                         }
                     }
@@ -120,8 +120,8 @@ namespace Maes.Map.PathFinding
                         if (IsSolid(currentCoordinate + dir.Previous().Vector, pathFindingMap, beOptimistic)
                         || IsSolid(currentCoordinate + dir.Next().Vector, pathFindingMap, beOptimistic))
                             {
-                                if (pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Previous().Vector, currentCoordinate) ||
-                                    pathFindingMap.IsOffsetSolid(currentCoordinate + dir.Next().Vector, currentCoordinate))
+                                if (pathFindingMap.IsUnseenSemiOpen(currentCoordinate + dir.Previous().Vector, currentCoordinate) ||
+                                    pathFindingMap.IsUnseenSemiOpen(currentCoordinate + dir.Next().Vector, currentCoordinate))
                                 {
                                     continue;
                                 }
@@ -294,15 +294,15 @@ namespace Maes.Map.PathFinding
                             continue;
 
                         neighborHit = IsAnyNeighborStatus(target + dir, pathFindingMap, lookupStatus);
-                        if (visitedTargetsList.Contains(target + dir) || !pathFindingMap.IsWithinBounds(target + dir))
-                        {
-                            continue;
-                        }
                         if (neighborHit.HasValue && pathFindingMap.IsWithinBounds(target + dir))
                         {
                             return neighborHit.Value;
                         }
 
+                        if (visitedTargetsList.Contains(target + dir) || !pathFindingMap.IsWithinBounds(target + dir))
+                        {
+                            continue;
+                        }
                         targetQueue.Enqueue(target + dir);
                         visitedTargetsList.Add(target + dir);
                     }

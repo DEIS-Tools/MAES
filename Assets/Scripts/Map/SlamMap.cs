@@ -351,7 +351,7 @@ namespace Maes.Map
             return true;
         }
 
-        public bool IsOffsetSolid(Vector2Int nextCoordinate, Vector2Int currentCoordinate)
+        public bool IsUnseenSemiOpen(Vector2Int nextCoordinate, Vector2Int currentCoordinate)
             {
                 return true;
             }
