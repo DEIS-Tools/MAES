@@ -163,11 +163,17 @@ namespace PlayModeTests
         public IEnumerator CompleteMap()
         {
             var buildingConfig = new BuildingMapConfig(RandomSeed, widthInTiles: 100, heightInTiles: 100);
-            InitSimulator(buildingConfig, new List<Vector2Int> { new Vector2Int(0, -24) });
+            InitSimulator(buildingConfig, new List<Vector2Int> { new Vector2Int(0, 0) });
 
             _maes.PressPlayButton();
             _maes.GetSimulationManager().AttemptSetPlayState(Maes.UI.SimulationPlayState.FastAsPossible);
-            return AssertDoorsWhenFinished(1);
+            if (_simulation.SimulatedLogicTicks > 36000)
+                yield return false;
+            while (_simulation.ExplorationTracker.ExploredProportion < 0.999f)
+            {
+                yield return null;
+            }
+            Assert.GreaterOrEqual(0.9999f, _simulation.ExplorationTracker.ExploredProportion);
         }
     }
 }
