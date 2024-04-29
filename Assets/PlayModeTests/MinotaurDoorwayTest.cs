@@ -7,6 +7,7 @@ using UnityEngine;
 using Maes.ExplorationAlgorithm.Minotaur;
 using Maes.Utilities.Files;
 using System.Linq;
+using Maes.Map.MapGen;
 
 namespace PlayModeTests
 {
@@ -35,9 +36,9 @@ namespace PlayModeTests
             Simulator.Destroy();
             _minotaurs.Clear();
         }
-        private void InitSimulator(string mapName, List<Vector2Int> robotSpawnPositions)
+        private RobotConstraints GetRobotConstraints()
         {
-            var constraints = new RobotConstraints(
+            return new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -65,6 +66,10 @@ namespace PlayModeTests
                     return true;
                 }
             );
+        }
+        private void InitSimulator(string mapName, List<Vector2Int> robotSpawnPositions)
+        {
+            var constraints = GetRobotConstraints();
             var map = PgmMapFileLoader.LoadMapFromFileIfPresent(mapName + ".pgm");
             var testingScenario = new SimulationScenario(RandomSeed,
                 mapSpawner: generator => generator.GenerateMap(map, RandomSeed),
@@ -74,6 +79,25 @@ namespace PlayModeTests
                     robotSeed =>
                     {
                         var algorithm = new MinotaurDoorwayMock(constraints, RandomSeed, 4);
+                        _minotaurs.Add(algorithm);
+                        return algorithm;
+                    }));
+
+            _maes = Simulator.GetInstance();
+            _maes.EnqueueScenario(testingScenario);
+            _simulation = _maes.GetSimulationManager().CurrentSimulation;
+        }
+        private void InitSimulator(BuildingMapConfig mapConfig, List<Vector2Int> robotSpawnPositions)
+        {
+            var constraints = GetRobotConstraints();
+            var testingScenario = new SimulationScenario(RandomSeed,
+                mapSpawner: generator => generator.GenerateMap(mapConfig),
+                hasFinishedSim: simulation => false,
+                robotConstraints: constraints,
+                robotSpawner: (map, spawner) => spawner.SpawnRobotsAtPositions(robotSpawnPositions, map, RandomSeed, 1,
+                    robotSeed =>
+                    {
+                        var algorithm = new MinotaurDoorwayMock(constraints, RandomSeed, 2);
                         _minotaurs.Add(algorithm);
                         return algorithm;
                     }));
@@ -129,6 +153,17 @@ namespace PlayModeTests
         public IEnumerator Hallway()
         {
             InitSimulator("hallway", new List<Vector2Int> { new Vector2Int(0, -24) });
+
+            _maes.PressPlayButton();
+            _maes.GetSimulationManager().AttemptSetPlayState(Maes.UI.SimulationPlayState.FastAsPossible);
+            return AssertDoorsWhenFinished(1);
+        }
+
+        [Test(ExpectedResult = null)]
+        public IEnumerator CompleteMap()
+        {
+            var buildingConfig = new BuildingMapConfig(RandomSeed, widthInTiles: 100, heightInTiles: 100);
+            InitSimulator(buildingConfig, new List<Vector2Int> { new Vector2Int(0, -24) });
 
             _maes.PressPlayButton();
             _maes.GetSimulationManager().AttemptSetPlayState(Maes.UI.SimulationPlayState.FastAsPossible);
