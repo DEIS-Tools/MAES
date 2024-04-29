@@ -173,15 +173,13 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             if (_deadlockTimer >= 5)
             {
                 var waypoint = _waypoint;
-                HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
+                if (MoveToNearestUnseenWithinRoom()) ;
+                else if (MovetoNearestDoorway()) ;
+                else if (MoveToNearestUnseen()) ;
                 if (waypoint.HasValue && waypoint.Equals(_waypoint))
                 {
-                    visited.Add(waypoint.Value.Destination);
+                    MoveToNearestUnseen(new HashSet<Vector2Int> { waypoint.Value.Destination });
                 }
-                if (MoveToNearestUnseenWithinRoom(visited)) ;
-                else if (MovetoNearestDoorway()) ;
-                else if (MoveToNearestUnseen(visited)) ;
-                else MoveToNearestUnseen();
                 _deadlockTimer = 0;
             }
 
@@ -229,7 +227,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     if (waypoint.Type == Waypoint.WaypointType.Door)
                         AttemptAddDoorway(GetWalls(wallPoints.Select(wallPoint => wallPoint.Position).Distinct()));
                     else if (waypoint.Type == Waypoint.WaypointType.NearestDoor)
-                        _doorways.First(doorway => _map.FromSlamMapCoordinate(doorway.Center + doorway.ApproachedDirection.Vector * 2) == waypoint.Destination).Explored = true;
+                        _doorways.First(doorway => _map.FromSlamMapCoordinate(doorway.Center + doorway.ApproachedDirection.Vector * 4) == waypoint.Destination).Explored = true;
                     _waypoint = null;
                 }
                 else
@@ -341,7 +339,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var furthestPoint = slamWallPoints.OrderByDescending(point => Vector2.Distance(point, slamPosition)).First();
             slamWallPoints = slamWallPoints.OrderByDescending(point => (Vector2.SignedAngle((furthestPoint - slamPosition), (point - slamPosition)) + 360) % 360);
 
-            slamWalls.ToList().ForEach(wall => Debug.DrawLine(slamMap.TileToWorld(wall.Start), slamMap.TileToWorld(wall.End), Color.black, 2));
+            slamWalls.ToList().ForEach(wall => Debug.DrawLine(slamMap.TileToWorld(wall.Start), slamMap.TileToWorld(wall.End), Color.white, 2));
             slamWallPoints.ToList().ForEach(point => point.DrawDebugLineFromRobot(slamMap, Color.yellow));
 
             var doorways = DoorwaysInRange(VisionRadius * 2).Select(doorway => doorway.Opening);
@@ -349,7 +347,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var points = slamWallPoints.Select(point => (perp: point + Vector2Int.FloorToInt((VisionRadius - 2) * 2 * Vector2.Perpendicular(point - slamPosition).normalized), point))
                            .Where(tuple => slamMap.IsWithinBounds(tuple.perp)
                                            && slamMap.GetTileStatus(tuple.perp) != SlamTileStatus.Solid
-                                           && !IsPointThroughDoorway(tuple.perp, doorways))
+                                           && !IsPerpendicularThroughDoorway(tuple.perp, doorways))
                            .ToList();
 
             if (!points.Any())
@@ -373,7 +371,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         if (WallUnseenNeighbor(point, slamWalls))
                             return true;
                     }
-                    else if (!openPoint.HasValue && slamMap.GetTileStatus(point.perp) == SlamTileStatus.Open)
+                    else if (slamMap.GetTileStatus(point.perp) == SlamTileStatus.Open)
                     {
                         openPoint = point;
                     }
@@ -387,7 +385,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return false;
         }
 
-        private bool IsPointThroughDoorway(Vector2Int perp, IEnumerable<Line2D> doorways)
+        private bool IsPerpendicularThroughDoorway(Vector2Int perp, IEnumerable<Line2D> doorways)
         {
             var slamMap = _controller.GetSlamMap();
             var slamPosition = slamMap.GetCurrentPosition();
@@ -563,7 +561,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                               .Select(tile => (status: _map.GetTileStatus(tile), perpendicularTile: tile + CardinalDirection.PerpendicularDirection(tile - _position).Vector * (VisionRadius - 1)))
                               .Where(tile => _map.IsWithinBounds(tile.perpendicularTile)
                                              && IfSolidIsPathable(tile)
-                                             && !IsPointThroughDoorway(tile.perpendicularTile, doorways))
+                                             && !IsPerpendicularThroughDoorway(tile.perpendicularTile, doorways))
                               .Select(tile => tile.perpendicularTile);
             if (tiles.Any())
             {
@@ -605,24 +603,19 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return true;
         }
 
-        private bool MoveToNearestUnseenWithinRoom(HashSet<Vector2Int> excludedTiles = null)
+        private bool MoveToNearestUnseenWithinRoom()
         {
-            var doorTiles = _map.FromSlamMapCoordinates(_doorways.SelectMany(doorway => doorway.Tiles)).ToList();
-            if (excludedTiles != null)
-            {
-                doorTiles.AddRange(excludedTiles);
-            }
-            var allExcluded = doorTiles.ToHashSet();
+            var doorTiles = _doorways.SelectMany(doorway => doorway.Tiles.ToList()).ToHashSet();
             var startCoordinate = _position;
             if (_map.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
             {
-                var NearestOpenTile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open, allExcluded);
+                var NearestOpenTile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open, doorTiles);
                 if (NearestOpenTile.HasValue)
                 {
                     startCoordinate = NearestOpenTile.Value;
                 }
             }
-            var tile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, allExcluded);
+            var tile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, doorTiles);
             if (tile.HasValue)
             {
                 tile = _map.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
@@ -641,8 +634,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var nearestDoorway = GetNearestUnexploredDoorway();
             if (nearestDoorway != null)
             {
-                _waypoint = new Waypoint(_map.FromSlamMapCoordinate(nearestDoorway.Center + nearestDoorway.ApproachedDirection.Vector * 2), Waypoint.WaypointType.NearestDoor, true);
+                _waypoint = new Waypoint(_map.FromSlamMapCoordinate(nearestDoorway.Center + nearestDoorway.ApproachedDirection.Vector * 4), Waypoint.WaypointType.NearestDoor, true);
                 _controller.PathAndMoveTo(_waypoint.Value.Destination);
+                nearestDoorway.Explored = true;
                 return true;
             }
             return false;
@@ -663,8 +657,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var tile = slamMap.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, excludedTiles);
             if (tile.HasValue)
             {
-                _waypoint = new Waypoint(_map.FromSlamMapCoordinate(tile.Value), Waypoint.WaypointType.Greed, true);
-                _controller.PathAndMoveTo(_waypoint.Value.Destination);
+                _controller.PathAndMoveTo(tile.Value);
+                _waypoint = new Waypoint(tile.Value, Waypoint.WaypointType.Greed, true);
                 return true;
             }
             return false;
@@ -862,7 +856,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         /// <returns>The distance of the path</returns>
         private float PathDistanceToPoint(Vector2Int point)
         {
-            List<Vector2Int> path = _map.GetPath(_map.FromSlamMapCoordinate(point), false, false);
+            List<Vector2Int> path = _controller.GetSlamMap().GetPath(_position, point);
             if (path == null) return Mathf.Infinity;
             List<float> distances = new();
             for (var i = 0; i < path.Count - 2; i++)

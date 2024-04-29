@@ -77,7 +77,7 @@ namespace Maes
             var buildingConfig = new BuildingMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
             var scenario = new SimulationScenario(
                 seed: randomSeed,
-                mapSpawner: generator => generator.GenerateMap(buildingConfig, randomSeed),
+                mapSpawner: generator => generator.GenerateMap(buildingConfig),
                 robotConstraints: constraints,
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                     map,
