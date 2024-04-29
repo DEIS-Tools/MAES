@@ -27,6 +27,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 {
                     minotaur._waypoint = new Waypoint(_doorway.Center + _doorway.ApproachedDirection.Vector * 4, Waypoint.WaypointType.Door, true);
                     minotaur._controller.PathAndMoveTo(minotaur._waypoint.Value.Destination);
+                    minotaur._doorways.Find(x => x.Center == _doorway.Center).Explored = true;
                     return this;
                 }
                 return null;

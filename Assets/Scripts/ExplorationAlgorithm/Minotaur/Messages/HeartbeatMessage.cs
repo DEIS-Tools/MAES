@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using UnityEngine;
+using System.Linq;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
 {
@@ -34,10 +35,10 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         var doorway = heartbeatMessage.doorways[i];
                         if (doorways.Contains(doorway))
                         {
-                            // if (doorway.ApproachedDirection.OppositeDirection() == doorways.Find(ownDoorway => ownDoorway == doorway).ApproachedDirection)
-                            // {
-                            //     doorways.Find(ownDoorway => ownDoorway == doorway).Explored = true;
-                            // }
+                            if (doorway.ApproachedDirection.OppositeDirection() == doorways.First(ownDoorway => ownDoorway.Equals(doorway)).ApproachedDirection)
+                            {
+                                doorways.First(ownDoorway => ownDoorway.Equals(doorway)).Explored = true;
+                            }
                         }
                         else
                         {
