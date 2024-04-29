@@ -789,44 +789,6 @@ namespace Maes.Map
                 return false;
             }
 
-        private bool CheckIfAllSlamStatusesSolid(Vector2Int coordinate)
-        {
-            var statuses = GetSlamTileStatuses(coordinate);
-            int solids = 0;
-            foreach (var coord in statuses) {
-                    if (coord != SlamMap.SlamTileStatus.Open) {
-                            solids++;
-                        }
-                }
-
-            if (solids == 4) {
-                    return true;
-                }
-
-            return false;
-        }
-        private bool CheckIfAnyStatusSolid(Vector2Int coordinate)
-            {
-                var statuses = GetSlamTileStatuses(coordinate);
-                foreach (var coord in statuses) {
-                    if (coord == SlamMap.SlamTileStatus.Solid) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-        private bool CheckForUnseen(Vector2Int coordinate)
-            {
-                var statuses = GetSlamTileStatuses(coordinate);
-                foreach (var coord in statuses) {
-                    if (coord == SlamMap.SlamTileStatus.Unseen){
-                        return true;
-                    }
-                }
-                return false;
-            }
-
         /// <summary>
         /// Updates the information in a tile with the new observed status. Does not change anything, if any of the SLAM tiles in the coarse-grained tile are 'solid'.
         /// </summary>
