@@ -50,7 +50,7 @@ namespace ExplorationAlgorithm
             }
 
             _ticks++;
-            var position = _controller.SlamMap.GetCurrentPositionSlamTile();
+            var position = _controller.SlamMap.GetCurrentPosition();
             // Simple state machine to not set a new task constantly
             if (!turning)
             {

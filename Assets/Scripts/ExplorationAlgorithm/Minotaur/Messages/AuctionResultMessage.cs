@@ -17,7 +17,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             }
             public IMinotaurMessage Combine(IMinotaurMessage otherMessage, MinotaurAlgorithm minotaur)
             {
-                throw new NotImplementedException();
+                return this;
             }
 
             public IMinotaurMessage? Process(MinotaurAlgorithm minotaur)
@@ -25,7 +25,10 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 // TODO: Should move to doorway that auction was won for, if in winner list
                 if (_winnerList.Contains(minotaur._controller.GetRobotID()))
                 {
-                    throw new NotImplementedException();
+                    minotaur._controller.StopCurrentTask();
+                    minotaur._waypoint = new Waypoint(minotaur._map.FromSlamMapCoordinate(_doorway.Center + _doorway.ApproachedDirection.Vector * 4), Waypoint.WaypointType.NearestDoor, true);
+                    minotaur._controller.PathAndMoveTo(minotaur._waypoint.Value.Destination);
+                    return this;
                 }
                 return null;
             }

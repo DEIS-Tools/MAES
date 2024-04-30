@@ -127,9 +127,9 @@ namespace Maes.Map {
             return status;
         }
 
-        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus)
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus, HashSet<Vector2Int> excludedTiles = null)
         {
-            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus);
+            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus, excludedTiles);
         }
         
         // Combines two SlamTileStatus in a 'optimistic' fashion.
@@ -151,6 +151,16 @@ namespace Maes.Map {
             if (status1 == SlamMap.SlamTileStatus.Unseen || status2 == SlamMap.SlamTileStatus.Unseen)
                 return SlamMap.SlamTileStatus.Unseen;
             return SlamMap.SlamTileStatus.Open;
+        }
+
+        public Vector2Int GetCurrentPosition()
+        {
+            return Vector2Int.FloorToInt(_slamMap.ApproximatePosition - _offset);
+        }
+
+        public Vector3 TileToWorld(Vector2 tile)
+        {
+            return new Vector3(tile.x, tile.y, -0.01f) + (Vector3)_offset;
         }
     }
 }

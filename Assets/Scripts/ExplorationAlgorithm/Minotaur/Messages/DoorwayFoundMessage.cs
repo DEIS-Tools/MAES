@@ -21,7 +21,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
             public IMinotaurMessage Combine(IMinotaurMessage otherMessage, MinotaurAlgorithm minotaur)
             {
-                throw new NotImplementedException(); //Shouldnt get multiple, and if you do, process one at a time
+                return this;
             }
 
             /// <summary>
@@ -30,17 +30,26 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             /// </summary>
             public IMinotaurMessage? Process(MinotaurAlgorithm minotaur)
             {
-                var doorwayTile = Vector2Int.RoundToInt(_doorway.Position);
-                var pathLengthToDoorway = minotaur._map.GetPath(doorwayTile, false, false);
-                foreach (Doorway knownDoorway in minotaur._doorways)
+                if (!minotaur._doorways.Contains(_doorway))
                 {
-                    if (pathLengthToDoorway.Contains(Vector2Int.RoundToInt(knownDoorway.Position)))
-                    {
-                        return null;
-                    }
+                    minotaur._doorways.Add(_doorway);
                 }
-                var bid = new Dictionary<int, int>(){{minotaur._controller.GetRobotID(), pathLengthToDoorway.Count}};
-                return new BiddingMessage(_requesterID, bid, _doorway);
+
+                var doorwayTile = minotaur._map.FromSlamMapCoordinate(_doorway.Center);
+                var pathLengthToDoorway = minotaur._map.GetPath(doorwayTile, false, false);
+                if (pathLengthToDoorway != null)
+                {
+                    foreach (Doorway knownDoorway in minotaur._doorways)
+                    {
+                        if (pathLengthToDoorway.Contains(minotaur._map.FromSlamMapCoordinate(knownDoorway.Center)))
+                        {
+                            return null;
+                        }
+                    }
+                    var bid = new Dictionary<int, int>() { { minotaur._controller.GetRobotID(), pathLengthToDoorway.Count } };
+                    return new BiddingMessage(_requesterID, bid, _doorway);
+                }
+                return null;
             }
         }
     }

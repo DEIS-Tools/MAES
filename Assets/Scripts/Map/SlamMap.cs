@@ -109,7 +109,7 @@ namespace Maes.Map
                 _tiles[localCoordinate.x, localCoordinate.y] = isOpen ? SlamTileStatus.Open : SlamTileStatus.Solid;
         }
 
-        public Vector2Int GetCurrentPositionSlamTile()
+        public Vector2Int GetCurrentPosition()
         {
             var currentPosition = GetApproxPosition();
             // Since the resolution of the slam map is double, we round to nearest half
@@ -201,9 +201,6 @@ namespace Maes.Map
         public static void Synchronize(List<SlamMap> maps)
         {
             var globalMap = new SlamTileStatus[maps[0]._widthInTiles, maps[0]._heightInTiles];
-            for (int x = 0; x < globalMap.GetLength(0); x++)
-                for (int y = 0; y < globalMap.GetLength(1); y++)
-                    globalMap[x, y] = SlamTileStatus.Unseen;
 
             foreach (var map in maps)
             {
@@ -232,9 +229,6 @@ namespace Maes.Map
         public static void Combine(SlamMap target, List<SlamMap> others)
         {
             var globalMap = new SlamTileStatus[target._widthInTiles, target._heightInTiles];
-            for (int x = 0; x < globalMap.GetLength(0); x++)
-                for (int y = 0; y < globalMap.GetLength(1); y++)
-                    globalMap[x, y] = SlamTileStatus.Unseen;
 
             foreach (var other in others)
             {
@@ -283,9 +277,9 @@ namespace Maes.Map
             return _tiles[tile.x, tile.y];
         }
 
-        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus)
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus, HashSet<Vector2Int> excludedTiles = null)
         {
-            return _pathFinder.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus);
+            return _pathFinder.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus, excludedTiles);
         }
 
         public float GetRobotAngleDeg()
@@ -358,7 +352,7 @@ namespace Maes.Map
         public RelativePosition GetRelativeSlamPosition(Vector2Int slamTileTarget)
         {
             // Convert to local coordinate
-            var robotPosition = GetCurrentPositionSlamTile();
+            var robotPosition = GetCurrentPosition();
             var distance = Vector2.Distance(robotPosition, (Vector2)slamTileTarget);
             var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetRobotAngleDeg()), slamTileTarget - robotPosition);
             return new RelativePosition(distance, angle);
@@ -419,5 +413,12 @@ namespace Maes.Map
             }
             return worldCoordinate;
         }
+
+        public Vector3 TileToWorld(Vector2 tile)
+        {
+            var WorldTile = tile / 2;
+            return new Vector3(WorldTile.x, WorldTile.y, -0.01f) + (Vector3)_offset;
+        }
+
     }
 }

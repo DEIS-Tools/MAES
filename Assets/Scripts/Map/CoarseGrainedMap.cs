@@ -68,7 +68,7 @@ namespace Maes.Map
             return _slamMap.ApproximatePosition - _offset;
         }
 
-        public Vector2Int GetCurrentPositionCoarseTile()
+        public Vector2Int GetCurrentPosition()
         {
             return Vector2Int.FloorToInt(GetApproximatePosition());
         }
@@ -191,9 +191,15 @@ namespace Maes.Map
             return status;
         }
 
-        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus)
+        /// <summary>
+        /// Gets the nearest target status tile using flood fill, which is faster than doing aStar.
+        /// </summary>
+        /// <param name="targetCoordinate">Location to start the flood fill</param>
+        /// <param name="lookupStatus">The status that is being looked for being {unseen, open, solid}</param>
+        /// <returns>The given tile in coarse coordinates</returns>
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus, HashSet<Vector2Int> excludedTiles = null)
         {
-            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus);
+            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus, excludedTiles);
         }
 
         /// <summary>
@@ -242,7 +248,7 @@ namespace Maes.Map
         /// <summary>
         /// Converts a list of <see cref="SlamMap"/> coordinates to a list of local coordinates.
         /// </summary>
-        public List<Vector2Int> FromSlamMapCoordinates(List<Vector2Int> slamCoords)
+        public IEnumerable<Vector2Int> FromSlamMapCoordinates(IEnumerable<Vector2Int> slamCoords)
         {
             var coarseCoords = new HashSet<Vector2Int>();
             foreach (var slamCoord in slamCoords)
@@ -250,15 +256,15 @@ namespace Maes.Map
                 coarseCoords.Add(FromSlamMapCoordinate(slamCoord));
             }
 
-            return coarseCoords.ToList();
+            return coarseCoords;
         }
 
         /// <summary>
         /// Converts the given local coordinate to a <see cref="SlamMap"/> coordinate.
         /// </summary>
-        public Vector2Int ToSlamMapCoordinate(Vector2Int localCoordinate)
+        public Vector2Int ToSlamMapCoordinate(Vector2 localCoordinate)
         {
-            return localCoordinate * 2;
+            return Vector2Int.FloorToInt(localCoordinate * 2);
         }
 
         /// <summary>
@@ -299,9 +305,7 @@ namespace Maes.Map
         public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false, bool beOptimistic = true)
         {
             var approxPosition = GetApproximatePosition();
-            return beOptimistic
-                ? _aStar.GetOptimisticPath(new Vector2Int((int)approxPosition.x, (int)approxPosition.y), target, this, acceptPartialPaths)
-                : _aStar.GetPath(Vector2Int.RoundToInt(approxPosition), target, this, acceptPartialPaths);
+            return _aStar.GetPath(Vector2Int.FloorToInt(approxPosition), target, this, beOptimistic, acceptPartialPaths);
         }
 
         /// <summary>
@@ -499,9 +503,10 @@ namespace Maes.Map
             if (_optimisticTileStatuses[courseCoord.x, courseCoord.y] != SlamMap.SlamTileStatus.Solid)
                 _optimisticTileStatuses[courseCoord.x, courseCoord.y] = observedStatus;
         }
-        public Vector3 CoarseToWorld(Vector2 position)
+
+        public Vector3 TileToWorld(Vector2 tile)
         {
-            return new Vector3(position.x, position.y, -0.01f) + (Vector3)_offset;
+            return new Vector3(tile.x, tile.y, -0.01f) + (Vector3)_offset;
         }
     }
 }

@@ -5,19 +5,21 @@ using UnityEngine;
 using Maes.Utilities;
 using static Maes.Map.SlamMap;
 using System;
+using Maes.Map.PathFinding;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
 {
     internal class EdgeDetector
     {
         public EdgeState State => UpdateState();
-        public bool isStuck => GetTilesAroundRobot(_edgeSize, _defaultLimitors).Where(tile => _map.GetTileStatus(tile) != SlamTileStatus.Open).Any();
+        public bool isStuck => GetTilesAroundRobot(_edgeSize, _defaultLimitors).Where(tile => _coarseMap.GetTileStatus(tile) != SlamTileStatus.Open).Any();
 
-        private CoarseGrainedMap _map;
+        private SlamMap _slamMap;
+        private CoarseGrainedMap _coarseMap;
         private int _edgeSize;
         private int _visionRange;
         private readonly List<SlamTileStatus> _defaultLimitors = new List<SlamTileStatus> { SlamTileStatus.Solid };
-        private Vector2Int _robotPosition => _map.GetCurrentPositionCoarseTile();
+        private Vector2Int _robotPosition => _coarseMap.GetCurrentPosition();
 
         public enum EdgeState
         {
@@ -26,9 +28,10 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             ForwardRight,
         }
 
-        public EdgeDetector(CoarseGrainedMap map, float visionRange)
+        public EdgeDetector(SlamMap map, float visionRange)
         {
-            _map = map;
+            _slamMap = map;
+            _coarseMap = map.GetCoarseMap();
             _edgeSize = (int)visionRange + 1;
             _visionRange = (int)visionRange;
         }
@@ -36,7 +39,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private EdgeState UpdateState()
         {
             var tiles = GetTilesAroundRobot(_edgeSize, _defaultLimitors);
-            var angle = _map.GetApproximateGlobalDegrees();
+            var angle = _coarseMap.GetApproximateGlobalDegrees();
             return EdgeState.ForwardRight;
         }
 
@@ -50,14 +53,14 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 var removedAngles = new List<int>();
                 foreach (var angle in angles)
                 {
-                    var tile = GetFurthestTileAroundRobot(_map.GetApproximateGlobalDegrees() + angle, range, _defaultLimitors);
+                    var tile = GetFurthestTileAroundRobot(_coarseMap.GetApproximateGlobalDegrees() + angle, range, _defaultLimitors);
 
-                    if (_map.GetTileStatus(tile) == SlamTileStatus.Solid)
+                    if (_coarseMap.GetTileStatus(tile) == SlamTileStatus.Solid)
                     {
                         removedAngles.Add(angle);
                         continue;
                     }
-                    if (_map.GetTileStatus(tile) == SlamTileStatus.Unseen)
+                    if (_coarseMap.GetTileStatus(tile) == SlamTileStatus.Unseen)
                     {
                         unseenTiles.Add(tile);
                     }
@@ -75,28 +78,41 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             return null;
         }
 
-        public IEnumerable<Vector2Int> GetTilesAroundRobot(int range, List<SlamTileStatus> limiters, int startAngle = 0)
+        /// <summary>
+        /// Gets the tiles around the robot by casting 360-<paramref name="startAngle"/> rays. These rays expand from the robot and out being stopped by the <paramref name="limiters"/>.
+        /// <para></para>
+        /// If only one ray is desired, consider <seealso cref="GetFurthestTileAroundRobot(float, int, List{SlamTileStatus}, bool, bool)"/>
+        /// </summary>
+        /// <param name="range">The distance of the ray</param>
+        /// <param name="limiters">What tiles should stop the rays</param>
+        /// <param name="slamPrecision">Target slam tiles instead of coarse tiles</param>
+        /// <param name="startAngle">If set above 0 then this will create arcs instead of circles around the robot, based on <see cref="Vector2.right"/> counter-clockwise</param>
+        /// <returns>The unique tiles that were hit</returns>
+        public IEnumerable<Vector2Int> GetTilesAroundRobot(int range, List<SlamTileStatus> limiters, bool slamPrecision = false, int startAngle = 0)
         {
+            IPathFindingMap map = slamPrecision ? _slamMap : _coarseMap;
             var tiles = new List<Vector2Int>();
             for (int angle = startAngle; angle < 360; angle++)
             {
-                tiles.Add(GetFurthestTileAroundRobot(_map.GetApproximateGlobalDegrees() + angle, range, limiters));
+                tiles.Add(GetFurthestTileAroundRobot(_coarseMap.GetApproximateGlobalDegrees() + angle, range, limiters, slamPrecision: slamPrecision));
             }
-            return tiles.Distinct().Where(tile => _map.IsWithinBounds(tile));
+            return tiles.Distinct().Where(tile => map.IsWithinBounds(tile));
         }
 
-        public Vector2Int GetFurthestTileAroundRobot(float angle, int range, List<SlamTileStatus> limiters, bool snapToGrid = false)
+        public Vector2Int GetFurthestTileAroundRobot(float angle, int range, List<SlamTileStatus> limiters, bool snapToGrid = false, bool slamPrecision = false)
         {
-            Vector2Int tile = _robotPosition;
-            for (int r = 0; r < range; r++)
+            var position = slamPrecision ? _slamMap.GetCurrentPosition() : _robotPosition;
+            IPathFindingMap map = slamPrecision ? _slamMap : _coarseMap;
+            Vector2Int tile = position;
+            for (int r = 0; r < (slamPrecision ? range*2 : range); r++)
             {
                 tile = snapToGrid ? CardinalDirection.AngleToDirection(angle).Vector * r : Vector2Int.FloorToInt(Geometry.VectorFromDegreesAndMagnitude(angle, r));
-                var candidateTile = tile + _robotPosition;
-                if (_map.IsWithinBounds(candidateTile))
+                var candidateTile = tile + position;
+                if (map.IsWithinBounds(candidateTile))
                 {
                     foreach (var limiter in limiters)
                     {
-                        if (_map.GetTileStatus(candidateTile) == limiter && (limiter != SlamTileStatus.Open || r > _visionRange))
+                        if (map.GetTileStatus(candidateTile) == limiter && (limiter != SlamTileStatus.Open || r > _visionRange))
                         {
                             return candidateTile;
                         }
@@ -112,15 +128,15 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var boxTileList = new List<Vector2Int>();
             for (int x = -_edgeSize; x <= _edgeSize; x++)
             {
-                for (int y = _edgeSize; y <= _edgeSize+1; y++)
+                for (int y = _edgeSize; y <= _edgeSize + 1; y++)
                 {
                     boxTileList.Add(_robotPosition + new Vector2Int(x, y));
                     boxTileList.Add(_robotPosition + new Vector2Int(x, -y));
-                    boxTileList.Add(_robotPosition + new Vector2Int(y,x));
-                    boxTileList.Add(_robotPosition + new Vector2Int(y,-x));
+                    boxTileList.Add(_robotPosition + new Vector2Int(y, x));
+                    boxTileList.Add(_robotPosition + new Vector2Int(-y, x));
                 }
             }
-            return boxTileList.Where(tile => _map.IsWithinBounds(tile));
+            return boxTileList.Where(tile => _coarseMap.IsWithinBounds(tile));
         }
 
 

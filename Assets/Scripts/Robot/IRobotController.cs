@@ -186,6 +186,6 @@ namespace Maes.Robot
         /// simulation's <see cref="RobotConstraints"/>)
         /// </summary>
         /// <returns>a reference to the robots <see cref="SlamMap"/></returns>
-        ISlamAlgorithm GetSlamMap();
+        SlamMap GetSlamMap();
     }
 }

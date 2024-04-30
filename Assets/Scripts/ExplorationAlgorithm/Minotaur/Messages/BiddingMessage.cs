@@ -39,26 +39,33 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 if (minotaur._controller.GetRobotID() == _requestorRobotID)
                 {
                     List<int> winnerIDList = new();
-                    if (_allBids.Count / 2 > 1)
+                    if ((_allBids.Count + 1) / 2 > 1)
                     {
-                        var orderedBids = _allBids.OrderByDescending(key => key.Value);
-                        var winnerbids = orderedBids.Take(_allBids.Count / 2);
+                        var orderedBids = _allBids.OrderBy(key => key.Value);
+                        var winnerbids = orderedBids.Take((_allBids.Count + 1) / 2);
                         foreach ((int key, int value) in winnerbids)
                         {
-                            winnerIDList.Add(value);
+                            winnerIDList.Add(key);
                         }
-                        // TODO: Should also move through doorway itself
-                        throw new NotImplementedException();
+                        minotaur._waypoint = new Waypoint(minotaur._map.FromSlamMapCoordinate(_doorway.Center + _doorway.ApproachedDirection.Vector * 4), Waypoint.WaypointType.Door, true);
+                        minotaur._controller.PathAndMoveTo(minotaur._waypoint.Value.Destination);
+                        minotaur._doorways.Find(x => x.Center == _doorway.Center).Explored = true;
+                        return new AuctionResultMessage(winnerIDList, _doorway);
                     }
                     else if (_allBids.Count / 2 == 1)
                     {
-                        // TODO: move through doorway yourself
-                        throw new NotImplementedException();
-                    } //else pass doorway, maybe here?
-
-                    return new AuctionResultMessage(winnerIDList, _doorway);
+                        minotaur._waypoint = new Waypoint(minotaur._map.FromSlamMapCoordinate(_doorway.Center + _doorway.ApproachedDirection.Vector * 4), Waypoint.WaypointType.Door, true);
+                        minotaur._controller.PathAndMoveTo(minotaur._waypoint.Value.Destination);
+                        minotaur._doorways.Find(x => x.Center == _doorway.Center).Explored = true;
+                        return this;
+                    }
+                    else
+                    {
+                        return this;
+                    }
                 }
-                else {
+                else
+                {
                     return this;
                 }
             }

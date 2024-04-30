@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using UnityEngine;
+using System.Linq;
 
 namespace Maes.ExplorationAlgorithm.Minotaur
 {
@@ -11,9 +13,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             internal SlamMap map;
             internal List<Doorway> doorways;
-            internal Vector2 location;
+            internal Vector2Int location;
 
-            public HeartbeatMessage(SlamMap map, List<Doorway> doorways, Vector2 location)
+            public HeartbeatMessage(SlamMap map, List<Doorway> doorways, Vector2Int location)
             {
                 this.map = map;
                 this.doorways = doorways;
@@ -22,21 +24,26 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
             public IMinotaurMessage? Combine(IMinotaurMessage otherMessage, MinotaurAlgorithm minotaur)
             {
-                if (otherMessage is HeartbeatMessage heartbeatMessage) {
-                    List<SlamMap> newMap = new(){heartbeatMessage.map};
-                    SlamMap.Combine(map, newMap); //layers of pass by reference, map in controller is updated with the info from message
+                if (otherMessage is HeartbeatMessage heartbeatMessage)
+                {
+                    List<SlamMap> maps = new() { heartbeatMessage.map, map };
+                    SlamMap.Synchronize(maps); //layers of pass by reference, map in controller is updated with the info from message
 
-                    foreach (Doorway doorway in heartbeatMessage.doorways) 
+                    var amount = heartbeatMessage.doorways.Count;
+                    for (int i = 0; i < amount; i++)
                     {
-                        foreach (Doorway ownDoorway in doorways)
-                            if (Math.Abs(doorway.Position.x - ownDoorway.Position.x) < 0.2 && Math.Abs(doorway.Position.y - ownDoorway.Position.y) < 0.2
-                            && doorway.ApproachedDirection.OppositeDirection() == ownDoorway.ApproachedDirection)
+                        var doorway = heartbeatMessage.doorways[i];
+                        if (doorways.Contains(doorway))
+                        {
+                            if (doorway.ApproachedDirection.OppositeDirection() == doorways.First(ownDoorway => ownDoorway.Equals(doorway)).ApproachedDirection)
                             {
-                                doorway.Explored = true;
-                            } else 
-                            {
-                                doorways.Add(doorway);
+                                doorways.First(ownDoorway => ownDoorway.Equals(doorway)).Explored = true;
                             }
+                        }
+                        else
+                        {
+                            doorways.Add(doorway);
+                        }
                     }
                     return this;
                 }
@@ -45,8 +52,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
             public IMinotaurMessage Process(MinotaurAlgorithm minotaur) //Combine all, then process, but not really anything to process for heartbeat
             {
-                throw new NotImplementedException(); //
+                return this;
             }
         }
     }
 }
+

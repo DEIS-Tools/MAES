@@ -83,6 +83,12 @@ namespace Maes.Map.PathFinding
             candidates.Enqueue(startingTile, startingTile.TotalCost);
             bestCandidateOnTile[startCoordinate] = startingTile;
 
+            if (!IsAnyNeighborStatus(targetCoordinate, pathFindingMap, SlamTileStatus.Open).HasValue && !beOptimistic)
+            {
+                var nearestTile = GetNearestTileFloodFill(pathFindingMap, targetCoordinate, SlamTileStatus.Open);
+                targetCoordinate = nearestTile.HasValue ? nearestTile.Value : targetCoordinate;
+            }
+
             int loopCount = 0;
             while (candidates.Count > 0)
             {
@@ -90,7 +96,7 @@ namespace Maes.Map.PathFinding
                 var currentTile = candidates.Dequeue();
                 var currentCoordinate = new Vector2Int(currentTile.X, currentTile.Y);
 
-                // Skip if a better candidate has been added to the queue since this was added 
+                // Skip if a better candidate has been added to the queue since this was added
                 if (bestCandidateOnTile.ContainsKey(currentCoordinate) && bestCandidateOnTile[currentCoordinate] != currentTile)
                     continue;
 
@@ -98,7 +104,7 @@ namespace Maes.Map.PathFinding
                     return currentTile.Path();
 
 
-                foreach (var dir in CardinalDirection.AllDirections())
+                foreach (var dir in CardinalDirection.GetCardinalAndOrdinalDirections())
                 {
                     Vector2Int candidateCoord = currentCoordinate + dir.Vector;
                     // Only consider non-solid tiles
@@ -144,6 +150,7 @@ namespace Maes.Map.PathFinding
                 {
                     if (kv.Value.Heuristic < lowestHeuristic)
                     {
+                        if (kv.Key == startCoordinate) continue;
                         lowestHeuristic = kv.Value.Heuristic;
                         lowestHeuristicKey = kv.Key;
                     }
@@ -241,7 +248,7 @@ namespace Maes.Map.PathFinding
             }
         }
 
-        public Vector2Int? GetNearestTileFloodFill(IPathFindingMap pathFindingMap, Vector2Int targetCoordinate, SlamTileStatus lookupStatus)
+        public Vector2Int? GetNearestTileFloodFill(IPathFindingMap pathFindingMap, Vector2Int targetCoordinate, SlamTileStatus lookupStatus, HashSet<Vector2Int> excludedTiles = null)
         {
             var targetQueue = new Queue<Vector2Int>();
             var visitedTargetsList = new HashSet<Vector2Int>();
@@ -253,19 +260,19 @@ namespace Maes.Map.PathFinding
                 var target = targetQueue.Dequeue();
                 visitedTargetsList.Add(target);
                 var neighborHit = IsAnyNeighborStatus(target, pathFindingMap, lookupStatus);
-                if (neighborHit.HasValue)
+                if (neighborHit.HasValue && (excludedTiles == null || !excludedTiles.Contains(neighborHit.Value)))
                 {
                     return neighborHit.Value;
                 }
                 else
                 {
-                    var directions = CardinalDirection.AllDirections().Select(dir => dir.Vector);
+                    var directions = CardinalDirection.GetCardinalDirections().Select(dir => dir.Vector);
                     foreach (var dir in directions)
                     {
-                        if (pathFindingMap.GetTileStatus(target + dir) == SlamTileStatus.Solid)
-                        {
+                        if (!pathFindingMap.IsWithinBounds(target + dir)
+                            || (excludedTiles != null && excludedTiles.Contains(target + dir))
+                            || pathFindingMap.GetTileStatus(target + dir) == SlamTileStatus.Solid)
                             continue;
-                        }
 
                         neighborHit = IsAnyNeighborStatus(target + dir, pathFindingMap, lookupStatus);
                         if (neighborHit.HasValue && pathFindingMap.IsWithinBounds(target + dir))
@@ -288,9 +295,11 @@ namespace Maes.Map.PathFinding
 
         public Vector2Int? IsAnyNeighborStatus(Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, SlamTileStatus status, bool optimistic = false)
         {
-            var directions = CardinalDirection.AllDirections().Select(dir => dir.Vector);
+            var directions = CardinalDirection.GetCardinalDirections().Select(dir => dir.Vector);
             foreach (var dir in directions)
             {
+                if (!pathFindingMap.IsWithinBounds(targetCoordinate + dir))
+                    continue;
                 if (pathFindingMap.GetTileStatus(targetCoordinate + dir, optimistic) == status)
                 {
                     return targetCoordinate + dir;

@@ -116,6 +116,8 @@ namespace Maes.UI
 
         private void HandleCameraSelect()
         {
+            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) return;
+
             if (Input.GetKey(KeyCode.Alpha1))
             {
                 SwitchCameraTo("Camera45");
@@ -223,9 +225,9 @@ namespace Maes.UI
             {
                 if (cam.camera.orthographic)
                 {
-                    if (cam.camera.orthographicSize + cam.zoomAmount.magnitude * direction > 0)
+                    if (cam.camera.orthographicSize - cam.zoomAmount.magnitude * direction > 0)
                     {
-                        cam.camera.orthographicSize += cam.zoomAmount.magnitude * direction;
+                        cam.camera.orthographicSize -= cam.zoomAmount.magnitude * direction;
                     }
                 }
                 else

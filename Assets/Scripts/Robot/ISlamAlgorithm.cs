@@ -50,7 +50,7 @@ namespace Maes.Robot {
         public Dictionary<Vector2Int, SlamMap.SlamTileStatus> GetCurrentlyVisibleTiles();
         
         /// <returns> The current position of the robot as a slam tile coordinate (rounded down) </returns>
-        public Vector2Int GetCurrentPositionSlamTile();
+        public Vector2Int GetCurrentPosition();
 
         /// <summary>
         /// Returns the perceived status of the given tile as a <see cref="SlamMap.SlamTileStatus"/>.

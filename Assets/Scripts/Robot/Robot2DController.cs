@@ -259,10 +259,10 @@ namespace Maes.Robot
         public void StartRotatingAroundPoint(Vector2Int point, bool counterClockwise = false)
         {
             AssertRobotIsInIdleState("Rotating around point");
-            var coarseLocation = SlamMap.CoarseMap.GetCurrentPositionCoarseTile();
-            var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetGlobalAngle()), Vector2.Perpendicular(point-coarseLocation) - coarseLocation);
+            var coarseLocation = SlamMap.CoarseMap.GetCurrentPosition();
+            var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(GetGlobalAngle()), Vector2.Perpendicular(point - coarseLocation) - coarseLocation);
             var radius = Vector2.Distance(Vector2Int.FloorToInt(coarseLocation), point);
-            var worldPoint = SlamMap.CoarseMap.CoarseToWorld(point);
+            var worldPoint = SlamMap.CoarseMap.TileToWorld(point);
             var distanceBetweenWheels = Vector2.Distance(LeftWheel.position, RightWheel.position);
             DebugCircle.Add((worldPoint, radius - distanceBetweenWheels / 2));
             DebugCircle.Add((worldPoint, radius + distanceBetweenWheels / 2));
@@ -338,7 +338,7 @@ namespace Maes.Robot
             info.AppendLine($"Current task: {CurrentTask?.GetType()}");
             info.AppendLine(
                 $"World Position: {Transform.position.x.ToString("#.0")}, {Transform.position.y.ToString("#.0")}");
-            info.Append($"Slam tile: {SlamMap.GetCurrentPositionSlamTile()}\n");
+            info.Append($"Slam tile: {SlamMap.GetCurrentPosition()}\n");
             info.Append($"Coarse tile: {SlamMap.CoarseMap.GetApproximatePosition()}\n");
             info.Append($"Is colliding: {IsCurrentlyColliding()}");
             return info.ToString();
@@ -360,23 +360,40 @@ namespace Maes.Robot
         public void PathAndMoveTo(Vector2Int tile)
         {
             if (GetStatus() != RobotStatus.Idle) return;
-            if (_currentPath.Count == 0)
+            if (_currentPath.Any() && _currentPath.Last() != tile) _currentPath.Clear();
+            if (!_currentPath.Any())
             {
-                var robotCurrentPosition = Vector2Int.RoundToInt(SlamMap.CoarseMap.GetApproximatePosition());
+                var robotCurrentPosition = Vector2Int.FloorToInt(SlamMap.CoarseMap.GetApproximatePosition());
                 if (robotCurrentPosition == tile) return;
                 var pathList = SlamMap.CoarseMap.GetPath(tile, false, false);
                 if (pathList == null) return;
                 _currentPath = new Queue<Vector2Int>(pathList);
                 _currentTarget = _currentPath.Dequeue();
             }
+            if (SlamMap.CoarseMap.GetTileStatus(_currentTarget) == SlamMap.SlamTileStatus.Solid) _currentTarget = _currentPath.Dequeue();
             var relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             if (relativePosition.Distance < 0.5f)
             {
-                if (_currentPath.Count == 0) return;
+                if (!_currentPath.Any()) return;
                 _currentTarget = _currentPath.Dequeue();
                 relativePosition = SlamMap.CoarseMap.GetTileCenterRelativePosition(_currentTarget);
             }
-            if (Math.Abs(relativePosition.RelativeAngle) > 0.5f) Rotate(relativePosition.RelativeAngle);
+            #region DrawPath
+            Debug.DrawLine(SlamMap.CoarseMap.TileToWorld(Vector2Int.FloorToInt(SlamMap.CoarseMap.GetApproximatePosition())), SlamMap.CoarseMap.TileToWorld(_currentTarget), Color.cyan, 2);
+            for (int i = 0; i < _currentPath.Count-1; i++)
+            {
+                var pathSteps = _currentPath.ToList();
+                if (i == 0)
+                    Debug.DrawLine(SlamMap.CoarseMap.TileToWorld(_currentTarget), SlamMap.CoarseMap.TileToWorld(pathSteps[i]), Color.cyan, 2);
+                Debug.DrawLine(SlamMap.CoarseMap.TileToWorld(pathSteps[i]), SlamMap.CoarseMap.TileToWorld(pathSteps[i + 1]), Color.cyan, 2);
+            }
+            if (_currentPath.Any())
+            {
+                var lastStep = _currentPath.Reverse().Take(2);
+                Debug.DrawLine(SlamMap.CoarseMap.TileToWorld(lastStep.Last()), SlamMap.CoarseMap.TileToWorld(lastStep.First()), Color.cyan, 2);
+            }
+            #endregion
+            if (Math.Abs(relativePosition.RelativeAngle) > 1.5f) Rotate(relativePosition.RelativeAngle);
             else if (relativePosition.Distance > 0.5f) Move(relativePosition.Distance);
         }
 
@@ -431,7 +448,7 @@ namespace Maes.Robot
                 .ToList();
         }
 
-        public ISlamAlgorithm GetSlamMap()
+        public SlamMap GetSlamMap()
         {
             return this.SlamMap;
         }
