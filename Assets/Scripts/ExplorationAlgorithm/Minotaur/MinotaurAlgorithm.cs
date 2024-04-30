@@ -39,6 +39,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private int _deadlockTimer = 0;
         private Vector2Int _previousPosition;
         private Waypoint _previousWaypoint;
+        private int _auctionTicks;
 
         private enum AlgorithmState
         {
@@ -134,7 +135,13 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             }
             var receivedHeartbeat = new Queue<HeartbeatMessage>(_controller.ReceiveBroadcast().OfType<HeartbeatMessage>());
             if (receivedHeartbeat.Count > 1)
-                receivedHeartbeat.Dequeue().Combine(receivedHeartbeat.Peek(), this);
+            {
+                var combinedMessage = receivedHeartbeat.Dequeue();
+                foreach (var message in receivedHeartbeat)
+                {
+                    combinedMessage = combinedMessage.Combine(message, this) as HeartbeatMessage;
+                }
+            }
             var receivedDoorwayFound = _controller.ReceiveBroadcast().OfType<DoorwayFoundMessage>();
             if (receivedDoorwayFound.Any())
             {
@@ -148,8 +155,13 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 }
             }
             var receivedAuctionResult = _controller.ReceiveBroadcast().OfType<AuctionResultMessage>();
-            if (receivedAuctionResult.Any()) receivedAuctionResult.Select(result => result.Process(this));
-
+            if (receivedAuctionResult.Any())
+            {
+                foreach (var message in receivedAuctionResult)
+                {
+                    message.Process(this);
+                }
+            }
 
 
             if (_controller.IsCurrentlyColliding())
@@ -279,18 +291,24 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     }
                     break;
                 case AlgorithmState.Auctioning: //Should probably wait a certain amount of ticks before doing this
-                    int tick = 0;
-                    tick++;
-                    if (tick == 5)
+                    _auctionTicks++;
+                    if (_auctionTicks == 3)
                     {
                         _waypoint = null;
                         _controller.StopCurrentTask();
                         var receivedBids = new Queue<BiddingMessage>(_controller.ReceiveBroadcast().OfType<BiddingMessage>());
-                        var combinedMessage = receivedBids.Dequeue().Combine(receivedBids.Peek(), this);
-                        var winnerMessage = combinedMessage.Process(this); //Causes the auction caller to move through doorway if enough robots in room
-                        if (winnerMessage is AuctionResultMessage)
+                        if (receivedBids.Any())
                         {
-                            _controller.Broadcast(winnerMessage);
+                            var combinedMessage = receivedBids.Dequeue();
+                            foreach (var message in receivedBids)
+                            {
+                                combinedMessage = combinedMessage.Combine(message, this) as BiddingMessage;
+                            }
+                            var winnerMessage = combinedMessage.Process(this); //Causes the auction caller to move through doorway if enough robots in room
+                            if (winnerMessage is AuctionResultMessage)
+                            {
+                                _controller.Broadcast(winnerMessage);
+                            }
                         }
                         _currentState = AlgorithmState.ExploreRoom;
                     }
@@ -605,24 +623,26 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private bool MoveToNearestUnseenWithinRoom()
         {
+            var slamMap = _controller.GetSlamMap();
             var doorTiles = _doorways.SelectMany(doorway => doorway.Tiles.ToList()).ToHashSet();
-            var startCoordinate = _position;
-            if (_map.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
+            var startCoordinate = slamMap.GetCurrentPosition();
+            if (slamMap.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
             {
-                var NearestOpenTile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open, doorTiles);
+                var NearestOpenTile = slamMap.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open, doorTiles);
                 if (NearestOpenTile.HasValue)
                 {
                     startCoordinate = NearestOpenTile.Value;
                 }
             }
-            var tile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, doorTiles);
+            var tile = slamMap.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, doorTiles);
             if (tile.HasValue)
             {
-                tile = _map.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
+                tile = slamMap.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
                 if (tile.HasValue)
                 {
-                    _controller.PathAndMoveTo(tile.Value);
-                    _waypoint = new Waypoint(tile.Value, Waypoint.WaypointType.Greed, true);
+                    var destination = _map.FromSlamMapCoordinate(tile.Value);
+                    _controller.PathAndMoveTo(destination);
+                    _waypoint = new Waypoint(destination, Waypoint.WaypointType.Greed, true);
                     return true;
                 }
             }
@@ -636,7 +656,6 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             {
                 _waypoint = new Waypoint(_map.FromSlamMapCoordinate(nearestDoorway.Center + nearestDoorway.ApproachedDirection.Vector * 4), Waypoint.WaypointType.NearestDoor, true);
                 _controller.PathAndMoveTo(_waypoint.Value.Destination);
-                nearestDoorway.Explored = true;
                 return true;
             }
             return false;
@@ -645,10 +664,10 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         private bool MoveToNearestUnseen(HashSet<Vector2Int> excludedTiles = null)
         {
             var slamMap = _controller.GetSlamMap();
-            var startCoordinate = _position;
+            var startCoordinate = slamMap.GetCurrentPosition();
             if (slamMap.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
             {
-                var NearestOpenTile = slamMap.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open);
+                var NearestOpenTile = slamMap.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open, excludedTiles);
                 if (NearestOpenTile.HasValue)
                 {
                     startCoordinate = NearestOpenTile.Value;
@@ -657,12 +676,18 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var tile = slamMap.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, excludedTiles);
             if (tile.HasValue)
             {
-                _controller.PathAndMoveTo(tile.Value);
-                _waypoint = new Waypoint(tile.Value, Waypoint.WaypointType.Greed, true);
-                return true;
+                tile = slamMap.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
+                if (tile.HasValue)
+                {
+                    var destination = _map.FromSlamMapCoordinate(tile.Value);
+                    _controller.PathAndMoveTo(destination);
+                    _waypoint = new Waypoint(destination, Waypoint.WaypointType.Greed, true);
+                    return true;
+                }
             }
             return false;
         }
+
 
         private bool IsDestinationReached()
         {
@@ -791,12 +816,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         Debug.Log($"doorway {start}-{end} at {_logicTicks}");
                         _doorways.Add(newDoorway);
 
-                        // _currentState = AlgorithmState.Auctioning;
-                        // _controller.Broadcast(new DoorwayFoundMessage(newDoorway, _controller.GetRobotID()));
-                    }
-                    else
-                    {
-                        otherDoorway.Explored = true;
+                        _currentState = AlgorithmState.Auctioning;
+                        _auctionTicks = 0;
+                        _controller.Broadcast(new DoorwayFoundMessage(newDoorway, _controller.GetRobotID()));
                     }
                 }
             }
@@ -839,7 +861,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var unexploredDoorways = _doorways.Where(doorway => !doorway.Explored);
             foreach (Doorway doorway in unexploredDoorways)
             {
-                var distance = PathDistanceToPoint(_map.FromSlamMapCoordinate(doorway.Center));
+                var distance = PathDistanceToPoint(doorway.Center);
                 if (distance < doorwayDistance)
                 {
                     doorwayDistance = distance;
@@ -856,7 +878,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         /// <returns>The distance of the path</returns>
         private float PathDistanceToPoint(Vector2Int point)
         {
-            List<Vector2Int> path = _controller.GetSlamMap().GetPath(_position, point);
+            List<Vector2Int> path = _map.GetPath(_map.FromSlamMapCoordinate(point), false, false);
             if (path == null) return Mathf.Infinity;
             List<float> distances = new();
             for (var i = 0; i < path.Count - 2; i++)
