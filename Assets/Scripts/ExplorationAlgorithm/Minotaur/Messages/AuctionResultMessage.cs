@@ -26,9 +26,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 if (_winnerList.Contains(minotaur._controller.GetRobotID()))
                 {
                     minotaur._controller.StopCurrentTask();
-                    minotaur._waypoint = new Waypoint(_doorway.Center + _doorway.ApproachedDirection.Vector * 4, Waypoint.WaypointType.Door, true);
+                    minotaur._waypoint = new Waypoint(minotaur._map.FromSlamMapCoordinate(_doorway.Center + _doorway.ApproachedDirection.Vector * 4), Waypoint.WaypointType.NearestDoor, true);
                     minotaur._controller.PathAndMoveTo(minotaur._waypoint.Value.Destination);
-                    minotaur._doorways.Find(x => x.Center == _doorway.Center).Explored = true;
                     return this;
                 }
                 return null;

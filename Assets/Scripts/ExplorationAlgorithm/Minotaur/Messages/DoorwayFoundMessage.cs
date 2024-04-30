@@ -30,6 +30,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             /// </summary>
             public IMinotaurMessage? Process(MinotaurAlgorithm minotaur)
             {
+                if (!minotaur._doorways.Contains(_doorway))
+                {
+                    minotaur._doorways.Add(_doorway);
+                }
+
                 var doorwayTile = minotaur._map.FromSlamMapCoordinate(_doorway.Center);
                 var pathLengthToDoorway = minotaur._map.GetPath(doorwayTile, false, false);
                 if (pathLengthToDoorway != null)

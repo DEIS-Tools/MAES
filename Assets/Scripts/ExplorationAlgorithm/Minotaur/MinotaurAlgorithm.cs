@@ -210,6 +210,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 _previousWaypoint = waypoint;
                 if (waypoint.UsePathing)
                 {
+                    if (_map.GetPath(waypoint.Destination, false, false) == null)
+                    {
+                        MoveToNearestUnseen(new() { waypoint.Destination });
+                        waypoint = _waypoint.Value;
+                    }
                     _controller.PathAndMoveTo(waypoint.Destination);
                 }
                 else
@@ -663,25 +668,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private bool MoveToNearestUnseen(HashSet<Vector2Int> excludedTiles = null)
         {
-            var slamMap = _controller.GetSlamMap();
-            var startCoordinate = slamMap.GetCurrentPosition();
-            if (slamMap.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
+            var startCoordinate = _position;
+            if (_map.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
             {
-                var NearestOpenTile = slamMap.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open, excludedTiles);
+                var NearestOpenTile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open, excludedTiles);
                 if (NearestOpenTile.HasValue)
                 {
                     startCoordinate = NearestOpenTile.Value;
                 }
             }
-            var tile = slamMap.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, excludedTiles);
+            var tile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, excludedTiles);
             if (tile.HasValue)
             {
-                tile = slamMap.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
+                tile = _map.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
                 if (tile.HasValue)
                 {
-                    var destination = _map.FromSlamMapCoordinate(tile.Value);
-                    _controller.PathAndMoveTo(destination);
-                    _waypoint = new Waypoint(destination, Waypoint.WaypointType.Greed, true);
+                    _controller.PathAndMoveTo(tile.Value);
+                    _waypoint = new Waypoint(tile.Value, Waypoint.WaypointType.Greed, true);
                     return true;
                 }
             }
