@@ -83,7 +83,7 @@ namespace Maes.Map.PathFinding
             candidates.Enqueue(startingTile, startingTile.TotalCost);
             bestCandidateOnTile[startCoordinate] = startingTile;
 
-            if (!IsAnyNeighborStatus(targetCoordinate, pathFindingMap, SlamTileStatus.Open).HasValue && !beOptimistic)
+            if (!IsAnyNeighborStatus(targetCoordinate, pathFindingMap, SlamTileStatus.Open).HasValue)
             {
                 var nearestTile = GetNearestTileFloodFill(pathFindingMap, targetCoordinate, SlamTileStatus.Open);
                 targetCoordinate = nearestTile.HasValue ? nearestTile.Value : targetCoordinate;
@@ -108,14 +108,24 @@ namespace Maes.Map.PathFinding
                 {
                     Vector2Int candidateCoord = currentCoordinate + dir.Vector;
                     // Only consider non-solid tiles
-                    if (IsSolid(candidateCoord, pathFindingMap, beOptimistic) && candidateCoord != targetCoordinate) continue;
+                    if (IsSolid(candidateCoord, pathFindingMap, beOptimistic) && candidateCoord != targetCoordinate) {
+                        if (pathFindingMap.IsUnseenSemiOpen(currentCoordinate + dir.Previous().Vector, currentCoordinate)){
+                            continue;
+                        }
+                    }
 
                     if (dir.IsDiagonal())
                     {
                         // To travel diagonally, the two neighbouring tiles must also be free
                         if (IsSolid(currentCoordinate + dir.Previous().Vector, pathFindingMap, beOptimistic)
                         || IsSolid(currentCoordinate + dir.Next().Vector, pathFindingMap, beOptimistic))
-                            continue;
+                            {
+                                if (pathFindingMap.IsUnseenSemiOpen(currentCoordinate + dir.Previous().Vector, currentCoordinate) ||
+                                    pathFindingMap.IsUnseenSemiOpen(currentCoordinate + dir.Next().Vector, currentCoordinate))
+                                {
+                                    continue;
+                                }
+                            }
                     }
 
                     var cost = currentTile.Cost + Vector2Int.Distance(currentCoordinate, candidateCoord);
@@ -160,7 +170,6 @@ namespace Maes.Map.PathFinding
                 return GetPath(startCoordinate, new Vector2Int(closestTile.X, closestTile.Y),
                     pathFindingMap, beOptimistic, false);
             }
-
             return null;
         }
 
@@ -188,9 +197,20 @@ namespace Maes.Map.PathFinding
         private bool IsSolid(Vector2Int coord, IPathFindingMap map, bool optimistic)
         {
             return optimistic
-                ? map.IsOptimisticSolid(coord)
+                ? map.IsOptimisticSolid(coord) 
                 : map.IsSolid(coord);
         }
+        private bool IsAnyNeighborOpen(Vector2Int targetCoordinate, IPathFindingMap pathFindingMap, bool optimistic)
+            {
+                if (IsSolid(targetCoordinate + Vector2Int.up + Vector2Int.left, pathFindingMap, optimistic)  && IsSolid(targetCoordinate + Vector2Int.up, pathFindingMap, optimistic) &&
+                    IsSolid(targetCoordinate + Vector2Int.left, pathFindingMap, optimistic) && IsSolid(targetCoordinate + Vector2Int.up + Vector2Int.right, pathFindingMap, optimistic) &&
+                    IsSolid(targetCoordinate + Vector2Int.right, pathFindingMap, optimistic) && IsSolid(targetCoordinate + Vector2Int.down + Vector2Int.left, pathFindingMap, optimistic) &&
+                    IsSolid(targetCoordinate + Vector2Int.down, pathFindingMap, optimistic) && IsSolid(targetCoordinate + Vector2Int.down + Vector2Int.right, pathFindingMap, optimistic))
+                    {
+                        return false;
+                    }
+                return true;
+            }
 
         private static float OctileHeuristic(Vector2Int from, Vector2Int to)
         {
@@ -258,7 +278,6 @@ namespace Maes.Map.PathFinding
             while (targetQueue.Any())
             {
                 var target = targetQueue.Dequeue();
-                visitedTargetsList.Add(target);
                 var neighborHit = IsAnyNeighborStatus(target, pathFindingMap, lookupStatus);
                 if (neighborHit.HasValue && (excludedTiles == null || !excludedTiles.Contains(neighborHit.Value)))
                 {

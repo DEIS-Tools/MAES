@@ -68,6 +68,10 @@ namespace Maes.Map {
 
             return false;
         }
+        public bool IsUnseenSemiOpen(Vector2Int nextCoordinate, Vector2Int currentCoordinate)
+            {
+                return true;
+            }
 
         public List<PathStep>? GetPathSteps(Vector2Int coarseTileFrom, Vector2Int coarseTileTo, bool acceptPartialPaths = false) {
             var path = _aStar.GetOptimisticPath(coarseTileFrom, coarseTileTo, this, acceptPartialPaths);
@@ -93,6 +97,11 @@ namespace Maes.Map {
 
         public float CellSize() {
             return 1.0f; 
+        }
+
+        public bool IsCoordWithinBounds(Vector2Int coordinate)
+        {
+            return false;
         }
         
         

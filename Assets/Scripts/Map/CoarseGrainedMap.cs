@@ -158,6 +158,11 @@ namespace Maes.Map
                 throw new ArgumentException($"Given coordinate is out of bounds {coordinate} ({_width}, {_height})");
         }
 
+        public bool IsCoordWithinBounds(Vector2Int coordinate)
+        {
+             return (coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height) && !CheckIfAnyIsStatus(coordinate, SlamMap.SlamTileStatus.Solid);
+        }
+
         delegate SlamMap.SlamTileStatus StatusAggregator(SlamMap.SlamTileStatus s1, SlamMap.SlamTileStatus s2);
 
         // Returns the status of the given tile (Solid, Open or Unseen)
@@ -302,7 +307,7 @@ namespace Maes.Map
         /// <param name="target">the target that the path should end at.</param>
         /// <param name="acceptPartialPaths">if <b>true</b>, returns path getting the closest to the target, if no full path can be found.</param>
         /// <param name="beOptimistic">if <b>true</b>, treats unseen tiles as open in the path finding algorithm. Treats unseen tiles as solid otherwise.</param>
-        public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false, bool beOptimistic = true)
+        public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false, bool beOptimistic = false)
         {
             var approxPosition = GetApproximatePosition();
             return _aStar.GetPath(Vector2Int.FloorToInt(approxPosition), target, this, beOptimistic, acceptPartialPaths);
@@ -350,7 +355,7 @@ namespace Maes.Map
         /// </summary>
         public List<PathStep>? GetTnfPathAsPathSteps(Vector2Int target)
         {
-            var path = GetPath(target, beOptimistic: true, acceptPartialPaths: true);
+            var path = GetPath(target, beOptimistic: false, acceptPartialPaths: false);
             return path == null
                 ? null
                 : _aStar.PathToSteps(path, 0f);
@@ -491,6 +496,53 @@ namespace Maes.Map
                 _slamMap.GetTileStatus(slamCoord + Vector2Int.up),
                 _slamMap.GetTileStatus(slamCoord + Vector2Int.up + Vector2Int.right),
             };
+        }
+
+        public bool IsUnseenSemiOpen(Vector2Int nextCoordinate, Vector2Int currentCoordinate)
+        {
+            // This function is a hacky fix to a pathfinding deadlocking issue.
+            // get SLAM coordinates for the coarse grained tiles that needs to be checked
+            var solid = SlamMap.SlamTileStatus.Solid;
+            var unseen = SlamMap.SlamTileStatus.Unseen;
+            var open = SlamMap.SlamTileStatus.Open;
+
+            // If all SLAM tiles are solid, just return solid
+            if (CheckIfAnyIsStatus(nextCoordinate, solid) || CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAllSlamStatusesSolid(nextCoordinate) || CheckIfAllSlamStatusesSolid(currentCoordinate)) {
+                return true;
+            }
+            if (CheckIfAnyIsStatus(currentCoordinate, open) && CheckIfAnyIsStatus(nextCoordinate, open))
+                {
+                    return false;
+                }
+            return true;
+        }
+
+        private bool CheckIfAllSlamStatusesSolid(Vector2Int coordinate)
+        {
+            var statuses = GetSlamTileStatuses(coordinate);
+            int solids = 0;
+            foreach (var coord in statuses) {
+                    if (coord != SlamMap.SlamTileStatus.Open) {
+                            solids++;
+                        }
+                }
+
+            if (solids == 4) {
+                    return true;
+                }
+
+            return false;
+        }
+
+        private bool CheckIfAnyIsStatus(Vector2Int coordinate, SlamMap.SlamTileStatus status)
+        {
+            var statuses = GetSlamTileStatuses(coordinate);
+            foreach (var coord in statuses) {
+                if (coord == status) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>

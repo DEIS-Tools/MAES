@@ -298,6 +298,11 @@ namespace Maes.Map
                    slamCoordinate.y > 0 && slamCoordinate.y < _heightInTiles;
         }
 
+        public bool IsCoordWithinBounds(Vector2Int coordinate)
+        {
+            return false;
+        }
+
         public bool IsOptimisticSolid(Vector2Int coordinate)
         {
             var slamCoordinate = coordinate * 2;
@@ -332,7 +337,8 @@ namespace Maes.Map
         /// </summary>
         /// <param name="coordinate">COARSEGRAINED coordinate</param>
         /// <returns></returns>
-        public bool IsSolid(Vector2Int coordinate) {
+        public bool IsSolid(Vector2Int coordinate)
+        {
             var slamCoordinate = coordinate * 2;
 
             if (IsWithinBounds(slamCoordinate))
@@ -348,7 +354,12 @@ namespace Maes.Map
             return true;
         }
 
-        // Returns position of the given tile relative to the current position of the robot  
+        public bool IsUnseenSemiOpen(Vector2Int nextCoordinate, Vector2Int currentCoordinate)
+            {
+                return true;
+            }
+        
+        // Returns position of the given tile relative to the current position of the robot
         public RelativePosition GetRelativeSlamPosition(Vector2Int slamTileTarget)
         {
             // Convert to local coordinate
