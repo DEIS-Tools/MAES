@@ -541,17 +541,6 @@ namespace Maes.Map
                 return false;
             }
 
-        private bool CheckForUnseen(Vector2Int coordinate)
-            {
-                var statuses = GetSlamTileStatuses(coordinate);
-                foreach (var coord in statuses) {
-                    if (coord == SlamMap.SlamTileStatus.Unseen){
-                        return true;
-                    }
-                }
-                return false;
-            }
-
         /// <summary>
         /// Updates the information in a tile with the new observed status. Does not change anything, if any of the SLAM tiles in the coarse-grained tile are 'solid'.
         /// </summary>
