@@ -47,7 +47,7 @@ namespace Maes.Map.Visualization {
         public void UpdateVisualization(ExplorationVisualizer visualizer, int currentTick) {
             visualizer.SetAllColors((index) => {
                 var coordinate = _map.TriangleIndexToCoordinate(index);
-                var status = _map.GetStatusOfTile(coordinate);
+                var status = _map.GetTileStatus(coordinate);
 
                 return status switch {
                     SlamMap.SlamTileStatus.Open => ExplorationVisualizer.SlamSeenColor,

@@ -77,3 +77,4 @@ maes-ros-slam-ws/.idea
 ProjectSettings/
 UserSettings/
 CodeCoverage/
+InitTestScene*

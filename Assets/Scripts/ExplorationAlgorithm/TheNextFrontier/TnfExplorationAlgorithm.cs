@@ -272,7 +272,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
             }
             var newMaps = new List<SlamMap> {_robotController.GetSlamMap() as SlamMap};
             foreach (var package in received) {
-                var pack = ((ISlamAlgorithm, int, Vector2)) package;
+                var pack = ((SlamMap, int, Vector2)) package;
                 newMaps.Add(pack.Item1 as SlamMap);
                 if (_currentDestinations.Any(dict => dict.Item1 == pack.Item2)){
                     var index = _currentDestinations.FindIndex(dict => dict.Item1 == pack.Item2);
@@ -283,7 +283,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
             }
 
             // Largest Robot ID synchronizes to save on Simulator CPU time
-            if (!received.Cast<(ISlamAlgorithm, int, Vector2)>().Any(p => p.Item2 > _robotId)) {
+            if (!received.Cast<(SlamMap, int, Vector2)>().Any(p => p.Item2 > _robotId)) {
                 SlamMap.Synchronize(newMaps);
             }
             if (_robotTnfStatus == TnfStatus.OutOfFrontiers) {
@@ -371,7 +371,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
         }
 
         private void StartMoving() {
-            if (_robotController.GetStatus() != RobotStatus.Idle || _nextTileInPath == null) {
+            if (_robotController.GetStatus() != RobotStatus .Idle || _nextTileInPath == null) {
                 return;
             }
             var relativePosition = _map.GetTileCenterRelativePosition(_nextTileInPath.End);

@@ -469,7 +469,7 @@ namespace Maes.ExplorationAlgorithm.Voronoi
         {
             var coarseMap = _robotController.GetSlamMap().GetCoarseMap();
             var visibleTilesMaps = _robotController.GetSlamMap().GetCurrentlyVisibleTiles();
-            var visibleCoarseTiles = coarseMap.FromSlamMapCoordinates(visibleTilesMaps.Keys.ToList());
+            var visibleCoarseTiles = coarseMap.FromSlamMapCoordinates(visibleTilesMaps.Keys).ToList();
 
             var robotPosition = coarseMap.GetApproximatePosition();
 
@@ -631,7 +631,7 @@ namespace Maes.ExplorationAlgorithm.Voronoi
             if (nearbyRobots.Count == 0)
             {
                 var visibleSlamTiles = _robotController.GetSlamMap().GetCurrentlyVisibleTiles();
-                var visibleCoarseTiles = coarseMap.FromSlamMapCoordinates(visibleSlamTiles.Keys.ToList());
+                var visibleCoarseTiles = coarseMap.FromSlamMapCoordinates(visibleSlamTiles.Keys).ToList();
                 var region = new VoronoiRegion(this._robotController.GetRobotID(), visibleCoarseTiles);
                 _localVoronoiRegions.Add(region);
                 _currentRegion = region;

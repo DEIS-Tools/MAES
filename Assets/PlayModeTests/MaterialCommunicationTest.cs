@@ -43,7 +43,6 @@ namespace PlayModeTests
             var bitmap = new Tile[MapWidth, MapHeight];
             const int firstWallRowY = MapHeight / 2;
             const int lastWallRowY = firstWallRowY + wallThicknessInTiles;
-            Tile.Rand = new Random(RandomSeed);
             var walls = new List<Tile>()
             {
                 new(TileType.Brick),
@@ -142,7 +141,7 @@ namespace PlayModeTests
         [Test(ExpectedResult = null)]
         public IEnumerator Broadcast_TransmissionFailedTest()
         {
-            InitSimulator(generator => generator.GenerateMap(GenerateMapWithHorizontalWallInMiddle(1), borderSize: 2),
+            InitSimulator(generator => generator.GenerateMap(GenerateMapWithHorizontalWallInMiddle(1), RandomSeed, borderSize: 2),
                 new List<Vector2Int> { new(-4, -4), new(8, 8) },
                 new Dictionary<uint, Dictionary<TileType, float>>
                 {
@@ -213,7 +212,7 @@ namespace PlayModeTests
         [Test(ExpectedResult = null)]
         public IEnumerator AttenuationCalculation()
         {
-            InitSimulator(generator => generator.GenerateMap(GenerateMapWithHorizontalAlternatingWallInMiddle(), borderSize: 2),
+            InitSimulator(generator => generator.GenerateMap(GenerateMapWithHorizontalAlternatingWallInMiddle(), RandomSeed, borderSize: 2),
                 new List<Vector2Int> { new(-4, -4), new(8, 8) },
                 new Dictionary<uint, Dictionary<TileType, float>>
                 {
@@ -281,7 +280,7 @@ namespace PlayModeTests
         {
             float foundWallDistance = float.PositiveInfinity;
             InitSimulator(
-                generator => generator.GenerateMap(GenerateMapWithHorizontalWallInMiddle(wallThickness), borderSize: 2),
+                generator => generator.GenerateMap(GenerateMapWithHorizontalWallInMiddle(wallThickness), RandomSeed, borderSize: 2),
                 new List<Vector2Int> { new(0, -2), new(0, 3 + wallThickness) },
                 transmissionSuccessCalculatorFunc:
                 (_, wallDistance) =>

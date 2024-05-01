@@ -34,7 +34,6 @@ using System.Collections.Generic;
 using Maes.UI;
 using UnityEditor;
 using System.Linq;
-using Maes.ExplorationAlgorithm.Voronoi;
 
 namespace Maes
 {
@@ -85,7 +84,7 @@ namespace Maes
                     randomSeed,
                     4,
                     new Vector2Int(0, 0),
-                    (seed) => new VoronoiExplorationAlgorithm(randomSeed, constraints, 4)
+                    (seed) => new MinotaurAlgorithm(constraints, randomSeed, 2)
                 ));
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();

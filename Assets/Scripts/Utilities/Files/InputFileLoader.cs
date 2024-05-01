@@ -27,12 +27,11 @@ namespace Maes.Utilities.Files {
     internal class InputFileLoader {
 
         public static string GetDefaultInputPath() {
-            return Path.Join(Path.Join(Directory.GetCurrentDirectory(), "maes-ros-slam-ws"), "src",
-                "maes_ros2_interface");
+            return Path.Join(Path.Join(Directory.GetCurrentDirectory(), "Assets"), "Maps");
         }
 
         [CanBeNull]
-        public static StreamReader ReadInputFile(String fileName) {
+        public static StreamReader ReadInputFile(string fileName) {
             return new StreamReader(Path.Join(GetDefaultInputPath(), fileName));
         }
 

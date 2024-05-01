@@ -19,16 +19,36 @@
 // 
 // Original repository: https://github.com/MalteZA/MAES
 
+using System.Collections.Generic;
 using UnityEngine;
+using static Maes.Map.SlamMap;
 
-namespace Maes.Map.PathFinding {
-    public interface IPathFindingMap {
+namespace Maes.Map.PathFinding
+{
+    public interface IPathFindingMap
+    {
 
         public bool IsSolid(Vector2Int coordinate);
 
         public bool IsOptimisticSolid(Vector2Int coordinate);
 
+        public bool IsUnseenSemiOpen(Vector2Int nextCoordinate, Vector2Int currentCoordinate);
+
         public float CellSize();
 
+        public bool IsWithinBounds(Vector2Int coordinate);
+
+        public SlamTileStatus GetTileStatus(Vector2Int coordinate, bool optimistic = false);
+
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamTileStatus lookupStatus, HashSet<Vector2Int> excludedTiles = null);
+
+        public Vector2Int GetCurrentPosition();
+
+        /// <summary>
+        /// This is for debugging purposes only to be able to easily convert coordinates to world units for drawing.
+        /// </summary>
+        /// <param name="tile"></param>
+        /// <returns></returns>
+        public Vector3 TileToWorld(Vector2 tile);
     }
 }

@@ -68,6 +68,10 @@ namespace Maes.Map {
 
             return false;
         }
+        public bool IsUnseenSemiOpen(Vector2Int nextCoordinate, Vector2Int currentCoordinate)
+            {
+                return true;
+            }
 
         public List<PathStep>? GetPathSteps(Vector2Int coarseTileFrom, Vector2Int coarseTileTo, bool acceptPartialPaths = false) {
             var path = _aStar.GetOptimisticPath(coarseTileFrom, coarseTileTo, this, acceptPartialPaths);
@@ -77,11 +81,11 @@ namespace Maes.Map {
         public bool IsOptimisticSolid(Vector2Int coordinate) {
             var slamTile = ToSlamMapCoordinate(coordinate);
 
-            // Anything not currently visible is solid
+            // Anything not currently visible is not solid
             if (!_slamMap._currentlyVisibleTiles.ContainsKey(slamTile))
-                return true;
+                return false;
             if (_slamMap._currentlyVisibleTiles[slamTile] == SlamMap.SlamTileStatus.Unseen)
-                return true;
+                return false;
 
             // Check if the coarse tile is actually solid
             var tileStatus = GetTileStatus(coordinate, true);
@@ -94,6 +98,11 @@ namespace Maes.Map {
         public float CellSize() {
             return 1.0f; 
         }
+
+        public bool IsCoordWithinBounds(Vector2Int coordinate)
+        {
+            return false;
+        }
         
         
         public Vector2Int FromSlamMapCoordinate(Vector2Int slamCoord) {
@@ -103,23 +112,33 @@ namespace Maes.Map {
         public Vector2Int ToSlamMapCoordinate(Vector2Int localCoordinate) {
             return localCoordinate * 2;
         }
+
+        public bool IsWithinBounds(Vector2Int coordinate)
+        {
+            return coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
+        }
         
         // Returns the status of the given tile (Solid, Open or Unseen)
         public SlamMap.SlamTileStatus GetTileStatus(Vector2Int localCoordinate, bool optimistic = false) {
             var slamCoord = ToSlamMapCoordinate(localCoordinate);
 
-            var status = _slamMap.GetStatusOfTile(slamCoord);
+            var status = _slamMap.GetTileStatus(slamCoord);
             if (optimistic) {
-                status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right));
-                status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up));
-                status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right + Vector2Int.up));    
+                status = AggregateStatusOptimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.right));
+                status = AggregateStatusOptimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.up));
+                status = AggregateStatusOptimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.right + Vector2Int.up));    
             } else {
-                status = AggregateStatusPessimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right));
-                status = AggregateStatusPessimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up));
-                status = AggregateStatusPessimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right + Vector2Int.up));
+                status = AggregateStatusPessimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.right));
+                status = AggregateStatusPessimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.up));
+                status = AggregateStatusPessimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.right + Vector2Int.up));
             }
             
             return status;
+        }
+
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus, HashSet<Vector2Int> excludedTiles = null)
+        {
+            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus, excludedTiles);
         }
         
         // Combines two SlamTileStatus in a 'optimistic' fashion.
@@ -141,6 +160,16 @@ namespace Maes.Map {
             if (status1 == SlamMap.SlamTileStatus.Unseen || status2 == SlamMap.SlamTileStatus.Unseen)
                 return SlamMap.SlamTileStatus.Unseen;
             return SlamMap.SlamTileStatus.Open;
+        }
+
+        public Vector2Int GetCurrentPosition()
+        {
+            return Vector2Int.FloorToInt(_slamMap.ApproximatePosition - _offset);
+        }
+
+        public Vector3 TileToWorld(Vector2 tile)
+        {
+            return new Vector3(tile.x, tile.y, -0.01f) + (Vector3)_offset;
         }
     }
 }
