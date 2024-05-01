@@ -20,6 +20,7 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
+using Maes.ExplorationAlgorithm.Minotaur;
 using System.Collections;
 using Maes.ExplorationAlgorithm.TheNextFrontier;
 using Maes.Map;
@@ -28,9 +29,12 @@ using Maes.Robot;
 using Maes.Utilities.Files;
 using UnityEngine;
 using Maes.Robot;
+using Maes.ExplorationAlgorithm.Movement;
 using System.Collections.Generic;
 using Maes.UI;
 using UnityEditor;
+using System.Linq;
+using Maes.ExplorationAlgorithm.Voronoi;
 
 namespace Maes
 {
@@ -39,26 +43,18 @@ namespace Maes
         private Simulator _simulator;
         private void Start()
         {
-            const int randomSeed = 269952;
-            const int height = 100;
-            const int width = 100;
-
-            var bConfig = new BuildingMapConfig(
-                randomSeed,
-                1,
-                width,
-                height);
+            const int randomSeed = 12; // 948778
 
             var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
-                slamUpdateIntervalInTicks: 10,
+                slamUpdateIntervalInTicks: 1,
                 slamSynchronizeIntervalInTicks: 10,
                 slamPositionInaccuracy: 0.2f,
                 distributeSlam: false,
                 environmentTagReadRange: 4.0f,
-                slamRayTraceRange: 7f,
+                slamRayTraceRange: 4f,
                 relativeMoveSpeed: 1f,
                 agentRelativeSize: 0.6f,
                 calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) =>
@@ -69,8 +65,7 @@ namespace Maes
                         return false;
                     }
                     // Max distance 15.0f
-
-                    if (15.0f < distanceTravelled)
+                    else if (15.0f < distanceTravelled)
                     {
                         return false;
                     }
@@ -79,35 +74,40 @@ namespace Maes
                 }
             );
 
+            //var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway_corner.pgm");
+            var buildingConfig = new BuildingMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
+            var scenario = new SimulationScenario(
+                seed: randomSeed,
+                mapSpawner: generator => generator.GenerateMap(buildingConfig),
+                robotConstraints: constraints,
+                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                    map,
+                    randomSeed,
+                    4,
+                    new Vector2Int(0, 0),
+                    (seed) => new VoronoiExplorationAlgorithm(randomSeed, constraints, 4)
+                ));
             // Get/instantiate simulation prefab
             var simulator = Simulator.GetInstance();
-            RobotSpawner.CreateAlgorithmDelegate tnf94 = seed => new FfTnfExplorationAlgorithm(1, 10, seed);
-            for (int i = 0; i < 50; i++)
-            {
-                simulator.EnqueueScenario(new SimulationScenario(seed: 123, mapSpawner: generator => generator.GenerateMap(bConfig), robotSpawner: (map, spawner) => spawner.SpawnRobotsTogether(
-                        map,
-                        seed: 123,
-                        numberOfRobots: 5,
-                        suggestedStartingPoint: Vector2Int.zero,
-                        createAlgorithmDelegate: tnf94),
-                    statisticsFileName: $"tnf-9-4-map-{bConfig.RandomSeed}",
-                    robotConstraints: constraints));
-            }
-            _simulator = simulator;
-            EditorApplication.Beep();
-            StartCoroutine(PauseSimulation());
-            simulator.PressPlayButton(); // Instantly enter play mode
-        }
 
-        IEnumerator PauseSimulation()
-        {
-            while (_simulator.GetSimulationManager().GetCurrentSimulation().SimulatedLogicTicks < 35700)
-            {
-                yield return new WaitForEndOfFrame();
-            }
-            _simulator.GetSimulationManager().AttemptSetPlayState(SimulationPlayState.Paused);
-            EditorApplication.Beep();
-            yield return null;
+            //var buildingConfig = new CaveMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
+            //scenario = new SimulationScenario(
+            //   hasFinishedSim: sim => sim.ExplorationTracker.ExploredProportion > 0.99f,
+            //   seed: randomSeed,
+            //   mapSpawner: generator => generator.GenerateMap(buildingConfig),
+            //   robotConstraints: constraints,
+            //   robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+            //       map,
+            //       randomSeed,
+            //       1,
+            //       new Vector2Int(0, 0),
+            //       (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
+            //   ));
+
+            simulator.EnqueueScenario(scenario);
+            simulator.PressPlayButton(); // Instantly enter play mode
+
+            //simulator.GetSimulationManager().AttemptSetPlayState(SimulationPlayState.FastAsPossible);
         }
     }
 }
