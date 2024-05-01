@@ -244,7 +244,10 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                     if (waypoint.Type == Waypoint.WaypointType.Door)
                         AttemptAddDoorway(GetWalls(wallPoints.Select(wallPoint => wallPoint.Position).Distinct()));
                     else if (waypoint.Type == Waypoint.WaypointType.NearestDoor)
-                        _doorways.First(doorway => _map.FromSlamMapCoordinate(doorway.Center + doorway.ApproachedDirection.Vector * 4) == waypoint.Destination).Explored = true;
+                    {
+                        var possibleFirstDoorway =  _doorways.FirstOrDefault(doorway => _map.FromSlamMapCoordinate(doorway.Center + doorway.ApproachedDirection.Vector * 4) == waypoint.Destination);
+                        if (possibleFirstDoorway != default) possibleFirstDoorway.Explored = true;
+                    }
                     _waypoint = null;
                 }
                 else
