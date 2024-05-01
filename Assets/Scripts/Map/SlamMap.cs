@@ -298,11 +298,13 @@ namespace Maes.Map
                    slamCoordinate.y > 0 && slamCoordinate.y < _heightInTiles;
         }
 
-        public bool IsCoordWithinBounds(Vector2Int coordinate) {
+        public bool IsCoordWithinBounds(Vector2Int coordinate)
+        {
             return false;
         }
 
-        public bool IsOptimisticSolid(Vector2Int coordinate) {
+        public bool IsOptimisticSolid(Vector2Int coordinate)
+        {
             var slamCoordinate = coordinate * 2;
             slamCoordinate = new Vector2Int(slamCoordinate.x, slamCoordinate.y);
 
@@ -335,7 +337,8 @@ namespace Maes.Map
         /// </summary>
         /// <param name="coordinate">COARSEGRAINED coordinate</param>
         /// <returns></returns>
-        public bool IsSolid(Vector2Int coordinate) {
+        public bool IsSolid(Vector2Int coordinate)
+        {
             var slamCoordinate = coordinate * 2;
 
             if (IsWithinBounds(slamCoordinate))

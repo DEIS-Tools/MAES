@@ -158,9 +158,10 @@ namespace Maes.Map
                 throw new ArgumentException($"Given coordinate is out of bounds {coordinate} ({_width}, {_height})");
         }
 
-        public bool IsCoordWithinBounds(Vector2Int coordinate) {
+        public bool IsCoordWithinBounds(Vector2Int coordinate)
+        {
              return (coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height) && !CheckIfAnyIsStatus(coordinate, SlamMap.SlamTileStatus.Solid);
-            }
+        }
 
         delegate SlamMap.SlamTileStatus StatusAggregator(SlamMap.SlamTileStatus s1, SlamMap.SlamTileStatus s2);
 
@@ -352,7 +353,8 @@ namespace Maes.Map
         /// <summary>
         /// Calculates, and returns, a path from the robots current position to the target. Will reduce the path to a list of <see cref="PathStep"/>s.
         /// </summary>
-        public List<PathStep>? GetTnfPathAsPathSteps(Vector2Int target) {
+        public List<PathStep>? GetTnfPathAsPathSteps(Vector2Int target)
+        {
             var path = GetPath(target, beOptimistic: false, acceptPartialPaths: false);
             return path == null
                 ? null
@@ -496,8 +498,9 @@ namespace Maes.Map
             };
         }
 
-        //Method for checking if a solid tile is actually solid, through the slam map
-        public bool IsUnseenSemiOpen(Vector2Int nextCoordinate, Vector2Int currentCoordinate) {
+        public bool IsUnseenSemiOpen(Vector2Int nextCoordinate, Vector2Int currentCoordinate)
+        {
+            // This function is a hacky fix to a pathfinding deadlocking issue.
             // get SLAM coordinates for the coarse grained tiles that needs to be checked
             var solid = SlamMap.SlamTileStatus.Solid;
             var unseen = SlamMap.SlamTileStatus.Unseen;
@@ -530,16 +533,17 @@ namespace Maes.Map
 
             return false;
         }
+
         private bool CheckIfAnyIsStatus(Vector2Int coordinate, SlamMap.SlamTileStatus status)
-            {
-                var statuses = GetSlamTileStatuses(coordinate);
-                foreach (var coord in statuses) {
-                    if (coord == status) {
-                        return true;
-                    }
+        {
+            var statuses = GetSlamTileStatuses(coordinate);
+            foreach (var coord in statuses) {
+                if (coord == status) {
+                    return true;
                 }
-                return false;
             }
+            return false;
+        }
 
         /// <summary>
         /// Updates the information in a tile with the new observed status. Does not change anything, if any of the SLAM tiles in the coarse-grained tile are 'solid'.
