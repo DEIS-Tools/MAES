@@ -82,7 +82,7 @@ namespace Maes
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                     map,
                     randomSeed,
-                    4,
+                    1,
                     new Vector2Int(0, 0),
                     (seed) => new MinotaurAlgorithm(constraints, randomSeed, 2)
                 ));

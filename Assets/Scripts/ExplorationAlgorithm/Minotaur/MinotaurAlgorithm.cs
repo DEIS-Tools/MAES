@@ -631,26 +631,24 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private bool MoveToNearestUnseenWithinRoom()
         {
-            var slamMap = _controller.GetSlamMap();
-            var doorTiles = _doorways.SelectMany(doorway => doorway.Tiles.ToList()).ToHashSet();
-            var startCoordinate = slamMap.GetCurrentPosition();
-            if (slamMap.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
+            var doorTiles = _map.FromSlamMapCoordinates(_doorways.SelectMany(doorway => doorway.Tiles).ToList()).ToHashSet();
+            var startCoordinate = _position;
+            if (_map.GetTileStatus(startCoordinate) == SlamTileStatus.Solid)
             {
-                var NearestOpenTile = slamMap.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open, doorTiles);
+                var NearestOpenTile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Open, doorTiles);
                 if (NearestOpenTile.HasValue)
                 {
                     startCoordinate = NearestOpenTile.Value;
                 }
             }
-            var tile = slamMap.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, doorTiles);
+            var tile = _map.GetNearestTileFloodFill(startCoordinate, SlamTileStatus.Unseen, doorTiles);
             if (tile.HasValue)
             {
-                tile = slamMap.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
+                tile = _map.GetNearestTileFloodFill(tile.Value, SlamTileStatus.Open);
                 if (tile.HasValue)
                 {
-                    var destination = _map.FromSlamMapCoordinate(tile.Value);
-                    _controller.PathAndMoveTo(destination);
-                    _waypoint = new Waypoint(destination, Waypoint.WaypointType.Greed, true);
+                    _controller.PathAndMoveTo(tile.Value);
+                    _waypoint = new Waypoint(tile.Value, Waypoint.WaypointType.Greed, true);
                     return true;
                 }
             }
