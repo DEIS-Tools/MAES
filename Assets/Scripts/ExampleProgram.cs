@@ -42,9 +42,12 @@ namespace Maes
         private Simulator _simulator;
         private void Start()
         {
-            const int randomSeed = 12; // 948778
+            const int randomSeed = 12345;
 
-            var constraintsGlobalCommunication = new RobotConstraints(
+            var constraintsList = new List<RobotConstraints>();
+
+            //var constraintsGlobalCommunication = new RobotConstraints(
+            constraintsList.Add(new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -60,9 +63,10 @@ namespace Maes
                 {
                     return true;
                 }
-            );
+            ));
 
-            var constraintsMaterials = new RobotConstraints(
+            //var constraintsMaterials = new RobotConstraints(
+            constraintsList.Add(new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -75,9 +79,10 @@ namespace Maes
                 relativeMoveSpeed: 1f,
                 agentRelativeSize: 0.6f,
                 materialCommunication: true
-            );
+            ));
 
-            var constraintsLOS = new RobotConstraints(
+            //var constraintsLOS = new RobotConstraints(
+            constraintsList.Add(new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -98,7 +103,7 @@ namespace Maes
                     }
                     return true;
                 }
-            );
+            ));
 
             var simulator = Simulator.GetInstance();
             RobotSpawner.CreateAlgorithmDelegate tnf = seed => new TnfExplorationAlgorithm(1, 10, seed);
@@ -106,83 +111,92 @@ namespace Maes
 
 
             var random = new System.Random(1234);
-
             List<int> rand_numbers = new List<int>();
-
             for (int i = 0; i < 100; i++)
             {
                 var val = random.Next(0, 1000000);
                 rand_numbers.Add(val);
             }
 
-            //var scenarios = ScenarioGenerator.GenerateTnfScenarios();
-            //foreach (SimulationScenario sce in scenarios){
-            //    simulator.EnqueueScenario(sce);
-            //}
             var buildingConfigList50 = new List<BuildingMapConfig>();
             var buildingConfigList75 = new List<BuildingMapConfig>();
             var buildingConfigList100 = new List<BuildingMapConfig>();
             foreach (int val in rand_numbers)
             {
                 buildingConfigList50.Add(new BuildingMapConfig(val, widthInTiles: 50, heightInTiles: 50, doorWidth: 6, minRoomSideLength: 11));
-                //buildingConfigList75.Add(new BuildingMapConfig(val, widthInTiles: 75, heightInTiles: 75));
-                //buildingConfigList100.Add(new BuildingMapConfig(val, widthInTiles: 100, heightInTiles: 100));
+                buildingConfigList75.Add(new BuildingMapConfig(val, widthInTiles: 75, heightInTiles: 75));
+                buildingConfigList100.Add(new BuildingMapConfig(val, widthInTiles: 100, heightInTiles: 100));
             }
 
-            foreach (var mapConfig in buildingConfigList50)
-            {
-                //var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway_corner.pgm");
-                simulator.EnqueueScenario(new SimulationScenario(seed: 123, 
-                    mapSpawner: generator => generator.GenerateMap(mapConfig),
-                    robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
-                                                                     buildingConfig,
-                                                                     seed: 123,
-                                                                     numberOfRobots: 5,
-                                                                     suggestedStartingPoint: Vector2Int.zero,
-                                                                     createAlgorithmDelegate: minos),
-                    statisticsFileName: $"doorway6-{mapConfig.RandomSeed}-",
-                    robotConstraints: constraints)
-                );
+            var constraintIterator = 0;
+            var mapSizes = new List<int>{50, 75, 100};
+            foreach (var constraint in constraintsList){
+                var constraintName = '';
+                switch (constraintIterator)
+                {
+                    case 0:
+                        constraintName = "Global";
+                        break;
+                    case 1:
+                        constraintName = "Material";
+                        break;
+                    default:
+                        constraintName = "LOS";
+                }
+                constraintIterator++;
+                var buildingMaps = buildingConfigList50.Union(buildingConfigList75.Union(buildingConfigList100));
+                foreach (var mapConfig in buildingMaps)
+                {
+                    for (var amountOfRobots = 1; amountOfRobots < 10; amountOfRobots += 2)
+                    {
 
-                //var scenario = new SimulationScenario(
-                //    seed: randomSeed,
-                //    mapSpawner: generator => generator.GenerateMap(buildingConfig),
-                //    robotConstraints: constraints,
-                //    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                //        map,
-                //        123,
-                //        5,
-                //        new Vector2Int(0, 0),
-                //        (seed) => new TnfExplorationAlgorithm(1, 10, 123)
-                //    ));
-                // Get/instantiate simulation prefab
+                        foreach(var size in mapSizes)
+                        {
+                            simulator.EnqueueScenario(new SimulationScenario(seed: 123,
+                                                                             mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                                             robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
+                                                                                 buildingConfig,
+                                                                                 seed: 123,
+                                                                                 numberOfRobots: amountOfRobots,
+                                                                                 suggestedStartingPoint: new Vector2Int(random.Next(0, size), random.Next(0, size)),
+                                                                                 createAlgorithmDelegate: minos),
+                                                                             statisticsFileName: $"minotaur-seed-{map.RandomSeed}-size-{size}-comms-{constraintName}-robots-{amountOfRobots}-SpawnTogether",
+                                                                             robotConstraints: constraint)
+                            );
 
-                //var buildingConfig = new CaveMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
-                //scenario = new SimulationScenario(
-                //   hasFinishedSim: sim => sim.ExplorationTracker.ExploredProportion > 0.99f,
-                //   seed: randomSeed,
-                //   mapSpawner: generator => generator.GenerateMap(buildingConfig),
-                //   robotConstraints: constraints,
-                //   robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                //       map,
-                //       randomSeed,
-                //       1,
-                //       new Vector2Int(0, 0),
-                //       (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
-                //   ));
+                            var spawningPosList = new List<Vector2Int>{}();
+                            for (var amountOfSpawns = 0; amountOfSpawns <= amountOfRobots; amountOfSpawns++)
+                                {
+                                    spawningPosList.Add( new Vector2Int(random.Next(0, size), random.Next(0, size)));
+                                }
 
-                //            simulator.EnqueueScenario(scenario);
+                            simulator.EnqueueScenario(new SimulationScenario(seed: 123,
+                                                                             mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                                             robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsAtPositions(
+                                                                                 collisionMap: buildingConfig,
+                                                                                 seed: 123,
+                                                                                 numberOfRobots: amountOfRobots,
+                                                                                 spawnPositions: spawningPosList,
+                                                                                 createAlgorithmDelegate: minos),
+                                                                             statisticsFileName: $"minotaur-seed-{map.RandomSeed}-size-{size}-comms-{constraintName}-robots-{amountOfRobots}-SpawnApart",
+                                                                             robotConstraints: constraint)
+                            );
+                        }
+                    }
+                }
             }
 
+            //Just code to make sure we don't get too many maps of the last one in the experiment
+            var dumpMap = new BuildingMapConfig(val, widthInTiles: 50, heightInTiles: 50)
             simulator.EnqueueScenario(new SimulationScenario(seed: 123,
-                mapSpawner: generator => generator.GenerateMap(mapConfig),
+                mapSpawner: generator => generator.GenerateMap(dumpMap),
                 robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
                                                                  buildingConfig,
                                                                  seed: 123,
                                                                  numberOfRobots: 5,
                                                                  suggestedStartingPoint: Vector2Int.zero,
                                                                  createAlgorithmDelegate: minos),
-                statisticsFileName: $"doorway6-{mapConfig.RandomSeed}-",
+                statisticsFileName: $"delete-me",
                 robotConstraints: constraints)
 
         simulator.PressPlayButton(); // Instantly enter play mode
