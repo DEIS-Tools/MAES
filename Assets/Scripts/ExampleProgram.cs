@@ -44,6 +44,39 @@ namespace Maes
         {
             const int randomSeed = 12; // 948778
 
+            var constraintsGlobalCommunication = new RobotConstraints(
+                senseNearbyAgentsRange: 5f,
+                senseNearbyAgentsBlockedByWalls: true,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 1,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f,
+                distributeSlam: false,
+                environmentTagReadRange: 4.0f,
+                slamRayTraceRange: 7f,
+                relativeMoveSpeed: 1f,
+                agentRelativeSize: 0.6f,
+                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) =>
+                {
+                    return true;
+                }
+            );
+
+            var constraintsMaterials = new RobotConstraints(
+                senseNearbyAgentsRange: 5f,
+                senseNearbyAgentsBlockedByWalls: true,
+                automaticallyUpdateSlam: true,
+                slamUpdateIntervalInTicks: 1,
+                slamSynchronizeIntervalInTicks: 10,
+                slamPositionInaccuracy: 0.2f,
+                distributeSlam: false,
+                environmentTagReadRange: 4.0f,
+                slamRayTraceRange: 7f,
+                relativeMoveSpeed: 1f,
+                agentRelativeSize: 0.6f,
+                materialCommunication: true
+            );
+
             var constraints = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
@@ -94,6 +127,8 @@ namespace Maes
             //    simulator.EnqueueScenario(sce);
             //}
             var buildingConfigList50 = new List<BuildingMapConfig>();
+            var buildingConfigList75 = new List<BuildingMapConfig>();
+            var buildingConfigList100 = new List<BuildingMapConfig>();
             foreach (int val in rand_numbers)
             {
                 buildingConfigList50.Add(new BuildingMapConfig(val, widthInTiles: 50, heightInTiles: 50, doorWidth: 6, minRoomSideLength: 11));

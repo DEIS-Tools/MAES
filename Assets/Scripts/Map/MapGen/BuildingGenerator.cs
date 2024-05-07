@@ -10,6 +10,7 @@ namespace Maes.Map.MapGen
     {
         private BuildingMapConfig _config;
         private float _wallHeight;
+        private static Tile _type;
 
         /// <summary>
         /// Generates a building map using the unity game objects Plane, InnerWalls and WallRoof.
@@ -27,6 +28,7 @@ namespace Maes.Map.MapGen
 
             var random = new Random(_config.RandomSeed);
             Tile.Rand = random;
+            _type = Tile.GetRandomWall();
 
             var emptyMap = GenerateEmptyMap(_config.BitMapWidth, _config.BitMapHeight);
 
@@ -227,7 +229,7 @@ namespace Maes.Map.MapGen
 
             var mapWidth = map!.GetLength(0);
             var mapHeight = map.GetLength(1);
-            var tileType = Tile.GetRandomWall();
+            var tileType = _type;
             for (var x = 0; x < mapWidth; x++)
             {
                 for (var y = 0; y < mapHeight; y++)
@@ -297,7 +299,7 @@ namespace Maes.Map.MapGen
             var selectedIndex = random.Next(filteredCoordinates.Count);
             var wallStartCoordinate = filteredCoordinates[selectedIndex];
 
-            var tileType = Tile.GetRandomWall();
+            var tileType = _type;
             // Create wall
             if (splitOnXAxis)
             {
@@ -347,10 +349,10 @@ namespace Maes.Map.MapGen
                 var biggestX = region.Select(coordinate => coordinate.x).Max();
                 var smallestY = region.Select(coordinate => coordinate.y).Min();
                 var biggestY = region.Select(coordinate => coordinate.y).Max();
-                var tile = Tile.GetRandomWall();
-                var innerTile = Tile.GetRandomWall();
+                var tile = _type;
+                var innerTile = _type;
                 while (innerTile.Type == tile.Type)
-                    innerTile = Tile.GetRandomWall();
+                    innerTile = _type;
 
                 for (var i = 0; i < wallThickness; i++)
                 {
