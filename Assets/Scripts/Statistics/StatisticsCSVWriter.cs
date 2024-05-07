@@ -47,7 +47,7 @@ namespace Maes.Statistics
             _biggestClusterPercentageSnapShots = simulation._communicationManager.CommunicationTracker.BiggestClusterPercentageSnapshots;
 
             _simulation = simulation;
-            var resultForFileName = "$\"e{(int)_exploreSnapShots[^1].Value}-c{(int)_coverSnapShots[^1].Value}\";\r\n";
+            var resultForFileName = $"e{(int)_exploreSnapShots[^1].Value}-c{(int)_coverSnapShots[^1].Value}";
             _path = GlobalSettings.StatisticsOutPutPath + fileNameWithoutExtension + "_" + resultForFileName + ".csv";
         }
 
