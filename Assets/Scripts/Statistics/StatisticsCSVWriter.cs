@@ -20,6 +20,7 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using UnityEngine;
@@ -40,6 +41,9 @@ namespace Maes.Statistics
 
         public StatisticsCSVWriter(Simulation simulation, string fileNameWithoutExtension)
         {
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+
             _coverSnapShots = simulation.ExplorationTracker._coverSnapshots;
             _exploreSnapShots = simulation.ExplorationTracker._exploreSnapshots;
             _distanceSnapShots = simulation.ExplorationTracker._distanceSnapshots;
@@ -50,11 +54,10 @@ namespace Maes.Statistics
             var resultForFileName = $"e{(int)_exploreSnapShots[^1].Value}-c{(int)_coverSnapShots[^1].Value}";
             _path = GlobalSettings.StatisticsOutPutPath + fileNameWithoutExtension + "_" + resultForFileName + ".csv";
         }
-
         public void CreateCSVFile(string separator)
         {
             using var csv = new StreamWriter(_path);
-            csv.WriteLine("Tick,Covered,Explored,Agents Interconnected, Biggest Cluster %");
+            csv.WriteLine("Tick,Covered,Explored,Average Agent Distance,Agents Interconnected, Biggest Cluster %");
             for (var i = 0; i < _coverSnapShots.Count; i++)
             {
                 var tick = _coverSnapShots[i].Tick;
@@ -69,7 +72,6 @@ namespace Maes.Statistics
                     var allAgentsInterconnectedString = agentsConnectedSnapShot.Value ? "" + 1 : "" + 0;
                     line.Append($"{allAgentsInterconnectedString}");
                 }
-
                 line.Append($"{separator}");
                 if (_biggestClusterPercentageSnapShots.TryGetValue(tick, out var biggestClusterPercentageSnapShot))
                 {
