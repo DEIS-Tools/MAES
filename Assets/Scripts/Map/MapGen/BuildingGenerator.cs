@@ -351,8 +351,8 @@ namespace Maes.Map.MapGen
                 var biggestY = region.Select(coordinate => coordinate.y).Max();
                 var tile = _type;
                 var innerTile = _type;
-                while (innerTile.Type == tile.Type)
-                    innerTile = _type;
+                //while (innerTile.Type == tile.Type)
+                //    innerTile = _type;
 
                 for (var i = 0; i < wallThickness; i++)
                 {
