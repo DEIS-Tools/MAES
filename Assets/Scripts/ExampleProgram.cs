@@ -77,7 +77,7 @@ namespace Maes
                 materialCommunication: true
             );
 
-            var constraints = new RobotConstraints(
+            var constraintsLOS = new RobotConstraints(
                 senseNearbyAgentsRange: 5f,
                 senseNearbyAgentsBlockedByWalls: true,
                 automaticallyUpdateSlam: true,
@@ -96,12 +96,6 @@ namespace Maes
                     {
                         return false;
                     }
-                    // Max distance 15.0f
-                    else if (15.0f < distanceTravelled)
-                    {
-                        return false;
-                    }
-
                     return true;
                 }
             );
@@ -115,11 +109,10 @@ namespace Maes
 
             List<int> rand_numbers = new List<int>();
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100; i++)
             {
                 var val = random.Next(0, 1000000);
                 rand_numbers.Add(val);
-                Debug.Log(val);
             }
 
             //var scenarios = ScenarioGenerator.GenerateTnfScenarios();
@@ -180,7 +173,19 @@ namespace Maes
 
                 //            simulator.EnqueueScenario(scenario);
             }
-            simulator.PressPlayButton(); // Instantly enter play mode
+
+            simulator.EnqueueScenario(new SimulationScenario(seed: 123,
+                mapSpawner: generator => generator.GenerateMap(mapConfig),
+                robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
+                                                                 buildingConfig,
+                                                                 seed: 123,
+                                                                 numberOfRobots: 5,
+                                                                 suggestedStartingPoint: Vector2Int.zero,
+                                                                 createAlgorithmDelegate: minos),
+                statisticsFileName: $"doorway6-{mapConfig.RandomSeed}-",
+                robotConstraints: constraints)
+
+        simulator.PressPlayButton(); // Instantly enter play mode
 
             //simulator.GetSimulationManager().AttemptSetPlayState(SimulationPlayState.FastAsPossible);
         }
