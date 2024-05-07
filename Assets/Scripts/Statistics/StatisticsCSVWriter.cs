@@ -56,7 +56,7 @@ namespace Maes.Statistics
         }
         public void CreateCSVFile(string separator)
         {
-            using var csv = new StreamWriter(_path);
+            using var csv = new StreamWriter(Path.GetFullPath(_path));
             csv.WriteLine("Tick,Covered,Explored,Average Agent Distance,Agents Interconnected, Biggest Cluster %");
             for (var i = 0; i < _coverSnapShots.Count; i++)
             {

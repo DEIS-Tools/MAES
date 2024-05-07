@@ -147,6 +147,11 @@ namespace Maes {
                 return;
             }
 
+            if (Application.isBatchMode && _playState != SimulationPlayState.FastAsPossible)
+            {
+                AttemptSetPlayState(SimulationPlayState.FastAsPossible);
+            }
+
             long startTimeMillis = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             int millisPerFixedUpdate = (int) (1000f * Time.fixedDeltaTime);
             // Subtract 8 milliseconds to allow for other procedures such as rendering to occur between updates 
