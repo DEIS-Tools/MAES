@@ -53,7 +53,7 @@ namespace Maes
                 slamPositionInaccuracy: 0.2f,
                 distributeSlam: false,
                 environmentTagReadRange: 4.0f,
-                slamRayTraceRange: 4f,
+                slamRayTraceRange: 10f,
                 relativeMoveSpeed: 1f,
                 agentRelativeSize: 0.6f,
                 calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) =>
@@ -72,22 +72,35 @@ namespace Maes
                     return true;
                 }
             );
+            var simulator = Simulator.GetInstance();
+            RobotSpawner.CreateAlgorithmDelegate tnf = seed => new TnfExplorationAlgorithm(1,10, seed);
+            RobotSpawner.CreateAlgorithmDelegate minos = seed => new MinotaurAlgorithm(constraints, seed, 2);
 
             //var map = PgmMapFileLoader.LoadMapFromFileIfPresent("doorway_corner.pgm");
-            var buildingConfig = new BuildingMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
-            var scenario = new SimulationScenario(
-                seed: randomSeed,
-                mapSpawner: generator => generator.GenerateMap(buildingConfig),
-                robotConstraints: constraints,
-                robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
-                    map,
-                    randomSeed,
-                    1,
-                    new Vector2Int(0, 0),
-                    (seed) => new MinotaurAlgorithm(constraints, randomSeed, 2)
-                ));
+            var buildingConfig = new BuildingMapConfig(868940, widthInTiles: 50, heightInTiles: 50);
+            for (var i = 0; i < 10; i++){
+                simulator.EnqueueScenario(new SimulationScenario(seed: 123, mapSpawner: generator => generator.GenerateMap(buildingConfig), robotSpawner:(buildingConfig, spawner) => spawner.SpawnRobotsTogether(
+                                                                     buildingConfig,
+                                                                     seed: 123,
+                                                                     numberOfRobots: 5,
+                                                                     suggestedStartingPoint: Vector2Int.zero,
+                                                                         createAlgorithmDelegate: minos),
+                                                                 statisticsFileName: $"test-",
+                                                                 robotConstraints: constraints)
+                );
+
+                //var scenario = new SimulationScenario(
+                //    seed: randomSeed,
+                //    mapSpawner: generator => generator.GenerateMap(buildingConfig),
+                //    robotConstraints: constraints,
+                //    robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
+                //        map,
+                //        123,
+                //        5,
+                //        new Vector2Int(0, 0),
+            //        (seed) => new TnfExplorationAlgorithm(1, 10, 123)
+            //    ));
             // Get/instantiate simulation prefab
-            var simulator = Simulator.GetInstance();
 
             //var buildingConfig = new CaveMapConfig(randomSeed, widthInTiles: 100, heightInTiles: 100);
             //scenario = new SimulationScenario(
@@ -103,7 +116,8 @@ namespace Maes
             //       (seed) => new MinotaurAlgorithm(constraints, randomSeed, 4)
             //   ));
 
-            simulator.EnqueueScenario(scenario);
+//            simulator.EnqueueScenario(scenario);
+            }
             simulator.PressPlayButton(); // Instantly enter play mode
 
             //simulator.GetSimulationManager().AttemptSetPlayState(SimulationPlayState.FastAsPossible);
