@@ -78,3 +78,4 @@ ProjectSettings/
 UserSettings/
 CodeCoverage/
 InitTestScene*
+*.csv
