@@ -128,7 +128,7 @@ namespace Maes
                 buildingConfigList100.Add(new BuildingMapConfig(val, widthInTiles: 100, heightInTiles: 100));
             }
 
-            var previousSimulations = Directory.GetFiles(GlobalSettings.StatisticsOutPutPath);
+            var previousSimulations = Directory.GetFiles(Path.GetFullPath("./" + GlobalSettings.StatisticsOutPutPath));
             var constraintIterator = 0;
             foreach (var constraint in constraintsDict)
             {

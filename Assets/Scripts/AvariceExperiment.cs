@@ -129,7 +129,7 @@ namespace Maes
             }
 
             var constraintIterator = 0;
-            var previousSimulations = Directory.GetFiles(GlobalSettings.StatisticsOutPutPath);
+            var previousSimulations = Directory.GetFiles(Path.GetFullPath("./" + GlobalSettings.StatisticsOutPutPath));
             foreach (var constraint in constraintsDict)
             {
                 var constraintName = "";
