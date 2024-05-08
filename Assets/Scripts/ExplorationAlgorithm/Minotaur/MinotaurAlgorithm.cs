@@ -816,7 +816,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
                     if (otherDoorway == null)
                     {
-                        Debug.Log($"doorway {start}-{end} at {_logicTicks}");
+                        //Debug.Log($"doorway {start}-{end} at {_logicTicks}");
                         _doorways.Add(newDoorway);
 
                         _currentState = AlgorithmState.Auctioning;

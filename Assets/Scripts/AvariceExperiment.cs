@@ -34,6 +34,8 @@ using UnityEditor;
 using System.Linq;
 using Maes.ExplorationAlgorithm.Greed;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace Maes
 {
@@ -127,7 +129,7 @@ namespace Maes
             }
 
             var constraintIterator = 0;
-            var mapSizes = new List<int> { 50, 75, 100 };
+            var previousSimulations = Directory.GetFiles(GlobalSettings.StatisticsOutPutPath);
             foreach (var constraint in constraintsDict)
             {
                 var constraintName = "";
@@ -151,34 +153,44 @@ namespace Maes
                     for (var amountOfRobots = 1; amountOfRobots < 9; amountOfRobots += 2)
                     {
                         var robotCount = amountOfRobots;
-                        simulator.EnqueueScenario(new SimulationScenario(seed: 123,
-                                                                            mapSpawner: generator => generator.GenerateMap(mapConfig),
-                                                                            robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
-                                                                                buildingConfig,
-                                                                                seed: 123,
-                                                                                numberOfRobots: robotCount,
-                                                                                suggestedStartingPoint: new Vector2Int(random.Next(-mapConfig.HeightInTiles/2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles/2, mapConfig.HeightInTiles / 2)),
-                                                                                createAlgorithmDelegate: algorithm),
-                                                                            statisticsFileName: $"avarice-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether",
-                                                                            robotConstraints: constraintsDict[constraintName])
-                        );
 
-                        var spawningPosList = new List<Vector2Int>();
-                        for (var amountOfSpawns = 0; amountOfSpawns < amountOfRobots; amountOfSpawns++)
+                        var regex = new Regex($@"avarice-seed-{mapConfig.RandomSeed}-mapConfig\.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether_.*\.csv");
+                        if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
                         {
-                            spawningPosList.Add(new Vector2Int(random.Next(-mapConfig.HeightInTiles/2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles/2, mapConfig.HeightInTiles / 2)));
+                            simulator.EnqueueScenario(new SimulationScenario(seed: 123,
+                                                                                mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                                                robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
+                                                                                    buildingConfig,
+                                                                                    seed: 123,
+                                                                                    numberOfRobots: robotCount,
+                                                                                    suggestedStartingPoint: new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)),
+                                                                                    createAlgorithmDelegate: algorithm),
+                                                                                statisticsFileName: $"avarice-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether",
+                                                                                robotConstraints: constraintsDict[constraintName])
+                            );
                         }
-                        simulator.EnqueueScenario(new SimulationScenario(seed: 123,
+
+                        var spawningPosHashSet = new HashSet<Vector2Int>();
+                        while (spawningPosHashSet.Count < amountOfRobots)
+                        {
+                            spawningPosHashSet.Add(new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)));
+                        }
+
+                        regex = new Regex($@"avarice-seed-{mapConfig.RandomSeed}-mapConfig\.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart_.*\.csv");
+                        if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
+                        {
+                            simulator.EnqueueScenario(new SimulationScenario(seed: 123,
                                                                             mapSpawner: generator => generator.GenerateMap(mapConfig),
                                                                             robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsAtPositions(
                                                                                 collisionMap: buildingConfig,
                                                                                 seed: 123,
                                                                                 numberOfRobots: robotCount,
-                                                                                spawnPositions: spawningPosList,
+                                                                                spawnPositions: spawningPosHashSet.ToList(),
                                                                                 createAlgorithmDelegate: algorithm),
                                                                             statisticsFileName: $"avarice-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart",
                                                                             robotConstraints: constraintsDict[constraintName])
                         );
+                        }
                     }
                 }
             }

@@ -79,3 +79,4 @@ UserSettings/
 CodeCoverage/
 InitTestScene*
 *.csv
+/MinotaurExperiment
