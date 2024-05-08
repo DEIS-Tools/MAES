@@ -70,7 +70,7 @@ namespace Maes
 
             var simulator = Simulator.GetInstance();
 
-            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("blank.pgm");
+            var map = PgmMapFileLoader.LoadMapFromFileIfPresent("blank_100.pgm");
             var random = new System.Random(1234);
             for (int i = 0; i < 10; i++)
             {
