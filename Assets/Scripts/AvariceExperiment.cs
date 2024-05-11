@@ -150,7 +150,7 @@ namespace Maes
                 var buildingMaps = buildingConfigList50.Union(buildingConfigList75.Union(buildingConfigList100));
                 foreach (var mapConfig in buildingMaps)
                 {
-                    for (var amountOfRobots = 1; amountOfRobots < 9; amountOfRobots += 2)
+                    for (var amountOfRobots = 1; amountOfRobots <= 9; amountOfRobots += 2)
                     {
                         var robotCount = amountOfRobots;
 

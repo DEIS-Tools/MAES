@@ -80,3 +80,4 @@ CodeCoverage/
 InitTestScene*
 *.csv
 /MinotaurExperiment
+/TnfExperiment
