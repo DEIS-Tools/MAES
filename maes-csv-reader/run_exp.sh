@@ -1,0 +1,1 @@
+python src/main.py -x Tick -y Tick -d minos-4-50 minos-7-50 minos-10-50 minos-4-75 minos-7-75 minos-10-75 minos-4-100 minos-7-100 minos-10-100 tnf-4-50 tnf-7-50 tnf-10-50 tnf-4-75 tnf-7-75 tnf-10-75 tnf-4-100 tnf-7-100 tnf-10-100 -e experiment -p false -t cactus

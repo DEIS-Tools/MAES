@@ -81,3 +81,5 @@ InitTestScene*
 *.csv
 /MinotaurExperiment
 /TnfExperiment
+/maes-csv-reader/env
+/maes-csv-reader/datasets
