@@ -12,7 +12,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
     internal class EdgeDetector
     {
         public EdgeState State => UpdateState();
-        public bool isStuck => GetTilesAroundPoint(_edgeSize, _defaultLimitors).Where(tile => _coarseMap.GetTileStatus(tile) != SlamTileStatus.Open).Any();
+        public bool isStuck => GetTilesAroundRobot(_edgeSize, _defaultLimitors).Where(tile => _coarseMap.GetTileStatus(tile) != SlamTileStatus.Open).Any();
 
         private SlamMap _slamMap;
         private CoarseGrainedMap _coarseMap;
@@ -38,7 +38,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         private EdgeState UpdateState()
         {
-            var tiles = GetTilesAroundPoint(_edgeSize, _defaultLimitors);
+            var tiles = GetTilesAroundRobot(_edgeSize, _defaultLimitors);
             var angle = _coarseMap.GetApproximateGlobalDegrees();
             return EdgeState.ForwardRight;
         }
@@ -53,7 +53,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 var removedAngles = new List<int>();
                 foreach (var angle in angles)
                 {
-                    var tile = GetFurthestTileAroundPoint(_coarseMap.GetApproximateGlobalDegrees() + angle, range, _defaultLimitors);
+                    var tile = GetFurthestTileAroundRobot(_coarseMap.GetApproximateGlobalDegrees() + angle, range, _defaultLimitors);
 
                     if (_coarseMap.GetTileStatus(tile) == SlamTileStatus.Solid)
                     {
@@ -81,38 +81,30 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         /// <summary>
         /// Gets the tiles around the robot by casting 360-<paramref name="startAngle"/> rays. These rays expand from the robot and out being stopped by the <paramref name="limiters"/>.
         /// <para></para>
-        /// If only one ray is desired, consider <seealso cref="GetFurthestTileAroundPoint(float, int, List{SlamTileStatus}, bool, bool)"/>
+        /// If only one ray is desired, consider <seealso cref="GetFurthestTileAroundRobot(float, int, List{SlamTileStatus}, bool, bool)"/>
         /// </summary>
         /// <param name="range">The distance of the ray</param>
         /// <param name="limiters">What tiles should stop the rays</param>
         /// <param name="slamPrecision">Target slam tiles instead of coarse tiles</param>
         /// <param name="startAngle">If set above 0 then this will create arcs instead of circles around the robot, based on <see cref="Vector2.right"/> counter-clockwise</param>
         /// <returns>The unique tiles that were hit</returns>
-        public IEnumerable<Vector2Int> GetTilesAroundPoint(int range, List<SlamTileStatus> limiters, Vector2Int? point = null, bool slamPrecision = false, int startAngle = 0)
+        public IEnumerable<Vector2Int> GetTilesAroundRobot(int range, List<SlamTileStatus> limiters, bool slamPrecision = false, int startAngle = 0)
         {
             IPathFindingMap map = slamPrecision ? _slamMap : _coarseMap;
             var tiles = new List<Vector2Int>();
             for (int angle = startAngle; angle < 360; angle++)
             {
-                tiles.Add(GetFurthestTileAroundPoint(_coarseMap.GetApproximateGlobalDegrees() + angle, range, limiters, slamPrecision: slamPrecision));
+                tiles.Add(GetFurthestTileAroundRobot(_coarseMap.GetApproximateGlobalDegrees() + angle, range, limiters, slamPrecision: slamPrecision));
             }
             return tiles.Distinct().Where(tile => map.IsWithinBounds(tile));
         }
 
-        public Vector2Int GetFurthestTileAroundPoint(float angle, int range, List<SlamTileStatus> limiters, Vector2Int? point = null, bool snapToGrid = false, bool slamPrecision = false)
+        public Vector2Int GetFurthestTileAroundRobot(float angle, int range, List<SlamTileStatus> limiters, bool snapToGrid = false, bool slamPrecision = false)
         {
-            Vector2Int position;
-            if (point.HasValue)
-            {
-                position = point.Value;
-            }
-            else
-            {
-                position = slamPrecision ? _slamMap.GetCurrentPosition() : _robotPosition;
-            }
+            var position = slamPrecision ? _slamMap.GetCurrentPosition() : _robotPosition;
             IPathFindingMap map = slamPrecision ? _slamMap : _coarseMap;
             Vector2Int tile = position;
-            for (int r = 0; r < (slamPrecision ? range * 2 : range); r++)
+            for (int r = 0; r < (slamPrecision ? range*2 : range); r++)
             {
                 tile = snapToGrid ? CardinalDirection.AngleToDirection(angle).Vector * r : Vector2Int.FloorToInt(Geometry.VectorFromDegreesAndMagnitude(angle, r));
                 var candidateTile = tile + position;

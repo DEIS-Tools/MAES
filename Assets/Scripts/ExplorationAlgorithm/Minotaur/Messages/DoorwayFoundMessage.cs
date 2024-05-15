@@ -30,6 +30,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             /// </summary>
             public IMinotaurMessage? Process(MinotaurAlgorithm minotaur)
             {
+                if (!minotaur._doorways.Contains(_doorway))
+                {
+                    minotaur._doorways.Add(_doorway);
+                }
+
                 var doorwayTile = minotaur._map.FromSlamMapCoordinate(_doorway.Center);
                 var pathLengthToDoorway = minotaur._map.GetPath(doorwayTile, false, false);
                 if (pathLengthToDoorway != null)
@@ -42,14 +47,8 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         }
                     }
                     var bid = new Dictionary<int, int>() { { minotaur._controller.GetRobotID(), pathLengthToDoorway.Count } };
-                    minotaur._doorways.Add(_doorway);
                     return new BiddingMessage(_requesterID, bid, _doorway);
                 }
-                if (!minotaur._doorways.Contains(_doorway))
-                {
-                    minotaur._doorways.Add(_doorway);
-                }
-
                 return null;
             }
         }
