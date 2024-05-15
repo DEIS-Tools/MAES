@@ -59,6 +59,7 @@ def make_table(csv_files, options):
 
             if last_tick > slowest_success and last_tick != 36000:
                 slowest_success = last_tick
+                slowest_success_name = csv.file_name
             if last_tick < fastest_success:
                 fastest_success = last_tick
                 fastest_success_name = csv.file_name
@@ -66,10 +67,13 @@ def make_table(csv_files, options):
                 timeouts += 1
             else:
                 successes += 1
-        print(fastest_success_name)
+        print(f"fastest map: {fastest_success_name}")
+        print(f"slowest map: {slowest_success_name}")
 
         success_rate = successes/(successes+timeouts)
         average = average_sum/data_point_amount
+        print(type(', '.join(name)))
+        name = ', '.join(name).split('/')[0]
         table.add_row(t.TableRow(name, average, successes, timeouts, success_rate, fastest_success, slowest_success))
 
     return table
@@ -107,6 +111,7 @@ def make_cactus_plots(csv_files, options):
 
         temp_x = range(0, len(temp_y))
         temp_y.sort()
+        name = ', '.join(name).split('/')[0]
         plots.append(plot.Plot(name, temp_x, temp_y, x_name, y_name))
 
     return plots

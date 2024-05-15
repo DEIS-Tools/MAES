@@ -24,9 +24,11 @@ class Exporter:
         self.export_text = ''
         self.export_text += f'\\begin{{tikzpicture}}\n' + \
                        f'\\begin{{axis}}[\n' + \
-                       f'xlabel={{{options.x_column_name}}},\n' + \
+                       f'xlabel={{Map}},\n' + \
                        f'ylabel={{{options.y_column_name}}},\n' + \
-                       f'legend pos = outer north east]\n\n\n'
+                       f'legend pos = outer north east,\n' + \
+                       f'cycle list name=custom,\n' + \
+                       f'yticklabel={{\\pfgmathprintnumber[fixed]{{\\tick}}}}]\n\n'
 
         for i, plot in enumerate(self.plots):
             self.export_text += f'\\addplot+[mark=none] coordinates {{\n'
@@ -50,9 +52,9 @@ class Exporter:
 
         self.export_text = ''
         self.export_text += f'\\begin{{table}}[]\n' + \
-                        f'\\begin{{tabular}}{{|1|1|1|1|1|1|1|}}\n' + \
+                        f'\\begin{{tabular}}{{|c|c|c|c|c|c|c|}}\n' + \
                         f'\\hline\n' + \
-                        f'Strategy & Average & Successes & Timeouts & Success Rate & Fastest Success & Slowest Success ' + '\\' + '\\' + '\\hline\n'
+                        f'Strategy & Average Ticks & Successes & Timeouts & Success Rate & Fastest Success (Ticks) & Slowest Success (Ticks) ' + '\\' + '\\' + '\\hline\n'
 
         for row in self.table.rows:
             self.export_text += f'{row.name} & {row.average} & {row.successes} & {row.timeouts} & {row.successRate} & {row.fastestSuccess if row.fastestSuccess != 36000 else "DNF"} & {row.slowestSuccess if row.slowestSuccess != 0 else "DNF"}' + '\\' + '\\' + '\\hline\n'
