@@ -27,8 +27,9 @@ class Exporter:
                        f'xlabel={{Map}},\n' + \
                        f'ylabel={{{options.y_column_name}}},\n' + \
                        f'legend pos = outer north east,\n' + \
+                       f'scale y ticks = false,\n' + \
                        f'cycle list name=custom,\n' + \
-                       f'yticklabel={{\\pfgmathprintnumber[fixed]{{\\tick}}}}]\n\n'
+                       f'yticklabel={{\\pgfmathprintnumber[fixed]{{\\tick}}}}]\n\n'
 
         for i, plot in enumerate(self.plots):
             self.export_text += f'\\addplot+[mark=none] coordinates {{\n'
