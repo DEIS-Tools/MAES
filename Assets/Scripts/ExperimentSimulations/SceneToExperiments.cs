@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 
 namespace Maes.ExperimentSimulations
 {
-    public class MinotaurExperiments : ExperimentBase
+    public class SceneToExperiments : ExperimentBase
     {
         // Start is called before the first frame update
         void Start()

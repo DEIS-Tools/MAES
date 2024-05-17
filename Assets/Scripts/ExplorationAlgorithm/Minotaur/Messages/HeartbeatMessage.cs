@@ -41,7 +41,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         var doorway = heartbeatMessage.doorways[i];
                         if (doorways.Contains(doorway))
                         {
-                            if (doorway.ApproachedDirection.OppositeDirection() == doorways.First(ownDoorway => ownDoorway.Equals(doorway)).ApproachedDirection)
+                            if (doorway.ExitDirection.OppositeDirection() == doorways.First(ownDoorway => ownDoorway.Equals(doorway)).ExitDirection)
                             {
                                 doorways.First(ownDoorway => ownDoorway.Equals(doorway)).Explored = true;
                             }

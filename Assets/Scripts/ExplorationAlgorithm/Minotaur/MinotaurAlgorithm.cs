@@ -188,7 +188,16 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 else if (MoveToNearestUnseen(_otherRobotDestinations)) ;
                 if (waypoint.HasValue && waypoint.Equals(_waypoint))
                 {
-                    MoveToNearestUnseen(_otherRobotDestinations.Union(new HashSet<Vector2Int> { waypoint.Value.Destination }).ToHashSet());
+                    if (_controller.GetStatus() != Robot.Task.RobotStatus.Idle)
+                        _controller.StopCurrentTask();
+                    else
+                    {
+                        var openTile = _map.GetNearestTileFloodFill(_position, SlamTileStatus.Open);
+                        if (openTile.HasValue)
+                            _controller.MoveTo(openTile.Value);
+                        else
+                            _controller.Move(1, true);
+                    }
                 }
                 _deadlockTimer = 0;
             }
@@ -259,7 +268,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                         AttemptAddDoorway(GetWalls(wallPoints.Select(wallPoint => wallPoint.Position).Distinct()));
                     else if (waypoint.Type == Waypoint.WaypointType.NearestDoor)
                     {
-                        var possibleFirstDoorway = _doorways.FirstOrDefault(doorway => _map.FromSlamMapCoordinate(doorway.Center + doorway.ApproachedDirection.Vector * 4) == waypoint.Destination);
+                        var possibleFirstDoorway = _doorways.FirstOrDefault(doorway => _map.FromSlamMapCoordinate(doorway.Center + doorway.ExitDirection.Vector * 4) == waypoint.Destination);
                         if (possibleFirstDoorway != default) possibleFirstDoorway.Explored = true;
                     }
                     _waypoint = null;
@@ -679,7 +688,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
             var nearestDoorway = GetNearestUnexploredDoorway();
             if (nearestDoorway != null)
             {
-                _waypoint = new Waypoint(_map.FromSlamMapCoordinate(nearestDoorway.Center + nearestDoorway.ApproachedDirection.Vector * 4), Waypoint.WaypointType.NearestDoor, true);
+                _waypoint = new Waypoint(_map.FromSlamMapCoordinate(nearestDoorway.Center + nearestDoorway.ExitDirection.Vector * 4), Waypoint.WaypointType.NearestDoor, true);
                 _controller.PathAndMoveTo(_waypoint.Value.Destination);
                 return true;
             }
@@ -831,7 +840,11 @@ namespace Maes.ExplorationAlgorithm.Minotaur
                 if (slamMap.GetTileStatus(intersectionPoint.intersection) != SlamTileStatus.Unseen
                     && (Mathf.Approximately(Vector2.Distance(start, end), _doorWidth * 2) || (Vector2.Distance(start, end) <= _doorWidth * 2 && Vector2.Distance(start, end) >= 3)))
                 {
-                    var newDoorway = new Doorway(start, end, CardinalDirection.VectorToDirection(center - slamPosition));
+                    var opening = new Line2D(start, end);
+                    var doorDirection = CardinalDirection.VectorToDirection(start - end);
+                    var extended = new Line2D(start*doorDirection.Vector*VisionRadius, end * doorDirection.OppositeDirection().Vector * VisionRadius);
+                    var closestToRobot = GetClosestPoints(new List<Line2D> { extended }, slamPosition);
+                    var newDoorway = new Doorway(opening, center, CardinalDirection.VectorToDirection(closestToRobot.First() - slamPosition));
                     var otherDoorway = _doorways.FirstOrDefault(doorway => doorway.Equals(newDoorway));
 
                     if (otherDoorway == null)

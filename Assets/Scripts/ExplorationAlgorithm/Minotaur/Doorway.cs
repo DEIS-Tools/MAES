@@ -14,23 +14,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         public readonly Line2D Opening;
         public IEnumerable<Vector2Int> Tiles => Opening.Rasterize().Select(tile => Vector2Int.FloorToInt(tile));
         public bool Explored;
-        public CardinalDirection ApproachedDirection;
+        public CardinalDirection ExitDirection;
         public static int DoorWidth;
         public static CoarseGrainedMap _map;
 
-        public Doorway(Vector2Int start, Vector2Int end, CardinalDirection approachedDirection)
+        public Doorway(Line2D opening, Vector2Int center, CardinalDirection exitDirection)
         {
-            Center = (start+end)/2;
+            Center = center;
             Explored = false;
-            Opening = new Line2D(start, end);
-            ApproachedDirection = approachedDirection;
+            Opening = opening;
+            ExitDirection = exitDirection;
         }
 
         public override bool Equals(object obj)
         {
             if (obj is Doorway other)
             {
-                var squareTiles = Enumerable.Range(0, DoorWidth+1).SelectMany(i => Tiles.Select(doorTile => doorTile + ApproachedDirection.Vector * i)).ToList();
+                var squareTiles = Enumerable.Range(0, DoorWidth+1).SelectMany(i => Tiles.Select(doorTile => doorTile + ExitDirection.Vector * i)).ToList();
                 //squareTiles.ToList().ForEach(tile => _map.FromSlamMapCoordinate(tile).DrawDebugLineFromRobot(_map, Color.cyan));
                 if (other.Tiles.Any(tile => squareTiles.Contains(tile)))
                 {
@@ -42,7 +42,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Center, Explored, ApproachedDirection);
+            return HashCode.Combine(Center, Explored, ExitDirection);
         }
     }
 }
