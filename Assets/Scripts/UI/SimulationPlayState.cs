@@ -24,7 +24,7 @@ namespace Maes.UI {
         Paused = 0,
         Play = 1,
         FastForward = 2,
-        FastAsPossible = 100000,
+        FastAsPossible = int.MaxValue,
         Step = 3
     }
 }
