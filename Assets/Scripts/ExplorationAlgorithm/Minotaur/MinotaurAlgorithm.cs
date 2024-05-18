@@ -454,7 +454,9 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         {
             var slamMap = _controller.GetSlamMap();
             var slamPosition = slamMap.GetCurrentPosition();
-            var wall = slamWalls.First(wall => wall.Start != wall.End && (wall.Start == point.point || wall.End == point.point));
+            var wall = slamWalls.FirstOrDefault(wall => wall.Start != wall.End && (wall.Start == point.point || wall.End == point.point));
+            if (wall == default) 
+                return false;
             var thirdPoint = wall.Rasterize().OrderBy(wallPoint => Vector2.Distance(wallPoint, slamPosition)).First();
             var towardRobotVector = CardinalDirection.VectorToDirection(slamPosition - thirdPoint).Vector;
             var wallDirection = CardinalDirection.VectorToDirection(point.point - thirdPoint).Vector;

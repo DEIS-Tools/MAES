@@ -37,6 +37,8 @@ using System.Linq;
 using Maes.ExplorationAlgorithm.Greed;
 using System.Text.RegularExpressions;
 using System.IO;
+using Codice.CM.Common;
+using static UnityEditor.PlayerSettings;
 
 namespace Maes.ExperimentSimulations
 {
@@ -46,7 +48,7 @@ namespace Maes.ExperimentSimulations
 
         private void Start()
         {
-            MinosVsGreedSimulation("Global", "50");
+            MinosVsGreedSimulation("Global", "100");
         }
 
         public void MinosVsGreedSimulation(string constraintName, string amount)
@@ -117,7 +119,7 @@ namespace Maes.ExperimentSimulations
             var simulator = Simulator.GetInstance();
             var random = new System.Random(1234);
             List<int> rand_numbers = new List<int>();
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100; i++)
             {
                 var val = random.Next(0, 1000000);
                 rand_numbers.Add(val);
@@ -149,7 +151,7 @@ namespace Maes.ExperimentSimulations
             }
 
             var previousSimulations = Directory.GetFiles(Path.GetFullPath("./" + GlobalSettings.StatisticsOutPutPath));
-            var algorithmName = "greed";
+            var algorithmName = "minotaur";
             foreach (var mapConfig in buildingConfigList)
             {
                 for (var amountOfRobots = 1; amountOfRobots <= 9; amountOfRobots += 2)
@@ -157,7 +159,7 @@ namespace Maes.ExperimentSimulations
                     var robotCount = amountOfRobots;
 
                     var regex = new Regex($@"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig\.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether_.*\.csv");
-                    if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
+                    if (robotCount == 5 && mapConfig.RandomSeed == 585462)
                     {
                         simulator.EnqueueScenario(new SimulationScenario(seed: 123,
                             mapSpawner: generator => generator.GenerateMap(mapConfig),
@@ -190,9 +192,9 @@ namespace Maes.ExperimentSimulations
                     }
 
                     regex = new Regex($@"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig\.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart_.*\.csv");
-                    if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
+                    if (false)
                     {
-                        simulator.EnqueueScenario(new SimulationScenario(seed: 123,
+                    simulator.EnqueueScenario(new SimulationScenario(seed: 123,
                                         mapSpawner: generator => generator.GenerateMap(mapConfig),
                                         robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsAtPositions(
                                             collisionMap: buildingConfig,
