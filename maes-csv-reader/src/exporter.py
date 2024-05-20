@@ -59,7 +59,7 @@ class Exporter:
                         f'Strategy & Average Ticks & Successes & Timeouts & Success Rate & Fastest Success (Ticks) & Slowest Success (Ticks) ' + '\\' + '\\' + '\\hline\n'
 
         for row in self.table.rows:
-            self.export_text += f'{row.name} & {row.average} & {row.successes} & {row.timeouts} & {row.successRate} & {row.fastestSuccess if row.fastestSuccess != 36000 else "DNF"} & {row.slowestSuccess if row.slowestSuccess != 0 else "DNF"}' + '\\' + '\\' + '\\hline\n'
+            self.export_text += f'{row.name} & {round(row.average, 2)} & {row.successes, 2} & {row.timeouts} & {round(row.successRate, 2)} & {row.fastestSuccess if row.fastestSuccess != 36000 else "DNF"} & {row.slowestSuccess if row.slowestSuccess != 0 else "DNF"}' + '\\' + '\\' + '\\hline\n'
 
         self.export_text += f'\\end{{tabular}}\n' + \
                         f'\\end{{adjustbox}}\n' + \
