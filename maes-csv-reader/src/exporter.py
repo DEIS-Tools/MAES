@@ -63,7 +63,7 @@ class Exporter:
         self.export_text += f'\\end{{tabular}}\n' + \
                         f'\\end{{table}}\n'
 
-        self.file_extension = ".table"
+        self.file_extension = ".tex"
 
 
 
