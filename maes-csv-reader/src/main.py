@@ -110,7 +110,7 @@ def make_cactus_plots(csv_files, options):
 
         temp_x = range(0, len(temp_y))
         temp_y.sort()
-        name = ', '.join(name).split('/')[0]
+        name = ', '.join(name).split(os.sep)[0]
         plots.append(plot.Plot(name, temp_x, temp_y, x_name, y_name))
 
     return plots
