@@ -53,6 +53,7 @@ class Exporter:
 
         self.export_text = ''
         self.export_text += f'\\begin{{table*}}[]\n' + \
+                        f'\\begin{{adjustbox}}{{max width=\\textwidth}}\n' + \
                         f'\\begin{{tabular}}{{|c|c|c|c|c|c|c|}}\n' + \
                         f'\\hline\n' + \
                         f'Strategy & Average Ticks & Successes & Timeouts & Success Rate & Fastest Success (Ticks) & Slowest Success (Ticks) ' + '\\' + '\\' + '\\hline\n'
@@ -61,6 +62,7 @@ class Exporter:
             self.export_text += f'{row.name} & {row.average} & {row.successes} & {row.timeouts} & {row.successRate} & {row.fastestSuccess if row.fastestSuccess != 36000 else "DNF"} & {row.slowestSuccess if row.slowestSuccess != 0 else "DNF"}' + '\\' + '\\' + '\\hline\n'
 
         self.export_text += f'\\end{{tabular}}\n' + \
+                        f'\\end{{adjustbox}}\n' + \
                         f'\\end{{table*}}\n'
 
         self.file_extension = ".tex"
