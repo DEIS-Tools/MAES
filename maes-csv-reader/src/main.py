@@ -72,8 +72,7 @@ def make_table(csv_files, options):
 
         success_rate = successes/(successes+timeouts)
         average = average_sum/data_point_amount
-        print(type(', '.join(name)))
-        name = ', '.join(name).split('/')[0]
+        name = ', '.join(name).split(os.sep)[0]
         table.add_row(t.TableRow(name, average, successes, timeouts, success_rate, fastest_success, slowest_success))
 
     return table
