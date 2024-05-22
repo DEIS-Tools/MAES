@@ -16,7 +16,7 @@ namespace Maes.ExperimentSimulations
             var sceneName = SceneManager.GetActiveScene().name;
             var configuration = sceneName.Split("_");
 
-            RunSimulation(configuration[0], configuration[1], configuration[2]);
+            RunSimulation(configuration[0], configuration[1], configuration[2], configuration[3], 100);
         }
     }
 }

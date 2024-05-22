@@ -86,7 +86,7 @@ namespace Maes.Robot
             float agentRelativeSize = 0.6f,
             SignalTransmissionSuccessCalculator? calculateSignalTransmissionProbability = null,
             int? slamRayTraceCount = null,
-            bool materialCommunication = true,
+            bool materialCommunication = false,
             uint frequency = 2400,
             float transmitPower = 15,
             float receiverSensitivity = -82,

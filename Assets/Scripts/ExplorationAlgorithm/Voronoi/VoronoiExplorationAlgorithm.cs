@@ -112,7 +112,7 @@ namespace Maes.ExplorationAlgorithm.Voronoi
             _random = new Random(randomSeed);
             _constraints = constraints;
             _markExploredRangeInCoarseTiles = markExploredRangeInCoarseTiles;
-            _voronoiRegionMaxDistance = (int)constraints.SenseNearbyAgentsRange;
+            _voronoiRegionMaxDistance = 50;
         }
 
         public void SetController(Robot2DController controller)
@@ -124,6 +124,11 @@ namespace Maes.ExplorationAlgorithm.Voronoi
 
         public void UpdateLogic()
         {
+            if (!_currentRegion.IsEmpty())
+            {
+                _currentRegion.Tiles.ForEach(tile => tile.DrawDebugLineFromRobot(this._robotController.GetSlamMap().GetCoarseMap(), Color.black, 0.2f));
+            }
+
             UpdateExploredStatusOfTiles();
 
             // Divide into voronoi regions with local robots
@@ -628,15 +633,15 @@ namespace Maes.ExplorationAlgorithm.Voronoi
             var myPosition = _robotController.GetSlamMap().GetCoarseMap().GetCurrentTile();
 
             // If no near robots, all visible tiles are assigned to my own region
-            if (nearbyRobots.Count == 0)
-            {
-                var visibleSlamTiles = _robotController.GetSlamMap().GetCurrentlyVisibleTiles();
-                var visibleCoarseTiles = coarseMap.FromSlamMapCoordinates(visibleSlamTiles.Keys).ToList();
-                var region = new VoronoiRegion(this._robotController.GetRobotID(), visibleCoarseTiles);
-                _localVoronoiRegions.Add(region);
-                _currentRegion = region;
-                return;
-            }
+            //if (nearbyRobots.Count == 0)
+            //{
+            //    var visibleSlamTiles = _robotController.GetSlamMap().GetCurrentlyVisibleTiles();
+            //    var visibleCoarseTiles = coarseMap.FromSlamMapCoordinates(visibleSlamTiles.Keys).ToList();
+            //    var region = new VoronoiRegion(this._robotController.GetRobotID(), visibleCoarseTiles);
+            //    _localVoronoiRegions.Add(region);
+            //    _currentRegion = region;
+            //    return;
+            //}
 
             // Find furthest away robot. Voronoi partition should include all robots within broadcast range
             nearbyRobots.Sort((r1, r2) => r1.Distance.CompareTo(r2.Distance));

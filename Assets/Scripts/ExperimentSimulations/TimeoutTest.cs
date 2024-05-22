@@ -37,8 +37,6 @@ using System.Linq;
 using Maes.ExplorationAlgorithm.Greed;
 using System.Text.RegularExpressions;
 using System.IO;
-using Codice.CM.Common;
-using static UnityEditor.PlayerSettings;
 
 namespace Maes.ExperimentSimulations
 {

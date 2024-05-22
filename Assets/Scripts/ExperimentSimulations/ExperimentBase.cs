@@ -37,33 +37,28 @@ using System.Linq;
 using Maes.ExplorationAlgorithm.Greed;
 using System.Text.RegularExpressions;
 using System.IO;
+using Maes.ExplorationAlgorithm.Voronoi;
 
 namespace Maes.ExperimentSimulations
 {
     public class ExperimentBase : MonoBehaviour
     {
         private Simulator _simulator;
-        /*
-            const int randomSeed = 12345;
-
         
-*/
-        public void RunSimulation(string algorithmName, string constraintName, string amount)
+        /// <summary>
+        /// This class will run mostly all configurations, it is written fast and loose.
+        /// </summary>
+        /// <param name="mapType"></param>
+        /// <param name="algorithmName"></param>
+        /// <param name="constraintName"></param>
+        /// <param name="mapSize"></param>
+        public void RunSimulation(string mapType, string algorithmName, string constraintName, string mapSize, int mapIterations)
         {
             var constraintsDict = new Dictionary<string, RobotConstraints>();
 
             constraintsDict["Global"] = new RobotConstraints(
-                senseNearbyAgentsRange: 5f,
-                senseNearbyAgentsBlockedByWalls: true,
-                automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 1,
-                slamSynchronizeIntervalInTicks: 10,
-                slamPositionInaccuracy: 0.2f,
-                distributeSlam: false,
-                environmentTagReadRange: 4.0f,
                 slamRayTraceRange: 7f,
-                relativeMoveSpeed: 1f,
-                agentRelativeSize: 0.6f,
                 calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) =>
                 {
                     return true;
@@ -71,32 +66,14 @@ namespace Maes.ExperimentSimulations
             );
 
             constraintsDict["Material"] = new RobotConstraints(
-                senseNearbyAgentsRange: 5f,
-                senseNearbyAgentsBlockedByWalls: true,
-                automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 1,
-                slamSynchronizeIntervalInTicks: 10,
-                slamPositionInaccuracy: 0.2f,
-                distributeSlam: false,
-                environmentTagReadRange: 4.0f,
                 slamRayTraceRange: 7f,
-                relativeMoveSpeed: 1f,
-                agentRelativeSize: 0.6f,
                 materialCommunication: true
             );
 
             constraintsDict["LOS"] = new RobotConstraints(
-                senseNearbyAgentsRange: 5f,
-                senseNearbyAgentsBlockedByWalls: true,
-                automaticallyUpdateSlam: true,
                 slamUpdateIntervalInTicks: 1,
-                slamSynchronizeIntervalInTicks: 10,
-                slamPositionInaccuracy: 0.2f,
-                distributeSlam: false,
-                environmentTagReadRange: 4.0f,
                 slamRayTraceRange: 7f,
-                relativeMoveSpeed: 1f,
-                agentRelativeSize: 0.6f,
                 calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) =>
                 {
                     // Blocked by walls
@@ -107,119 +84,238 @@ namespace Maes.ExperimentSimulations
                     return true;
                 }
             );
+
+            constraintsDict["None"] = new RobotConstraints(
+                slamUpdateIntervalInTicks: 1,
+                slamRayTraceRange: 7f,
+                calculateSignalTransmissionProbability: (distanceTravelled, distanceThroughWalls) =>
+                {
+                    return false;
+                }
+            );
             var algorithms = new Dictionary<string, RobotSpawner.CreateAlgorithmDelegate>
                 {
                     { "tnf", seed => new TnfExplorationAlgorithm(1, 10, seed) },
                     { "minotaur", seed => new MinotaurAlgorithm(constraintsDict[constraintName], seed, 2) },
-                    { "greed", seed => new GreedAlgorithm() }
+                    { "greed", seed => new GreedAlgorithm() },
+                    { "voronoi", seed => new VoronoiExplorationAlgorithm(seed, constraintsDict[constraintName], constraintsDict[constraintName].SlamRayTraceRange-1) }
                 };
             var simulator = Simulator.GetInstance();
             var random = new System.Random(1234);
             List<int> rand_numbers = new List<int>();
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < mapIterations; i++)
             {
                 var val = random.Next(0, 1000000);
                 rand_numbers.Add(val);
             }
 
+
+
             var buildingConfigList = new List<BuildingMapConfig>();
-            switch (amount)
+            var caveConfigList = new List<CaveMapConfig>();
+            if (mapType == "building")
             {
-                case "50":
-                    foreach (var val in rand_numbers)
-                    {
-                        buildingConfigList.Add(new BuildingMapConfig(val, widthInTiles: 50, heightInTiles: 50));
-                    }
-                    break;
-                case "75":
-                    foreach (var val in rand_numbers)
-                    {
-                        buildingConfigList.Add(new BuildingMapConfig(val, widthInTiles: 75, heightInTiles: 75));
-                    }
-                    break;
-                case "100":
-                    foreach (var val in rand_numbers)
-                    {
-                        buildingConfigList.Add(new BuildingMapConfig(val, widthInTiles: 100, heightInTiles: 100));
-                    }
-                    break;
-                default:
-                    break;
+                switch (mapSize)
+                {
+                    case "50":
+                        foreach (var val in rand_numbers)
+                        {
+                            buildingConfigList.Add(new BuildingMapConfig(val, widthInTiles: 50, heightInTiles: 50));
+                        }
+                        break;
+                    case "75":
+                        foreach (var val in rand_numbers)
+                        {
+                            buildingConfigList.Add(new BuildingMapConfig(val, widthInTiles: 75, heightInTiles: 75));
+                        }
+                        break;
+                    case "100":
+                        foreach (var val in rand_numbers)
+                        {
+                            buildingConfigList.Add(new BuildingMapConfig(val, widthInTiles: 100, heightInTiles: 100));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                switch (mapSize)
+                {
+                    case "50":
+                        foreach (var val in rand_numbers)
+                        {
+                            caveConfigList.Add(new CaveMapConfig(val, widthInTiles: 50, heightInTiles: 50));
+                        }
+                        break;
+                    case "75":
+                        foreach (var val in rand_numbers)
+                        {
+                            caveConfigList.Add(new CaveMapConfig(val, widthInTiles: 75, heightInTiles: 75));
+                        }
+                        break;
+                    case "100":
+                        foreach (var val in rand_numbers)
+                        {
+                            caveConfigList.Add(new CaveMapConfig(val, widthInTiles: 100, heightInTiles: 100));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
             }
 
             var previousSimulations = Directory.GetFiles(Path.GetFullPath("./" + GlobalSettings.StatisticsOutPutPath));
-            foreach (var mapConfig in buildingConfigList)
+            if (mapType == "building")
             {
-                for (var amountOfRobots = 1; amountOfRobots <= 9; amountOfRobots += 2)
+                foreach (var mapConfig in buildingConfigList)
                 {
-                    var robotCount = amountOfRobots;
-                    var regex = new Regex($@"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig\.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether_.*\.csv");
-                    if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
+                    for (var amountOfRobots = 1; amountOfRobots <= 9; amountOfRobots += 2)
                     {
-                        simulator.EnqueueScenario(new SimulationScenario(seed: 123,
-                                                                        mapSpawner: generator => generator.GenerateMap(mapConfig),
-                                                                        robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
-                                                                            buildingConfig,
-                                                                            seed: 123,
-                                                                            numberOfRobots: robotCount,
-                                                                            suggestedStartingPoint: new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)),
-                                                                            createAlgorithmDelegate: algorithms[algorithmName]),
-                                                                        statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether",
-                                                                        robotConstraints: constraintsDict[constraintName])
-                        );
-                    }
-                    else
-                    {
-                        new SimulationScenario(seed: 123,
-                                            mapSpawner: generator => generator.GenerateMap(mapConfig),
-                                            robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
-                                                buildingConfig,
-                                                seed: 123,
-                                                numberOfRobots: robotCount,
-                                                suggestedStartingPoint: new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)),
-                                                createAlgorithmDelegate: algorithms[algorithmName]),
-                                            statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether",
-                                            robotConstraints: constraintsDict[constraintName]);
-                    }
-                    
-                    var spawningPosHashSet = new HashSet<Vector2Int>();
-                    while (spawningPosHashSet.Count < amountOfRobots)
-                    {
-                        spawningPosHashSet.Add(new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)));
-                    }
+                        var robotCount = amountOfRobots;
+                        var regex = new Regex($@"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig\.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether_.*\.csv");
+                        if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
+                        {
+                            simulator.EnqueueScenario(new SimulationScenario(seed: 123,
+                                                                            mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                                            robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
+                                                                                buildingConfig,
+                                                                                seed: 123,
+                                                                                numberOfRobots: robotCount,
+                                                                                suggestedStartingPoint: new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)),
+                                                                                createAlgorithmDelegate: algorithms[algorithmName]),
+                                                                            statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether",
+                                                                            robotConstraints: constraintsDict[constraintName])
+                            );
+                        }
+                        else
+                        {
+                            new SimulationScenario(seed: 123,
+                                                mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
+                                                    buildingConfig,
+                                                    seed: 123,
+                                                    numberOfRobots: robotCount,
+                                                    suggestedStartingPoint: new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)),
+                                                    createAlgorithmDelegate: algorithms[algorithmName]),
+                                                statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether",
+                                                robotConstraints: constraintsDict[constraintName]);
+                        }
+
+                        var spawningPosHashSet = new HashSet<Vector2Int>();
+                        while (spawningPosHashSet.Count < amountOfRobots)
+                        {
+                            spawningPosHashSet.Add(new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)));
+                        }
 
 
-                    regex = new Regex($@"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig\.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart_.*\.csv");
-                    if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
-                    {
-                        simulator.EnqueueScenario(new SimulationScenario(seed: 123,
-                                                                        mapSpawner: generator => generator.GenerateMap(mapConfig),
-                                                                        robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsAtPositions(
-                                                                            collisionMap: buildingConfig,
-                                                                            seed: 123,
-                                                                            numberOfRobots: robotCount,
-                                                                            spawnPositions: spawningPosHashSet.ToList(),
-                                                                            createAlgorithmDelegate: algorithms[algorithmName]),
-                                                                        statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart",
-                                                                        robotConstraints: constraintsDict[constraintName])
-                        );
-                    }
-                    else
-                    {
-                        new SimulationScenario(seed: 123,
-                                            mapSpawner: generator => generator.GenerateMap(mapConfig),
-                                            robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsAtPositions(
-                                                collisionMap: buildingConfig,
-                                                seed: 123,
-                                                numberOfRobots: robotCount,
-                                                spawnPositions: spawningPosHashSet.ToList(),
-                                                createAlgorithmDelegate: algorithms[algorithmName]),
-                                            statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart",
-                                            robotConstraints: constraintsDict[constraintName]);
+                        regex = new Regex($@"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig\.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart_.*\.csv");
+                        if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
+                        {
+                            simulator.EnqueueScenario(new SimulationScenario(seed: 123,
+                                                                            mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                                            robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsAtPositions(
+                                                                                collisionMap: buildingConfig,
+                                                                                seed: 123,
+                                                                                numberOfRobots: robotCount,
+                                                                                spawnPositions: spawningPosHashSet.ToList(),
+                                                                                createAlgorithmDelegate: algorithms[algorithmName]),
+                                                                            statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart",
+                                                                            robotConstraints: constraintsDict[constraintName])
+                            );
+                        }
+                        else
+                        {
+                            new SimulationScenario(seed: 123,
+                                                mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsAtPositions(
+                                                    collisionMap: buildingConfig,
+                                                    seed: 123,
+                                                    numberOfRobots: robotCount,
+                                                    spawnPositions: spawningPosHashSet.ToList(),
+                                                    createAlgorithmDelegate: algorithms[algorithmName]),
+                                                statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart",
+                                                robotConstraints: constraintsDict[constraintName]);
+                        }
                     }
                 }
             }
+            else
+            {
+                foreach (var mapConfig in caveConfigList)
+                {
+                    for (var amountOfRobots = 1; amountOfRobots <= 9; amountOfRobots += 2)
+                    {
+                        var robotCount = amountOfRobots;
+                        var regex = new Regex($@"{mapType}-{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether_.*\.csv");
+                        if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
+                        {
+                            simulator.EnqueueScenario(new SimulationScenario(seed: 123,
+                                                                            mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                                            robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
+                                                                                buildingConfig,
+                                                                                seed: 123,
+                                                                                numberOfRobots: robotCount,
+                                                                                suggestedStartingPoint: new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)),
+                                                                                createAlgorithmDelegate: algorithms[algorithmName]),
+                                                                            statisticsFileName: $"{mapType}-{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether",
+                                                                            robotConstraints: constraintsDict[constraintName])
+                            );
+                        }
+                        else
+                        {
+                            new SimulationScenario(seed: 123,
+                                                mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
+                                                    buildingConfig,
+                                                    seed: 123,
+                                                    numberOfRobots: robotCount,
+                                                    suggestedStartingPoint: new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)),
+                                                    createAlgorithmDelegate: algorithms[algorithmName]),
+                                                statisticsFileName: $"{mapType}-{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether",
+                                                robotConstraints: constraintsDict[constraintName]);
+                        }
 
+                        var spawningPosHashSet = new HashSet<Vector2Int>();
+                        while (spawningPosHashSet.Count < amountOfRobots)
+                        {
+                            spawningPosHashSet.Add(new Vector2Int(random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2), random.Next(-mapConfig.HeightInTiles / 2, mapConfig.HeightInTiles / 2)));
+                        }
+
+
+                        regex = new Regex($@"{mapType}-{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart_.*\.csv");
+                        if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
+                        {
+                            simulator.EnqueueScenario(new SimulationScenario(seed: 123,
+                                                                            mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                                            robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsAtPositions(
+                                                                                collisionMap: buildingConfig,
+                                                                                seed: 123,
+                                                                                numberOfRobots: robotCount,
+                                                                                spawnPositions: spawningPosHashSet.ToList(),
+                                                                                createAlgorithmDelegate: algorithms[algorithmName]),
+                                                                            statisticsFileName: $"{mapType}-{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart",
+                                                                            robotConstraints: constraintsDict[constraintName])
+                            );
+                        }
+                        else
+                        {
+                            new SimulationScenario(seed: 123,
+                                                mapSpawner: generator => generator.GenerateMap(mapConfig),
+                                                robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsAtPositions(
+                                                    collisionMap: buildingConfig,
+                                                    seed: 123,
+                                                    numberOfRobots: robotCount,
+                                                    spawnPositions: spawningPosHashSet.ToList(),
+                                                    createAlgorithmDelegate: algorithms[algorithmName]),
+                                                statisticsFileName: $"{mapType}-{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart",
+                                                robotConstraints: constraintsDict[constraintName]);
+                        }
+                    }
+                }
+            }
             //Just code to make sure we don't get too many maps of the last one in the experiment
             var dumpMap = new BuildingMapConfig(-1, widthInTiles: 50, heightInTiles: 50);
             simulator.EnqueueScenario(new SimulationScenario(seed: 123,
