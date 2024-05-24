@@ -21,7 +21,6 @@ class Exporter:
         """
         Method to export plots to tikz
         """
-        splittedName = self.plots[0].name.split('-')
         self.export_text = ''
         self.export_text += f'\\begin{{tikzpicture}}\n' + \
                        f'\\begin{{axis}}[\n' + \
@@ -46,12 +45,23 @@ class Exporter:
             self.export_text +=  f'}};\n' + \
                             f'\\addlegendentry{{{plot.name}}}\n\n\n'
 
-        spawn_text = "spawning together" if splittedName[6] == "spawntogether" else "spawning apart"
         self.export_text += f'\\end{{axis}}\n' + \
-                        f'\\label{{fig:{splittedName[2]}-{splittedName[6]}-{splittedName[3]}}}\n' + \
-                        f'\\caption{{Cactus plot over the various strategies with the configuration that uses a map size of {splittedName[2]}, using {splittedName[3]} for communication, and {spawn_text}.}}\n' + \
                         f'\\end{{tikzpicture}}\n'
         self.file_extension = ".tikz"
+
+    def export_to_figure(self, options):
+        splittedName = self.plots[0].name.split('-')
+        spawn_text = "spawning together" if splittedName[6] == "spawntogether" else "spawning apart"
+
+        self.export_text = ''
+        self.export_text = '\\begin{figure*}\n' + \
+            '\\centering\n' + \
+            f'\\includegraphics[width=\\textwidth](figures/tikz/{options.export_file_name})\n' + \
+            f'\\label{{fig:{splittedName[2]}-{splittedName[6]}-{splittedName[3]}}}\n' + \
+            f'\\caption{{Cactus plot over the various strategies with the configuration that uses a map size of {splittedName[2]}, using {splittedName[3]} for communication, and {spawn_text}.}}\n' + \
+            '\\end{figure*}'
+
+        self.file_extension = ".tex"
 
     def export_latex_table(self, options):
         """
@@ -61,8 +71,6 @@ class Exporter:
             print("no table was provided")
             return 1
         splittedName = self.table.rows[0].name.split('-')
-        print("hello?")
-        print(splittedName)
 
         self.export_text = ''
         self.export_text += f'\\begin{{table*}}[]\n' + \

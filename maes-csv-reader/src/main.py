@@ -193,6 +193,9 @@ def export_to_tikz(plots, options):
     export = exporter.Exporter(plots, None)
     export.export_to_tikz(options)
     export.save_to_file(options.export_file_name)
+    if options.plot_type == "cactus":
+        export.export_to_figure(options)
+        export.save_to_file("tikz-figure-" + options.export_file_name)
 
 def export_to_latex_table(table, options):
     export = exporter.Exporter(None, table)
