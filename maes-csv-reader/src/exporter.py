@@ -57,8 +57,8 @@ class Exporter:
         self.export_text = '\\begin{figure*}\n' + \
             '\\centering\n' + \
             f'\\includegraphics[width=\\textwidth]{{figures/tikz/{options.export_file_name}}}\n' + \
-            f'\\label{{fig:{splittedName[2]}-{splittedName[6]}-{splittedName[3]}}}\n' + \
             f'\\caption{{Cactus plot over the various strategies with the configuration that uses a map size of {splittedName[2]}, using {splittedName[3]} for communication, and {spawn_text}.}}\n' + \
+            f'\\label{{fig:{splittedName[2]}-{splittedName[6]}-{splittedName[3]}}}\n' + \
             '\\end{figure*}'
 
         self.file_extension = ".tex"
@@ -85,8 +85,8 @@ class Exporter:
         spawn_text = "spawning together" if splittedName[6] == "spawntogether" else "spawning apart"
         self.export_text += f'\\end{{tabular}}\n' + \
                         f'\\end{{adjustbox}}\n' + \
-                        f'\\label{{tab:{splittedName[2]}-{splittedName[6]}-{splittedName[3]}}}\n' + \
                         f'\\caption{{Table over the various strategies with the configuration that uses a map size of {splittedName[2]}, using {splittedName[3]} for communication, and {spawn_text}.}}\n' + \
+                        f'\\label{{tab:{splittedName[2]}-{splittedName[6]}-{splittedName[3]}}}\n' + \
                         f'\\end{{table*}}\n'
 
         self.file_extension = ".tex"
