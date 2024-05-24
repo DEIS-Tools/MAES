@@ -32,9 +32,7 @@ class Exporter:
                        f'ymode=log,\n' + \
                        f'log ticks with fixed point,\n' + \
                        f'ytick={{10,100,1000,10000,36000}},\n' + \
-                       f'ymajorgrids=true,\n' + \
-                       f'ymajorgrids=true,\n' + \
-                       f'yminorgrids=true,\n' + \
+                       f'grid=both,\n' + \
                        f'hide obscured y ticks=false,\n' + \
                        f'ymin=100,\n' + \
                        f']\n\n'
