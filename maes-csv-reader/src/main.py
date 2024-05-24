@@ -46,8 +46,8 @@ def make_table(csv_files, options):
     for directory in separated_csvs:
         name = ''
         average_sum = 0.0
-        successes = 0
-        timeouts = 0
+        successes = 0.0
+        timeouts = 0.0
         success_rate = 0.0
         fastest_success = 36000
         slowest_success = 0

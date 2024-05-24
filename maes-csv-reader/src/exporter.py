@@ -21,6 +21,7 @@ class Exporter:
         """
         Method to export plots to tikz
         """
+        splittedName = self.plots[0].name.split('-')
         self.export_text = ''
         self.export_text += f'\\begin{{tikzpicture}}\n' + \
                        f'\\begin{{axis}}[\n' + \
@@ -45,7 +46,10 @@ class Exporter:
             self.export_text +=  f'}};\n' + \
                             f'\\addlegendentry{{{plot.name}}}\n\n\n'
 
+        spawn_text = "spawning together" if splittedName[6] == "spawntogether" else "spawning apart"
         self.export_text += f'\\end{{axis}}\n' + \
+                        f'\\label{{fig:{splittedName[2]}-{splittedName[6]}-{splittedName[3]}}}\n' + \
+                        f'\\caption{{Cactus plot over the various strategies with the configuration that uses a map size of {splittedName[2]}, using {splittedName[3]} for communication, and {spawn_text}.}}\n' + \
                         f'\\end{{tikzpicture}}\n'
         self.file_extension = ".tikz"
 
@@ -56,6 +60,9 @@ class Exporter:
         if self.table == None:
             print("no table was provided")
             return 1
+        splittedName = self.table.rows[0].name.split('-')
+        print("hello?")
+        print(splittedName)
 
         self.export_text = ''
         self.export_text += f'\\begin{{table*}}[]\n' + \
@@ -65,10 +72,13 @@ class Exporter:
                         f'Strategy & Average Ticks & Successes & Timeouts & Success Rate & Fastest Success (Ticks) & Slowest Success (Ticks) ' + '\\' + '\\' + '\\hline\n'
 
         for row in self.table.rows:
-            self.export_text += f'{row.name} & {"%.2f" % round(row.average, 2)} & {row.successes} & {row.timeouts} & {"%.2f" % round(row.successRate)} & {row.fastestSuccess if row.fastestSuccess != 36000 else "DNF"} & {row.slowestSuccess if row.slowestSuccess != 0 else "DNF"}' + '\\' + '\\' + '\\hline\n'
+            self.export_text += f'{row.name} & {"%.2f" % round(row.average, 2)} & {row.successes} & {row.timeouts} & {"%.2f" % round(row.successRate, 2)} & {row.fastestSuccess if row.fastestSuccess != 36000 else "DNF"} & {row.slowestSuccess if row.slowestSuccess != 0 else "DNF"}' + '\\' + '\\' + '\\hline\n'
 
+        spawn_text = "spawning together" if splittedName[6] == "spawntogether" else "spawning apart"
         self.export_text += f'\\end{{tabular}}\n' + \
                         f'\\end{{adjustbox}}\n' + \
+                        f'\\label{{tab:{splittedName[2]}-{splittedName[6]}-{splittedName[3]}}}\n' + \
+                        f'\\caption{{Table over the various strategies with the configuration that uses a map size of {splittedName[2]}, using {splittedName[3]} for communication, and {spawn_text}.}}\n' + \
                         f'\\end{{table*}}\n'
 
         self.file_extension = ".tex"
