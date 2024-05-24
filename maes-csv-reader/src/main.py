@@ -71,10 +71,11 @@ def make_table(csv_files, options):
         print(f"fastest map: {fastest_success_name}")
         print(f"slowest map: {slowest_success_name}")
 
-        success_rate = successes/(successes+timeouts)
-        average = average_sum/data_point_amount
-        name = ', '.join(name).split(os.sep)[0]
-        table.add_row(t.TableRow(name, average, successes, timeouts, success_rate, fastest_success, slowest_success))
+        if (successes+timeouts) > 0:
+            success_rate = successes/(successes+timeouts)
+            average = average_sum/data_point_amount
+            name = ', '.join(name).split(os.sep)[0]
+            table.add_row(t.TableRow(name, average, successes, timeouts, success_rate, fastest_success, slowest_success))
 
     return table
 
