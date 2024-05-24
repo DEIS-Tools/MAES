@@ -56,7 +56,7 @@ class Exporter:
         self.export_text = ''
         self.export_text = '\\begin{figure*}\n' + \
             '\\centering\n' + \
-            f'\\includegraphics[width=\\textwidth]({options.export_file_name})\n' + \
+            f'\\includegraphics[width=\\textwidth]{{figures/tikz/{options.export_file_name}}}\n' + \
             f'\\label{{fig:{splittedName[2]}-{splittedName[6]}-{splittedName[3]}}}\n' + \
             f'\\caption{{Cactus plot over the various strategies with the configuration that uses a map size of {splittedName[2]}, using {splittedName[3]} for communication, and {spawn_text}.}}\n' + \
             '\\end{figure*}'
