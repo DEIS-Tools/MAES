@@ -26,10 +26,18 @@ class Exporter:
                        f'\\begin{{axis}}[\n' + \
                        f'xlabel={{Map}},\n' + \
                        f'ylabel={{{options.y_column_name}}},\n' + \
+                       f'legend style={{font=\\fontsize{{7}}{{7}}\\selectfont}},\n' + \
                        f'legend pos = north west,\n' + \
                        f'cycle list name=custom,\n' + \
-                       f'scaled y ticks = false,\n' + \
-                       f'yticklabel={{\\pgfmathprintnumber[fixed]{{\\tick}}}}]\n\n'
+                       f'ymode=log,\n' + \
+                       f'log ticks with fixed point,\n' + \
+                       f'ytick={{10,100,1000,10000,36000}},\n' + \
+                       f'ymajorgrids=true,\n' + \
+                       f'ymajorgrids=true,\n' + \
+                       f'yminorgrids=true,\n' + \
+                       f'hide obscured y ticks=false,\n' + \
+                       f'ymin=100,\n' + \
+                       f']\n\n'
 
         for i, plot in enumerate(self.plots):
             self.export_text += f'\\addplot+[mark=none] coordinates {{\n'
