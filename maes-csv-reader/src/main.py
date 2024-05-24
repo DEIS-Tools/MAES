@@ -32,7 +32,8 @@ def main(args):
         show_plot(plots, options)
     if options.export_file_name != "":
         export_to_tikz(plots, options)
-        export_to_latex_table(table, options)
+        if options.plot_type == "cactus":
+            export_to_latex_table(table, options)
 
     return 0
 
@@ -124,7 +125,6 @@ def make_ratio_plots(csv_files, options):
     temp_plots = []
     plots = []
     separated_csvs = separate_plots_by_directory(csv_files, options)
-    print(separated_csvs)
     if len(separated_csvs) != 2:
         raise Exception("Ratio plots only works with two folders! (at the moment)")
 
@@ -141,10 +141,23 @@ def make_ratio_plots(csv_files, options):
         raise Exception("Different amount of csv files in the directories!")
 
     temp_y = []
+    largest_diff = 0
+    largest_diff_seed = ""
     for i in range(0, len(temp_plots[0])):
         temp_y.append(temp_plots[0][i] - temp_plots[1][i])
-        print(f"first: {temp_plots[0][i]}, second: {temp_plots[1][i]}")
-        print(f"result: {temp_y[i]}")
+        if temp_plots[0][i] < temp_plots[1][i]:
+            pass
+            #print(f"greed: {separated_csvs[0][i].file_name} is faster")
+        elif temp_plots[0][i] > temp_plots[1][i]:
+            print(f"minotaur: {separated_csvs[1][i].file_name} is faster")
+            print(f"first: {temp_plots[0][i]}, second: {temp_plots[1][i]}")
+            if (temp_plots[0][i] - temp_plots[1][i]) > largest_diff:
+                largest_diff = temp_plots[0][i] - temp_plots[1][i]
+                largest_diff_seed = separated_csvs[1][i].file_name
+        else:
+            print("equal speed")
+        #print(f"result: {temp_y[i]}")
+    print(f"largest difference is {largest_diff} on map {largest_diff_seed}")
 
     temp_y.sort()
     temp_x = range(0, len(temp_y))

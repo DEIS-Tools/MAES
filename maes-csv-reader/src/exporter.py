@@ -26,7 +26,7 @@ class Exporter:
                        f'\\begin{{axis}}[\n' + \
                        f'xlabel={{Map}},\n' + \
                        f'ylabel={{{options.y_column_name}}},\n' + \
-                       f'legend pos = outer north east,\n' + \
+                       f'legend pos = north west,\n' + \
                        f'cycle list name=custom,\n' + \
                        f'scaled y ticks = false,\n' + \
                        f'yticklabel={{\\pgfmathprintnumber[fixed]{{\\tick}}}}]\n\n'
@@ -59,7 +59,7 @@ class Exporter:
                         f'Strategy & Average Ticks & Successes & Timeouts & Success Rate & Fastest Success (Ticks) & Slowest Success (Ticks) ' + '\\' + '\\' + '\\hline\n'
 
         for row in self.table.rows:
-            self.export_text += f'{row.name} & {"%.2f" % round(row.average, 2)} & {row.successes} & {row.timeouts} & {"%.2f" % round(row.successRate, 2)} & {row.fastestSuccess if row.fastestSuccess != 36000 else "DNF"} & {row.slowestSuccess if row.slowestSuccess != 0 else "DNF"}' + '\\' + '\\' + '\\hline\n'
+            self.export_text += f'{row.name} & {"%.2f" % round(row.average, 2)} & {row.successes} & {row.timeouts} & {"%.2f" % round(row.successRate)} & {row.fastestSuccess if row.fastestSuccess != 36000 else "DNF"} & {row.slowestSuccess if row.slowestSuccess != 0 else "DNF"}' + '\\' + '\\' + '\\hline\n'
 
         self.export_text += f'\\end{{tabular}}\n' + \
                         f'\\end{{adjustbox}}\n' + \
