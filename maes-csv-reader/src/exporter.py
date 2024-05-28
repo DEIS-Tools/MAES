@@ -80,7 +80,7 @@ class Exporter:
                         f'Strategy & Average Ticks & Successes & Timeouts & Success Rate & Fastest Success (Ticks) & Slowest Success (Ticks) ' + '\\' + '\\' + '\\hline\n'
 
         for row in self.table.rows:
-            self.export_text += f'{row.name} & {"%.2f" % round(row.average, 2)} & {row.successes} & {row.timeouts} & {"%.2f" % round(row.successRate, 2)} & {row.fastestSuccess if row.fastestSuccess != 36000 else "DNF"} & {row.slowestSuccess if row.slowestSuccess != 0 else "DNF"}' + '\\' + '\\' + '\\hline\n'
+            self.export_text += f'{row.name} & {"{:,.2f}".format(round(row.average, 2))} & {row.successes} & {row.timeouts} & {"{:,}".format(round(row.successRate, 2))} & {"{:,}".format(row.fastestSuccess) if row.fastestSuccess != 36000 else "DNF"} & {"{:,}".format(row.slowestSuccess) if row.slowestSuccess != 0 else "DNF"}' + '\\' + '\\' + '\\hline\n'
 
         spawn_text = "spawning together" if splittedName[6] == "spawntogether" else "spawning apart"
         self.export_text += f'\\end{{tabular}}\n' + \
