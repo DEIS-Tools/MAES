@@ -52,7 +52,7 @@ namespace Maes.ExperimentSimulations
         /// <param name="algorithmName"></param>
         /// <param name="constraintName"></param>
         /// <param name="mapSize"></param>
-        public void RunSimulation(string mapType, string algorithmName, string constraintName, string mapSize, int mapIterations)
+        public void RunSimulation(string mapType, string algorithmName, string constraintName, string mapSize, int mapIterations, int? desiredSeed = null, int? desiredRobots = null)
         {
             var constraintsDict = new Dictionary<string, RobotConstraints>();
 
@@ -176,7 +176,7 @@ namespace Maes.ExperimentSimulations
                     {
                         var robotCount = amountOfRobots;
                         var regex = new Regex($@"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig\.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnTogether_.*\.csv");
-                        if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
+                        if (((desiredSeed.HasValue && desiredSeed.Value == mapConfig.RandomSeed) && (desiredRobots.HasValue && desiredRobots == robotCount)) || (!desiredSeed.HasValue && !previousSimulations.Any(simulation => regex.IsMatch(simulation))))
                         {
                             simulator.EnqueueScenario(new SimulationScenario(seed: 123,
                                                                             mapSpawner: generator => generator.GenerateMap(mapConfig),
@@ -212,7 +212,7 @@ namespace Maes.ExperimentSimulations
 
 
                         regex = new Regex($@"{algorithmName}-seed-{mapConfig.RandomSeed}-mapConfig\.HeightInTiles-{mapConfig.HeightInTiles}-comms-{constraintName}-robots-{robotCount}-SpawnApart_.*\.csv");
-                        if (!previousSimulations.Any(simulation => regex.IsMatch(simulation)))
+                        if (((desiredSeed.HasValue && desiredSeed.Value == mapConfig.RandomSeed) && (desiredRobots.HasValue && desiredRobots == robotCount)) || (!desiredSeed.HasValue && !previousSimulations.Any(simulation => regex.IsMatch(simulation))))
                         {
                             simulator.EnqueueScenario(new SimulationScenario(seed: 123,
                                                                             mapSpawner: generator => generator.GenerateMap(mapConfig),
