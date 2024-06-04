@@ -155,7 +155,7 @@ def print_help(errors: [str]):
     print("-i <file 1> ... <file n> or --file-identifier <file 1> ... <file n> to set the name of the plots as seen in final product. (Optional, filenames will be used if omitted)")
     print("-e <name> or --export-file-name <name> to set the name of the export file. (Optional, but required if you want to export)")
     print("-p <true/false> or --show-plot <true/false> to show the plot or not. (Optional, false as default)")
-    print("Example: python main.py -x Tick -y Explored -f test.csv test1.csv test2.csv -i plot plot1 plot2 -e experiment1 -p false")
+    print("Example: python main.py -x Tick -y Tick -d testdir1 testdir2 -t cactus -e experiment1 -p false")
     if len(errors) != 0:
         print(f"Program failed to execute, errors encountered: ")
         for error in errors:
