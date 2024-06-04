@@ -79,8 +79,7 @@ namespace Maes.Map.MapGen
             int wallThresholdSize = 1,
             int roomThresholdSize = 20,
             int borderSize = 2,
-            int neighbourWallsNeededToStayWall = 3,
-            Dictionary<uint, Dictionary<TileType, float>> attenuationDictionary = null)
+            int neighbourWallsNeededToStayWall = 3)
         {
             // Only fill percent between and including 0 to 100 are allowed
             if (0 > randomFillPercent || randomFillPercent >= 100)
