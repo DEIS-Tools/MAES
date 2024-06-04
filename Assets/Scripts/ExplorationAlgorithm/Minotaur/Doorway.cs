@@ -1,3 +1,24 @@
+// Copyright 2024 MAES
+// 
+// This file is part of MAES
+// 
+// MAES is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the
+// Free Software Foundation, either version 3 of the License, or (at your option)
+// any later version.
+// 
+// MAES is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+// Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License along
+// with MAES. If not, see http://www.gnu.org/licenses/.
+// 
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard
+// 
+// Original repository: https://github.com/Molitany/MAES
+
 using Maes.Map;
 using Maes.Utilities;
 using System;
@@ -14,23 +35,23 @@ namespace Maes.ExplorationAlgorithm.Minotaur
         public readonly Line2D Opening;
         public IEnumerable<Vector2Int> Tiles => Opening.Rasterize().Select(tile => Vector2Int.FloorToInt(tile));
         public bool Explored;
-        public CardinalDirection ApproachedDirection;
+        public CardinalDirection ExitDirection;
         public static int DoorWidth;
         public static CoarseGrainedMap _map;
 
-        public Doorway(Vector2Int start, Vector2Int end, CardinalDirection approachedDirection)
+        public Doorway(Line2D opening, Vector2Int center, CardinalDirection exitDirection)
         {
-            Center = (start+end)/2;
+            Center = center;
             Explored = false;
-            Opening = new Line2D(start, end);
-            ApproachedDirection = approachedDirection;
+            Opening = opening;
+            ExitDirection = exitDirection;
         }
 
         public override bool Equals(object obj)
         {
             if (obj is Doorway other)
             {
-                var squareTiles = Enumerable.Range(0, DoorWidth+1).SelectMany(i => Tiles.Select(doorTile => doorTile + ApproachedDirection.Vector * i)).ToList();
+                var squareTiles = Enumerable.Range(0, DoorWidth+1).SelectMany(i => Tiles.Select(doorTile => doorTile + ExitDirection.Vector * i)).ToList();
                 //squareTiles.ToList().ForEach(tile => _map.FromSlamMapCoordinate(tile).DrawDebugLineFromRobot(_map, Color.cyan));
                 if (other.Tiles.Any(tile => squareTiles.Contains(tile)))
                 {
@@ -42,7 +63,7 @@ namespace Maes.ExplorationAlgorithm.Minotaur
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Center, Explored, ApproachedDirection);
+            return HashCode.Combine(Center, Explored, ExitDirection);
         }
     }
 }

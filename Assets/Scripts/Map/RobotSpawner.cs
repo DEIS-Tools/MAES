@@ -1,4 +1,4 @@
-﻿// Copyright 2022 MAES
+﻿// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 using System;
 using System.Collections.Generic;
@@ -83,20 +83,14 @@ namespace Maes.Map
             spawnPositions = spawnPositions.Select(pos => new Vector2Int(pos.x - (int)collisionMap.ScaledOffset.x,
                                                 pos.y - (int)collisionMap.ScaledOffset.y)).ToList();
 
-            // If any of the spawn positions are not possible, throw an exception
-            //if (spawnPositions.Exists(sPos => !possibleSpawnTiles.Contains(sPos)))
-            //{
-            //    var illegalPos = spawnPositions.First(sPos => !possibleSpawnTiles.Contains(sPos));
-            //    throw new Exception($"Spawn position at ({illegalPos.x},{illegalPos.y}) is illegal. " +
-            //                        $"It is likely inside a wall or out of bounds of the map");
-            //}
-
             int robotId = 0;
-            foreach (var spawnTile in spawnPositions)
+            foreach (var spawn in spawnPositions)
             {
+                possibleSpawnTiles = possibleSpawnTiles.OrderBy(tile => Vector2.Distance(tile, spawn)).ToList();
+
                 var robot = CreateRobot(
-                    x: spawnTile.x,
-                    y: spawnTile.y,
+                    x: possibleSpawnTiles.First().x,
+                    y: possibleSpawnTiles.First().y,
                     relativeSize: RobotConstraints.AgentRelativeSize,
                     robotId: robotId++,
                     algorithm: createAlgorithmDelegate(seed + robotId),
@@ -105,6 +99,7 @@ namespace Maes.Map
                 );
                 robots.Add(robot);
             }
+
 
             return robots;
         }

@@ -49,7 +49,7 @@ namespace Maes {
 
         // Statistics
         public static readonly bool ShouldWriteCSVResults = true;
-        public static readonly string StatisticsOutPutPath = "";
+        public static readonly string StatisticsOutPutPath = "data/";
         public static readonly int TicksPerStatsSnapShot = 10;
         public static readonly bool PopulateAdjacencyAndComGroupsEveryTick = false;
 

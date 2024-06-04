@@ -1,4 +1,25 @@
-﻿using System;
+﻿// Copyright 2024 MAES
+// 
+// This file is part of MAES
+// 
+// MAES is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the
+// Free Software Foundation, either version 3 of the License, or (at your option)
+// any later version.
+// 
+// MAES is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+// Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License along
+// with MAES. If not, see http://www.gnu.org/licenses/.
+// 
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
+// 
+// Original repository: https://github.com/Molitany/MAES
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,6 +31,7 @@ namespace Maes.Map.MapGen
     {
         private BuildingMapConfig _config;
         private float _wallHeight;
+        private static Tile _type;
 
         /// <summary>
         /// Generates a building map using the unity game objects Plane, InnerWalls and WallRoof.
@@ -27,6 +49,7 @@ namespace Maes.Map.MapGen
 
             var random = new Random(_config.RandomSeed);
             Tile.Rand = random;
+            _type = Tile.GetRandomWall();
 
             var emptyMap = GenerateEmptyMap(_config.BitMapWidth, _config.BitMapHeight);
 
@@ -227,7 +250,7 @@ namespace Maes.Map.MapGen
 
             var mapWidth = map!.GetLength(0);
             var mapHeight = map.GetLength(1);
-            var tileType = Tile.GetRandomWall();
+            var tileType = _type;
             for (var x = 0; x < mapWidth; x++)
             {
                 for (var y = 0; y < mapHeight; y++)
@@ -297,7 +320,7 @@ namespace Maes.Map.MapGen
             var selectedIndex = random.Next(filteredCoordinates.Count);
             var wallStartCoordinate = filteredCoordinates[selectedIndex];
 
-            var tileType = Tile.GetRandomWall();
+            var tileType = _type;
             // Create wall
             if (splitOnXAxis)
             {
@@ -347,10 +370,10 @@ namespace Maes.Map.MapGen
                 var biggestX = region.Select(coordinate => coordinate.x).Max();
                 var smallestY = region.Select(coordinate => coordinate.y).Min();
                 var biggestY = region.Select(coordinate => coordinate.y).Max();
-                var tile = Tile.GetRandomWall();
-                var innerTile = Tile.GetRandomWall();
-                while (innerTile.Type == tile.Type)
-                    innerTile = Tile.GetRandomWall();
+                var tile = _type;
+                var innerTile = _type;
+                //while (innerTile.Type == tile.Type)
+                //    innerTile = _type;
 
                 for (var i = 0; i < wallThickness; i++)
                 {
