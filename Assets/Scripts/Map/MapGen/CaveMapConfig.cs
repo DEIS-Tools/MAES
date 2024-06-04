@@ -74,13 +74,12 @@ namespace Maes.Map.MapGen
             int randomSeed,
             int widthInTiles = 100, int heightInTiles = 100,
             int smoothingRuns = 3,
-            int connectionPassagesWidth = 6,
-            int randomFillPercent = 60,
-            int wallThresholdSize = 3,
-            int roomThresholdSize = 6,
+            int connectionPassagesWidth = 4,
+            int randomFillPercent = 50,
+            int wallThresholdSize = 1,
+            int roomThresholdSize = 20,
             int borderSize = 2,
-            int neighbourWallsNeededToStayWall = 3,
-            Dictionary<uint, Dictionary<TileType, float>> attenuationDictionary = null)
+            int neighbourWallsNeededToStayWall = 3)
         {
             // Only fill percent between and including 0 to 100 are allowed
             if (0 > randomFillPercent || randomFillPercent >= 100)

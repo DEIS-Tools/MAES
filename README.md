@@ -32,8 +32,8 @@ A video trailer for MAES can be found [here](https://youtu.be/lgUNrTfJW5g)
 
 # Getting started
 MAES can be run in two different configurations, either ROSMode or UnityMode.
-UnityMode requires an installed Unity editor (last tested with version 2021.2.17f1), and allows for developing algorithm in C#.
-It has been tested to work on both Linux (Ubuntu 20.04, 21.04, 21.10 and 22.04), MacOS Monterey 12 and Windows 10.
+UnityMode requires an installed Unity editor (last tested with version 2022.3.13f1), and allows for developing algorithm in C#.
+It has been tested to work on both Linux (Ubuntu 20.04, 21.04, 21.10, 22.04, and Arch), MacOS Monterey 12, Windows (10 and 11).
 Click [here](#running-in-unitymode) to get started in UnityMode.
 
 ROSMode enables ROS2 Galactic integration, where the robots can be controlled from ROS (Robot Operating System) nodes.
@@ -46,7 +46,7 @@ Install MAES by opening Unity's Package Manager (Window -> Package Manager) and 
 
 Then paste the following address:
 ```
-https://github.com/MalteZA/MAES.git?path=/Assets
+https://github.com/DEIS-Tools/MAES.git?path=/Assets
 ```
 
 Once the package has been downloaded and installed you are ready to use MAES!
@@ -56,14 +56,14 @@ Then inside the Start() method of the script enter the following code:
 ```c#
 // Get/instantiate simulation prefab - This will cause the simulator to appear in Unity
 var simulator = Simulator.GetInstance();
-            
+
 // Setup a very simple configuration for a scenario (cave map, random seed: 123)
 var caveConfig = new CaveMapConfig(123, widthInTiles: 75, heightInTiles: 75);
-var scenario = new SimulationScenario(123, mapSpawner: generator => generator.GenerateCaveMap(caveConfig));
+var scenario = new SimulationScenario(123, mapSpawner: generator => generator.GenerateMap(caveConfig));
 // Add the scenario to the simulator
 simulator.EnqueueScenario(scenario);
 // Start simulating immediately
-simulator.PresPlayButton();
+simulator.PressPlayButton();
 ```
 (An example can also be found in [ExampleProgram](Assets/Scripts/ExampleProgram.cs))
 
@@ -374,6 +374,12 @@ Agent Constraints:
 | Sense Nearby Agents Blocked by Walls   | Bool     | If true, agents only know of other agents' presence, if they are within line of sight                                                                                                                                                                                                                                                      |
 | MinimumSignalTransmissionProbability   | Float    | The smallest probability value that still allows communication between robots                                                                                                                                                                                                                                                              |
 | CalculateSignalTransmissionProbability | Delegate | A function that provides a value representing the probability of transmitting a message. If this value is above the MinimumSignalTransmissionProbability then the message will be transmitted, otherwise it will be discarded. This function is given the total distance travelled by the signal and the distance travelled through walls. |
+| MaterialCommunication | Bool | If true, agents use attenuationDictionary for communication instead. |
+| Frequency | UInt | The frequency of the communication when using MaterialCommunication |
+| TransmitPower | Float | The power in Db of the sender |
+| ReceiverSensitivity | Float | The minimum Db for the receiver to accept a message |
+| AttenuationDictionary | Dictionary<uint, Dictionary<TileType, float>>? | the attenuations of different tile types e.g. Concrete. Only used for material communication |
+
 
 In the YAML file you cannot supply a function for the message transmission probability. Instead you can supply a maximum broadcast range and a parameters that indicates whether message can pass through walls:
 
@@ -409,12 +415,21 @@ MAES contains several settings that influences the behaviour of the simulation. 
 | Populate Adjacency And Com Groups Every Tick | Bool   | The adjacency matrix used inside the [CommunicationManager.cs](Assets/Scripts/Robot/CommunicationManager.cs) is populated lazily. Enabling this setting will make it eager. This can be useful for gathering statistics regarding communication ranges to test if agents are at any time outside communication range, as opposed to testing only when communication actually occurs. Enabling this does, however, decrease performance - sometimes significantly so |
 | Ticks Before Exploration Heat Map Cold       | Int    | The amount of ticks that need to pass without exploration before the exploration heat map will show that cell as completely cold.                                                                                                                                                                                                                                                                                                                                   |
 | Ticks Before Coverage Heat Map Cold          | Int    | The amount of ticks that need to pass without coverage before the coverage heat map will show that cell as completely cold.                                                                                                                                                                                                                                                                                                                                         |
+# Minotaur Experiments
+To run the Minotaur experiments on your own, then you can use the Unity scenes in `./Assets/Scenes/ExperimentSimulations`. The building- and cave maps are seperated into their own folders. The scenes can be built on their own and should output 1000 csv files with 1-9 robots, spawnapart and together. The scenes are dependent on the name as it gets split and used for the `RunSimulation` of `ExperimentBase`.
+Further Scenes can be added for eventual new algorithms or configuration options by creating a new scene with the configuration as part of the name, and giving it a `gameObject` with `SceneToExperiment` as a script. 
 
+This has been done so the individual scenes can be built seperately and run with the -batchmode arg for parallelisation. The `ExperimentBase` can also be used on its own to run specific simulations with the optional command.
 
 # Contributors
-
 Philip Irming Holler - [philipholler94@gmail.com](mailto:philipholler94@gmail.com?subject=Regarding%20the%20MAES%20Project)
 
 Magnus Kirkegaard Jensen - [magnjensen@gmail.com](mailto:magnjensen@gmail.com?subject=Regarding%20the%20MAES%20Project)
 
 Malte Zoëga Andreasen - [malte@mza.dk](mailto:malte@mza.dk?subject=Regarding%20the%20MAES%20Project)
+
+Rasmus Borrisholt Schmidt - [rasmus.rbs@gmail.com](mailto:rasmus.rbs@gmail.com?subject=Regarding%20the%20MAES%20Project)
+
+Andreas Sebastian Sørensen - [todes92@protonmail.com](mailto:todes92@protonmail.com?subject=Regarding%20the%20MAES%20Project)
+
+Thor Beregaard - [thor@beregaard.dk](mailto:thor@beregaard.dk?subject=Regarding%20the%20MAES%20Project)
