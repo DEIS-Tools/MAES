@@ -42,6 +42,9 @@ namespace Maes
     {
         private Simulator _simulator;
         /*
+*/
+        private void Start()
+        {
             const int randomSeed = 12345;
 
             var constraintsDict = new Dictionary<string, RobotConstraints>();
@@ -104,9 +107,7 @@ namespace Maes
                     return true;
                 }
             );
-*/
-        private void RunSimulation(RobotConstraints robotConstraints, string constraintName)
-        {
+
             var simulator = Simulator.GetInstance();
             var random = new System.Random(1234);
             List<int> rand_numbers = new List<int>();
@@ -115,6 +116,9 @@ namespace Maes
                 var val = random.Next(0, 1000000);
                 rand_numbers.Add(val);
             }
+
+            var constraintName = "Global";
+            var robotConstraints = constraintsDict[constraintName];
 
             var buildingConfigList50 = new List<BuildingMapConfig>();
             var buildingConfigList75 = new List<BuildingMapConfig>();
@@ -140,6 +144,7 @@ namespace Maes
             {
                 for (var amountOfRobots = 1; amountOfRobots < 10; amountOfRobots += 2)
                 {
+                    var robotCount = amountOfRobots;
                     foreach (var size in mapSizes)
                     {
                         foreach (var (algorithmName, algorithm) in algorithms)
@@ -150,15 +155,15 @@ namespace Maes
                                                                              robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsTogether(
                                                                                  buildingConfig,
                                                                                  seed: 123,
-                                                                                 numberOfRobots: amountOfRobots,
+                                                                                 numberOfRobots: robotCount,
                                                                                  suggestedStartingPoint: new Vector2Int(random.Next(0, size), random.Next(0, size)),
                                                                                  createAlgorithmDelegate: algorithm),
-                                                                             statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-size-{size}-comms-{constraintName}-robots-{amountOfRobots}-SpawnTogether",
+                                                                             statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-size-{size}-comms-{constraintName}-robots-{robotCount}-SpawnTogether",
                                                                              robotConstraints: robotConstraints)
                             );
 
                             var spawningPosList = new List<Vector2Int>();
-                            for (var amountOfSpawns = 0; amountOfSpawns <= amountOfRobots; amountOfSpawns++)
+                            for (var amountOfSpawns = 0; amountOfSpawns < robotCount; amountOfSpawns++)
                             {
                                 spawningPosList.Add(new Vector2Int(random.Next(0, size), random.Next(0, size)));
                             }
@@ -168,10 +173,10 @@ namespace Maes
                                                                              robotSpawner: (buildingConfig, spawner) => spawner.SpawnRobotsAtPositions(
                                                                                  collisionMap: buildingConfig,
                                                                                  seed: 123,
-                                                                                 numberOfRobots: amountOfRobots,
+                                                                                 numberOfRobots: robotCount,
                                                                                  spawnPositions: spawningPosList,
                                                                                  createAlgorithmDelegate: algorithm),
-                                                                             statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-size-{size}-comms-{constraintName}-robots-{amountOfRobots}-SpawnApart",
+                                                                             statisticsFileName: $"{algorithmName}-seed-{mapConfig.RandomSeed}-size-{size}-comms-{constraintName}-robots-{robotCount}-SpawnApart",
                                                                              robotConstraints: robotConstraints)
                             );
                         }
@@ -196,5 +201,6 @@ namespace Maes
 
             //simulator.GetSimulationManager().AttemptSetPlayState(SimulationPlayState.FastAsPossible);
         }
+
     }
 }
