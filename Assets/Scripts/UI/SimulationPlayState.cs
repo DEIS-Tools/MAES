@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,16 +15,16 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 namespace Maes.UI {
     public enum SimulationPlayState {
         Paused = 0,
         Play = 1,
         FastForward = 2,
-        FastAsPossible = 100000,
+        FastAsPossible = int.MaxValue,
         Step = 3
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 using System;
 using System.Collections.Generic;
@@ -27,10 +27,12 @@ using Maes.Robot;
 using Maes.Utilities;
 using UnityEngine;
 
-namespace Maes.Map {
+namespace Maes.Map
+{
 
     // This represents a low-resolution map where the robot can comfortably fit inside a single cell
-    public class CoarseGrainedMap : IPathFindingMap {
+    public class CoarseGrainedMap : IPathFindingMap
+    {
 
         private readonly SlamMap _slamMap;
         private bool[,] _tilesCoveredStatus;
@@ -47,7 +49,8 @@ namespace Maes.Map {
         /// <param name="width">Width in coarse-grained tiles.</param>
         /// <param name="height">Height in coarse-grained tiles.</param>
         /// <param name="offset">Coordinate offset.</param>
-        public CoarseGrainedMap(SlamMap slamMap, int width, int height, Vector2 offset) {
+        public CoarseGrainedMap(SlamMap slamMap, int width, int height, Vector2 offset)
+        {
             _slamMap = slamMap;
             _width = width;
             _height = height;
@@ -60,31 +63,42 @@ namespace Maes.Map {
         /// <summary>
         /// Returns the approximate position on this map (local tile scale coordinates)
         /// </summary> 
-        public Vector2 GetApproximatePosition() {
+        public Vector2 GetApproximatePosition()
+        {
             return _slamMap.ApproximatePosition - _offset;
         }
 
-        public float GetApproximateGlobalDegrees() {
+        public Vector2Int GetCurrentPosition()
+        {
+            return Vector2Int.FloorToInt(GetApproximatePosition());
+        }
+
+        public float GetApproximateGlobalDegrees()
+        {
             return _slamMap.GetRobotAngleDeg();
         }
-        
+
         /// <param name="tileCoord">The coarse-grained tile to get a relative position to</param>
         /// <returns>A <see cref="RelativePosition"/>, relative from the calling Robot to the target tileCoord.</returns>
-        public RelativePosition GetTileCenterRelativePosition(Vector2Int tileCoord) {
+        public RelativePosition GetTileCenterRelativePosition(Vector2Int tileCoord)
+        {
             // Convert to local coordinate
             var robotPosition = GetApproximatePosition();
             var target = new Vector2(tileCoord.x + 0.5f, tileCoord.y + 0.5f);
-            var distance = Vector2.Distance(robotPosition, (Vector2) target);
+            var distance = Vector2.Distance(robotPosition, (Vector2)target);
             var angle = Vector2.SignedAngle(Geometry.DirectionAsVector(_slamMap.GetRobotAngleDeg()), target - robotPosition);
             return new RelativePosition(distance, angle);
         }
-        
+
         /// <returns>all tiles that are either Seen or Solid as a Dictionary.</returns>
-        public Dictionary<Vector2Int, SlamMap.SlamTileStatus> GetExploredTiles() {
+        public Dictionary<Vector2Int, SlamMap.SlamTileStatus> GetExploredTiles()
+        {
             var res = new Dictionary<Vector2Int, SlamMap.SlamTileStatus>();
 
-            for (int x = 0; x < _width; x++) {
-                for (int y = 0; y < _height; y++) {
+            for (int x = 0; x < _width; x++)
+            {
+                for (int y = 0; y < _height; y++)
+                {
                     var pos = new Vector2Int(x, y);
                     if (GetTileStatus(pos) != SlamMap.SlamTileStatus.Unseen)
                         res[pos] = GetTileStatus(pos);
@@ -93,10 +107,30 @@ namespace Maes.Map {
 
             return res;
         }
-        
+
+
+        /// <returns>all tiles that are unseen as a list.</returns>
+        public List<Vector2Int> GetUnexploredTiles()
+        {
+            var res = new List<Vector2Int>();
+
+            for (int x = 0; x < _width; x++)
+            {
+                for (int y = 0; y < _height; y++)
+                {
+                    var pos = new Vector2Int(x, y);
+                    if (GetTileStatus(pos) == SlamMap.SlamTileStatus.Unseen)
+                        res.Add(pos);
+                }
+            }
+
+            return res;
+        }
+
         /// <param name="localCoordinate">the tile to get the explored-status from.</param>
         /// <returns>the explored-status of the given tile.</returns>
-        public bool IsTileExplored(Vector2Int localCoordinate) {
+        public bool IsTileExplored(Vector2Int localCoordinate)
+        {
             AssertWithinBounds(localCoordinate);
             return _tilesCoveredStatus[localCoordinate.x, localCoordinate.y];
         }
@@ -107,7 +141,8 @@ namespace Maes.Map {
         /// </summary>
         /// <param name="localCoordinate">the given tile to set det data at.</param>
         /// <param name="data">the data-value to set at the given tile.</param>
-        public void SetTileExplored(Vector2Int localCoordinate, bool data) {
+        public void SetTileExplored(Vector2Int localCoordinate, bool data)
+        {
             AssertWithinBounds(localCoordinate);
             _tilesCoveredStatus[localCoordinate.x, localCoordinate.y] = data;
         }
@@ -117,10 +152,15 @@ namespace Maes.Map {
         /// </summary>
         /// <param name="coordinate">the coordinate to test.</param>
         /// <exception cref="ArgumentException">raised when coordinate is out of bounds.</exception>
-        private void AssertWithinBounds(Vector2Int coordinate) {
-            var withinBounds = coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
-            if (!withinBounds)
+        private void AssertWithinBounds(Vector2Int coordinate)
+        {
+            if (!IsWithinBounds(coordinate))
                 throw new ArgumentException($"Given coordinate is out of bounds {coordinate} ({_width}, {_height})");
+        }
+
+        public bool IsCoordWithinBounds(Vector2Int coordinate)
+        {
+             return (coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height) && !CheckIfAnyIsStatus(coordinate, SlamMap.SlamTileStatus.Solid);
         }
 
         delegate SlamMap.SlamTileStatus StatusAggregator(SlamMap.SlamTileStatus s1, SlamMap.SlamTileStatus s2);
@@ -130,29 +170,43 @@ namespace Maes.Map {
         /// Returns SLAM status of a given tile. Aggregates with neighbours up, right, and up+right (to compensate for half resolution).
         /// </summary>
         /// <param name="localCoordinate">To coarse-grained coordinate to get the status of.</param>
-        /// <param name="optismistic"><br/>
+        /// <param name="optimistic"><br/>
         /// <li>if <b>true</b>, uses <see cref="AggregateStatusOptimistic"/> to get status on neighbours.</li><br/>
         /// <li>if <b>false</b>, uses <see cref="AggregateStatusPessimistic"/> to get status on neighbours.</li>
         /// </param>
         /// <returns>the aggregates status of the tile as a <see cref="SlamMap.SlamTileStatus"/>.</returns>
-        public SlamMap.SlamTileStatus GetTileStatus(Vector2Int localCoordinate, bool optismistic = false) {
+        public SlamMap.SlamTileStatus GetTileStatus(Vector2Int localCoordinate, bool optimistic = false)
+        {
             var slamCoord = ToSlamMapCoordinate(localCoordinate);
 
-            var status = _slamMap.GetStatusOfTile(slamCoord);
-            if (optismistic) {
-                status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right));
-                status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up));
-                status = AggregateStatusOptimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right + Vector2Int.up));
+            var status = _slamMap.GetTileStatus(slamCoord);
+            if (optimistic)
+            {
+                status = AggregateStatusOptimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.right));
+                status = AggregateStatusOptimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.up));
+                status = AggregateStatusOptimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.right + Vector2Int.up));
             }
-            else {
-                status = AggregateStatusPessimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right));
-                status = AggregateStatusPessimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up));
-                status = AggregateStatusPessimistic(status, _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right + Vector2Int.up));
+            else
+            {
+                status = AggregateStatusPessimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.right));
+                status = AggregateStatusPessimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.up));
+                status = AggregateStatusPessimistic(status, _slamMap.GetTileStatus(slamCoord + Vector2Int.right + Vector2Int.up));
             }
 
             return status;
         }
-        
+
+        /// <summary>
+        /// Gets the nearest target status tile using flood fill, which is faster than doing aStar.
+        /// </summary>
+        /// <param name="targetCoordinate">Location to start the flood fill</param>
+        /// <param name="lookupStatus">The status that is being looked for being {unseen, open, solid}</param>
+        /// <returns>The given tile in coarse coordinates</returns>
+        public Vector2Int? GetNearestTileFloodFill(Vector2Int targetCoordinate, SlamMap.SlamTileStatus lookupStatus, HashSet<Vector2Int> excludedTiles = null)
+        {
+            return _aStar.GetNearestTileFloodFill(this, targetCoordinate, lookupStatus, excludedTiles);
+        }
+
         /// <summary>
         /// Combines two <see cref="SlamMap.SlamTileStatus"/>' in an "optimistic" fashion.
         /// </summary>
@@ -161,7 +215,8 @@ namespace Maes.Map {
         /// <li>Otherwise, if any status is 'open', both are considered 'open'.</li><br/>
         /// 'Unseen' is only returned if both tiles are 'unseen'.
         /// </returns>
-        private static SlamMap.SlamTileStatus AggregateStatusOptimistic(SlamMap.SlamTileStatus status1, SlamMap.SlamTileStatus status2) {
+        private static SlamMap.SlamTileStatus AggregateStatusOptimistic(SlamMap.SlamTileStatus status1, SlamMap.SlamTileStatus status2)
+        {
             if (status1 == SlamMap.SlamTileStatus.Solid || status2 == SlamMap.SlamTileStatus.Solid)
                 return SlamMap.SlamTileStatus.Solid;
             if (status1 == SlamMap.SlamTileStatus.Open || status2 == SlamMap.SlamTileStatus.Open)
@@ -177,7 +232,8 @@ namespace Maes.Map {
         /// <li>if any status is 'unseen', both are considered 'unseen'.</li><br/>
         /// 'Open' is only returned if both tiles are 'open'.
         /// </returns>
-        private SlamMap.SlamTileStatus AggregateStatusPessimistic(SlamMap.SlamTileStatus status1, SlamMap.SlamTileStatus status2) {
+        private SlamMap.SlamTileStatus AggregateStatusPessimistic(SlamMap.SlamTileStatus status1, SlamMap.SlamTileStatus status2)
+        {
             if (status1 == SlamMap.SlamTileStatus.Solid || status2 == SlamMap.SlamTileStatus.Solid)
                 return SlamMap.SlamTileStatus.Solid;
             if (status1 == SlamMap.SlamTileStatus.Unseen || status2 == SlamMap.SlamTileStatus.Unseen)
@@ -185,54 +241,64 @@ namespace Maes.Map {
             return SlamMap.SlamTileStatus.Open;
         }
 
-        
+
         /// <summary>
         /// Converts the given <see cref="SlamMap"/> coordinate to a local coordinate.
         /// </summary>
-        public Vector2Int FromSlamMapCoordinate(Vector2Int slamCoord) {
+        public Vector2Int FromSlamMapCoordinate(Vector2Int slamCoord)
+        {
             return slamCoord / 2;
         }
 
         /// <summary>
         /// Converts a list of <see cref="SlamMap"/> coordinates to a list of local coordinates.
         /// </summary>
-        public List<Vector2Int> FromSlamMapCoordinates(List<Vector2Int> slamCoords) {
+        public IEnumerable<Vector2Int> FromSlamMapCoordinates(IEnumerable<Vector2Int> slamCoords)
+        {
             var coarseCoords = new HashSet<Vector2Int>();
-            foreach (var slamCoord in slamCoords) {
+            foreach (var slamCoord in slamCoords)
+            {
                 coarseCoords.Add(FromSlamMapCoordinate(slamCoord));
             }
 
-            return coarseCoords.ToList();
+            return coarseCoords;
         }
 
         /// <summary>
         /// Converts the given local coordinate to a <see cref="SlamMap"/> coordinate.
         /// </summary>
-        public Vector2Int ToSlamMapCoordinate(Vector2Int localCoordinate) {
-            return localCoordinate * 2;
+        public Vector2Int ToSlamMapCoordinate(Vector2 localCoordinate)
+        {
+            return Vector2Int.FloorToInt(localCoordinate * 2);
         }
-        
+
         /// <summary>
         /// Returns the position of the neighbour in the given direction, relative to the current direction and position of the robot.
         /// </summary>
-        public Vector2Int GetRelativeNeighbour(CardinalDirection.RelativeDirection relativeDirection) {
-            CardinalDirection currentCardinalDirection = CardinalDirection.DirectionFromDegrees(_slamMap.GetRobotAngleDeg());
-            CardinalDirection targetDirection = currentCardinalDirection.GetRelativeDirection(relativeDirection);
-
+        public Vector2Int GetRelativeNeighbour(CardinalDirection.RelativeDirection relativeDirection)
+        {
+            var targetDirection = GetRelativeNeighbourDirection(relativeDirection);
             var currentPosition = GetApproximatePosition();
             var relativePosition = currentPosition + targetDirection.Vector;
-            return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
+            return new Vector2Int((int)relativePosition.x, (int)relativePosition.y);
         }
-        
+
+        public CardinalDirection GetRelativeNeighbourDirection(CardinalDirection.RelativeDirection relativeDirection)
+        {
+            CardinalDirection currentCardinalDirection = CardinalDirection.DirectionFromDegrees(_slamMap.GetRobotAngleDeg());
+            return currentCardinalDirection.GetRelativeDirection(relativeDirection);
+        }
+
         /// <summary>
         /// Returns the position of the neighbour in the given global direction, relative to the robot's position.
         /// </summary>
         /// <param name="direction"></param>
         /// <returns></returns>
-        public Vector2Int GetGlobalNeighbour(CardinalDirection direction) {
+        public Vector2Int GetGlobalNeighbour(CardinalDirection direction)
+        {
             var currentPosition = GetApproximatePosition();
             var relativePosition = currentPosition + direction.Vector;
-            return new Vector2Int((int) relativePosition.x, (int) relativePosition.y);
+            return new Vector2Int((int)relativePosition.x, (int)relativePosition.y);
         }
 
         /// <summary>
@@ -241,26 +307,26 @@ namespace Maes.Map {
         /// <param name="target">the target that the path should end at.</param>
         /// <param name="acceptPartialPaths">if <b>true</b>, returns path getting the closest to the target, if no full path can be found.</param>
         /// <param name="beOptimistic">if <b>true</b>, treats unseen tiles as open in the path finding algorithm. Treats unseen tiles as solid otherwise.</param>
-        public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false, bool beOptimistic = true) {
+        public List<Vector2Int>? GetPath(Vector2Int target, bool acceptPartialPaths = false, bool beOptimistic = false)
+        {
             var approxPosition = GetApproximatePosition();
-            return beOptimistic 
-                ? _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this) 
-                : _aStar.GetPath(Vector2Int.RoundToInt(approxPosition), target, this);
+            return _aStar.GetPath(Vector2Int.FloorToInt(approxPosition), target, this, beOptimistic, acceptPartialPaths);
         }
-        
+
         /// <summary>
         /// Calculates, and returns, the path from the robot's current position to the target. Will avoid planning a path though the excluded tiles.
         /// </summary>
         /// <param name="target">the target that the path should end at.</param>
         /// <param name="excludedTiles">the tiles that should be avoided during the path.</param>
         /// <param name="maxPathCost">the maximum cost of the path.</param>
-        public List<Vector2Int>? GetPath(Vector2Int target, HashSet<Vector2Int> excludedTiles = null, float maxPathCost = float.MaxValue) {
+        public List<Vector2Int>? GetPath(Vector2Int target, HashSet<Vector2Int> excludedTiles = null, float maxPathCost = float.MaxValue)
+        {
             if (excludedTiles != null && excludedTiles.Contains(target))
                 return null;
 
             var approxPosition = GetApproximatePosition();
             if (excludedTiles != null) _excludedTiles = excludedTiles;
-            var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this, false); 
+            var path = _aStar.GetOptimisticPath(new Vector2Int((int)approxPosition.x, (int)approxPosition.y), target, this, false);
             _excludedTiles = new HashSet<Vector2Int>();
             return path;
         }
@@ -272,43 +338,48 @@ namespace Maes.Map {
         /// <param name="target">the target that the path should end at.</param>
         /// <param name="excludedTiles">the tiles that should be avoided during traversal.</param>
         /// <returns></returns>
-        public List<PathStep>? GetPathSteps(Vector2Int target, HashSet<Vector2Int> excludedTiles = null) {
+        public List<PathStep>? GetPathSteps(Vector2Int target, HashSet<Vector2Int> excludedTiles = null)
+        {
             if (excludedTiles != null && excludedTiles.Contains(target))
                 return null;
 
             var approxPosition = GetApproximatePosition();
             if (excludedTiles != null) _excludedTiles = excludedTiles;
-            var path = _aStar.GetOptimisticPath(new Vector2Int((int) approxPosition.x, (int) approxPosition.y), target, this);
+            var path = _aStar.GetOptimisticPath(new Vector2Int((int)approxPosition.x, (int)approxPosition.y), target, this);
             _excludedTiles = new HashSet<Vector2Int>();
             return path == null ? null : _aStar.PathToSteps(path, 0.4f);
         }
-        
+
         /// <summary>
         /// Calculates, and returns, a path from the robots current position to the target. Will reduce the path to a list of <see cref="PathStep"/>s.
         /// </summary>
-        public List<PathStep>? GetTnfPathAsPathSteps(Vector2Int target) {
-            var path = GetPath(target, beOptimistic: false);
+        public List<PathStep>? GetTnfPathAsPathSteps(Vector2Int target)
+        {
+            var path = GetPath(target, beOptimistic: false, acceptPartialPaths: false);
             return path == null
                 ? null
                 : _aStar.PathToSteps(path, 0f);
         }
 
         /// <returns>whether or not a tile at a given position is solid.</returns>
-        public bool IsSolid(Vector2Int coordinate) {
+        public bool IsSolid(Vector2Int coordinate)
+        {
             if (_excludedTiles.Contains(coordinate))
                 return true;
-            var tileStatus = GetTileStatus(coordinate, optismistic: false);
+            var tileStatus = GetTileStatus(coordinate, optimistic: false);
             return tileStatus != SlamMap.SlamTileStatus.Open;
         }
 
         /// <returns>whether or not a tile at a given position is solid. Is more optimistic than <see cref="IsSolid"/>.</returns>
-        public bool IsOptimisticSolid(Vector2Int coordinate) {
+        public bool IsOptimisticSolid(Vector2Int coordinate)
+        {
             if (_excludedTiles.Contains(coordinate))
                 return true;
             return _optimisticTileStatuses[coordinate.x, coordinate.y] != SlamMap.SlamTileStatus.Open;
         }
 
-        public float CellSize() {
+        public float CellSize()
+        {
             return 1.0f;
         }
 
@@ -316,20 +387,25 @@ namespace Maes.Map {
         /// Converts the <see cref="Vector2"/> given by <see cref="GetApproximatePosition"/> to the tile in
         /// which the robot is currently positioned.
         /// </summary>
-        public Vector2Int GetCurrentTile() {
+        public Vector2Int GetCurrentTile()
+        {
             var robotPosition = GetApproximatePosition();
-            return new Vector2Int((int) robotPosition.x, (int) robotPosition.y);
+            return new Vector2Int((int)robotPosition.x, (int)robotPosition.y);
         }
 
         /// <summary>
         /// Synchronizes a list of maps, to make them all contain the same information. Used to simulate Distributed SLAM.
         /// </summary>
-        public static void Synchronize(List<CoarseGrainedMap> maps, SlamMap.SlamTileStatus[,] newSlamStatuses) {
+        public static void Synchronize(List<CoarseGrainedMap> maps, SlamMap.SlamTileStatus[,] newSlamStatuses)
+        {
             // Synchronize exploration bool statuses
             var globalExplorationStatuses = new bool[maps[0]._width, maps[0]._height];
-            foreach (var map in maps) {
-                for (int x = 0; x < map._width; x++) {
-                    for (int y = 0; y < map._height; y++) {
+            foreach (var map in maps)
+            {
+                for (int x = 0; x < map._width; x++)
+                {
+                    for (int y = 0; y < map._height; y++)
+                    {
                         globalExplorationStatuses[x, y] |= map._tilesCoveredStatus[x, y];
                     }
                 }
@@ -339,8 +415,10 @@ namespace Maes.Map {
 
             // Synchronize tile statuses
             var globalMap = new SlamMap.SlamTileStatus[maps[0]._width, maps[0]._height];
-            for (int x = 0; x < maps[0]._width; x++) {
-                for (int y = 0; y < maps[0]._height; y++) {
+            for (int x = 0; x < maps[0]._width; x++)
+            {
+                for (int y = 0; y < maps[0]._height; y++)
+                {
                     int slamX = x * 2;
                     int slamY = y * 2;
                     var status = newSlamStatuses[slamX, slamY];
@@ -360,11 +438,15 @@ namespace Maes.Map {
         /// <param name="map"></param>
         /// <param name="others"></param>
         /// <param name="newSlamStatuses"></param>
-        public static void Combine(CoarseGrainedMap map, List<CoarseGrainedMap> others, SlamMap.SlamTileStatus[,] newSlamStatuses) {
+        public static void Combine(CoarseGrainedMap map, List<CoarseGrainedMap> others, SlamMap.SlamTileStatus[,] newSlamStatuses)
+        {
             var globalExplorationStatuses = new bool[map._width, map._height];
-            foreach (var other in others) {
-                for (int x = 0; x < other._width; x++) {
-                    for (int y = 0; y < other._height; y++) {
+            foreach (var other in others)
+            {
+                for (int x = 0; x < other._width; x++)
+                {
+                    for (int y = 0; y < other._height; y++)
+                    {
                         globalExplorationStatuses[x, y] |= other._tilesCoveredStatus[x, y];
                     }
                 }
@@ -373,8 +455,10 @@ namespace Maes.Map {
 
             // Synchronize tile statuses
             var globalMap = new SlamMap.SlamTileStatus[others[0]._width, others[0]._height];
-            for (int x = 0; x < others[0]._width; x++) {
-                for (int y = 0; y < others[0]._height; y++) {
+            for (int x = 0; x < others[0]._width; x++)
+            {
+                for (int y = 0; y < others[0]._height; y++)
+                {
                     int slamX = x * 2;
                     int slamY = y * 2;
                     var status = newSlamStatuses[slamX, slamY];
@@ -387,36 +471,94 @@ namespace Maes.Map {
 
             map._optimisticTileStatuses = globalMap.Clone() as SlamMap.SlamTileStatus[,];
         }
-        
+
+        public bool IsWithinBounds(Vector2Int coordinate)
+        {
+            return coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
+        }
+
         /// <returns><b>false</b>, only if the tile at the coordinate is known to be solid.</returns>
-        public bool IsPotentiallyExplorable(Vector2Int coordinate) {
-            var withinBounds = coordinate.x >= 0 && coordinate.x < _width && coordinate.y >= 0 && coordinate.y < _height;
+        public bool IsPotentiallyExplorable(Vector2Int coordinate)
+        {
             // To avoid giving away information which the robot cannot know, tiles outside the map bounds are
             // considered explorable
-            if (!withinBounds) return true;
+            if (!IsWithinBounds(coordinate)) return true;
 
             return (!_tilesCoveredStatus[coordinate.x, coordinate.y]) && GetSlamTileStatuses(coordinate).All(status => status != SlamMap.SlamTileStatus.Solid);
         }
 
-        private List<SlamMap.SlamTileStatus> GetSlamTileStatuses(Vector2Int coordinate) {
+        private List<SlamMap.SlamTileStatus> GetSlamTileStatuses(Vector2Int coordinate)
+        {
             var slamCoord = coordinate * 2;
             return new List<SlamMap.SlamTileStatus>() {
-                _slamMap.GetStatusOfTile(slamCoord),
-                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.right),
-                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up),
-                _slamMap.GetStatusOfTile(slamCoord + Vector2Int.up + Vector2Int.right),
+                _slamMap.GetTileStatus(slamCoord),
+                _slamMap.GetTileStatus(slamCoord + Vector2Int.right),
+                _slamMap.GetTileStatus(slamCoord + Vector2Int.up),
+                _slamMap.GetTileStatus(slamCoord + Vector2Int.up + Vector2Int.right),
             };
+        }
+
+        public bool IsUnseenSemiOpen(Vector2Int nextCoordinate, Vector2Int currentCoordinate)
+        {
+            // This function is a hacky fix to a pathfinding deadlocking issue.
+            // get SLAM coordinates for the coarse grained tiles that needs to be checked
+            var solid = SlamMap.SlamTileStatus.Solid;
+            var unseen = SlamMap.SlamTileStatus.Unseen;
+            var open = SlamMap.SlamTileStatus.Open;
+
+            // If all SLAM tiles are solid, just return solid
+            if (CheckIfAnyIsStatus(nextCoordinate, solid) || CheckIfAnyIsStatus(currentCoordinate, solid) || CheckIfAllSlamStatusesSolid(nextCoordinate) || CheckIfAllSlamStatusesSolid(currentCoordinate)) {
+                return true;
+            }
+            if (CheckIfAnyIsStatus(currentCoordinate, open) && CheckIfAnyIsStatus(nextCoordinate, open))
+                {
+                    return false;
+                }
+            return true;
+        }
+
+        private bool CheckIfAllSlamStatusesSolid(Vector2Int coordinate)
+        {
+            var statuses = GetSlamTileStatuses(coordinate);
+            int solids = 0;
+            foreach (var coord in statuses) {
+                    if (coord != SlamMap.SlamTileStatus.Open) {
+                            solids++;
+                        }
+                }
+
+            if (solids == 4) {
+                    return true;
+                }
+
+            return false;
+        }
+
+        private bool CheckIfAnyIsStatus(Vector2Int coordinate, SlamMap.SlamTileStatus status)
+        {
+            var statuses = GetSlamTileStatuses(coordinate);
+            foreach (var coord in statuses) {
+                if (coord == status) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
         /// Updates the information in a tile with the new observed status. Does not change anything, if any of the SLAM tiles in the coarse-grained tile are 'solid'.
         /// </summary>
-        public void UpdateTile(Vector2Int courseCoord, SlamMap.SlamTileStatus observedStatus) {
+        public void UpdateTile(Vector2Int courseCoord, SlamMap.SlamTileStatus observedStatus)
+        {
             // If some sub-tile of the coarse tile is known to be solid, then new status does not matter
             // Otherwise assign the new status (either open or solid)
             if (_optimisticTileStatuses[courseCoord.x, courseCoord.y] != SlamMap.SlamTileStatus.Solid)
                 _optimisticTileStatuses[courseCoord.x, courseCoord.y] = observedStatus;
         }
-    }
 
+        public Vector3 TileToWorld(Vector2 tile)
+        {
+            return new Vector3(tile.x, tile.y, -0.01f) + (Vector3)_offset;
+        }
+    }
 }

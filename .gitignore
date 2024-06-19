@@ -70,3 +70,17 @@ maes-ros-slam-ws/build
 maes-ros-slam-ws/log
 # if workspace opened in pycharm, this folder will be created
 maes-ros-slam-ws/.idea
+
+# Misc
+/.vscode
+/.vsconfig
+ProjectSettings/
+UserSettings/
+CodeCoverage/
+InitTestScene*
+*.csv
+/MinotaurExperiment
+/TnfExperiment
+/maes-csv-reader/env
+/maes-csv-reader/datasets
+/maes-csv-reader/src/__pycache*

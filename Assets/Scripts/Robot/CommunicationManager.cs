@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,14 +15,15 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Maes.Map;
+using Maes.Map.MapGen;
 using Maes.Statistics;
 using Maes.Utilities;
 using UnityEngine;
@@ -54,12 +55,12 @@ namespace Maes.Robot {
         private DebuggingVisualizer _visualizer;
 
         // Messages that will sent during the next logic update
-        private List<Message> _queuedMessages = new List<Message>();
+        private List<Message> _queuedMessages = new();
         
         // Messages that were sent last tick and can now be read 
-        private List<Message> _readableMessages = new List<Message>();
+        private List<Message> _readableMessages = new();
 
-        private readonly RayTracingMap<bool> _rayTracingMap;
+        private readonly RayTracingMap<Tile> _rayTracingMap;
         private List<MonaRobot> _robots;
 
         // Map for storing and retrieving all tags deposited by robots
@@ -93,22 +94,24 @@ namespace Maes.Robot {
             public readonly int WallsCellsPassedThrough;
             public readonly int RegularCellsPassedThrough;
             public readonly bool TransmissionSuccessful;
+            public readonly float SignalStrength;
 
-            public CommunicationInfo(float distance, float angle, int wallsCellsPassedThrough, int regularCellsPassedThrough, bool transmissionSuccess) {
+            public CommunicationInfo(float distance, float angle, int wallsCellsPassedThrough, int regularCellsPassedThrough, bool transmissionSuccess, float signalStrength) {
                 Distance = distance;
                 Angle = angle;
                 WallsCellsPassedThrough = wallsCellsPassedThrough;
                 RegularCellsPassedThrough = regularCellsPassedThrough;
                 TransmissionSuccessful = transmissionSuccess;
+                SignalStrength = signalStrength;
             }
 
         }
 
-        public CommunicationManager(SimulationMap<bool> collisionMap, RobotConstraints robotConstraints,
+        public CommunicationManager(SimulationMap<Tile> collisionMap, RobotConstraints robotConstraints,
             DebuggingVisualizer visualizer) {
             _robotConstraints = robotConstraints;
             _visualizer = visualizer;
-            _rayTracingMap = new RayTracingMap<bool>(collisionMap);
+            _rayTracingMap = new RayTracingMap<Tile>(collisionMap);
             _environmentTaggingMap = new EnvironmentTaggingMap(collisionMap);
             CommunicationTracker = new CommunicationTracker(robotConstraints);
         }
@@ -155,23 +158,31 @@ namespace Maes.Robot {
             if (angleMod <= 45.05f && angleMod >= 45f) angle += 0.005f;
             else if (angleMod >= 44.95f && angleMod <= 45f) angle -= 0.005f;
                 
-            var wallsTravelledThrough = 0;
-            var regularCellsTravelledThrough = 0;
-            _rayTracingMap.Raytrace(pos1, angle, distance, (_, cellIsSolid) => {
-                if (cellIsSolid) wallsTravelledThrough++;
-                else regularCellsTravelledThrough++;
+            var wallsTraveledThrough = 0;
+            var regularCellsTraveledThrough = 0;
+            var signalStrength = _robotConstraints.TransmitPower;
+
+            _rayTracingMap.Raytrace(pos1, angle, distance, (_, tile) => {
+                if (Tile.IsWall(tile.Type)) wallsTraveledThrough++;
+                else regularCellsTraveledThrough++;
+
+                if (_robotConstraints.MaterialCommunication) 
+                    signalStrength -= _robotConstraints.AttenuationDictionary[_robotConstraints.Frequency][tile.Type];
+
                 return true;
             });
-
-            return CreateCommunicationInfo(angle, wallsTravelledThrough, regularCellsTravelledThrough, distance);
+            return CreateCommunicationInfo(angle, wallsTraveledThrough, regularCellsTraveledThrough, distance, signalStrength);
         }
 
-        private CommunicationInfo CreateCommunicationInfo(float angle, int wallsCellsPassedThrough, int regularCellsPassedThrough, float distance) {
+        private CommunicationInfo CreateCommunicationInfo(float angle, int wallsCellsPassedThrough, int regularCellsPassedThrough, float distance, float signalStrength) {
             var totalCells = wallsCellsPassedThrough + regularCellsPassedThrough;
-            var distanceTravelledThroughWalls = ((float) wallsCellsPassedThrough / (float) totalCells)  * distance;
-            var transmissionProbability = _robotConstraints
-                .IsTransmissionSuccessful(distance, distanceTravelledThroughWalls);
-            return new CommunicationInfo(distance, angle, wallsCellsPassedThrough, regularCellsPassedThrough, transmissionProbability);
+            var distanceTraveledThroughWalls = ((float) wallsCellsPassedThrough / (float) totalCells)  * distance;
+            var transmissionSuccessful = _robotConstraints
+                .IsTransmissionSuccessful(distance, distanceTraveledThroughWalls);
+            if (_robotConstraints.MaterialCommunication)
+                transmissionSuccessful = _robotConstraints.ReceiverSensitivity <= signalStrength;
+            //Debug.Log($"strength: {signalStrength}, success: {transmissionSuccessful}");
+            return new CommunicationInfo(distance, angle, wallsCellsPassedThrough, regularCellsPassedThrough, transmissionSuccessful, signalStrength);
         }
 
         public void LogicUpdate() {
@@ -243,7 +254,7 @@ namespace Maes.Robot {
                             Debug.Log(e);
                             Debug.Log("Raytracing failed - Execution continued by providing a fake trace" +
                                       " with zero transmission probability");
-                            _adjacencyMatrix[(r1.id, r2.id)] = new CommunicationInfo(float.MaxValue, 90, 1, 1, false);
+                            _adjacencyMatrix[(r1.id, r2.id)] = new CommunicationInfo(float.MaxValue, 90, 1, 1, false, -int.MaxValue);
                         }
                         
                     }
@@ -308,8 +319,9 @@ namespace Maes.Robot {
 
                 
                 var comInfo = _adjacencyMatrix[(id, robot.id)];
-                if(comInfo.Distance > _robotConstraints.SenseNearbyAgentsRange 
-                   || (comInfo.WallsCellsPassedThrough > 0 && _robotConstraints.SenseNearbyAgentsBlockedByWalls))
+                if ((comInfo.Distance > _robotConstraints.SenseNearbyAgentsRange && !_robotConstraints.MaterialCommunication) || 
+                   (comInfo.WallsCellsPassedThrough > 0 && _robotConstraints.SenseNearbyAgentsBlockedByWalls) ||
+                   (!comInfo.TransmissionSuccessful && _robotConstraints.MaterialCommunication))
                     continue;
 
                 sensedObjects.Add(new SensedObject<int>(comInfo.Distance, comInfo.Angle, robot.id));
@@ -333,18 +345,18 @@ namespace Maes.Robot {
             var robotPosition = robot.transform.position;
             
             // Perform trace from the center of the robot
-            var result1 = _rayTracingMap.FindIntersection(robot.transform.position, globalAngle, range, (_, isSolid) => !isSolid);
+            var result1 = _rayTracingMap.FindIntersection(robot.transform.position, globalAngle, range, (_, tile) => !Tile.IsWall(tile.Type));
             var distance1 = result1 == null ? float.MaxValue : Vector2.Distance(robotPosition, result1.Value.Item1);
             var robotSize = _robotRelativeSize;
             
             // Perform trace from the left side perimeter of the robot
             var offsetLeft = Geometry.VectorFromDegreesAndMagnitude((globalAngle + 90) % 360, robotSize / 2f);
-            var result2 = _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetLeft, globalAngle, range, (_, isSolid) => !isSolid);
+            var result2 = _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetLeft, globalAngle, range, (_, tile) => !Tile.IsWall(tile.Type));
             var distance2 = result2 == null ? float.MaxValue : Vector2.Distance(robotPosition, result2.Value.Item1);
 
             // Finally perform trace from the right side perimeter of the robot
             var offsetRight = Geometry.VectorFromDegreesAndMagnitude((globalAngle + 270) % 360, robotSize / 2f);
-            var result3 = _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetRight, globalAngle, range, (_, isSolid) => !isSolid);
+            var result3 = _rayTracingMap.FindIntersection((Vector2) robot.transform.position + offsetRight, globalAngle, range, (_, tile) => !Tile.IsWall(tile.Type));
             var distance3 = result3 == null ? float.MaxValue : Vector2.Distance(robotPosition, result3.Value.Item1);
 
             // Return the detected wall that is closest to the robot

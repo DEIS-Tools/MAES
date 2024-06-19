@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,13 +15,14 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 using System;
 using System.Collections.Generic;
 using Maes.Map;
+using Maes.Map.MapGen;
 using UnityEngine;
 
 namespace Maes.Statistics {
@@ -37,12 +38,12 @@ namespace Maes.Statistics {
         
         public float CoverageProportion => CoveredMiniTiles / (float) CoverableTiles;
 
-        public CoverageCalculator(SimulationMap<ExplorationCell> explorationMap, SimulationMap<bool> collisionMap) {
+        public CoverageCalculator(SimulationMap<ExplorationCell> explorationMap, SimulationMap<Tile> collisionMap) {
             _explorationMap = explorationMap;
             FindCoverableTiles(collisionMap);
         }
 
-        private void FindCoverableTiles(SimulationMap<bool> collisionMap) {
+        private void FindCoverableTiles(SimulationMap<Tile> collisionMap) {
             // Register all coverable tiles
             for (int x = 0; x < _explorationMap.WidthInTiles; x++) {
                 for (int y = 0; y < _explorationMap.HeightInTiles; y++) {
@@ -53,7 +54,7 @@ namespace Maes.Statistics {
                         // If any of the two triangles forming the 'mini-tile' are solid,
                         // then mark both triangles as non-coverable
                         // (because the entire mini-tile will be considered as solid in the SLAM map used by the robots)
-                        var isSolid = tileCells[i] || tileCells[i+1];
+                        var isSolid = Tile.IsWall(tileCells[i].Type) || Tile.IsWall(tileCells[i+1].Type);
                         explorationCells[i].CanBeCovered = !isSolid;
                         explorationCells[i+1].CanBeCovered = !isSolid;
                         if (!isSolid) CoverableTiles++;

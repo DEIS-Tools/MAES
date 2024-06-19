@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,11 +15,12 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Maes.Map;
@@ -79,6 +80,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
         private readonly System.Random _random;
         private bool _isCommunicating;
         private int _ticksSpentColliding;
+        private List<(int, Vector2)> _currentDestinations = new List<(int, Vector2)>{};
 
 
         private class Frontier {
@@ -167,7 +169,13 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
                 if (_lastSeenNeighbours.Any()) {
                     _robotController.StopCurrentTask();
                     _isCommunicating = true;
-                    _robotController.Broadcast((_robotController.GetSlamMap(), _robotController.GetRobotID()));
+                    if (_path != null && _path.Count > 0) {
+                        PathStep lastStep = _path.Last.Value;
+                        _robotController.Broadcast((_robotController.GetSlamMap(), _robotController.GetRobotID(), (Vector2) lastStep.End));
+                    }
+                    else {
+                        _robotController.Broadcast((_robotController.GetSlamMap(), _robotController.GetRobotID(), _robotPos));
+                    }
                 }
                 _logicTicksSinceLastCommunication++;
                 return;
@@ -264,12 +272,18 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
             }
             var newMaps = new List<SlamMap> {_robotController.GetSlamMap() as SlamMap};
             foreach (var package in received) {
-                var pack = ((ISlamAlgorithm, int)) package;
+                var pack = ((SlamMap, int, Vector2)) package;
                 newMaps.Add(pack.Item1 as SlamMap);
+                if (_currentDestinations.Any(dict => dict.Item1 == pack.Item2)){
+                    var index = _currentDestinations.FindIndex(dict => dict.Item1 == pack.Item2);
+                    _currentDestinations[index] = (pack.Item2, pack.Item3);
+                } else {
+                    _currentDestinations.Add((pack.Item2, pack.Item3));
+                }
             }
 
             // Largest Robot ID synchronizes to save on Simulator CPU time
-            if (!received.Cast<(ISlamAlgorithm, int)>().Any(p => p.Item2 > _robotId)) {
+            if (!received.Cast<(SlamMap, int, Vector2)>().Any(p => p.Item2 > _robotId)) {
                 SlamMap.Synchronize(newMaps);
             }
             if (_robotTnfStatus == TnfStatus.OutOfFrontiers) {
@@ -357,7 +371,7 @@ namespace Maes.ExplorationAlgorithm.TheNextFrontier {
         }
 
         private void StartMoving() {
-            if (_robotController.GetStatus() != RobotStatus.Idle || _nextTileInPath == null) {
+            if (_robotController.GetStatus() != RobotStatus .Idle || _nextTileInPath == null) {
                 return;
             }
             var relativePosition = _map.GetTileCenterRelativePosition(_nextTileInPath.End);

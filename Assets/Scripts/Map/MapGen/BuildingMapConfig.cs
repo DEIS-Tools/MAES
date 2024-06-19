@@ -20,36 +20,37 @@
 // Original repository: https://github.com/MalteZA/MAES
 
 using System;
+using System.Collections.Generic;
 using Maes.YamlConfig;
 
 namespace Maes.Map.MapGen {
     public struct BuildingMapConfig {
         // Bitmap size is always +1 larger in both axis
         // due to the marching squares algorithm using 4 points per square
-        public readonly int widthInTiles;
-        public readonly int heightInTiles;
-        public readonly int bitMapWidth;
-        public readonly int bitMapHeight;
+        public int WidthInTiles { get; }
+        public int HeightInTiles { get; }
+        public int BitMapWidth { get; }
+        public int BitMapHeight { get; }
 
-        public readonly int randomSeed;
+        public int RandomSeed { get; }
 
-        public readonly float maxHallInPercent;
+        public float MaxHallInPercent { get; }
 
-        public readonly int hallWidth;
-        public readonly float minRoomSideLength;
-        public readonly uint doorWidth;
+        public int HallWidth { get; }
+        public float MinRoomSideLength { get; }
+        public uint DoorWidth { get; }
 
-        public readonly int doorPadding;
+        public int DoorPadding { get; }
 
         // Value in [0,100] determining the likelihood of an office being split
         // Higher value = more but smaller rooms.
-        public readonly uint roomSplitChancePercent;
+        public uint RoomSplitChancePercent { get; }
 
-        public readonly int borderSize;
+        public int BorderSize { get; }
+        public int WallThickness { get; }
 
         internal BuildingMapConfig(MaesYamlConfigLoader.MaesConfigType config, int seed) : this(
-            randomSeed: seed,
-            widthInTiles: config.Map.WidthInTiles,
+            randomSeed: seed, wallThickness: config.Map.BuildingConfig.WallThickness, widthInTiles: config.Map.WidthInTiles,
             heightInTiles: config.Map.HeightInTiles,
             maxHallInPercent: config.Map.BuildingConfig.MaxHallInPercent,
             hallWidth: config.Map.BuildingConfig.HallWidth,
@@ -59,41 +60,41 @@ namespace Maes.Map.MapGen {
             roomSplitChancePercent: config.Map.BuildingConfig.RoomSplitChance,
             borderSize: config.Map.BorderSize
             ) {
-            
         }
         
         public BuildingMapConfig(
-            int randomSeed, 
-            int widthInTiles=50, int heightInTiles=50, 
+            int randomSeed, int wallThickness = 1, int widthInTiles=50, int heightInTiles=50, 
             float maxHallInPercent=20,
             int hallWidth=4, 
             int minRoomSideLength=6, 
             uint doorWidth=2, 
             int doorPadding=2, 
             uint roomSplitChancePercent=85,
-            int borderSize=1) {
+            int borderSize=1)
+            {
             if ((2 * doorPadding + doorWidth) > minRoomSideLength) {
                 throw new ArgumentOutOfRangeException(
-                    "Door width cannot be bigger than the smallest side lenght of rooms plus two times doorPadding");
+                    "Door width cannot be bigger than the smallest side lenght of rooms plus two times DoorPadding");
             }
 
             if (roomSplitChancePercent > 100) {
-                throw new ArgumentOutOfRangeException("officeSplitChance cannot be greater than 100");
+                throw new ArgumentOutOfRangeException("roomSplitChance cannot be greater than 100");
             }
 
-            this.widthInTiles = widthInTiles;
-            this.heightInTiles = heightInTiles;
-            this.bitMapWidth = widthInTiles + 1 - (borderSize * 2);
-            this.bitMapHeight = heightInTiles + 1 - (borderSize * 2);
+            WidthInTiles = widthInTiles;
+            HeightInTiles = heightInTiles;
+            BitMapWidth = widthInTiles + 1 - (borderSize * 2);
+            BitMapHeight = heightInTiles + 1 - (borderSize * 2);
 
-            this.randomSeed = randomSeed;
-            this.maxHallInPercent = maxHallInPercent;
-            this.hallWidth = hallWidth;
-            this.minRoomSideLength = minRoomSideLength;
-            this.doorWidth = doorWidth;
-            this.doorPadding = doorPadding;
-            this.roomSplitChancePercent = roomSplitChancePercent;
-            this.borderSize = borderSize;
+            RandomSeed = randomSeed;
+            WallThickness = wallThickness;
+            MaxHallInPercent = maxHallInPercent;
+            HallWidth = hallWidth;
+            MinRoomSideLength = minRoomSideLength;
+            DoorWidth = doorWidth;
+            DoorPadding = doorPadding;
+            RoomSplitChancePercent = roomSplitChancePercent;
+            BorderSize = borderSize;
         }
     }
 }

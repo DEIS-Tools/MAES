@@ -45,11 +45,11 @@ namespace Maes {
         public static readonly int PhysicsTicksPerLogicUpdate = 10;
 
         // Debug visualizer
-        public static readonly bool DrawCommunication = true;
+        public static readonly bool DrawCommunication = false;
 
         // Statistics
         public static readonly bool ShouldWriteCSVResults = true;
-        public static readonly string StatisticsOutPutPath = "";
+        public static readonly string StatisticsOutPutPath = "data/";
         public static readonly int TicksPerStatsSnapShot = 10;
         public static readonly bool PopulateAdjacencyAndComGroupsEveryTick = false;
 

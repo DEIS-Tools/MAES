@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,14 +15,15 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Maes.Map;
+using Maes.Map.MapGen;
 using Maes.Map.Visualization;
 using Maes.Robot;
 using Maes.Utilities;
@@ -34,7 +35,7 @@ namespace Maes.Statistics {
         private CoverageCalculator _coverageCalculator;
         
         // The low-resolution collision map used to create the smoothed map that robots are navigating 
-        private SimulationMap<bool> _collisionMap;
+        private SimulationMap<Tile> _collisionMap;
         private ExplorationVisualizer _explorationVisualizer;
 
         private SimulationMap<ExplorationCell> _explorationMap;
@@ -63,7 +64,9 @@ namespace Maes.Statistics {
 
         public List<SnapShot<float>> _coverSnapshots = new List<SnapShot<float>>();
         public List<SnapShot<float>> _exploreSnapshots = new List<SnapShot<float>>();
-
+        public List<SnapShot<float>> _distanceSnapshots = new List<SnapShot<float>>();
+        private float mostRecentDistance;
+        
         private VisualizationMode _currentVisualizationMode;
 
         public struct SnapShot<TValue> {
@@ -76,15 +79,15 @@ namespace Maes.Statistics {
             }
         }
 
-        public ExplorationTracker(SimulationMap<bool> collisionMap, ExplorationVisualizer explorationVisualizer, RobotConstraints constraints) {
+        public ExplorationTracker(SimulationMap<Tile> collisionMap, ExplorationVisualizer explorationVisualizer, RobotConstraints constraints) {
             var explorableTriangles = 0;
             _collisionMap = collisionMap;
             _explorationVisualizer = explorationVisualizer;
             _constraints = constraints;
-            _explorationMap = collisionMap.FMap(isCellSolid => {
-                if (!isCellSolid)
+            _explorationMap = collisionMap.FMap(tile => {
+                if (!Tile.IsWall(tile.Type))
                     explorableTriangles++;
-                return new ExplorationCell(isExplorable: !isCellSolid);
+                return new ExplorationCell(isExplorable: !Tile.IsWall(tile.Type));
             });
             _currentVisualizationMode = new AllRobotsExplorationVisualization(_explorationMap);
             _totalExplorableTriangles = explorableTriangles;
@@ -98,8 +101,26 @@ namespace Maes.Statistics {
         public void CreateSnapShot() {
             _coverSnapshots.Add(new SnapShot<float>(_currentTick, CoverageProportion * 100));
             _exploreSnapshots.Add(new SnapShot<float>(_currentTick, ExploredProportion * 100));
+            _distanceSnapshots.Add(new SnapShot<float>(_currentTick, mostRecentDistance));
         }
 
+        private float calculateAverageDistance(List<MonaRobot> robots){
+            List<float> averages = new List<float>();
+            float average = 0;
+            float sum = 0;
+            foreach (var robot in robots) {
+                var robotPosition = robot.transform.position;
+                foreach (var otherRobot in robots){
+                    var otherRobotPosition = otherRobot.transform.position;
+                    averages.Add((float)Math.Sqrt(Math.Pow(robotPosition.x - otherRobotPosition.x, 2) + Math.Pow(robotPosition.y - otherRobotPosition.y, 2) + Math.Pow(robotPosition.z - otherRobotPosition.z, 2)));
+                }
+            }
+            foreach (var number in averages) {
+                sum += number;
+            }
+            average = sum / averages.Count;
+            return average;
+        }
         private void UpdateCoverageStatus(MonaRobot robot) {
             var newlyCoveredCells = new List<(int, ExplorationCell)> {};
             var robotPos = robot.transform.position;
@@ -128,7 +149,10 @@ namespace Maes.Statistics {
             PerformRayTracing(robots, shouldUpdateSlamMap);
 
             // In the first tick, the robot does not have a position in the slam map.
-            if (!_isFirstTick) foreach (var robot in robots) UpdateCoverageStatus(robot);
+            if (!_isFirstTick) {
+                foreach (var robot in robots) UpdateCoverageStatus(robot);
+                mostRecentDistance = calculateAverageDistance(robots);
+            } 
             else _isFirstTick = false;
 
             if (_constraints.AutomaticallyUpdateSlam) {

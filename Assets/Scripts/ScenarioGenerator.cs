@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 using System;
 using System.Collections.Generic;
@@ -90,20 +90,20 @@ namespace Maes {
              );
 
              foreach (var seed in yamlConfig.RandomSeeds) {
-                 MapFactory mapSpawner = generator => generator.GenerateCaveMap(new CaveMapConfig(0));
+                 MapFactory mapSpawner = generator => generator.GenerateMap(new CaveMapConfig(0));
                  if (yamlConfig.Map != null) {
                      if (yamlConfig.Map.CustomMapFilename != null) {
                          // Load custom map from file
                          var bitmap = PgmMapFileLoader.LoadMapFromFileIfPresent(yamlConfig.Map.CustomMapFilename);
-                         mapSpawner = (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, yamlConfig.Map.WallHeight, yamlConfig.Map.BorderSize);
+                         mapSpawner = (mapGenerator) => mapGenerator.GenerateMap(bitmap, seed, yamlConfig.Map.WallHeight, yamlConfig.Map.BorderSize);
                      } else if (yamlConfig.Map.CaveConfig != null) { 
                          // Generate Cave Map
                          var caveConfig = new CaveMapConfig(yamlConfig, seed);
-                         mapSpawner = (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, yamlConfig.Map.WallHeight);
+                         mapSpawner = (mapGenerator) => mapGenerator.GenerateMap(caveConfig, yamlConfig.Map.WallHeight);
                      } else if (yamlConfig.Map.BuildingConfig != null){  
                          // Building type
                          var buildingConfig = new BuildingMapConfig(yamlConfig, seed);
-                         mapSpawner = (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, yamlConfig.Map.WallHeight);
+                         mapSpawner = (mapGenerator) => mapGenerator.GenerateMap(buildingConfig, yamlConfig.Map.WallHeight);
                      }
                  }
                  
@@ -225,6 +225,7 @@ namespace Maes {
                         1);
                     var buildingConfig = new BuildingMapConfig(
                         randomSeed,
+                        1,
                         width,
                         height,
                         20,
@@ -239,7 +240,7 @@ namespace Maes {
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
                             hasFinishedSim: shouldEndSim,
-                            mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                            mapSpawner: (mapGenerator) => mapGenerator.GenerateMap(buildingConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                                 map, 
                                 randomSeed, 
@@ -251,7 +252,7 @@ namespace Maes {
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
                             hasFinishedSim: shouldEndSim,
-                            mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
+                            mapSpawner: (mapGenerator) => mapGenerator.GenerateMap(caveConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                                 map, 
                                 randomSeed, 
@@ -312,6 +313,7 @@ namespace Maes {
                      1);
                  var buildingConfig = new BuildingMapConfig(
                      randomSeed,
+                     1,
                      width,
                      height,
                      20,
@@ -332,7 +334,7 @@ namespace Maes {
                      scenarios.Enqueue(new SimulationScenario(
                          seed: randomSeed,
                          hasFinishedSim: hasFinishedFunc,
-                         mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                         mapSpawner: (mapGenerator) => mapGenerator.GenerateMap(buildingConfig, 2.0f),
                          robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                              map,
                              randomSeed,
@@ -342,17 +344,17 @@ namespace Maes {
                          $"{algorithmName}-building-{width}x{height}-hallway-" + randomSeed
                      ));
                      // scenarios.Enqueue(new SimulationScenario(
-                     //     seed: randomSeed,
+                     //     seed: RandomSeed,
                      //     hasFinishedSim: hasFinishedFunc,
                      //     mapSpawner: (mapGenerator) => mapGenerator.CreateMapFromBitMap(bitmap, 2.0f, 1),
                      //     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                      //         map,
-                     //         randomSeed,
+                     //         RandomSeed,
                      //         numberOfRobots,
                      //         new Vector2Int(0, 0),
                      //         createAlgorithmDelegate),
                      //     robotConstraints: robotConstraints,
-                     //     $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + randomSeed
+                     //     $"{algorithmName}-cave-{width}x{height}-spawnTogether-" + RandomSeed
                      // ));
                  }
              }
@@ -475,6 +477,7 @@ namespace Maes {
                         1);
                     var buildingConfig = new BuildingMapConfig(
                         randomSeed,
+                        1,
                         width,
                         height,
                         20,
@@ -489,7 +492,7 @@ namespace Maes {
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
                             hasFinishedSim: algorithmName == "TNF" ? shouldEndTnfSim : shouldEndSim,
-                            mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                            mapSpawner: (mapGenerator) => mapGenerator.GenerateMap(buildingConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                                 map, 
                                 randomSeed, 
@@ -501,7 +504,7 @@ namespace Maes {
                         scenarios.Enqueue(new SimulationScenario(
                             seed: randomSeed,
                             hasFinishedSim: algorithmName == "TNF" ? shouldEndTnfSim : shouldEndSim,
-                            mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
+                            mapSpawner: (mapGenerator) => mapGenerator.GenerateMap(caveConfig, 2.0f),
                             robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                                 map, 
                                 randomSeed, 
@@ -569,7 +572,7 @@ namespace Maes {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateMap(buildingConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
@@ -583,7 +586,7 @@ namespace Maes {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 2.0f),
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateMap(mapConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
@@ -660,7 +663,7 @@ namespace Maes {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateBuildingMap(buildingConfig, 2.0f),
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateMap(buildingConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                             map, 
                             randomSeed, 
@@ -674,7 +677,7 @@ namespace Maes {
                     scenarios.Enqueue(new SimulationScenario(
                         seed: randomSeed,
                         hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 20 * minute,
-                        mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(mapConfig, 2.0f),
+                        mapSpawner: (mapGenerator) => mapGenerator.GenerateMap(mapConfig, 2.0f),
                         robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsTogether(
                             map, 
                             randomSeed, 
@@ -740,7 +743,7 @@ namespace Maes {
                 scenarios.Enqueue(new SimulationScenario(
                     seed: randomSeed,
                     hasFinishedSim: (simulation) => simulation.SimulateTimeSeconds >= 60 * minute,
-                    mapSpawner: (mapGenerator) => mapGenerator.GenerateCaveMap(caveConfig, 2.0f),
+                    mapSpawner: (mapGenerator) => mapGenerator.GenerateMap(caveConfig, 2.0f),
                     robotSpawner: (map, robotSpawner) => robotSpawner.SpawnRobotsInBiggestRoom(
                         map, 
                         randomSeed, 
@@ -814,7 +817,7 @@ namespace Maes {
             scenarios.Enqueue(new SimulationScenario(
                 seed: randomSeed, 
                 hasFinishedSim: simulation => simulation.SimulateTimeSeconds >= 60 * Minute,
-                mapSpawner: generator => generator.GenerateBuildingMap(config: buildingConfig, 2.0f),
+                mapSpawner: generator => generator.GenerateMap(buildingConfig, 2.0f),
                 robotSpawner: (map, robotSpawner) => robotSpawner.SpawnAtHallWayEnds(
                     map,
                     randomSeed,

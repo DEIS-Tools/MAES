@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 using System;
 using System.Linq;
@@ -52,7 +52,7 @@ namespace Maes.Utilities {
         
         private static readonly CardinalDirection[] Directions = 
             {East, SouthEast, South, SouthWest, West, NorthWest, North, NorthEast};
-        
+
         public readonly int Index;
         public readonly Vector2Int Vector;
         
@@ -92,7 +92,7 @@ namespace Maes.Utilities {
             var xDir = 0;
             var yDir = 0;
             
-            if (Index > 6 || Index < 2) xDir = 1;
+            if (Index > 6 || (Index < 2 && Index >= 0)) xDir = 1;
             else if (Index < 6 && Index > 2) xDir = -1;
             
             if (Index > 4) yDir = 1;
@@ -105,11 +105,76 @@ namespace Maes.Utilities {
             return GetDirection(this.Index + (int) dir);
         }
 
-        public static CardinalDirection[] AllDirections() => Directions;
+        public static CardinalDirection[] GetCardinalAndOrdinalDirections() => Directions;
+        public static CardinalDirection[] GetCardinalDirections() => new CardinalDirection[] { East, South, West, North};
 
 
         public static CardinalDirection FromVector(Vector2Int vector) {
-            return AllDirections().First(dir => dir.Vector == vector);
+            return GetCardinalAndOrdinalDirections().First(dir => dir.Vector == vector);
+        }
+
+        public static CardinalDirection VectorToDirection(Vector2 vector)
+        {
+            if (vector == Vector2.zero) 
+            {
+                return new CardinalDirection(-1);
+            }
+            return AngleToDirection(vector.GetAngleRelativeToX());
+        }
+
+        public static CardinalDirection AngleToDirection(float angle)
+        {
+            return FromVector(Vector2Int.RoundToInt(new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad))));
+        }
+
+        public CardinalDirection Counterclockwise()
+        {
+            return Index switch
+            {
+                //East
+                0 => North,
+                //Southeast
+                1 => NorthEast,
+                //South
+                2 => East,
+                //Southwest
+                3 => SouthEast,
+                //West
+                4 => South,
+                //Northwest
+                5 => SouthWest,
+                //North
+                6 => West,
+                //Northeast
+                7 => NorthWest,
+                _ => new CardinalDirection(-1),
+            };
+        }
+
+        public CardinalDirection Clockwise()
+        {
+            return Counterclockwise().OppositeDirection();
+        }
+
+        public static CardinalDirection PerpendicularDirection(Vector2 vector)
+        {
+            return VectorToDirection(Vector2.Perpendicular(vector));
+        }
+
+        public override string ToString()
+        {
+            return Index switch
+            {
+                0 => "East",
+                1 => "Southeast",
+                2 => "South",
+                3 => "Southwest",
+                4 => "West",
+                5 => "Northwest",
+                6 => "North",
+                7 => "Northeast",
+                _ => "",
+            };
         }
     }
 }

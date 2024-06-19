@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 using System;
 using System.Collections.Generic;
@@ -32,8 +32,9 @@ namespace Maes {
         private SimulationPlayState _playState = SimulationPlayState.Paused;
 
         public GameObject SimulationPrefab;
-        private Queue<SimulationScenario> _scenarios = new Queue<SimulationScenario>();
+        public Queue<SimulationScenario> _scenarios = new Queue<SimulationScenario>();
 
+        public Queue<SimulationScenario> _initialScenarios = new Queue<SimulationScenario>();
         public SimulationSpeedController UISpeedController;
         public GameObject UIControllerDebugTitle;
         public GameObject UIControllerDebugInfo;
@@ -42,7 +43,7 @@ namespace Maes {
 
         public SimulationInfoUIController simulationInfoUIController;
 
-        private SimulationScenario _currentScenario;
+        public SimulationScenario _currentScenario;
         public Simulation CurrentSimulation;
         private GameObject _simulationGameObject;
         
@@ -65,7 +66,7 @@ namespace Maes {
                 UIControllerDebugTitle.SetActive(false);
                 UIControllerDebugInfo.SetActive(false);
             }
-            UISpeedController.UpdateButtonsUI(PlayState);
+            UISpeedController.UpdateButtonsUI(SimulationPlayState.Play);
         }
 
         public void RemoveFastForwardButtonsFromControlPanel() {
@@ -110,6 +111,28 @@ namespace Maes {
         }
 
 
+        private void Update()
+        {
+            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) {
+                if (Input.GetKeyDown(KeyCode.Alpha1))
+                {
+                    AttemptSetPlayState(SimulationPlayState.Play);
+                } 
+                else if (Input.GetKeyDown(KeyCode.Alpha2))
+                {
+                    AttemptSetPlayState(SimulationPlayState.FastForward);
+                }
+                else if (Input.GetKeyDown(KeyCode.Alpha3))
+                {
+                    AttemptSetPlayState(SimulationPlayState.FastAsPossible);
+                }
+                else if (Input.GetKeyDown(KeyCode.P))
+                {
+                    AttemptSetPlayState(SimulationPlayState.Step);
+                }
+            }
+        }
+
         // Timing variables for controlling the simulation in a manner that is decoupled from Unity's update system
         private long _nextUpdateTimeMillis = 0;
 
@@ -122,6 +145,11 @@ namespace Maes {
                     Application.Quit(0);
                 }
                 return;
+            }
+
+            if (Application.isBatchMode && _playState != SimulationPlayState.FastAsPossible)
+            {
+                AttemptSetPlayState(SimulationPlayState.FastAsPossible);
             }
 
             long startTimeMillis = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
@@ -164,7 +192,9 @@ namespace Maes {
             if (_currentScenario != null && _currentScenario.HasFinishedSim(CurrentSimulation)) {
                 if (GlobalSettings.ShouldWriteCSVResults && _currentScenario.HasFinishedSim(CurrentSimulation))
                     CreateStatisticsFile();
-                RemoveCurrentSimulation();
+                if (_scenarios.Count != 0) { //If last simulation, let us keep looking around in it
+                    RemoveCurrentSimulation();
+                }
             }
 
             if (_currentScenario == null) {
@@ -236,9 +266,9 @@ namespace Maes {
         }
 
         public void EnqueueScenario(SimulationScenario simulationScenario) {
-            if (HasActiveScenario()) 
+            if (HasActiveScenario()) {
                 _scenarios.Enqueue(simulationScenario);
-            else // This is the first scenario, initialize it immediately 
+            } else // This is the first scenario, initialize it immediately 
                 CreateSimulation(simulationScenario);
         }
 

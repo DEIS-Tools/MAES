@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 #nullable enable
 using System;
@@ -545,7 +545,7 @@ namespace Maes.ExplorationAlgorithm.SSB {
                 return currentTile;
 
             // Try to find one
-            foreach (var direction in AllDirections()) {
+            foreach (var direction in GetCardinalAndOrdinalDirections()) {
                 var candidateTile = currentTile + direction.Vector;
                 if (!existingBPs.Contains(candidateTile) && !IsTileBlocked(candidateTile))
                     return candidateTile;

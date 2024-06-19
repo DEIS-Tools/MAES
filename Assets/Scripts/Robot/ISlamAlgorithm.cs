@@ -1,4 +1,4 @@
-// Copyright 2022 MAES
+// Copyright 2024 MAES
 // 
 // This file is part of MAES
 // 
@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License along
 // with MAES. If not, see http://www.gnu.org/licenses/.
 // 
-// Contributors: Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen
+// Contributors: Rasmus Borrisholt Schmidt, Andreas Sebastian Sørensen, Thor Beregaard, Malte Z. Andreasen, Philip I. Holler and Magnus K. Jensen,
 // 
-// Original repository: https://github.com/MalteZA/MAES
+// Original repository: https://github.com/Molitany/MAES
 
 using System.Collections.Generic;
 using Maes.Map;
@@ -50,7 +50,7 @@ namespace Maes.Robot {
         public Dictionary<Vector2Int, SlamMap.SlamTileStatus> GetCurrentlyVisibleTiles();
         
         /// <returns> The current position of the robot as a slam tile coordinate (rounded down) </returns>
-        public Vector2Int GetCurrentPositionSlamTile();
+        public Vector2Int GetCurrentPosition();
 
         /// <summary>
         /// Returns the perceived status of the given tile as a <see cref="SlamMap.SlamTileStatus"/>.
@@ -60,7 +60,7 @@ namespace Maes.Robot {
         /// </summary>
         /// <param name="tile">The coordinate measured in slam tiles</param>
         /// <returns>The perceived <see cref="SlamMap.SlamTileStatus"/> of the given tile</returns>
-        public SlamMap.SlamTileStatus GetStatusOfTile(Vector2Int tile);
+        public SlamMap.SlamTileStatus GetTileStatus(Vector2Int tile, bool optimistic = false);
         
         /// <returns>The robots orientation in the slam map measured in degrees relative to the x-axis (counter-clockwise)</returns>
         public float GetRobotAngleDeg();

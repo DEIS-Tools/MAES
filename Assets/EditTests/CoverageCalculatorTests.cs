@@ -21,37 +21,41 @@
 
 using System.Collections.Generic;
 using Maes.Map;
+using Maes.Map.MapGen;
 using Maes.Statistics;
 using NUnit.Framework;
 using UnityEngine;
+using Random = System.Random;
 
 namespace EditTests {
     public class CoverageCalculatorTest {
 
         private CoverageCalculator _coverageCalculator;
-        private SimulationMap<bool> _collisionMap;
+        private SimulationMap<Tile> _collisionMap;
         private SimulationMap<ExplorationCell> _explorationMap;
-
+        private const int RandomSeed = 123;
         private const int Width=50, Height=50;
 
         [SetUp]
         public void InitializeCalculatorAndMaps() {
             _collisionMap = GenerateCollisionMap();
-            _explorationMap = _collisionMap.FMap(isSolid => new ExplorationCell(!isSolid));
+            _explorationMap = _collisionMap.FMap(tile => new ExplorationCell(!Tile.IsWall(tile.Type)));
             _coverageCalculator = new CoverageCalculator(_explorationMap, _collisionMap);
         }
 
         // Generates a collision map where only the edge tiles are solid
-        private static SimulationMap<bool> GenerateCollisionMap() {
-            SimulationMapTile<bool>[,] tiles = new SimulationMapTile<bool>[Width, Height];
+        private static SimulationMap<Tile> GenerateCollisionMap() {
+            SimulationMapTile<Tile>[,] tiles = new SimulationMapTile<Tile>[Width, Height];
+            Tile.Rand = new Random(RandomSeed);
+            var wall = Tile.GetRandomWall();
             for (int x = 0; x < Width; x++) {
                 for (int y = 0; y < Height; y++) {
-                    var isSolid = IsGeneratedTileSolid(new Vector2Int(x, y));
-                    tiles[x, y] = new SimulationMapTile<bool>(() => isSolid);
+                    var tile = IsGeneratedTileSolid(new Vector2Int(x, y)) ? wall : new Tile(TileType.Room);
+                    tiles[x, y] = new SimulationMapTile<Tile>(() => tile);
                 }
             }
 
-            return new SimulationMap<bool>(tiles, Vector2.zero);
+            return new SimulationMap<Tile>(tiles, Vector2.zero);
         }
 
         // All edges are solid. All other tiles are non-solid
