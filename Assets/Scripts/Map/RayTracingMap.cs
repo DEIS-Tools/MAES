@@ -260,7 +260,7 @@ namespace Maes.Map {
             // If a trace travels diagonally in the bottom half of a tile, it will cross at least 4 tiles
             int minimumTracesBeforeDistanceCheck = (int) (distance / _maxTraceLengthPerTriangle);
             while (true) {
-                if (traceCount > 150) { // Safety measure for avoiding infinite loops 
+                if (traceCount > 1500) { // Safety measure for avoiding infinite loops 
                     Debug.Log($"Equation: {a}x + {b}");
                     throw new Exception($"INFINITE LOOP: {startingPoint.x}, {startingPoint.y}");
                 }
