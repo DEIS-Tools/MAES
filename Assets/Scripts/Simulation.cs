@@ -195,6 +195,10 @@ namespace Maes
 
         private void OnDrawGizmos()
         {
+            if (_collisionMap == null) {
+                return;
+            }
+
             var height = (_collisionMap.HeightInTiles + 1) / 2;
             var width = (_collisionMap.WidthInTiles + 1) / 2;
             Gizmos.color = Color.blue;
