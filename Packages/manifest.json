@@ -5,11 +5,7 @@
     "com.unity.ads": "4.4.2",
     "com.unity.ai.navigation": "1.1.5",
     "com.unity.analytics": "3.8.1",
-<<<<<<< Upstream, based on d9fd56c5a267cde9e014c2b3859524f16d14e31c
-    "com.unity.collab-proxy": "2.5.1",
-=======
     "com.unity.collab-proxy": "2.5.2",
->>>>>>> ddedd46 feature:breath-first-search-exploration
     "com.unity.ide.rider": "3.0.31",
     "com.unity.ide.visualstudio": "2.0.22",
     "com.unity.ide.vscode": "1.2.5",

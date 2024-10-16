@@ -44,11 +44,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
-<<<<<<< Upstream, based on d9fd56c5a267cde9e014c2b3859524f16d14e31c
-      "version": "2.5.1",
-=======
       "version": "2.5.2",
->>>>>>> ddedd46 feature:breath-first-search-exploration
       "depth": 0,
       "source": "registry",
       "dependencies": {},
