@@ -62,11 +62,6 @@ namespace Maes.ExplorationAlgorithm.HenrikAlgo
             }
         }
 
-        private bool IsDestinationReached(Vector2Int target, Vector2Int source)
-        {
-            throw new NotImplementedException();
-        }
-
         public string GetDebugInfo()
         {
             var info = new StringBuilder();
